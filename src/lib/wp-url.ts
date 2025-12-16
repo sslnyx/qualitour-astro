@@ -19,8 +19,12 @@ export function getWpBaseUrl(): string {
         }
     }
 
-    // Fallback
-    return 'https://handsome-cellar.localsite.io';
+    // Fallback - only use local dev URL in development
+    if (import.meta.env.DEV) {
+        return 'https://handsome-cellar.localsite.io';
+    }
+
+    return '';
 }
 
 /**

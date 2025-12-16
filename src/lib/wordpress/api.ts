@@ -24,7 +24,7 @@ function getApiUrl(): string {
     const url = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
         import.meta.env.PUBLIC_WORDPRESS_API_URL ||
         import.meta.env.WORDPRESS_API_URL ||
-        'https://handsome-cellar.localsite.io/wp-json/qualitour/v1';
+        (import.meta.env.DEV ? 'https://handsome-cellar.localsite.io/wp-json/qualitour/v1' : '');
     return url.endsWith('/') ? url.slice(0, -1) : url;
 }
 

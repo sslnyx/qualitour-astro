@@ -43,8 +43,12 @@ function getWordPressOrigin(): string {
         }
     }
 
-    // Development fallback - needs to be accessible from browser
-    return 'https://handsome-cellar.localsite.io';
+    // Development fallback - only use in DEV mode
+    if (import.meta.env.DEV) {
+        return 'https://handsome-cellar.localsite.io';
+    }
+
+    return '';
 }
 
 /**
