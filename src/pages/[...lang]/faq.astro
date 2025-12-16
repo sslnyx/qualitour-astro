@@ -1,0 +1,106 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHero from "../../components/PageHero.astro";
+import { type Locale } from "../../i18n/config";
+import { FAQCategories, FAQQuickLinks } from "../../components/FAQAccordion";
+
+// Generate paths for both locales
+export function getStaticPaths() {
+    return [
+        { params: { lang: undefined } }, // English: /faq
+        { params: { lang: "zh" } }, // Chinese: /zh/faq
+    ];
+}
+
+const { lang } = Astro.params;
+const currentLang: Locale = (lang as Locale) || "en";
+const localePrefix = currentLang === "en" ? "" : `/${currentLang}`;
+
+const t = {
+    title: currentLang === "zh" ? "常见问题" : "Frequently Asked Questions",
+    subtitle:
+        currentLang === "zh"
+            ? "关于Qualitour行程的常见问题解答。"
+            : "Everything you need to know about your journey with Qualitour.",
+    badge: currentLang === "zh" ? "帮助中心" : "Help Center",
+    stillQuestions:
+        currentLang === "zh" ? "还有问题？" : "Still Have Questions?",
+    stillQuestionsDesc:
+        currentLang === "zh"
+            ? "我们友好的团队随时为您提供帮助！请与我们联系，我们会尽快回复您。"
+            : "Our friendly team is here to help! Contact us and we'll get back to you as soon as possible.",
+    contactUs: currentLang === "zh" ? "联系我们" : "Contact Us",
+    call: currentLang === "zh" ? "致电" : "Call",
+};
+---
+
+<Layout
+    title={`${t.title} | Qualitour`}
+    description="Find answers to common questions about Qualitour tours, bookings, cancellations, payment methods, and travel requirements."
+    lang={currentLang}
+>
+    <!-- Hero Section -->
+    <PageHero
+        image="/faq-hero.png"
+        title={t.title}
+        subtitle={t.subtitle}
+        badge={{ icon: "help_outline", text: t.badge }}
+    >
+        <!-- Quick Jump Links -->
+        <div class="mt-8">
+            <FAQQuickLinks client:load />
+        </div>
+    </PageHero>
+
+    <!-- FAQ Content -->
+    <section class="py-16 md:py-24 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <FAQCategories client:load />
+        </div>
+    </section>
+
+    <!-- Contact CTA Section -->
+    <section
+        class="py-20 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] relative overflow-hidden"
+    >
+        <!-- Pattern overlay -->
+        <div
+            class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,#fff_1px,transparent_1px)] [background-size:24px_24px]"
+        >
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-3xl mx-auto">
+                <div
+                    class="w-20 h-20 mx-auto mb-6 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center"
+                >
+                    <span class="material-icons text-white text-4xl"
+                        >support_agent</span
+                    >
+                </div>
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6">
+                    {t.stillQuestions}
+                </h2>
+                <p class="text-xl text-white/90 mb-10">
+                    {t.stillQuestionsDesc}
+                </p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a
+                        href={`${localePrefix}/contact`}
+                        class="inline-flex items-center gap-2 bg-white text-[#f7941e] px-10 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                    >
+                        <span class="material-icons">mail</span>
+                        {t.contactUs}
+                    </a>
+                    <a
+                        href="tel:+17789456000"
+                        class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-10 py-4 rounded-full font-bold text-lg border border-white/30 hover:bg-white/30 transition-all"
+                    >
+                        <span class="material-icons">phone</span>
+                        {t.call} (778) 945-6000
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</Layout>

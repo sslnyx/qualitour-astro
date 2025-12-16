@@ -1,0 +1,398 @@
+---
+import { getCurrentLocale, type Locale } from "../i18n/config";
+
+interface Props {
+    lang?: Locale;
+}
+
+const { lang } = Astro.props;
+const currentLocale = lang || getCurrentLocale(Astro.url);
+const localePrefix = currentLocale === "en" ? "" : `/${currentLocale}`;
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="relative overflow-hidden">
+    <!-- Gradient Background -->
+    <div
+        class="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
+    >
+    </div>
+
+    <!-- Decorative Elements -->
+    <div
+        class="absolute top-0 left-0 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"
+    >
+    </div>
+    <div
+        class="absolute bottom-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"
+    >
+    </div>
+    <div
+        class="absolute top-1/2 left-1/2 w-64 h-64 bg-orange-500/3 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"
+    >
+    </div>
+
+    <!-- Main Footer Content -->
+    <div class="relative z-10 py-10 sm:py-14 lg:py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Top Section: Logo and Tagline -->
+            <div class="text-center mb-10 sm:mb-14 lg:mb-16">
+                <a href={`${localePrefix}/`} class="inline-block group">
+                    <img
+                        src="/qualitour_logo.png"
+                        alt="Qualitour"
+                        class="w-[150px] sm:w-[180px] lg:w-[200px] h-auto mx-auto transform transition-transform duration-300 group-hover:scale-105"
+                    />
+                </a>
+                <p
+                    class="mt-3 sm:mt-4 text-gray-400 text-sm sm:text-base lg:text-lg max-w-xl mx-auto px-4 sm:px-0"
+                >
+                    Your gateway to extraordinary Canadian adventures. Discover
+                    the beauty of nature with expert-guided tours.
+                </p>
+                <!-- Decorative Line with Gradient - Hidden on mobile for cleaner look -->
+                <div
+                    class="mt-6 sm:mt-8 hidden sm:flex items-center justify-center gap-4"
+                >
+                    <div
+                        class="h-px w-16 bg-gradient-to-r from-transparent to-orange-500/50"
+                    >
+                    </div>
+                    <div
+                        class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"
+                    >
+                    </div>
+                    <div
+                        class="h-px w-16 bg-gradient-to-l from-transparent to-orange-500/50"
+                    >
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Grid - Single column centered on mobile, 4 columns on desktop -->
+            <div
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-8 lg:gap-12 mb-10 sm:mb-14 lg:mb-16"
+            >
+                <!-- Column 1: Quick Links -->
+                <div class="text-center sm:text-left">
+                    <h3
+                        class="text-white text-sm font-bold uppercase tracking-wider mb-4 sm:mb-6 justify-center sm:justify-start flex items-center gap-2"
+                    >
+                        <span
+                            class="hidden sm:flex w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg items-center justify-center"
+                        >
+                            <span class="material-icons text-white text-sm"
+                                >explore</span
+                            >
+                        </span>
+                        Explore
+                    </h3>
+                    <ul class="space-y-2 sm:space-y-3">
+                        <li>
+                            <a
+                                href={`${localePrefix}/tours`}
+                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                            >
+                                Tours
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href={`${localePrefix}/private-transfers`}
+                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                            >
+                                Private Transfers
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href={`${localePrefix}/visa`}
+                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                            >
+                                China Visa
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href={`${localePrefix}/faq`}
+                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                            >
+                                FAQ
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Column 2: Company -->
+                <div class="text-center sm:text-left">
+                    <h3
+                        class="text-white text-sm font-bold uppercase tracking-wider mb-4 sm:mb-6 justify-center sm:justify-start flex items-center gap-2"
+                    >
+                        <span
+                            class="hidden sm:flex w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg items-center justify-center"
+                        >
+                            <span class="material-icons text-white text-sm"
+                                >business</span
+                            >
+                        </span>
+                        Company
+                    </h3>
+                    <ul class="space-y-2 sm:space-y-3">
+                        <li>
+                            <a
+                                href={`${localePrefix}/about-us`}
+                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                            >
+                                About Us
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href={`${localePrefix}/reviews`}
+                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                            >
+                                Reviews
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href={`${localePrefix}/contact`}
+                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                            >
+                                Contact Us
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href={`${localePrefix}/privacy-policy`}
+                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                            >
+                                Privacy Policy
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Column 3: Contact Info -->
+                <div class="text-center sm:text-left">
+                    <h3
+                        class="text-white text-sm font-bold uppercase tracking-wider mb-4 sm:mb-6 justify-center sm:justify-start flex items-center gap-2"
+                    >
+                        <span
+                            class="hidden sm:flex w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg items-center justify-center"
+                        >
+                            <span class="material-icons text-white text-sm"
+                                >contact_mail</span
+                            >
+                        </span>
+                        Contact
+                    </h3>
+                    <ul class="space-y-3">
+                        <li>
+                            <a
+                                href="tel:778-945-6000"
+                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base inline-flex items-center gap-2 justify-center sm:justify-start"
+                            >
+                                <span
+                                    class="material-icons text-orange-400 text-lg hidden sm:inline"
+                                    >call</span
+                                >
+                                (778) 945-6000
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href="mailto:info@qualitour.ca"
+                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base inline-flex items-center gap-2 justify-center sm:justify-start"
+                            >
+                                <span
+                                    class="material-icons text-orange-400 text-lg hidden sm:inline"
+                                    >mail</span
+                                >
+                                info@qualitour.ca
+                            </a>
+                        </li>
+                        <li class="hidden sm:block">
+                            <div class="flex items-start gap-2">
+                                <span
+                                    class="material-icons text-orange-400 text-lg mt-0.5"
+                                    >location_on</span
+                                >
+                                <span
+                                    class="text-gray-400 text-sm leading-relaxed text-left"
+                                >
+                                    5635 Cambie Street<br />
+                                    Vancouver, BC V5Z 3A3<br />
+                                    Canada
+                                </span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Column 4: Connect & Social -->
+                <div class="text-center sm:text-left">
+                    <h3
+                        class="text-white text-sm font-bold uppercase tracking-wider mb-4 sm:mb-6 justify-center sm:justify-start flex items-center gap-2"
+                    >
+                        <span
+                            class="hidden sm:flex w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg items-center justify-center"
+                        >
+                            <span class="material-icons text-white text-sm"
+                                >verified</span
+                            >
+                        </span>
+                        Connect
+                    </h3>
+
+                    <!-- IATA Badge -->
+                    <div class="flex justify-center sm:justify-start mb-4">
+                        <a
+                            href="https://www.iata.org/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="group"
+                        >
+                            <div
+                                class="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:border-orange-500/30 transition-all duration-300 hover:bg-white/15"
+                            >
+                                <img
+                                    src="/iata.png"
+                                    alt="IATA Accredited"
+                                    class="w-[60px] h-auto opacity-90 group-hover:opacity-100 transition-opacity"
+                                />
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Social Links -->
+                    <p class="text-gray-400 text-sm mb-3">Follow us</p>
+                    <div
+                        class="flex items-center justify-center sm:justify-start gap-3"
+                    >
+                        <a
+                            href="https://www.facebook.com/qualitour"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="w-10 h-10 bg-gray-800/50 rounded-lg flex items-center justify-center hover:bg-gradient-to-br hover:from-orange-500 hover:to-amber-500 transition-all duration-300 group"
+                            aria-label="Follow us on Facebook"
+                        >
+                            <i
+                                class="fa-brands fa-facebook-f text-gray-400 group-hover:text-white transition-colors"
+                            ></i>
+                        </a>
+                        <a
+                            href="https://www.instagram.com/qualitour"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="w-10 h-10 bg-gray-800/50 rounded-lg flex items-center justify-center hover:bg-gradient-to-br hover:from-orange-500 hover:to-amber-500 transition-all duration-300 group"
+                            aria-label="Follow us on Instagram"
+                        >
+                            <i
+                                class="fa-brands fa-instagram text-gray-400 group-hover:text-white transition-colors"
+                            ></i>
+                        </a>
+                        <a
+                            href="https://www.youtube.com/@qualitour"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="w-10 h-10 bg-gray-800/50 rounded-lg flex items-center justify-center hover:bg-gradient-to-br hover:from-orange-500 hover:to-amber-500 transition-all duration-300 group"
+                            aria-label="Subscribe on YouTube"
+                        >
+                            <i
+                                class="fa-brands fa-youtube text-gray-400 group-hover:text-white transition-colors"
+                            ></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Newsletter Section (Hidden on mobile) -->
+            <div class="relative mb-10 sm:mb-14 lg:mb-16 hidden sm:block">
+                <div
+                    class="bg-gradient-to-r from-gray-800/50 via-gray-700/30 to-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-white/5"
+                >
+                    <div
+                        class="flex flex-col lg:flex-row items-center justify-between gap-6"
+                    >
+                        <div class="text-center lg:text-left">
+                            <h3
+                                class="text-white font-bold text-xl mb-2 flex items-center justify-center lg:justify-start gap-3"
+                            >
+                                <span class="material-icons text-orange-400"
+                                    >mail_outline</span
+                                >
+                                Stay Updated
+                            </h3>
+                            <p class="text-gray-400">
+                                Get exclusive travel deals and tour updates
+                                delivered to your inbox
+                            </p>
+                        </div>
+                        <div
+                            class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto"
+                        >
+                            <input
+                                type="email"
+                                placeholder="Enter your email"
+                                class="px-5 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all w-full sm:w-72"
+                            />
+                            <button
+                                class="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-orange-500/25"
+                            >
+                                Subscribe
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="relative z-10 border-t border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div
+                class="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500"
+            >
+                <p class="text-center md:text-left">
+                    © {currentYear} Qualitour Holiday Inc.
+                    <span class="hidden sm:inline">
+                        All rights reserved. |</span
+                    >
+                    <span class="block sm:inline mt-1 sm:mt-0"
+                        >B.C. Reg. #62469</span
+                    >
+                </p>
+                <div class="flex items-center gap-4 sm:gap-6">
+                    <a
+                        href={`${localePrefix}/privacy-policy`}
+                        class="hover:text-orange-400 transition-colors"
+                        >Privacy</a
+                    >
+                    <a
+                        href={`${localePrefix}/terms`}
+                        class="hover:text-orange-400 transition-colors">Terms</a
+                    >
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+    /* Custom Animations */
+    @keyframes gradient-shift {
+        0%,
+        100% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+    }
+
+    footer {
+        background-size: 200% 200%;
+    }
+</style>

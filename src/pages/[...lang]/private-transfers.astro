@@ -1,0 +1,715 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHero from "../../components/PageHero.astro";
+import { type Locale } from "../../i18n/config";
+import { wpUrl } from "../../lib/wp-url";
+import TransferBookingModalButton from "../../components/TransferBookingModalButton";
+import PremiumReviewsGrid from "../../components/PremiumReviewsGrid";
+import { getGoogleReviews } from "../../lib/wordpress/api";
+
+// Generate paths for both locales
+export function getStaticPaths() {
+    return [
+        { params: { lang: undefined } }, // English: /private-transfers
+        { params: { lang: "zh" } }, // Chinese: /zh/private-transfers
+    ];
+}
+
+const { lang: langParam } = Astro.params;
+const lang: Locale = (langParam as Locale) || "en";
+const localePrefix = lang === "en" ? "" : `/${lang}`;
+
+// Fetch reviews
+let reviews: any[] = [];
+try {
+    reviews = await getGoogleReviews();
+} catch (e) {
+    console.error("Failed to fetch reviews:", e);
+}
+
+// Filter transfer-related reviews
+const transferKeywords = [
+    "transfer",
+    "airport",
+    "yvr",
+    "cruise",
+    "whistler",
+    "shuttle",
+    "driver",
+    "van",
+    "接送",
+    "机场",
+    "司机",
+];
+const transferReviews = reviews
+    .filter((r) => {
+        const text = (r.text || "").toLowerCase();
+        return (
+            r.rating >= 4 &&
+            transferKeywords.some((k) => text.includes(k.toLowerCase()))
+        );
+    })
+    .slice(0, 6);
+
+const t = {
+    heading: lang === "zh" ? "私人接送服务" : "Private Transfer Services",
+    subheading:
+        lang === "zh"
+            ? "舒适、安全、准时的专属用车服务"
+            : "Premium door-to-door transportation across British Columbia",
+    heroTagline: lang === "zh" ? "专业接送" : "PROFESSIONAL TRANSFERS",
+    whyUs: lang === "zh" ? "为什么选择我们" : "Why Choose Qualitour",
+    ourFleet: lang === "zh" ? "车队与包车服务" : "Fleet & Charter Services",
+    fleetDesc:
+        lang === "zh"
+            ? "专注于小团体私人接送"
+            : "Specialized vehicles for every occasion",
+    popularRoutes: lang === "zh" ? "热门路线" : "Popular Routes",
+    routesDesc: lang === "zh" ? "选择您的行程" : "Select your journey",
+    perVehicle: lang === "zh" ? "每车" : "per vehicle",
+    charterServices: lang === "zh" ? "包车服务" : "Charter Services",
+    charterDesc:
+        lang === "zh"
+            ? "按小时计费的灵活包车方案"
+            : "Flexible hourly rates for your custom itinerary",
+    needQuote: lang === "zh" ? "需要定制报价？" : "Need a Custom Quote?",
+    quoteDesc:
+        lang === "zh"
+            ? "告诉我们您的行程，获取专属报价"
+            : "Share your travel plans and get a personalized quote",
+    ctaTitle: lang === "zh" ? "准备好出发了吗？" : "Ready to Travel in Style?",
+    ctaDesc:
+        lang === "zh"
+            ? "让专业司机带您安全到达目的地"
+            : "Let our professional drivers take you where you need to go",
+    getInTouch: lang === "zh" ? "联系我们" : "Get in Touch",
+    customerReview: lang === "zh" ? "客户评价" : "What Our Customers Say",
+    faq: lang === "zh" ? "常见问题" : "Frequently Asked Questions",
+};
+
+const whyUsItems = [
+    {
+        icon: "verified",
+        title: lang === "zh" ? "专业司机" : "Professional Drivers",
+        desc:
+            lang === "zh"
+                ? "经验丰富、礼貌周到"
+                : "Experienced, courteous & knowledgeable",
+    },
+    {
+        icon: "schedule",
+        title: lang === "zh" ? "准时可靠" : "Always On Time",
+        desc:
+            lang === "zh"
+                ? "实时航班追踪"
+                : "Real-time flight tracking included",
+    },
+    {
+        icon: "star",
+        title: lang === "zh" ? "优质车辆" : "Premium Vehicles",
+        desc:
+            lang === "zh"
+                ? "舒适宽敞、定期维护"
+                : "Modern fleet, regularly maintained",
+    },
+    {
+        icon: "support_agent",
+        title: lang === "zh" ? "全程服务" : "24/7 Support",
+        desc:
+            lang === "zh" ? "随时为您解答" : "We're here whenever you need us",
+    },
+];
+
+const fleetItems = [
+    {
+        imageUrl: wpUrl("/wp-content/uploads/2020/12/2-Sienna-300x207.png"),
+        label: "Mini-van",
+        capacity: "4 passengers",
+        features: ["Comfortable seating", "Air conditioning", "Luggage space"],
+    },
+    {
+        imageUrl: wpUrl(
+            "/wp-content/uploads/2020/10/transfer-standard-van-1-300x200.jpg",
+        ),
+        label: "Standard Van",
+        capacity: "11 passengers",
+        features: [
+            "Spacious interior",
+            "Premium comfort",
+            "Extra luggage room",
+        ],
+    },
+    {
+        imageUrl: wpUrl(
+            "/wp-content/uploads/2020/10/transfer-deluxe-van-1-300x200.jpg",
+        ),
+        label: "Deluxe Van",
+        capacity: "14 passengers",
+        features: ["Luxury seating", "Entertainment system", "Maximum comfort"],
+    },
+];
+
+const charterRates = [
+    {
+        imageUrl: wpUrl("/wp-content/uploads/2020/12/2-Van.png"),
+        title: "Mercedes Sprinter Van (Standard)",
+        priceNumber: "95",
+        priceUnit: "/ Hr",
+        bullets: [
+            "Up to 11 passengers with luggage",
+            "Min. 2.5 hours",
+            "Within Greater Vancouver only",
+        ],
+    },
+    {
+        imageUrl: wpUrl("/wp-content/uploads/2020/12/3-Deluxe-Van.png"),
+        title: "Mercedes Sprinter Van (Deluxe)",
+        priceNumber: "110",
+        priceUnit: "/ Hr",
+        bullets: [
+            "Up to 14 passengers with luggage",
+            "Min. 2.5 hours",
+            "Within Greater Vancouver only",
+        ],
+        popular: true,
+    },
+    {
+        imageUrl: wpUrl(
+            "/wp-content/uploads/2024/10/Weixin-Image_20240924131059.jpg",
+        ),
+        title: "Premium Charter Package",
+        priceNumber: "110",
+        priceUnit: "/ Hr",
+        bullets: [
+            "Up to 14 passengers with luggage",
+            "Min. 2.5 hours",
+            "Within Greater Vancouver only",
+        ],
+    },
+];
+
+const transferOffers = [
+    {
+        titleLines: ["Vancouver Airport (YVR)", "→", "Whistler"],
+        caption: "From $465",
+        icon: "flight_land",
+        book: [
+            { actId: "19", label: "11-seater" },
+            { actId: "54", label: "14-seater" },
+        ],
+    },
+    {
+        titleLines: ["Greater Vancouver", "→", "Whistler"],
+        caption: "From $435",
+        icon: "downhill_skiing",
+        book: [
+            { actId: "19", label: "11-seater" },
+            { actId: "54", label: "14-seater" },
+        ],
+    },
+    {
+        titleLines: ["Whistler", "→", "YVR / Vancouver"],
+        caption: "From $435",
+        icon: "flight_takeoff",
+        book: [
+            { actId: "20", label: "11-seater" },
+            { actId: "55", label: "14-seater" },
+        ],
+    },
+    {
+        titleLines: ["Vancouver", "→", "Sun Peaks"],
+        caption: "From $960",
+        icon: "ac_unit",
+        book: [{ actId: "82", label: "11-seater" }],
+    },
+    {
+        titleLines: ["Sun Peaks", "→", "Vancouver"],
+        caption: "From $960",
+        icon: "ac_unit",
+        book: [{ actId: "83", label: "11-seater" }],
+    },
+    {
+        titleLines: ["Vancouver", "→", "Seattle"],
+        caption: "From $950",
+        icon: "directions_car",
+        book: [
+            { actId: "84", label: "11-seater" },
+            { actId: "97", label: "14-seater" },
+        ],
+    },
+    {
+        titleLines: ["Seattle", "→", "Vancouver"],
+        caption: "From $1050",
+        icon: "directions_car",
+        book: [
+            { actId: "85", label: "11-seater" },
+            { actId: "98", label: "14-seater" },
+        ],
+    },
+    {
+        titleLines: ["YVR Airport", "→", "Canada Place Cruise"],
+        caption: "From $245",
+        icon: "directions_boat",
+        book: [
+            { actId: "88", label: "11-seater" },
+            { actId: "96", label: "14-seater" },
+        ],
+    },
+    {
+        titleLines: ["Canada Place Cruise", "→", "YVR Airport"],
+        caption: "From $240",
+        icon: "directions_boat",
+        book: [
+            { actId: "89", label: "11-seater" },
+            { actId: "95", label: "14-seater" },
+        ],
+    },
+];
+
+const faqItems = [
+    {
+        q:
+            lang === "zh"
+                ? "价格包含哪些内容？"
+                : "What is included in the price?",
+        a:
+            lang === "zh"
+                ? "一切！没有额外惊喜或隐藏费用。价格包含燃油附加费和5%的GST。"
+                : "Everything! There will be no added surprises or hidden costs. The price includes fuel surcharge and 5% GST.",
+    },
+    {
+        q:
+            lang === "zh"
+                ? "如何在机场找到你们？"
+                : "How do I find you at the airport?",
+        a:
+            lang === "zh"
+                ? "通关后请走到主要出口。我们的司机将举着写有您名字的牌子等候。"
+                : "Once you clear customs and immigration, walk to the main exit door. Our driver will hold a signboard with your name to wait for you.",
+    },
+    {
+        q:
+            lang === "zh"
+                ? "如果航班延误怎么办？"
+                : "What if our flight is delayed?",
+        a:
+            lang === "zh"
+                ? "我们会监控进港航班。最长等待时间为75分钟，超时将收取额外费用。"
+                : "We will monitor the arrival flights. The maximum waiting time is 75 minutes and will have additional cost after 75 minutes waiting time.",
+    },
+    {
+        q:
+            lang === "zh"
+                ? "提供儿童座椅吗？"
+                : "Do you have car seats available?",
+        a:
+            lang === "zh"
+                ? "是的，我们提供儿童座椅。请在预订时备注儿童年龄。"
+                : "Yes, we have child's car seats available. However when you make your booking don't forget to indicate the age of the child in the comments.",
+    },
+    {
+        q: lang === "zh" ? "如何取消预订？" : "Cancellation Policy",
+        a:
+            lang === "zh"
+                ? "服务前72小时可免费取消（扣除5%手续费）。72小时内取消不退款。"
+                : "Cancellations can be made anytime until 72 hours prior to the service, but refunds are subject to an administration fee of 5% of the total amount.",
+    },
+];
+
+function extractPriceNumber(caption: string): string | null {
+    const m = caption.match(/\$\s*(\d+)/);
+    return m ? m[1] : null;
+}
+---
+
+<Layout
+    title="Private Transfers | Qualitour"
+    description="Private transfer services across Greater Vancouver and the Lower Mainland: airport transfers, cruise ship transfers, and ski resort transfers."
+    lang={lang}
+>
+    <!-- Hero Section -->
+    <PageHero
+        image="/ski-shuttle.jpg"
+        title={t.heading}
+        subtitle={t.subheading}
+        badge={{ icon: "airport_shuttle", text: t.heroTagline }}
+    >
+        <div class="flex flex-wrap justify-center gap-4 mt-10">
+            <a
+                href="#routes"
+                class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] text-white font-bold rounded-full hover:shadow-2xl hover:shadow-orange-500/30 hover:scale-105 transition-all duration-300"
+            >
+                <span class="material-icons">route</span>
+                {t.popularRoutes}
+            </a>
+            <a
+                href={`${localePrefix}/contact`}
+                class="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300"
+            >
+                <span class="material-icons">mail</span>
+                {t.getInTouch}
+            </a>
+        </div>
+    </PageHero>
+
+    <!-- Why Choose Us -->
+    <section class="py-20 bg-white relative overflow-hidden">
+        <div
+            class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-orange-50 to-transparent"
+        >
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                    {t.whyUs}
+                </h2>
+                <div
+                    class="w-20 h-1 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] mx-auto rounded-full"
+                >
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {
+                    whyUsItems.map((item) => (
+                        <div class="group text-center p-8 rounded-2xl hover:bg-gradient-to-br hover:from-orange-50 hover:to-amber-50 transition-all duration-300">
+                            <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#f7941e] to-[#ff6b35] rounded-2xl flex items-center justify-center shadow-lg shadow-orange-200/50 group-hover:scale-110 transition-transform duration-300">
+                                <span class="material-icons text-white text-3xl">
+                                    {item.icon}
+                                </span>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">
+                                {item.title}
+                            </h3>
+                            <p class="text-gray-500">{item.desc}</p>
+                        </div>
+                    ))
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- Fleet & Charter Services -->
+    <section id="charter" class="py-20 bg-gray-50 scroll-mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span
+                    class="text-[#f7941e] font-bold tracking-widest uppercase text-sm mb-2 block"
+                    >{t.ourFleet}</span
+                >
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                    {t.charterDesc}
+                </h2>
+            </div>
+
+            <!-- Charter Rates -->
+            <div
+                class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-20"
+            >
+                {
+                    charterRates.map((rate) => (
+                        <div
+                            class={`relative bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ${rate.popular ? "ring-2 ring-[#f7941e] transform scale-105" : ""}`}
+                        >
+                            {rate.popular && (
+                                <div class="absolute top-4 right-4 px-3 py-1 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] text-white text-xs font-bold rounded-full">
+                                    POPULAR
+                                </div>
+                            )}
+                            <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 p-6 flex items-center justify-center">
+                                <img
+                                    src={rate.imageUrl}
+                                    alt={rate.title}
+                                    class="max-w-full max-h-full object-contain"
+                                />
+                            </div>
+                            <div class="p-6">
+                                <h3 class="text-lg font-bold text-gray-900 mb-2">
+                                    {rate.title}
+                                </h3>
+                                <div class="flex items-baseline gap-1 mb-6">
+                                    <span class="text-4xl font-bold text-[#f7941e]">
+                                        ${rate.priceNumber}
+                                    </span>
+                                    <span class="text-gray-500">
+                                        {rate.priceUnit}
+                                    </span>
+                                </div>
+                                <ul class="space-y-3 mb-6">
+                                    {rate.bullets.map((b) => (
+                                        <li class="flex items-start gap-3 text-gray-600">
+                                            <span class="material-icons text-green-500 text-lg mt-0.5">
+                                                check
+                                            </span>
+                                            <span>{b}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <a
+                                    href={`${localePrefix}/contact`}
+                                    class="block w-full text-center py-3 bg-gray-100 hover:bg-[#f7941e] text-gray-700 hover:text-white font-semibold rounded-xl transition-all duration-300"
+                                >
+                                    {t.needQuote}
+                                </a>
+                            </div>
+                        </div>
+                    ))
+                }
+            </div>
+
+            <!-- Vehicle Specifications -->
+            <div class="text-center mb-12">
+                <h3 class="text-2xl font-bold text-gray-900">{t.fleetDesc}</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {
+                    fleetItems.map((item) => (
+                        <div class="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+                            <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 p-6 flex items-center justify-center">
+                                <img
+                                    src={item.imageUrl}
+                                    alt={item.label}
+                                    class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                                />
+                            </div>
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold text-gray-900 mb-1">
+                                    {item.label}
+                                </h3>
+                                <p class="text-[#f7941e] font-semibold mb-4">
+                                    {item.capacity}
+                                </p>
+                                <ul class="space-y-2">
+                                    {item.features.map((feature) => (
+                                        <li class="flex items-center gap-2 text-gray-600 text-sm">
+                                            <span class="material-icons text-green-500 text-base">
+                                                check_circle
+                                            </span>
+                                            {feature}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    ))
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- Popular Routes -->
+    <section id="routes" class="py-20 bg-white scroll-mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span
+                    class="text-[#f7941e] font-bold tracking-widest uppercase text-sm mb-2 block"
+                    >{t.popularRoutes}</span
+                >
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                    {t.routesDesc}
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {
+                    transferOffers.map((offer) => {
+                        const price = extractPriceNumber(offer.caption);
+                        return (
+                            <div class="group relative bg-white rounded-2xl border border-gray-200 p-6 hover:border-[#f7941e]/50 hover:shadow-xl transition-all duration-300 overflow-hidden">
+                                <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-[#f7941e]/10 to-transparent rounded-bl-full" />
+                                <div class="w-14 h-14 bg-gradient-to-br from-[#f7941e]/10 to-orange-50 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <span class="material-icons text-[#f7941e] text-2xl">
+                                        {offer.icon || "airport_shuttle"}
+                                    </span>
+                                </div>
+                                <div class="mb-4">
+                                    <div class="font-bold text-gray-900 text-lg leading-relaxed">
+                                        {offer.titleLines[0]}
+                                    </div>
+                                    <div class="text-[#f7941e] font-bold my-1">
+                                        {offer.titleLines[1]}
+                                    </div>
+                                    <div class="font-bold text-gray-900 text-lg">
+                                        {offer.titleLines[2]}
+                                    </div>
+                                </div>
+                                <div class="mb-6">
+                                    {price && (
+                                        <div class="flex items-baseline gap-1">
+                                            <span class="text-3xl font-bold text-gray-900">
+                                                ${price}
+                                            </span>
+                                            <span class="text-gray-500 text-sm">
+                                                {t.perVehicle}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    {offer.book.map((b) => (
+                                        <TransferBookingModalButton
+                                            label={b.label}
+                                            activityId={b.actId}
+                                            localePrefix={localePrefix}
+                                            lang={lang}
+                                            client:visible
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- Customer Reviews -->
+    <section
+        class="py-20 bg-gradient-to-br from-gray-900 to-gray-800 text-white"
+    >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">
+                    {t.customerReview}
+                </h2>
+                <div
+                    class="w-20 h-1 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] mx-auto rounded-full"
+                >
+                </div>
+            </div>
+
+            <div
+                class="max-w-7xl mx-auto bg-white/5 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-white/10"
+            >
+                {
+                    transferReviews.length > 0 ? (
+                        <PremiumReviewsGrid
+                            reviews={transferReviews}
+                            client:visible
+                        />
+                    ) : (
+                        <p class="text-center text-white/60">
+                            Loading reviews...
+                        </p>
+                    )
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span
+                    class="text-[#f7941e] font-bold tracking-widest uppercase text-sm mb-2 block"
+                    >FAQ</span
+                >
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                    {t.faq}
+                </h2>
+            </div>
+
+            <div class="max-w-3xl mx-auto space-y-4">
+                {
+                    faqItems.map((item) => (
+                        <details class="group bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+                            <summary class="flex items-center justify-between p-6 cursor-pointer list-none">
+                                <span class="font-bold text-gray-900 group-open:text-[#f7941e] transition-colors">
+                                    {item.q}
+                                </span>
+                                <span class="material-icons text-gray-400 group-open:text-[#f7941e] group-open:rotate-180 transition-all duration-300">
+                                    expand_more
+                                </span>
+                            </summary>
+                            <div class="px-6 pb-6 text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
+                                {item.a}
+                            </div>
+                        </details>
+                    ))
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- Quote CTA -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div
+                class="max-w-4xl mx-auto bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-10 md:p-16 text-center relative overflow-hidden"
+            >
+                <div
+                    class="absolute top-0 left-0 w-40 h-40 bg-[#f7941e]/20 rounded-full blur-3xl"
+                >
+                </div>
+                <div
+                    class="absolute bottom-0 right-0 w-60 h-60 bg-blue-500/10 rounded-full blur-3xl"
+                >
+                </div>
+
+                <div class="relative z-10">
+                    <div
+                        class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#f7941e] to-[#ff6b35] rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30"
+                    >
+                        <span class="material-icons text-white text-4xl"
+                            >request_quote</span
+                        >
+                    </div>
+
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+                        {t.needQuote}
+                    </h2>
+                    <p class="text-white/70 text-lg mb-8 max-w-xl mx-auto">
+                        {t.quoteDesc}
+                    </p>
+
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <a
+                            href={`${localePrefix}/contact`}
+                            class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] text-white font-bold rounded-full hover:shadow-2xl hover:shadow-orange-500/30 hover:scale-105 transition-all duration-300"
+                        >
+                            <span class="material-icons">mail</span>
+                            {t.getInTouch}
+                        </a>
+                        <a
+                            href="tel:+17789456000"
+                            class="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300"
+                        >
+                            <span class="material-icons">call</span>
+                            +1 (778) 945-6000
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section
+        class="py-20 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] relative overflow-hidden"
+    >
+        <div
+            class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,#fff_1px,transparent_1px)] [background-size:24px_24px]"
+        >
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center text-white max-w-2xl mx-auto">
+                <h2 class="text-3xl md:text-5xl font-bold mb-6">
+                    {t.ctaTitle}
+                </h2>
+                <p class="text-xl opacity-90 mb-10">{t.ctaDesc}</p>
+                <a
+                    href={`${localePrefix}/contact`}
+                    class="inline-flex items-center gap-2 px-10 py-4 bg-white text-[#f7941e] font-bold rounded-full hover:shadow-2xl hover:scale-105 transition-all duration-300"
+                >
+                    <span class="material-icons">arrow_forward</span>
+                    {t.getInTouch}
+                </a>
+            </div>
+        </div>
+    </section>
+</Layout>

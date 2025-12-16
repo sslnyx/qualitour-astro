@@ -52,14 +52,18 @@
     }
 
     body {
-        background-color: #ffffff;
+        background-color: #f9fafb;
+        /* gray-50 - light mode */
+        color: #1f2937;
+        /* gray-800 */
     }
 
     /* Basic typography styles for content areas */
     .prose p {
         margin-bottom: 1rem;
         line-height: 1.75;
-        color: #282828;
+        color: #374151;
+        /* gray-700 */
     }
 
     .prose ul,
@@ -71,7 +75,8 @@
     .prose li {
         margin-bottom: 0.5rem;
         line-height: 1.75;
-        color: #282828;
+        color: #374151;
+        /* gray-700 */
     }
 
     .prose ul li {
@@ -96,7 +101,8 @@
 
     .prose strong {
         font-weight: 600;
-        color: #383838;
+        color: #111827;
+        /* gray-900 */
     }
 
     .prose em {

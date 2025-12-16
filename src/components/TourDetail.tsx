@@ -3,40 +3,150 @@
  * 
  * React component for tour detail page with tabs for Overview, Itinerary, Photos, FAQ.
  * Used as an Astro island with client:load for interactivity.
+ * Supports i18n for English and Chinese.
  */
 
 import { useState, useMemo } from 'react';
 import type { WPTour } from '../lib/wordpress/types';
+import { wpUrl } from '../lib/wp-url';
 
 interface TourDetailProps {
     tour: WPTour;
+    lang?: string;
 }
 
 type TabId = 'overview' | 'itinerary' | 'photos' | 'faq';
 
 interface Tab {
     id: TabId;
-    label: string;
+    label: { en: string; zh: string };
     icon: string;
 }
 
 const tabs: Tab[] = [
-    { id: 'overview', label: 'Overview', icon: 'info' },
-    { id: 'itinerary', label: 'Itinerary', icon: 'route' },
-    { id: 'photos', label: 'Photos', icon: 'photo_library' },
-    { id: 'faq', label: 'FAQ', icon: 'help_outline' },
+    { id: 'overview', label: { en: 'Overview', zh: '行程概述' }, icon: 'info' },
+    { id: 'itinerary', label: { en: 'Itinerary', zh: '每日行程' }, icon: 'route' },
+    { id: 'photos', label: { en: 'Photos', zh: '照片' }, icon: 'photo_library' },
+    { id: 'faq', label: { en: 'FAQ', zh: '常见问题' }, icon: 'help_outline' },
 ];
 
-export function TourDetail({ tour }: TourDetailProps) {
+// i18n translations
+const translations = {
+    en: {
+        tourDetails: 'Tour Details',
+        duration: 'Duration',
+        location: 'Location',
+        country: 'Country',
+        highlights: 'Tour Highlights',
+        whatsIncluded: "What's Included",
+        whatsNotIncluded: "What's Not Included",
+        day: 'Day',
+    },
+    zh: {
+        tourDetails: '行程详情',
+        duration: '行程天数',
+        location: '地点',
+        country: '国家',
+        highlights: '行程亮点',
+        whatsIncluded: '费用包含',
+        whatsNotIncluded: '费用不包含',
+        day: '第',
+    },
+};
+
+export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const [expandedDay, setExpandedDay] = useState<number | null>(null);
 
-    // Get page builder sections
+    const t = translations[lang as keyof typeof translations] || translations.en;
+
+    // Get page builder sections from goodlayers_data
     const sections = useMemo(() => {
-        return tour.goodlayers_data?.sections ||
-            (tour.goodlayers_data as any)?.page_builder ||
-            [];
+        const gd = tour.goodlayers_data as any;
+        if (!gd) return [];
+
+        // Try multiple possible structures
+        return gd.sections || gd.page_builder || gd['gdlr-core-page-builder'] || [];
     }, [tour]);
+
+    // Get Goodlayers data helper
+    const gd = tour.goodlayers_data as any;
+
+    // Extract additional tour content - check multiple possible field names
+    const tourHighlights = useMemo(() => {
+        return gd?.tour_highlight ||
+            gd?.['tourmaster-tour-highlight'] ||
+            gd?.['_tourmaster-tour-highlight'] ||
+            gd?.highlight ||
+            '';
+    }, [gd]);
+
+    const tourIncludes = useMemo(() => {
+        return gd?.tour_include ||
+            gd?.['tourmaster-tour-include'] ||
+            gd?.['_tourmaster-tour-include'] ||
+            gd?.include ||
+            '';
+    }, [gd]);
+
+    const tourExcludes = useMemo(() => {
+        return gd?.tour_exclude ||
+            gd?.['tourmaster-tour-exclude'] ||
+            gd?.['_tourmaster-tour-exclude'] ||
+            gd?.exclude ||
+            '';
+    }, [gd]);
+
+    // Extract content blocks from detail/details section (like Next.js TourOverview)
+    interface ContentBlock {
+        type: 'title' | 'text' | 'icon-list';
+        content: any;
+        order: number;
+    }
+
+    const contentBlocks = useMemo((): ContentBlock[] => {
+        const detailSection = sections.find(
+            (s: any) => s.value?.id === 'detail' || s.value?.id === 'details'
+        );
+
+        const blocks: ContentBlock[] = [];
+
+        if (detailSection?.items) {
+            detailSection.items.forEach((item: any, idx: number) => {
+                // Skip tour_title and dividers
+                if (item.type === 'tour_title' || item.type === 'divider') return;
+
+                // Handle text boxes
+                if (item.type === 'text-box' && item.value?.content) {
+                    blocks.push({
+                        type: 'text',
+                        content: item.value.content,
+                        order: idx,
+                    });
+                }
+
+                // Handle titles
+                if (item.type === 'title' && (item.value?.title || item.value?.caption)) {
+                    blocks.push({
+                        type: 'title',
+                        content: item.value?.title || item.value?.caption,
+                        order: idx,
+                    });
+                }
+
+                // Handle icon lists
+                if (item.type === 'icon-list' && item.value?.tabs?.length > 0) {
+                    blocks.push({
+                        type: 'icon-list',
+                        content: item.value.tabs,
+                        order: idx,
+                    });
+                }
+            });
+        }
+
+        return blocks;
+    }, [sections]);
 
     // Extract content by section type
     const overviewContent = useMemo(() => {
@@ -59,6 +169,7 @@ export function TourDetail({ tour }: TourDetailProps) {
 
     // Check for itinerary
     const itinerary = useMemo(() => {
+        // Try to find itinerary section in page builder
         const itinerarySection = sections.find(
             (s: any) => s.value?.id === 'itinerary'
         );
@@ -72,34 +183,73 @@ export function TourDetail({ tour }: TourDetailProps) {
             }
         }
 
-        // Fallback to tour_itinerary field
-        return tour.goodlayers_data?.tour_itinerary || [];
-    }, [tour, sections]);
+        // Fallback to tour_itinerary field from Goodlayers
+        return gd?.tour_itinerary || gd?.['tourmaster-tour-itinerary'] || [];
+    }, [gd, sections]);
 
-    // Check for photos
+    // Check for photos - collect from multiple sources and convert to R2 URLs
     const photos = useMemo(() => {
         const photoList: string[] = [];
 
-        // Add featured image
-        const featuredUrl = tour.featured_image_url?.full?.url || tour.featured_image_url?.full;
-        if (featuredUrl) photoList.push(featuredUrl as string);
+        // Add featured image first
+        const featuredImg = tour.featured_image_url;
+        if (featuredImg) {
+            let featuredUrl: string | undefined;
+            if (typeof featuredImg === 'string') {
+                featuredUrl = featuredImg;
+            } else if (typeof featuredImg === 'object') {
+                const full = (featuredImg as any).full;
+                featuredUrl = typeof full === 'string' ? full : full?.url;
+            }
+            if (featuredUrl) photoList.push(wpUrl(featuredUrl));
+        }
 
-        // Look for gallery in sections
+        // Look for gallery in Goodlayers sections
         sections.forEach((section: any) => {
             section.items?.forEach((item: any) => {
                 if (item.type === 'gallery' && item.value?.gallery) {
                     item.value.gallery.forEach((img: any) => {
-                        if (img.url) photoList.push(img.url);
+                        if (img.url) photoList.push(wpUrl(img.url));
+                        else if (typeof img === 'string') photoList.push(wpUrl(img));
                     });
                 }
                 if (item.type === 'image' && item.value?.url) {
-                    photoList.push(item.value.url);
+                    photoList.push(wpUrl(item.value.url));
                 }
             });
         });
 
-        return photoList;
-    }, [tour, sections]);
+        // Check for tour gallery in Goodlayers meta
+        if (gd?.['tourmaster-tour-gallery']) {
+            const gallery = gd['tourmaster-tour-gallery'];
+            if (Array.isArray(gallery)) {
+                gallery.forEach((img: any) => {
+                    if (typeof img === 'string') {
+                        photoList.push(wpUrl(img));
+                    } else if (img.url) {
+                        photoList.push(wpUrl(img.url));
+                    }
+                });
+            }
+        }
+
+        // Check for tour_gallery field
+        if (gd?.tour_gallery) {
+            const gallery = gd.tour_gallery;
+            if (Array.isArray(gallery)) {
+                gallery.forEach((img: any) => {
+                    if (typeof img === 'string') {
+                        photoList.push(wpUrl(img));
+                    } else if (img.url) {
+                        photoList.push(wpUrl(img.url));
+                    }
+                });
+            }
+        }
+
+        // Remove duplicates
+        return [...new Set(photoList)];
+    }, [tour, gd, sections]);
 
     // Check for FAQ
     const faqItems = useMemo(() => {
@@ -116,8 +266,8 @@ export function TourDetail({ tour }: TourDetailProps) {
             }
         }
 
-        return tour.goodlayers_data?.tour_faq || [];
-    }, [tour, sections]);
+        return gd?.tour_faq || [];
+    }, [gd, sections]);
 
     // Filter tabs based on available content
     const availableTabs = tabs.filter(tab => {
@@ -149,7 +299,7 @@ export function TourDetail({ tour }: TourDetailProps) {
                             <span className={`material-icons text-xl ${activeTab === tab.id ? 'text-orange-500' : 'text-gray-400'}`}>
                                 {tab.icon}
                             </span>
-                            {tab.label}
+                            {tab.label[lang as keyof typeof tab.label] || tab.label.en}
 
                             {activeTab === tab.id && (
                                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-amber-500" />
@@ -163,53 +313,162 @@ export function TourDetail({ tour }: TourDetailProps) {
             <div className="p-6 md:p-8">
                 {/* Overview Tab */}
                 {activeTab === 'overview' && (
-                    <div className="animate-fadeIn">
-                        <div
-                            className="prose prose-gray max-w-none
-                prose-headings:text-gray-900 prose-headings:font-bold
-                prose-p:text-gray-600 prose-p:leading-relaxed
-                prose-a:text-orange-500 prose-a:no-underline hover:prose-a:underline
-                prose-strong:text-gray-900
-                prose-ul:text-gray-600 prose-li:marker:text-orange-500
-              "
-                            dangerouslySetInnerHTML={{ __html: overviewContent }}
-                        />
-
-                        {/* Tour Meta Info */}
-                        {tour.tour_meta && (
-                            <div className="mt-8 pt-8 border-t border-gray-100">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4">Tour Details</h3>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    {tour.tour_meta.duration_text && (
-                                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                            <span className="material-icons text-orange-500">schedule</span>
-                                            <div>
-                                                <div className="text-xs text-gray-500 uppercase">Duration</div>
-                                                <div className="font-medium text-gray-900">{tour.tour_meta.duration_text}</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {tour.tour_meta.location && (
-                                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                            <span className="material-icons text-orange-500">place</span>
-                                            <div>
-                                                <div className="text-xs text-gray-500 uppercase">Location</div>
-                                                <div className="font-medium text-gray-900">{tour.tour_meta.location}</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {tour.tour_meta.country && (
-                                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                            <span className="material-icons text-orange-500">public</span>
-                                            <div>
-                                                <div className="text-xs text-gray-500 uppercase">Country</div>
-                                                <div className="font-medium text-gray-900">{tour.tour_meta.country}</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                    <div className="animate-fadeIn space-y-8">
+                        {/* Main Content */}
+                        {overviewContent && (
+                            <div className="bg-orange-50 rounded-xl p-8 border border-orange-200">
+                                <div
+                                    className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
+                                    dangerouslySetInnerHTML={{ __html: overviewContent }}
+                                />
                             </div>
                         )}
+
+                        {/* Content Blocks from detail/details section */}
+                        {contentBlocks.map((block, idx) => {
+                            switch (block.type) {
+                                case 'title':
+                                    return (
+                                        <h3 key={idx} className="text-2xl font-bold text-gray-900 mt-8 mb-4 flex items-center gap-3">
+                                            <span className="w-1 h-8 bg-orange-500 rounded-full"></span>
+                                            {block.content}
+                                        </h3>
+                                    );
+                                case 'text':
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className="prose prose-base max-w-none text-gray-700 leading-relaxed"
+                                            dangerouslySetInnerHTML={{ __html: block.content }}
+                                        />
+                                    );
+                                case 'icon-list':
+                                    return (
+                                        <div key={idx} className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                                            <ul className="grid md:grid-cols-2 gap-4">
+                                                {block.content.map((listItem: any, listIdx: number) => (
+                                                    <li key={listIdx} className="flex items-start gap-3 group">
+                                                        <span className="text-orange-500 shrink-0 text-lg group-hover:scale-110 transition-transform">
+                                                            {listItem.icon === 'icon_clock' ? (
+                                                                <span className="material-icons">schedule</span>
+                                                            ) : listItem.icon ? (
+                                                                <i className={listItem.icon} style={{ fontSize: '20px' }} />
+                                                            ) : (
+                                                                <span className="material-icons">check_circle</span>
+                                                            )}
+                                                        </span>
+                                                        <span className="text-gray-700 flex-1">{listItem.title}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    );
+                                default:
+                                    return null;
+                            }
+                        })}
+
+                        {/* Tour Highlights */}
+                        {tourHighlights && (
+                            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <span className="material-icons text-orange-500">star</span>
+                                    {t.highlights}
+                                </h3>
+                                <div
+                                    className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-orange-500"
+                                    dangerouslySetInnerHTML={{ __html: tourHighlights }}
+                                />
+                            </div>
+                        )}
+
+                        {/* Includes / Excludes */}
+                        {(tourIncludes || tourExcludes) && (
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {tourIncludes && (
+                                    <div className="bg-green-50 rounded-2xl p-6 border border-green-100">
+                                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                            <span className="material-icons text-green-500">check_circle</span>
+                                            {t.whatsIncluded}
+                                        </h3>
+                                        <div
+                                            className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-green-500"
+                                            dangerouslySetInnerHTML={{ __html: tourIncludes }}
+                                        />
+                                    </div>
+                                )}
+                                {tourExcludes && (
+                                    <div className="bg-red-50 rounded-2xl p-6 border border-red-100">
+                                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                            <span className="material-icons text-red-500">cancel</span>
+                                            {t.whatsNotIncluded}
+                                        </h3>
+                                        <div
+                                            className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-red-500"
+                                            dangerouslySetInnerHTML={{ __html: tourExcludes }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Tour Meta Info */}
+                        {(() => {
+                            // Extract tour meta from multiple sources
+                            const duration = tour.tour_meta?.duration_text ||
+                                tour.tour_meta?.duration ||
+                                gd?.['tourmaster-tour-duration'] ||
+                                gd?.tour_duration ||
+                                '';
+                            const location = tour.tour_meta?.location ||
+                                gd?.['tourmaster-tour-location'] ||
+                                gd?.tour_location ||
+                                tour.tour_terms?.destinations?.[0]?.name ||
+                                '';
+                            const country = tour.tour_meta?.country ||
+                                gd?.['tourmaster-tour-country'] ||
+                                gd?.tour_country ||
+                                '';
+
+                            const hasAnyMeta = duration || location || country;
+
+                            if (!hasAnyMeta) return null;
+
+                            return (
+                                <div className="pt-8 border-t border-gray-100">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-4">{t.tourDetails}</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        {duration && (
+                                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                                <span className="material-icons text-orange-500">schedule</span>
+                                                <div>
+                                                    <div className="text-xs text-gray-500 uppercase">{t.duration}</div>
+                                                    <div className="font-medium text-gray-900">{duration}</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {location && (
+                                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                                <span className="material-icons text-orange-500">place</span>
+                                                <div>
+                                                    <div className="text-xs text-gray-500 uppercase">{t.location}</div>
+                                                    <div className="font-medium text-gray-900">{location}</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {country && (
+                                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                                <span className="material-icons text-orange-500">public</span>
+                                                <div>
+                                                    <div className="text-xs text-gray-500 uppercase">{t.country}</div>
+                                                    <div className="font-medium text-gray-900">{country}</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 )}
 
@@ -230,7 +489,7 @@ export function TourDetail({ tour }: TourDetailProps) {
                                             {index + 1}
                                         </div>
                                         <h4 className="font-semibold text-gray-900 text-left">
-                                            {day.title || `Day ${index + 1}`}
+                                            {day.title || (lang === 'zh' ? `${t.day}${index + 1}天` : `${t.day} ${index + 1}`)}
                                         </h4>
                                     </div>
                                     <span className={`material-icons text-gray-400 transition-transform ${expandedDay === index ? 'rotate-180' : ''}`}>
@@ -301,3 +560,4 @@ export function TourDetail({ tour }: TourDetailProps) {
         </div>
     );
 }
+

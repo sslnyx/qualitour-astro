@@ -1,0 +1,451 @@
+---
+/**
+ * TourFilterSidebar - Premium filter sidebar for tours page
+ * Features: Tour Length (pills), Tour Type (checkboxes), Destinations (nested)
+ */
+import type {
+    WPTourDestination,
+    WPTourDuration,
+    WPTourType,
+} from "../lib/wordpress/types";
+
+interface Props {
+    destinations: WPTourDestination[];
+    durations: WPTourDuration[];
+    types: WPTourType[];
+    lang: string;
+    activeDuration?: string;
+    activeType?: string;
+    activeDestination?: string;
+}
+
+const {
+    destinations,
+    durations,
+    types,
+    lang,
+    activeDuration,
+    activeType,
+    activeDestination,
+} = Astro.props;
+
+const localePrefix = lang === "en" ? "" : `/${lang}`;
+
+// Build destination tree for hierarchical display
+function buildDestinationTree(destinations: WPTourDestination[]) {
+    const parentMap = new Map<number, WPTourDestination[]>();
+    const topLevel: WPTourDestination[] = [];
+
+    destinations.forEach((dest) => {
+        if (dest.parent === 0) {
+            topLevel.push(dest);
+        } else {
+            const children = parentMap.get(dest.parent) || [];
+            children.push(dest);
+            parentMap.set(dest.parent, children);
+        }
+    });
+
+    return { topLevel, parentMap };
+}
+
+const { topLevel: topLevelDestinations, parentMap: destinationChildren } =
+    buildDestinationTree(destinations);
+
+// Get current URL for building filter links
+const currentUrl = new URL(Astro.request.url);
+
+function buildFilterUrl(updates: Record<string, string | null>): string {
+    const params = new URLSearchParams(currentUrl.search);
+
+    for (const [key, value] of Object.entries(updates)) {
+        if (value === null || value === "") {
+            params.delete(key);
+        } else {
+            params.set(key, value);
+        }
+    }
+
+    const queryString = params.toString();
+    return queryString
+        ? `${localePrefix}/tours?${queryString}`
+        : `${localePrefix}/tours`;
+}
+
+const hasActiveFilters = activeDuration || activeType || activeDestination;
+---
+
+<aside
+    class="tour-filter-sidebar bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24"
+>
+    <h2 class="font-bold text-lg text-gray-900 mb-6 flex items-center gap-2">
+        <span class="material-icons text-[#f7941e]">filter_list</span>
+        Filters
+    </h2>
+
+    <!-- Active Filters Summary -->
+    {
+        hasActiveFilters && (
+            <div class="p-3 bg-[#f7941e]/5 rounded-xl border border-[#f7941e]/20 mb-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700">
+                        Active Filters
+                    </span>
+                    <a
+                        href={`${localePrefix}/tours`}
+                        class="text-xs text-[#f7941e] hover:text-[#d67a1a] font-medium"
+                    >
+                        Clear All
+                    </a>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    {activeDuration && (
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-full text-xs border border-gray-200">
+                            <span class="material-icons text-xs">schedule</span>
+                            {durations.find((d) => d.slug === activeDuration)
+                                ?.name || activeDuration}
+                            <a
+                                href={buildFilterUrl({ duration: null })}
+                                class="text-gray-400 hover:text-gray-600"
+                            >
+                                ×
+                            </a>
+                        </span>
+                    )}
+                    {activeType && (
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-full text-xs border border-gray-200">
+                            <span class="material-icons text-xs">category</span>
+                            {types.find((t) => t.slug === activeType)?.name ||
+                                activeType}
+                            <a
+                                href={buildFilterUrl({ type: null })}
+                                class="text-gray-400 hover:text-gray-600"
+                            >
+                                ×
+                            </a>
+                        </span>
+                    )}
+                    {activeDestination && (
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-full text-xs border border-gray-200">
+                            <span class="material-icons text-xs">place</span>
+                            {destinations.find(
+                                (d) => d.slug === activeDestination,
+                            )?.name || activeDestination}
+                            <a
+                                href={buildFilterUrl({ destination: null })}
+                                class="text-gray-400 hover:text-gray-600"
+                            >
+                                ×
+                            </a>
+                        </span>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
+    <!-- Tour Length Section - Premium Pill Style -->
+    {
+        durations.length > 0 && (
+            <div class="border-b border-gray-100 pb-4 mb-4">
+                <button
+                    class="filter-toggle flex items-center justify-between w-full py-2 text-left group"
+                    data-section="duration"
+                >
+                    <span class="font-semibold text-gray-900 flex items-center gap-2">
+                        <span class="material-icons text-[#f7941e] text-lg">
+                            schedule
+                        </span>
+                        Tour Length
+                    </span>
+                    <span class="material-icons text-gray-500 transition-transform duration-200 toggle-icon">
+                        expand_more
+                    </span>
+                </button>
+                <div
+                    class="filter-content mt-3 flex flex-wrap gap-2"
+                    data-section="duration"
+                >
+                    {durations.map((dur) => {
+                        const isSelected = activeDuration === dur.slug;
+                        return (
+                            <a
+                                href={
+                                    isSelected
+                                        ? buildFilterUrl({ duration: null })
+                                        : buildFilterUrl({ duration: dur.slug })
+                                }
+                                class:list={[
+                                    "px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 border",
+                                    isSelected
+                                        ? "bg-gradient-to-r from-[#f7941e] to-[#ffb347] text-white border-transparent shadow-md shadow-orange-200"
+                                        : "bg-white text-gray-700 border-gray-200 hover:border-[#f7941e] hover:text-[#f7941e] hover:shadow-sm",
+                                ]}
+                            >
+                                {dur.name}
+                                <span
+                                    class:list={[
+                                        "ml-1.5 text-xs",
+                                        isSelected
+                                            ? "text-white/80"
+                                            : "text-gray-400",
+                                    ]}
+                                >
+                                    ({dur.count || 0})
+                                </span>
+                            </a>
+                        );
+                    })}
+                </div>
+            </div>
+        )
+    }
+
+    <!-- Tour Type Section -->
+    {
+        types.length > 0 && (
+            <div class="border-b border-gray-100 pb-4 mb-4">
+                <button
+                    class="filter-toggle flex items-center justify-between w-full py-2 text-left group"
+                    data-section="types"
+                >
+                    <span class="font-semibold text-gray-900 flex items-center gap-2">
+                        <span class="material-icons text-[#f7941e] text-lg">
+                            category
+                        </span>
+                        Tour Type
+                    </span>
+                    <span class="material-icons text-gray-500 transition-transform duration-200 toggle-icon">
+                        expand_more
+                    </span>
+                </button>
+                <div class="filter-content mt-2 space-y-1" data-section="types">
+                    {types.map((type) => {
+                        const isSelected = activeType === type.slug;
+                        return (
+                            <a
+                                href={
+                                    isSelected
+                                        ? buildFilterUrl({ type: null })
+                                        : buildFilterUrl({ type: type.slug })
+                                }
+                                class="flex items-center gap-3 py-2 w-full text-left hover:text-[#f7941e] transition-colors"
+                            >
+                                <span
+                                    class:list={[
+                                        "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                                        isSelected
+                                            ? "bg-[#f7941e] border-[#f7941e]"
+                                            : "border-gray-300",
+                                    ]}
+                                >
+                                    {isSelected && (
+                                        <svg
+                                            class="w-3 h-3 text-white"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
+                                        </svg>
+                                    )}
+                                </span>
+                                <span
+                                    class:list={[
+                                        "flex-1 text-sm",
+                                        isSelected
+                                            ? "text-[#f7941e] font-medium"
+                                            : "text-gray-700",
+                                    ]}
+                                >
+                                    {type.name}
+                                </span>
+                                <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                                    {type.count || 0}
+                                </span>
+                            </a>
+                        );
+                    })}
+                </div>
+            </div>
+        )
+    }
+
+    <!-- Destinations Section -->
+    {
+        destinations.length > 0 && (
+            <div class="pb-4">
+                <button
+                    class="filter-toggle flex items-center justify-between w-full py-2 text-left group"
+                    data-section="destinations"
+                >
+                    <span class="font-semibold text-gray-900 flex items-center gap-2">
+                        <span class="material-icons text-[#f7941e] text-lg">
+                            place
+                        </span>
+                        Destinations
+                    </span>
+                    <span class="material-icons text-gray-500 transition-transform duration-200 toggle-icon">
+                        expand_more
+                    </span>
+                </button>
+                <div
+                    class="filter-content mt-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar"
+                    data-section="destinations"
+                >
+                    {topLevelDestinations.map((dest) => {
+                        const isSelected = activeDestination === dest.slug;
+                        const children = destinationChildren.get(dest.id) || [];
+                        return (
+                            <div>
+                                <a
+                                    href={
+                                        isSelected
+                                            ? buildFilterUrl({
+                                                  destination: null,
+                                              })
+                                            : buildFilterUrl({
+                                                  destination: dest.slug,
+                                              })
+                                    }
+                                    class="flex items-center gap-3 py-2 w-full text-left hover:text-[#f7941e] transition-colors"
+                                >
+                                    <span
+                                        class:list={[
+                                            "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                                            isSelected
+                                                ? "bg-[#f7941e] border-[#f7941e]"
+                                                : "border-gray-300",
+                                        ]}
+                                    >
+                                        {isSelected && (
+                                            <svg
+                                                class="w-3 h-3 text-white"
+                                                fill="currentColor"
+                                                viewBox="0 0 20 20"
+                                            >
+                                                <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
+                                            </svg>
+                                        )}
+                                    </span>
+                                    <span
+                                        class:list={[
+                                            "flex-1 text-sm",
+                                            isSelected
+                                                ? "text-[#f7941e] font-medium"
+                                                : "text-gray-700",
+                                        ]}
+                                    >
+                                        {dest.name}
+                                    </span>
+                                    <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                                        {dest.count || 0}
+                                    </span>
+                                </a>
+                                {children.length > 0 && (
+                                    <div class="border-l-2 border-gray-100 ml-2 pl-3">
+                                        {children.map((child) => {
+                                            const isChildSelected =
+                                                activeDestination ===
+                                                child.slug;
+                                            return (
+                                                <a
+                                                    href={
+                                                        isChildSelected
+                                                            ? buildFilterUrl({
+                                                                  destination:
+                                                                      null,
+                                                              })
+                                                            : buildFilterUrl({
+                                                                  destination:
+                                                                      child.slug,
+                                                              })
+                                                    }
+                                                    class="flex items-center gap-3 py-1.5 w-full text-left hover:text-[#f7941e] transition-colors"
+                                                >
+                                                    <span
+                                                        class:list={[
+                                                            "w-3 h-3 rounded border flex items-center justify-center transition-all",
+                                                            isChildSelected
+                                                                ? "bg-[#f7941e] border-[#f7941e]"
+                                                                : "border-gray-300",
+                                                        ]}
+                                                    >
+                                                        {isChildSelected && (
+                                                            <svg
+                                                                class="w-2 h-2 text-white"
+                                                                fill="currentColor"
+                                                                viewBox="0 0 20 20"
+                                                            >
+                                                                <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
+                                                            </svg>
+                                                        )}
+                                                    </span>
+                                                    <span
+                                                        class:list={[
+                                                            "flex-1 text-xs",
+                                                            isChildSelected
+                                                                ? "text-[#f7941e] font-medium"
+                                                                : "text-gray-600",
+                                                        ]}
+                                                    >
+                                                        {child.name}
+                                                    </span>
+                                                    <span class="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full text-[10px]">
+                                                        {child.count || 0}
+                                                    </span>
+                                                </a>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        )
+    }
+</aside>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 2px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 2px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+    }
+
+    .filter-content.collapsed {
+        display: none;
+    }
+
+    .toggle-icon.rotated {
+        transform: rotate(180deg);
+    }
+</style>
+
+<script>
+    // Toggle filter sections
+    document.querySelectorAll(".filter-toggle").forEach((toggle) => {
+        toggle.addEventListener("click", () => {
+            const section = toggle.getAttribute("data-section");
+            const content = document.querySelector(
+                `.filter-content[data-section="${section}"]`,
+            );
+            const icon = toggle.querySelector(".toggle-icon");
+
+            if (content && icon) {
+                content.classList.toggle("collapsed");
+                icon.classList.toggle("rotated");
+            }
+        });
+    });
+</script>

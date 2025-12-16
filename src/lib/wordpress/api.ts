@@ -16,12 +16,13 @@ import type {
     WPApiParams,
 } from './types';
 
-// Default timeout for fetch requests (5 seconds)
-const DEFAULT_FETCH_TIMEOUT_MS = 5000;
+// Default timeout for fetch requests (30 seconds for large datasets)
+const DEFAULT_FETCH_TIMEOUT_MS = 30000;
 
 // Get WordPress API URL from environment (qualitour/v1 custom API)
 function getApiUrl(): string {
-    const url = import.meta.env.PUBLIC_WORDPRESS_API_URL ||
+    const url = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
+        import.meta.env.PUBLIC_WORDPRESS_API_URL ||
         import.meta.env.WORDPRESS_API_URL ||
         'https://handsome-cellar.localsite.io/wp-json/qualitour/v1';
     return url.endsWith('/') ? url.slice(0, -1) : url;
@@ -62,6 +63,19 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
         });
 
         if (!response.ok) {
+            console.error(`[Astro API] Request failed for URL: ${url}`);
+            console.error(`[Astro API] Status: ${response.status} ${response.statusText}`);
+            try {
+                const body = await response.text();
+                // Check if it's an HTML 404 (wrong URL) or JSON error (API error)
+                if (body.trim().startsWith('<')) {
+                    console.error(`[Astro API] Received HTML response (likely wrong URL): ${body.substring(0, 200)}...`);
+                } else {
+                    console.error(`[Astro API] JSON Error Body: ${body.substring(0, 500)}`);
+                }
+            } catch (e) {
+                console.error(`[Astro API] Could not read response body`);
+            }
             throw new Error(`WordPress API Error: ${response.status} ${response.statusText}`);
         }
 
@@ -102,22 +116,22 @@ export async function getTours(
 
 export async function getTourBySlug(slug: string, lang?: string): Promise<WPTour | null> {
     const customApiUrl = getCustomApiUrl();
-    const url = new URL(`${customApiUrl}/tours`);
+    // Use dedicated slug endpoint which returns full tour data including goodlayers_data
+    const url = new URL(`${customApiUrl}/tours/slug/${encodeURIComponent(slug)}`);
 
-    url.searchParams.set('slug', slug);
-    url.searchParams.set('_fields', 'id,slug,title,content,excerpt,featured_media,featured_image_url,tour_meta,goodlayers_data,acf_fields,tour_terms');
     if (lang && lang !== 'en') url.searchParams.set('lang', lang);
 
     console.log(`[Astro SSG] Fetching tour by slug: ${url.toString()}`);
 
     const response = await fetchWithTimeout(url.toString());
-    const tours = await response.json();
+    const tour = await response.json();
 
-    return Array.isArray(tours) && tours.length > 0 ? tours[0] : null;
+    // The /tours/slug/{slug} endpoint returns a single tour object, not an array
+    return tour && tour.id ? tour : null;
 }
 
 export async function getAllTourSlugs(lang?: string): Promise<string[]> {
-    const tours = await getTours({ per_page: 300 }, lang);
+    const tours = await getTours({ per_page: 1000 }, lang);
     return tours.map(tour => tour.slug);
 }
 

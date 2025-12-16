@@ -1,0 +1,475 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHero from "../../components/PageHero.astro";
+import { type Locale } from "../../i18n/config";
+import { wpUrl } from "../../lib/wp-url";
+import { VisaInquiryForm } from "../../components/forms";
+import PremiumReviewsGrid from "../../components/PremiumReviewsGrid";
+import { getGoogleReviews } from "../../lib/wordpress/api";
+
+// Generate paths for both locales
+export function getStaticPaths() {
+    return [
+        { params: { lang: undefined } }, // English: /visa
+        { params: { lang: "zh" } }, // Chinese: /zh/visa
+    ];
+}
+
+const { lang: langParam } = Astro.params;
+const lang: Locale = (langParam as Locale) || "en";
+const localePrefix = lang === "en" ? "" : `/${lang}`;
+
+// Visa hero background
+const VISA_HERO_BG = wpUrl(
+    "/wp-content/uploads/2023/08/nuno-alberto-MykFFC5zolE-unsplash1-scaled.jpg",
+);
+
+// Fetch reviews
+let reviews: any[] = [];
+try {
+    reviews = await getGoogleReviews();
+} catch (e) {
+    console.error("Failed to fetch reviews:", e);
+}
+
+// Filter visa-related reviews
+const visaKeywords = [
+    "visa",
+    "china",
+    "application",
+    "documents",
+    "passport",
+    "签证",
+    "中国",
+    "护照",
+    "申请",
+];
+const visaReviews = reviews
+    .filter((r) => {
+        const text = (r.text || "").toLowerCase();
+        return (
+            r.rating >= 4 &&
+            visaKeywords.some((k) => text.includes(k.toLowerCase()))
+        );
+    })
+    .slice(0, 6);
+
+// If no visa-specific reviews, show general high-rated ones
+const displayReviews =
+    visaReviews.length > 0
+        ? visaReviews
+        : reviews.filter((r) => r.rating >= 5).slice(0, 6);
+
+const title = lang === "zh" ? "中国签证服务" : "China Visa Services";
+const subtitle =
+    lang === "zh"
+        ? "省时省心，我们协助您完成申请流程"
+        : "Save time with guided, hassle-free support";
+
+const valueProps =
+    lang === "zh"
+        ? [
+              {
+                  icon: "schedule",
+                  title: "节省时间",
+                  body: "不必花大量时间研究材料与表格，我们会协助您按要求准备。",
+              },
+              {
+                  icon: "support_agent",
+                  title: "经验支持",
+                  body: "我们熟悉申请流程与常见问题，帮助您更高效地完成递交。",
+              },
+              {
+                  icon: "verified",
+                  title: "更高成功率",
+                  body: "通过更清晰的材料准备与提交检查，降低遗漏风险。",
+              },
+          ]
+        : [
+              {
+                  icon: "schedule",
+                  title: "Save your time",
+                  body: "Skip the research and focus on your trip. We'll guide your application step-by-step.",
+              },
+              {
+                  icon: "support_agent",
+                  title: "Leverage our experience",
+                  body: "We know the typical requirements and common pitfalls, helping you prepare correctly.",
+              },
+              {
+                  icon: "verified",
+                  title: "Increase success rate",
+                  body: "A clear checklist and review process reduces errors and missing documents.",
+              },
+          ];
+
+const steps =
+    lang === "zh"
+        ? [
+              {
+                  title: "咨询与签证类型确认",
+                  body: "根据出行目的与行程，确认合适的签证类型与时间安排。",
+              },
+              {
+                  title: "材料清单与表格指导",
+                  body: "提供材料清单并协助填写表格，确保信息一致。",
+              },
+              {
+                  title: "递交与进度跟进",
+                  body: "协助递交申请并跟进进度，及时提醒补充材料。",
+              },
+              { title: "取证与交付", body: "完成后通知取证/寄送安排。" },
+          ]
+        : [
+              {
+                  title: "Consultation",
+                  body: "Confirm your visa type and timeline based on your trip purpose.",
+              },
+              {
+                  title: "Document checklist",
+                  body: "We provide a checklist and guidance on forms and required documents.",
+              },
+              {
+                  title: "Submission support",
+                  body: "We support the submission process and follow up on progress.",
+              },
+              {
+                  title: "Pickup / delivery",
+                  body: "Once ready, we coordinate pickup or delivery options.",
+              },
+          ];
+
+const requirements =
+    lang === "zh"
+        ? [
+              "有效护照",
+              "签证照片",
+              "出行行程/机票与住宿信息（如适用）",
+              "工作/财务等辅助材料（视情况）",
+          ]
+        : [
+              "Valid passport",
+              "Visa photo",
+              "Itinerary / flight and accommodation details (if applicable)",
+              "Supporting documents (may vary by case)",
+          ];
+---
+
+<Layout
+    title="China Visa Services | Qualitour"
+    description="Hassle-free China visa support: document checklist, application guidance, and submission support."
+    lang={lang}
+>
+    <!-- Hero Section -->
+    <PageHero
+        image={VISA_HERO_BG}
+        title={title}
+        subtitle={subtitle}
+        badge={{
+            icon: "assignment",
+            text: lang === "zh" ? "签证服务" : "Visa Services",
+        }}
+    />
+
+    <!-- Value Props Section -->
+    <section
+        class="py-16 md:py-24 bg-gradient-to-br from-gray-50 via-white to-gray-50"
+    >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {
+                    valueProps.map((p, idx) => (
+                        <div class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-8 border border-gray-100 hover:border-[#f7941e]/20 hover:-translate-y-1">
+                            <div class="flex flex-col items-center text-center">
+                                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#f7941e] to-[#ff6b35] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                    <span class="material-icons text-white text-3xl">
+                                        {p.icon}
+                                    </span>
+                                </div>
+                                <h2 class="text-xl font-bold text-gray-900 mb-4">
+                                    {p.title}
+                                </h2>
+                                <p class="text-gray-600 leading-relaxed">
+                                    {p.body}
+                                </p>
+                            </div>
+                        </div>
+                    ))
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works Section -->
+    <section class="py-16 md:py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+                <!-- Left Column - Steps -->
+                <div>
+                    <div class="mb-8">
+                        <div
+                            class="inline-flex items-center gap-2 bg-[#f7941e]/10 rounded-full px-4 py-2 mb-4"
+                        >
+                            <span class="material-icons text-[#f7941e] text-sm"
+                                >route</span
+                            >
+                            <span
+                                class="text-[#f7941e] font-semibold text-sm tracking-wide uppercase"
+                            >
+                                {lang === "zh" ? "流程" : "Process"}
+                            </span>
+                        </div>
+                        <h2
+                            class="text-3xl md:text-4xl font-bold text-gray-900"
+                        >
+                            {lang === "zh" ? "我们如何协助" : "How it works"}
+                        </h2>
+                    </div>
+
+                    <div class="space-y-6">
+                        {
+                            steps.map((s, idx) => (
+                                <div class="group bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#f7941e]/20">
+                                    <div class="flex items-start gap-5">
+                                        <div class="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#f7941e] to-[#ff6b35] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                            <span class="text-white font-bold text-lg">
+                                                {idx + 1}
+                                            </span>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="font-bold text-lg text-gray-900 mb-2">
+                                                {s.title}
+                                            </h3>
+                                            <p class="text-gray-500 leading-relaxed">
+                                                {s.body}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        }
+                    </div>
+                </div>
+
+                <!-- Right Column - Requirements -->
+                <div class="lg:sticky lg:top-24">
+                    <div
+                        class="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 md:p-10 border border-gray-200 shadow-lg"
+                    >
+                        <div class="mb-6">
+                            <div
+                                class="inline-flex items-center gap-2 bg-[#f7941e]/10 rounded-full px-4 py-2 mb-4"
+                            >
+                                <span
+                                    class="material-icons text-[#f7941e] text-sm"
+                                    >checklist</span
+                                >
+                                <span
+                                    class="text-[#f7941e] font-semibold text-sm tracking-wide uppercase"
+                                >
+                                    {lang === "zh" ? "材料" : "Requirements"}
+                                </span>
+                            </div>
+                            <h2 class="text-3xl font-bold text-gray-900 mb-3">
+                                {
+                                    lang === "zh"
+                                        ? "常见材料"
+                                        : "Typical requirements"
+                                }
+                            </h2>
+                            <p class="text-gray-500 leading-relaxed">
+                                {
+                                    lang === "zh"
+                                        ? "具体材料可能因签证类型与个人情况不同，请以我们最终确认的清单为准。"
+                                        : "Requirements may vary by visa type and personal situation. We'll confirm the final checklist with you."
+                                }
+                            </p>
+                        </div>
+
+                        <ul class="space-y-4">
+                            {
+                                requirements.map((r) => (
+                                    <li class="flex items-start gap-4">
+                                        <div class="shrink-0 w-8 h-8 rounded-lg bg-[#f7941e]/10 flex items-center justify-center mt-0.5">
+                                            <span class="material-icons text-[#f7941e] text-lg">
+                                                check_circle
+                                            </span>
+                                        </div>
+                                        <span class="text-gray-700 leading-relaxed pt-1">
+                                            {r}
+                                        </span>
+                                    </li>
+                                ))
+                            }
+                        </ul>
+
+                        <div
+                            class="mt-8 p-4 bg-blue-50 rounded-xl border border-blue-100"
+                        >
+                            <div class="flex items-start gap-3">
+                                <span
+                                    class="material-icons text-blue-600 text-xl mt-0.5"
+                                    >info</span
+                                >
+                                <p
+                                    class="text-sm text-blue-900 leading-relaxed"
+                                >
+                                    {
+                                        lang === "zh"
+                                            ? "提示：签证政策可能调整，建议尽早规划并预留办理时间。"
+                                            : "Note: Visa policies can change. Plan ahead and allow sufficient processing time."
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Visa Inquiry Form Section -->
+    <section
+        class="py-16 md:py-24 bg-gradient-to-br from-gray-50 via-white to-gray-50"
+    >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div
+                class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-200 p-8 md:p-12"
+            >
+                <div class="text-center mb-8">
+                    <div
+                        class="inline-flex items-center gap-2 bg-[#f7941e]/10 rounded-full px-4 py-2 mb-4"
+                    >
+                        <span class="material-icons text-[#f7941e] text-sm"
+                            >contact_support</span
+                        >
+                        <span
+                            class="text-[#f7941e] font-semibold text-sm tracking-wide uppercase"
+                        >
+                            {lang === "zh" ? "联系我们" : "Contact Us"}
+                        </span>
+                    </div>
+                    <h2
+                        class="text-3xl md:text-4xl font-bold text-gray-900 mb-3"
+                    >
+                        {lang === "zh" ? "立即咨询" : "Start Your Inquiry"}
+                    </h2>
+                    <p class="text-gray-500 leading-relaxed">
+                        {
+                            lang === "zh"
+                                ? "填写以下表格，我们将在1个工作日内与您联系。"
+                                : "Fill out the form below and we'll get back to you within 1 business day."
+                        }
+                    </p>
+                </div>
+                <VisaInquiryForm className="max-w-lg mx-auto" client:load />
+            </div>
+        </div>
+    </section>
+
+    <!-- Reviews Section -->
+    {
+        displayReviews.length > 0 && (
+            <section class="py-16 md:py-24 bg-white">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-lg border border-gray-200 p-8 md:p-12">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                            <div>
+                                <div class="inline-flex items-center gap-2 bg-[#f7941e]/10 rounded-full px-4 py-2 mb-3">
+                                    <span class="material-icons text-[#f7941e] text-sm">
+                                        star
+                                    </span>
+                                    <span class="text-[#f7941e] font-semibold text-sm tracking-wide uppercase">
+                                        {lang === "zh" ? "评价" : "Reviews"}
+                                    </span>
+                                </div>
+                                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                                    {lang === "zh"
+                                        ? "客户评价"
+                                        : "Customer Reviews"}
+                                </h2>
+                                <p class="text-gray-500">
+                                    {lang === "zh"
+                                        ? "来自 Google 的真实评价"
+                                        : "Real reviews from Google"}
+                                </p>
+                            </div>
+                        </div>
+
+                        <PremiumReviewsGrid
+                            reviews={displayReviews}
+                            client:visible
+                        />
+
+                        <div class="text-center mt-8">
+                            <a
+                                href={`${localePrefix}/reviews`}
+                                class="inline-flex items-center gap-2 text-[#f7941e] hover:text-[#e68a1c] font-semibold transition-colors group"
+                            >
+                                <span>
+                                    {lang === "zh"
+                                        ? "查看所有评价"
+                                        : "Read more reviews"}
+                                </span>
+                                <span class="material-icons text-xl group-hover:translate-x-1 transition-transform">
+                                    arrow_forward
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        )
+    }
+
+    <!-- CTA Section -->
+    <section
+        class="py-20 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] relative overflow-hidden"
+    >
+        <div
+            class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,#fff_1px,transparent_1px)] [background-size:24px_24px]"
+        >
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-3xl mx-auto">
+                <div
+                    class="w-20 h-20 mx-auto mb-6 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center"
+                >
+                    <span class="material-icons text-white text-4xl"
+                        >flight_takeoff</span
+                    >
+                </div>
+
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6">
+                    {lang === "zh" ? "准备前往中国？" : "China bound?"}
+                </h2>
+
+                <p class="text-xl text-white/90 mb-10 leading-relaxed">
+                    {
+                        lang === "zh"
+                            ? "告诉我们您的出行计划，我们会协助您理清材料并推进申请。"
+                            : "Tell us your travel plan and we'll help you move the application forward with clarity and care."
+                    }
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a
+                        href={`${localePrefix}/contact`}
+                        class="inline-flex items-center gap-2 bg-white text-[#f7941e] px-10 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                    >
+                        <span class="material-icons">mail</span>
+                        {lang === "zh" ? "立即咨询" : "Talk to us"}
+                    </a>
+                    <a
+                        href="tel:+17789456000"
+                        class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-10 py-4 rounded-full font-bold text-lg border border-white/30 hover:bg-white/30 transition-all"
+                    >
+                        <span class="material-icons">phone</span>
+                        (778) 945-6000
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</Layout>

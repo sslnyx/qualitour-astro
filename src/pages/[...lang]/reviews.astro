@@ -4,20 +4,29 @@
  * Static page with reviews fetched from WordPress at build time
  */
 
-import Layout from '../layouts/Layout.astro';
-import { getBusinessReviews } from '../lib/wordpress/api';
-import PremiumReviewsGrid from '../components/PremiumReviewsGrid';
+import Layout from '../../layouts/Layout.astro';
+import { getBusinessReviews } from '../../lib/wordpress/api';
+import PremiumReviewsGrid from '../../components/PremiumReviewsGrid';
+import type { GoogleReview } from '../../lib/wordpress/types';
+import { type Locale } from '../../i18n/config';
 
+// Generate paths for both locales
+export function getStaticPaths() {
+  return [
+    { params: { lang: undefined } },  // English: /reviews
+    { params: { lang: 'zh' } },       // Chinese: /zh/reviews
+  ];
+}
 
+const { lang } = Astro.params;
+const currentLang: Locale = (lang as Locale) || 'en';
+const localePrefix = currentLang === 'en' ? '' : `/${currentLang}`;
 
 // Fetch reviews at build time
 const placeDetails = await getBusinessReviews();
 const reviews = placeDetails?.reviews || [];
 const rating = placeDetails?.rating || 0;
 const totalReviews = placeDetails?.user_ratings_total || reviews.length;
-
-// Import type for type annotation
-import type { GoogleReview } from '../lib/wordpress/types';
 
 // Calculate rating distribution
 const ratingDistribution = [5, 4, 3, 2, 1].map(stars => {
@@ -26,10 +35,27 @@ const ratingDistribution = [5, 4, 3, 2, 1].map(stars => {
     return { stars, count, percentage };
 });
 
-const lang = 'en';
+// Translations
+const t = {
+    badge: currentLang === 'zh' ? '客户评价' : 'Customer Reviews',
+    title: currentLang === 'zh' ? '听听我们满意的旅客怎么说' : 'Hear From Our Happy Travelers',
+    subtitle: currentLang === 'zh' ? 'Qualitour旅客分享的真实体验' : 'Authentic experiences shared by travelers who explored the world with Qualitour.',
+    avgRating: currentLang === 'zh' ? '平均评分' : 'Average Rating',
+    googleReviews: currentLang === 'zh' ? 'Google评论' : 'Google Reviews',
+    fiveStarReviews: currentLang === 'zh' ? '五星评论' : '5-Star Reviews',
+    reviews: currentLang === 'zh' ? '条评论' : 'reviews',
+    allReviews: currentLang === 'zh' ? '所有评论' : 'All Reviews',
+    browseReviews: currentLang === 'zh' ? '浏览旅客的真实体验' : 'Browse through authentic experiences shared by our travelers',
+    noReviews: currentLang === 'zh' ? '暂无评论' : 'No Reviews Yet',
+    beFirst: currentLang === 'zh' ? '成为第一个留下评论的人！' : 'Be the first to leave a review!',
+    shareExperience: currentLang === 'zh' ? '分享您的体验' : 'Share Your Experience',
+    feedbackMatters: currentLang === 'zh' ? '您的反馈对我们意义重大！帮助其他旅客发现Qualitour。' : 'Your feedback means the world to us! Help other travelers discover Qualitour.',
+    leaveReview: currentLang === 'zh' ? '留下Google评论' : 'Leave a Google Review',
+    contactUs: currentLang === 'zh' ? '联系我们' : 'Contact Us',
+};
 ---
 
-<Layout title="Customer Reviews | Qualitour" description="Read authentic reviews from our happy customers. See why travelers trust Qualitour for their tour experiences.">
+<Layout title="Customer Reviews | Qualitour" description="Read authentic reviews from our happy customers. See why travelers trust Qualitour for their tour experiences." lang={currentLang}>
     <main class="flex-grow">
         <!-- Hero Section -->
         <section class="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
@@ -44,7 +70,7 @@ const lang = 'en';
                 <!-- Badge -->
                 <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-8 border border-white/20">
                     <span class="material-icons text-[#f7941e]">star</span>
-                    <span class="text-white font-medium">Customer Reviews</span>
+                    <span class="text-white font-medium">{t.badge}</span>
                 </div>
 
                 <!-- Title -->
@@ -172,7 +198,7 @@ const lang = 'en';
                         </div>
 
                         <!-- Reviews Grid Component -->
-                        <PremiumReviewsGrid reviews={reviews} lang={lang} client:load />
+                        <PremiumReviewsGrid reviews={reviews} lang={currentLang} client:load />
                     </>
                 )}
             </div>

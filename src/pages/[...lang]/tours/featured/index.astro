@@ -1,0 +1,176 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+import { getTours, getSiteNavData } from '../../../../lib/wordpress/api';
+import { type Locale } from '../../../../i18n/config';
+import { TourCard } from '../../../../components/TourCard';
+
+// Generate paths for both locales
+export function getStaticPaths() {
+  return [
+    { params: { lang: undefined } },  // English: /tours/featured
+    { params: { lang: 'zh' } },       // Chinese: /zh/tours/featured
+  ];
+}
+
+const { lang: langParam } = Astro.params;
+const lang: Locale = (langParam as Locale) || 'en';
+const localePrefix = lang === 'en' ? '' : `/${lang}`;
+
+// Fetch all tours and nav data
+const [allTours, navData] = await Promise.all([
+  getTours({ per_page: 200 }, lang),
+  getSiteNavData(lang),
+]);
+
+// Filter featured tours (those with featured flag or premium pricing)
+const featuredTours = allTours.filter(tour => {
+  const meta = tour.tour_meta || {};
+  // Consider a tour "featured" if it has the featured flag or is marked as popular
+  return meta.featured === '1' || 
+         meta.featured === true ||
+         meta.is_featured === '1' ||
+         meta.is_featured === true;
+});
+
+// If no explicitly featured tours, show the first 12 as "popular"
+const displayTours = featuredTours.length > 0 ? featuredTours : allTours.slice(0, 12);
+const isFallback = featuredTours.length === 0;
+---
+
+<Layout 
+  title="Featured Tours | Qualitour"
+  description="Discover our handpicked selection of premium featured tours. Experience the best of China with our most popular and highly-rated journeys."
+  lang={lang}
+>
+  <main class="min-h-screen bg-gray-50">
+    <!-- Page Header -->
+    <section class="relative bg-gradient-to-r from-gray-900 to-gray-800 py-16 md:py-24 overflow-hidden">
+      <!-- Decorative elements -->
+      <div class="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-0 left-0 w-64 h-64 bg-orange-400/10 rounded-full blur-2xl"></div>
+      
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center text-white">
+          <nav class="text-sm mb-4 flex items-center justify-center gap-2">
+            <a href={`${localePrefix}/`} class="text-gray-400 hover:text-white transition-colors">Home</a>
+            <span class="text-gray-600">/</span>
+            <a href={`${localePrefix}/tours`} class="text-gray-400 hover:text-white transition-colors">Tours</a>
+            <span class="text-gray-600">/</span>
+            <span class="text-orange-400">Featured</span>
+          </nav>
+          
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6">
+            <span class="material-icons text-orange-400">star</span>
+            <span class="text-white/80 text-sm">Featured Selection</span>
+          </div>
+          
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+            {isFallback ? 'Popular Tours' : 'Featured Tours'}
+          </h1>
+          <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+            {isFallback 
+              ? `Explore ${displayTours.length} of our most popular tours`
+              : `Discover ${displayTours.length} handpicked premium experiences`
+            }
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tours Grid -->
+    <section class="py-12 md:py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {displayTours.length > 0 ? (
+          <>
+            <!-- Results Count -->
+            <div class="flex items-center justify-between gap-4 mb-8">
+              <p class="text-gray-600">
+                Showing <span class="font-semibold text-gray-900">{displayTours.length}</span> {isFallback ? 'popular' : 'featured'} tours
+              </p>
+              <a
+                href={`${localePrefix}/tours`}
+                class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 transition-colors"
+              >
+                <span class="material-icons text-lg">arrow_back</span>
+                View all tours
+              </a>
+            </div>
+
+            <!-- Tour Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {displayTours.map((tour) => (
+                <TourCard tour={tour} lang={lang} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <!-- Empty State -->
+          <div class="text-center py-16">
+            <span class="material-icons text-6xl text-gray-300 mb-4 block">star_border</span>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">No featured tours available</h3>
+            <p class="text-gray-500 mb-6">
+              Check out our full collection of tours instead!
+            </p>
+            <a
+              href={`${localePrefix}/tours`}
+              class="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white font-semibold rounded-full hover:bg-orange-600 transition-colors"
+            >
+              <span class="material-icons">explore</span>
+              Browse All Tours
+            </a>
+          </div>
+        )}
+      </div>
+    </section>
+
+    <!-- Explore by Category -->
+    <section class="py-16 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <span class="text-orange-500 font-medium text-sm uppercase tracking-wider">
+            Browse More
+          </span>
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mt-2">
+            Explore by Destination
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {navData.destinations.slice(0, 12).map((dest) => (
+            <a
+              href={`${localePrefix}/tours/destination/${dest.slug}`}
+              class="group p-4 bg-gray-50 rounded-xl hover:bg-orange-50 border border-gray-100 hover:border-orange-200 transition-all text-center"
+            >
+              <span class="material-icons text-2xl text-gray-400 group-hover:text-orange-500 mb-2 block">
+                location_on
+              </span>
+              <h3 class="font-medium text-gray-900 group-hover:text-orange-600 transition-colors">
+                {dest.name}
+              </h3>
+              <p class="text-sm text-gray-500 mt-1">{dest.count} tours</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-gradient-to-r from-orange-500 to-amber-500">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">
+          Can't Find What You're Looking For?
+        </h2>
+        <p class="text-xl opacity-90 mb-8">
+          Let us create a custom tour tailored to your preferences
+        </p>
+        <a
+          href={`${localePrefix}/contact`}
+          class="inline-flex items-center gap-2 px-8 py-4 bg-white text-orange-500 font-bold rounded-full hover:shadow-xl hover:scale-105 transition-all"
+        >
+          <span class="material-icons">mail</span>
+          Contact Us
+        </a>
+      </div>
+    </section>
+  </main>
+</Layout>

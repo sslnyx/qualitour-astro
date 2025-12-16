@@ -1,39 +1,45 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import { getTours, getSiteNavData } from "../../lib/wordpress/api";
-import { getCurrentLocale } from "../../i18n/config";
-import { TourCard } from "../../components/TourCard";
+import Layout from "../../../layouts/Layout.astro";
+import {
+  getTours,
+  getSiteNavData,
+  getTourDurations,
+  getTourTypes,
+} from "../../../lib/wordpress/api";
+import { type Locale } from "../../../i18n/config";
+import { ToursGrid } from "../../../components/ToursGrid";
+import { TourFilterSidebarClient } from "../../../components/TourFilterSidebarClient";
 
-const lang = getCurrentLocale(Astro.url);
+// Generate paths for both locales
+export function getStaticPaths() {
+  return [
+    { params: { lang: undefined } }, // English: /tours
+    { params: { lang: "zh" } }, // Chinese: /zh/tours
+  ];
+}
+
+const { lang: langParam } = Astro.params;
+const lang: Locale = (langParam as Locale) || "en";
 const localePrefix = lang === "en" ? "" : `/${lang}`;
 
-// Fetch tours and filter data
-const [tours, navData] = await Promise.all([
-  getTours({ per_page: 100 }, lang),
+// Fetch all tours and filter data at build time
+// Client-side filtering will handle URL params
+const [tours, navData, durations, types] = await Promise.all([
+  getTours({ per_page: 1000 }, lang),
   getSiteNavData(lang),
+  getTourDurations(lang),
+  getTourTypes(lang),
 ]);
-
-// Get filter params from URL
-const url = new URL(Astro.request.url);
-const destinationSlug = url.searchParams.get("destination");
-const typeSlug = url.searchParams.get("type");
-const searchQuery = url.searchParams.get("q");
-
-// Filter tours (simple client-side filtering since this is SSG)
-let filteredTours = tours;
-
-// Page title
-let pageTitle = "All Tours";
 ---
 
 <Layout
-  title={`${pageTitle} | Qualitour`}
+  title="All Tours | Qualitour"
   description="Explore our curated collection of premium China tours. From cultural adventures to scenic wonders, find your perfect journey."
   lang={lang}
 >
   <main class="min-h-screen bg-gray-50">
     <!-- Page Header -->
-    <section class="bg-gradient-to-r from-gray-900 to-gray-800 py-16 md:py-24">
+    <section class="bg-gradient-to-r from-gray-900 to-gray-800 py-16 md:py-20">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center text-white">
           <nav class="text-sm mb-4">
@@ -55,63 +61,31 @@ let pageTitle = "All Tours";
       </div>
     </section>
 
-    <!-- Tours Grid -->
+    <!-- Tours Content with Sidebar -->
     <section class="py-12 md:py-16">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Results Count -->
-        <div
-          class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
-        >
-          <p class="text-gray-600">
-            Showing <span class="font-semibold text-gray-900"
-              >{filteredTours.length}</span
-            > tours
-          </p>
-
-          <!-- Quick Filter Links -->
-          <div class="flex flex-wrap gap-2">
-            {
-              navData.destinations.slice(0, 5).map((dest) => (
-                <a
-                  href={`${localePrefix}/tours/destination/${dest.slug}`}
-                  class="px-3 py-1.5 text-sm bg-white border border-gray-200 text-gray-600 rounded-full hover:border-orange-300 hover:text-orange-500 transition-colors"
-                >
-                  {dest.name}
-                </a>
-              ))
-            }
+        <div class="flex flex-col lg:flex-row gap-8">
+          <!-- Filter Sidebar (Desktop) - React Client Component -->
+          <div class="hidden lg:block lg:w-72 flex-shrink-0">
+            <TourFilterSidebarClient
+              client:load
+              destinations={navData.destinations}
+              durations={durations}
+              types={types}
+              lang={lang}
+            />
           </div>
-        </div>
 
-        <!-- Tour Grid -->
-        <div
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
-        >
-          {filteredTours.map((tour) => <TourCard tour={tour} lang={lang} />)}
+          <!-- Main Content - React Client Component -->
+          <ToursGrid
+            client:load
+            tours={tours}
+            destinations={navData.destinations}
+            durations={durations}
+            types={types}
+            lang={lang}
+          />
         </div>
-
-        {/* Empty State */}
-        {
-          filteredTours.length === 0 && (
-            <div class="text-center py-16">
-              <span class="material-icons text-6xl text-gray-300 mb-4">
-                search_off
-              </span>
-              <h3 class="text-xl font-semibold text-gray-900 mb-2">
-                No tours found
-              </h3>
-              <p class="text-gray-500 mb-6">
-                Try adjusting your filters or search criteria
-              </p>
-              <a
-                href={`${localePrefix}/tours`}
-                class="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white font-semibold rounded-full hover:bg-orange-600 transition-colors"
-              >
-                View All Tours
-              </a>
-            </div>
-          )
-        }
       </div>
     </section>
 
@@ -135,7 +109,7 @@ let pageTitle = "All Tours";
           {
             navData.destinations.map((dest) => (
               <a
-                href={`${localePrefix}/tours/destination/${dest.slug}`}
+                href={`${localePrefix}/tours?destination=${dest.slug}`}
                 class="group p-4 bg-gray-50 rounded-xl hover:bg-orange-50 border border-gray-100 hover:border-orange-200 transition-all text-center"
               >
                 <span class="material-icons text-2xl text-gray-400 group-hover:text-orange-500 mb-2 block">
@@ -174,3 +148,21 @@ let pageTitle = "All Tours";
     </section>
   </main>
 </Layout>
+
+<script>
+  // Handle destination links to dispatch urlchange event
+  document.querySelectorAll('a[href*="?destination="]').forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const href = (e.currentTarget as HTMLAnchorElement).getAttribute("href");
+      if (href) {
+        window.history.pushState({}, "", href);
+        window.dispatchEvent(new Event("urlchange"));
+        // Scroll to tours section
+        document
+          .querySelector(".py-12.md\\:py-16")
+          ?.scrollIntoView({ behavior: "smooth" });
+      }
+    });
+  });
+</script>

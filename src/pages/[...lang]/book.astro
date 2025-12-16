@@ -1,0 +1,237 @@
+---
+/**
+ * Book Page - Redirect to Zaui Booking System
+ *
+ * This page serves as a landing page for the booking system.
+ * The actual booking is handled by the Zaui booking widget.
+ */
+
+import Layout from "../../layouts/Layout.astro";
+import PageHero from "../../components/PageHero.astro";
+import { type Locale } from "../../i18n/config";
+
+// Generate paths for both locales
+export function getStaticPaths() {
+    return [
+        { params: { lang: undefined } }, // English: /book
+        { params: { lang: "zh" } }, // Chinese: /zh/book
+    ];
+}
+
+const { lang } = Astro.params;
+const currentLang: Locale = (lang as Locale) || "en";
+const localePrefix = currentLang === "en" ? "" : `/${currentLang}`;
+
+const t = {
+    title: currentLang === "zh" ? "预订行程" : "Book Your Tour",
+    subtitle:
+        currentLang === "zh"
+            ? "选择您喜欢的行程并开始预订"
+            : "Select your preferred tour and start your booking",
+    selectTour: currentLang === "zh" ? "选择行程" : "Select a Tour",
+    selectTourDesc:
+        currentLang === "zh"
+            ? "探索我们精心策划的加拿大游览行程，涵盖最具标志性的目的地。"
+            : "Explore our curated selection of guided tours through Canada's most iconic destinations.",
+    viewTours: currentLang === "zh" ? "浏览全部行程" : "Browse All Tours",
+    transfers: currentLang === "zh" ? "私人接送" : "Private Transfers",
+    transfersDesc:
+        currentLang === "zh"
+            ? "专业司机提供私人机场接机、滑雪接送和邮轮接送服务。"
+            : "Private airport pickups, ski shuttles, and cruise transfers with professional drivers.",
+    viewTransfers:
+        currentLang === "zh" ? "查看接送服务" : "View Transfer Services",
+    contact: currentLang === "zh" ? "需要帮助？" : "Need Help?",
+    contactDesc:
+        currentLang === "zh"
+            ? "需要定制行程或有特殊要求？我们的团队随时为您服务。"
+            : "Need a custom itinerary or have special requirements? Our team is here to help.",
+    contactUs: currentLang === "zh" ? "联系我们" : "Contact Us",
+    readyToBook:
+        currentLang === "zh" ? "准备直接预订？" : "Ready to Book Directly?",
+    readyToBookDesc:
+        currentLang === "zh"
+            ? "访问我们的预订系统进行即时预订和查看可用性。"
+            : "Access our booking system directly for instant reservations and availability.",
+    openBookingSystem:
+        currentLang === "zh" ? "打开预订系统" : "Open Booking System",
+};
+---
+
+<Layout
+    title={`${t.title} | Qualitour`}
+    description="Book your tour with Qualitour. Select from our curated selection of Canadian tours and experiences."
+    lang={currentLang}
+>
+    <!-- Hero Section -->
+    <PageHero
+        image="/guide-tour.jpg"
+        title={t.title}
+        subtitle={t.subtitle}
+        badge={{
+            icon: "event_available",
+            text: currentLang === "zh" ? "立即预订" : "Book Now",
+        }}
+        height="min-h-[50vh]"
+    />
+
+    <!-- Booking Options -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Tours Option -->
+                <a
+                    href={`${localePrefix}/tours`}
+                    class="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                >
+                    <div class="relative h-48 overflow-hidden">
+                        <img
+                            src="/guide-tour.jpg"
+                            alt="Guided Tours"
+                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div
+                            class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"
+                        >
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <span
+                                class="inline-flex items-center gap-2 px-3 py-1 bg-[#f7941e] text-white text-sm font-medium rounded-full"
+                            >
+                                <span class="material-icons text-base"
+                                    >tour</span
+                                >
+                                Tours
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3
+                            class="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#f7941e] transition-colors"
+                        >
+                            {t.selectTour}
+                        </h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            {t.selectTourDesc}
+                        </p>
+                        <span
+                            class="inline-flex items-center text-[#f7941e] font-semibold"
+                        >
+                            {t.viewTours}
+                            <span
+                                class="material-icons ml-1 text-lg group-hover:translate-x-1 transition-transform"
+                                >arrow_forward</span
+                            >
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Transfers Option -->
+                <a
+                    href={`${localePrefix}/private-transfers`}
+                    class="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                >
+                    <div class="relative h-48 overflow-hidden">
+                        <img
+                            src="/ski-shuttle.jpg"
+                            alt="Private Transfers"
+                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div
+                            class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"
+                        >
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <span
+                                class="inline-flex items-center gap-2 px-3 py-1 bg-[#f7941e] text-white text-sm font-medium rounded-full"
+                            >
+                                <span class="material-icons text-base"
+                                    >directions_car</span
+                                >
+                                Transfers
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3
+                            class="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#f7941e] transition-colors"
+                        >
+                            {t.transfers}
+                        </h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            {t.transfersDesc}
+                        </p>
+                        <span
+                            class="inline-flex items-center text-[#f7941e] font-semibold"
+                        >
+                            {t.viewTransfers}
+                            <span
+                                class="material-icons ml-1 text-lg group-hover:translate-x-1 transition-transform"
+                                >arrow_forward</span
+                            >
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Contact Option -->
+                <a
+                    href={`${localePrefix}/contact`}
+                    class="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                >
+                    <div
+                        class="relative h-48 overflow-hidden bg-gradient-to-br from-[#f7941e] to-[#ff6b35]"
+                    >
+                        <div
+                            class="absolute inset-0 flex items-center justify-center"
+                        >
+                            <span
+                                class="material-icons text-white text-7xl opacity-30"
+                                >support_agent</span
+                            >
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3
+                            class="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#f7941e] transition-colors"
+                        >
+                            {t.contact}
+                        </h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            {t.contactDesc}
+                        </p>
+                        <span
+                            class="inline-flex items-center text-[#f7941e] font-semibold"
+                        >
+                            {t.contactUs}
+                            <span
+                                class="material-icons ml-1 text-lg group-hover:translate-x-1 transition-transform"
+                                >arrow_forward</span
+                            >
+                        </span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Direct Booking CTA -->
+    <section class="py-16 bg-gray-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-2xl md:text-3xl font-bold text-white mb-4">
+                {t.readyToBook}
+            </h2>
+            <p class="text-gray-400 mb-8 max-w-xl mx-auto">
+                {t.readyToBookDesc}
+            </p>
+            <a
+                href="https://qualitour.zaui.net/booking/web/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] text-white font-bold rounded-full hover:shadow-2xl hover:shadow-orange-500/30 hover:scale-105 transition-all duration-300"
+            >
+                <span class="material-icons">launch</span>
+                {t.openBookingSystem}
+            </a>
+        </div>
+    </section>
+</Layout>
