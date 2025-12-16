@@ -1,0 +1,239 @@
+/* Icon Fonts - All loaded as self-hosted npm packages in layout.tsx */
+
+/* Material Icons class rules (required since @fontsource only provides @font-face) */
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    /* Preferred icon size */
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    /* Support for all WebKit browsers. */
+    -webkit-font-smoothing: antialiased;
+    /* Support for Safari and Chrome. */
+    text-rendering: optimizeLegibility;
+    /* Support for Firefox. */
+    -moz-osx-font-smoothing: grayscale;
+    /* Support for IE. */
+    font-feature-settings: 'liga';
+}
+
+@import "tailwindcss";
+
+@layer utilities {
+    .font-kaushan {
+        font-family: var(--font-kaushan-script), cursive;
+    }
+
+    /* Standardized container: 1200px max-width, 22px horizontal padding */
+    .container-qualitour {
+        @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    }
+}
+
+@layer base {
+
+    /* Embla Carousel Slide Gaps */
+    .embla__slide {
+        flex: 0 0 calc(33.3333% - 0.75rem);
+        /* Show 3 slides minus the gap */
+        margin-right: 1.5rem;
+        /* 24px - consistent with gap-6 */
+        padding-top: 0.5rem;
+        /* 8px - for shadow spacing */
+        padding-bottom: 0.5rem;
+        /* 8px - for shadow spacing */
+    }
+
+    body {
+        background-color: #ffffff;
+    }
+
+    /* Basic typography styles for content areas */
+    .prose p {
+        margin-bottom: 1rem;
+        line-height: 1.75;
+        color: #282828;
+    }
+
+    .prose ul,
+    .prose ol {
+        margin-bottom: 1rem;
+        padding-left: 1.5rem;
+    }
+
+    .prose li {
+        margin-bottom: 0.5rem;
+        line-height: 1.75;
+        color: #282828;
+    }
+
+    .prose ul li {
+        list-style-type: disc;
+    }
+
+    .prose ol li {
+        list-style-type: decimal;
+    }
+
+    /* Nested lists */
+    .prose ul ul,
+    .prose ol ul {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .prose ul ul li,
+    .prose ol ul li {
+        list-style-type: circle;
+    }
+
+    .prose strong {
+        font-weight: 600;
+        color: #383838;
+    }
+
+    .prose em {
+        font-style: italic;
+    }
+
+    .prose a {
+        color: #f7941e;
+        text-decoration: underline;
+    }
+
+    .prose a:hover {
+        color: #d67a1a;
+    }
+
+    /* Image carousel scrolling */
+    .image-carousel .overflow-x-auto {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .image-carousel .overflow-x-auto::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .image-carousel .overflow-x-auto::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .image-carousel .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 4px;
+    }
+
+    .image-carousel .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+    }
+}
+
+@layer utilities {
+    @keyframes blob {
+        0% {
+            transform: translate(0px, 0px) scale(1);
+        }
+
+        33% {
+            transform: translate(30px, -50px) scale(1.1);
+        }
+
+        66% {
+            transform: translate(-20px, 20px) scale(0.9);
+        }
+
+        100% {
+            transform: translate(0px, 0px) scale(1);
+        }
+    }
+
+    .animate-blob {
+        animation: blob 7s infinite;
+    }
+
+    .animation-delay-2000 {
+        animation-delay: 2s;
+    }
+
+    .animation-delay-4000 {
+        animation-delay: 4s;
+    }
+
+    /* Premium Skeleton Shimmer Animation */
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    @keyframes wave {
+        0% {
+            background-position: -200% 0;
+        }
+
+        100% {
+            background-position: 200% 0;
+        }
+    }
+
+    .skeleton-shimmer::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        transform: translateX(-100%);
+        background: linear-gradient(90deg,
+                transparent,
+                rgba(255, 255, 255, 0.4),
+                transparent);
+        animation: shimmer 1.5s infinite;
+    }
+
+    .skeleton-wave {
+        background: linear-gradient(90deg,
+                #e5e7eb 0%,
+                #f3f4f6 50%,
+                #e5e7eb 100%);
+        background-size: 200% 100%;
+        animation: wave 1.5s ease-in-out infinite;
+    }
+
+    /* Scrollbar hide utility */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Fade in animation */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out;
+    }
+}

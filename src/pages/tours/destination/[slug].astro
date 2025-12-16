@@ -1,0 +1,173 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getTours, getTourDestinations, getSiteNavData } from '../../../lib/wordpress/api';
+import { getCurrentLocale } from '../../../i18n/config';
+import { TourCard } from '../../../components/TourCard';
+
+// Generate static paths for all destinations
+export async function getStaticPaths() {
+  const destinations = await getTourDestinations();
+  
+  return destinations.map((dest) => ({
+    params: { slug: dest.slug },
+    props: { destination: dest }
+  }));
+}
+
+const { slug } = Astro.params;
+const { destination } = Astro.props;
+const lang = getCurrentLocale(Astro.url);
+const localePrefix = lang === 'en' ? '' : `/${lang}`;
+
+// Fetch all tours and filter by destination
+const [allTours, navData] = await Promise.all([
+  getTours({ per_page: 200 }, lang),
+  getSiteNavData(lang),
+]);
+
+// Filter tours that belong to this destination
+const filteredTours = allTours.filter(tour => {
+  const tourDests = tour.tour_terms?.destinations || [];
+  return tourDests.some(d => d.slug === slug);
+});
+---
+
+<Layout 
+  title={`${destination?.name || 'Destination'} Tours | Qualitour`}
+  description={`Explore our curated collection of tours to ${destination?.name}. Discover unforgettable experiences and book your next adventure.`}
+  lang={lang}
+>
+  <main class="min-h-screen bg-gray-50">
+    <!-- Page Header -->
+    <section class="relative bg-gradient-to-r from-gray-900 to-gray-800 py-16 md:py-24 overflow-hidden">
+      <!-- Decorative elements -->
+      <div class="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-0 left-0 w-64 h-64 bg-orange-400/10 rounded-full blur-2xl"></div>
+      
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center text-white">
+          <nav class="text-sm mb-4 flex items-center justify-center gap-2">
+            <a href={`${localePrefix}/`} class="text-gray-400 hover:text-white transition-colors">Home</a>
+            <span class="text-gray-600">/</span>
+            <a href={`${localePrefix}/tours`} class="text-gray-400 hover:text-white transition-colors">Tours</a>
+            <span class="text-gray-600">/</span>
+            <span class="text-orange-400">{destination?.name}</span>
+          </nav>
+          
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6">
+            <span class="material-icons text-orange-400">location_on</span>
+            <span class="text-white/80 text-sm">Destination</span>
+          </div>
+          
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+            {destination?.name} Tours
+          </h1>
+          <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+            Discover {filteredTours.length} amazing tours to {destination?.name}
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tours Grid -->
+    <section class="py-12 md:py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {filteredTours.length > 0 ? (
+          <>
+            <!-- Results Count -->
+            <div class="flex items-center justify-between gap-4 mb-8">
+              <p class="text-gray-600">
+                Showing <span class="font-semibold text-gray-900">{filteredTours.length}</span> tours
+              </p>
+              <a
+                href={`${localePrefix}/tours`}
+                class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 transition-colors"
+              >
+                <span class="material-icons text-lg">arrow_back</span>
+                View all tours
+              </a>
+            </div>
+
+            <!-- Tour Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {filteredTours.map((tour) => (
+                <TourCard tour={tour} lang={lang} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <!-- Empty State -->
+          <div class="text-center py-16">
+            <span class="material-icons text-6xl text-gray-300 mb-4 block">travel_explore</span>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">No tours available yet</h3>
+            <p class="text-gray-500 mb-6">
+              We're working on adding more tours to {destination?.name}. Check back soon!
+            </p>
+            <a
+              href={`${localePrefix}/tours`}
+              class="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white font-semibold rounded-full hover:bg-orange-600 transition-colors"
+            >
+              <span class="material-icons">explore</span>
+              Browse All Tours
+            </a>
+          </div>
+        )}
+      </div>
+    </section>
+
+    <!-- Other Destinations -->
+    <section class="py-16 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+            Explore Other Destinations
+          </h2>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-3">
+          {navData.destinations
+            .filter(d => d.slug !== slug)
+            .slice(0, 12)
+            .map((dest) => (
+            <a
+              href={`${localePrefix}/tours/destination/${dest.slug}`}
+              class="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-300 text-gray-700 hover:text-orange-600 rounded-full transition-all"
+            >
+              <span class="material-icons text-sm">place</span>
+              {dest.name}
+              <span class="text-xs text-gray-400">({dest.count})</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-gradient-to-r from-orange-500 to-amber-500">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">
+          Ready to Explore {destination?.name}?
+        </h2>
+        <p class="text-xl opacity-90 mb-8">
+          Contact us for personalized recommendations and custom itineraries
+        </p>
+        <div class="flex flex-wrap justify-center gap-4">
+          <a
+            href={`${localePrefix}/contact`}
+            class="inline-flex items-center gap-2 px-8 py-4 bg-white text-orange-500 font-bold rounded-full hover:shadow-xl hover:scale-105 transition-all"
+          >
+            <span class="material-icons">mail</span>
+            Get a Quote
+          </a>
+          <a
+            href="tel:+17789456000"
+            class="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur text-white font-bold rounded-full border border-white/30 hover:bg-white/20 transition-all"
+          >
+            <span class="material-icons">call</span>
+            Call Us
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>

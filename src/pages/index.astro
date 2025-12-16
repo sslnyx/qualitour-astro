@@ -1,0 +1,415 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getTours, getSiteNavData } from '../lib/wordpress/api';
+import { getCurrentLocale } from '../i18n/config';
+import heroBackground from '../assets/hero-background.webp';
+import TourCard from '../components/TourCard';
+
+const lang = getCurrentLocale(Astro.url);
+const localePrefix = lang === 'en' ? '' : `/${lang}`;
+
+// Fetch data at build time
+const [tours, navData] = await Promise.all([
+  getTours({ per_page: 12 }, lang),
+  getSiteNavData(lang),
+]);
+
+const featuredTours = tours.slice(0, 6);
+
+// Translations
+const t = {
+  heroTagline: 'QUALITOUR',
+  heroTitle: lang === 'zh' ? '重新出發' : 'Explore Again',
+  heroSubtitle: lang === 'zh' ? '发现并预订难忘的旅行体验' : 'Discover and book unforgettable travel experiences',
+  searchPlaceholder: lang === 'zh' ? '搜索目的地或行程...' : 'Search destinations or tours...',
+  search: lang === 'zh' ? '搜索' : 'Search',
+  category: lang === 'zh' ? '选择类别' : 'Select Category',
+  whyChooseUs: lang === 'zh' ? '为什么选择我们' : 'Why Choose Qualitour',
+  guidedTours: lang === 'zh' ? '专业导游' : 'Professional Guides',
+  guidedToursDesc: lang === 'zh' ? '经验丰富的本地导游带您探索' : 'Experienced local guides for authentic experiences',
+  smallGroups: lang === 'zh' ? '小团出行' : 'Small Groups',
+  smallGroupsDesc: lang === 'zh' ? '亲密的家庭式小团体旅行' : 'Intimate travel with family and friends',
+  premiumService: lang === 'zh' ? '优质服务' : 'Premium Service',
+  premiumServiceDesc: lang === 'zh' ? '从预订到旅程结束全程服务' : '24/7 support from booking to return',
+  bestValue: lang === 'zh' ? '超值价格' : 'Best Value',
+  bestValueDesc: lang === 'zh' ? '质优价廉的旅游体验' : 'Quality experiences at competitive prices',
+  privateTransfers: lang === 'zh' ? '私人接送服务' : 'Private Transfer Services',
+  transfersSubtitle: lang === 'zh' ? '小团体私人接送，最多可容纳14人' : 'Specialized in small group transfers for up to 14 passengers',
+  perVehicle: lang === 'zh' ? '每车' : 'per vehicle',
+  viewAllTransfers: lang === 'zh' ? '查看全部接送服务' : 'View All Transfers',
+  featuredTours: lang === 'zh' ? '精选行程' : 'Featured Tours',
+  featuredToursSubtitle: lang === 'zh' ? '探索我们最受欢迎的旅游套餐' : 'Explore our most popular tour packages',
+  viewAllTours: lang === 'zh' ? '查看全部行程' : 'View All Tours',
+  customerReviews: lang === 'zh' ? '客户评价' : 'What Our Customers Say',
+  reviewsSubtitle: lang === 'zh' ? '真实旅客的真实体验' : 'Real experiences from real travelers',
+  readyToExplore: lang === 'zh' ? '准备好开始探索了吗？' : 'Ready to Start Your Adventure?',
+  ctaSubtitle: lang === 'zh' ? '让我们帮您规划一次难忘的旅程' : 'Let us help you plan an unforgettable journey',
+  browseAllTours: lang === 'zh' ? '浏览所有行程' : 'Browse All Tours',
+  contactUs: lang === 'zh' ? '联系我们' : 'Contact Us',
+  happyTravelers: lang === 'zh' ? '满意客户' : 'Happy Travelers',
+  tourPackages: lang === 'zh' ? '精选行程' : 'Tour Packages',
+  customerRating: lang === 'zh' ? '客户评分' : 'Customer Rating',
+  bookNow: lang === 'zh' ? '立即预订' : 'Book Now',
+  testimonials: lang === 'zh' ? '客户反馈' : 'TESTIMONIALS',
+};
+
+const whyUsItems = [
+  { icon: 'explore', title: t.guidedTours, desc: t.guidedToursDesc },
+  { icon: 'groups', title: t.smallGroups, desc: t.smallGroupsDesc },
+  { icon: 'support_agent', title: t.premiumService, desc: t.premiumServiceDesc },
+  { icon: 'verified', title: t.bestValue, desc: t.bestValueDesc },
+];
+
+const transferRoutes = [
+  {
+    from: 'Vancouver Airport (YVR)',
+    to: 'Whistler',
+    price: '465',
+    icon: 'flight_land',
+  },
+  {
+    from: 'Greater Vancouver',
+    to: 'Whistler',
+    price: '435',
+    icon: 'downhill_skiing',
+  },
+  {
+    from: 'Whistler',
+    to: 'YVR / Vancouver',
+    price: '435',
+    icon: 'flight_takeoff',
+  },
+];
+---
+
+
+<Layout 
+  title="Qualitour - Premium China Tours"
+  description="Discover and book unforgettable travel experiences. Premium guided tours through China's most remarkable destinations."
+  lang={lang}
+>
+  <!-- Hero Section - Premium Dark Theme -->
+  <section class="relative min-h-[85vh] flex items-center overflow-hidden">
+    <!-- Background Image with Overlay -->
+    <img
+      src={heroBackground.src}
+      alt=""
+      class="absolute inset-0 w-full h-full object-cover object-bottom"
+      style="z-index: -2;"
+    />
+    <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40" style="z-index: -1;"></div>
+
+    <!-- Decorative elements -->
+    <div class="absolute top-20 right-20 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-40 left-10 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20">
+      <div class="max-w-3xl">
+        <span class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500/20 backdrop-blur-sm rounded-full text-orange-400 text-sm font-bold tracking-widest mb-6">
+          <span class="material-icons text-lg">public</span>
+          {t.heroTagline}
+        </span>
+
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-kaushan text-white mb-6 leading-tight">
+          {t.heroTitle}
+        </h1>
+
+        <p class="text-xl md:text-2xl text-white/80 mb-10 leading-relaxed">
+          {t.heroSubtitle}
+        </p>
+
+        <!-- Search Bar -->
+        <form
+          class="bg-white/10 backdrop-blur-md rounded-2xl p-2 flex flex-col md:flex-row items-center gap-2 border border-white/20"
+          action={`${localePrefix}/tours`}
+          method="GET"
+        >
+          <div class="relative grow w-full md:w-auto">
+            <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-white/50">search</span>
+            <input
+              type="text"
+              name="tour-search"
+              placeholder={t.searchPlaceholder}
+              class="w-full pl-12 pr-4 py-4 bg-transparent text-white placeholder-white/50 focus:outline-none"
+            />
+          </div>
+          <div class="relative w-full md:w-auto">
+            <select
+              name="tax-tour_category"
+              class="w-full md:w-48 px-4 py-4 text-white bg-white/10 rounded-xl focus:outline-none appearance-none cursor-pointer"
+            >
+              <option value="" class="text-gray-900">{t.category}</option>
+              <option value="1-day-tour" class="text-gray-900">1 Day Tour</option>
+              <option value="2-3-days-tours" class="text-gray-900">2-3 Days Tours</option>
+              <option value="4-6-days-tours" class="text-gray-900">4-6 Days Tours</option>
+              <option value="7-9-days-tours" class="text-gray-900">7-9 Days Tours</option>
+            </select>
+            <span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none">expand_more</span>
+          </div>
+          <button
+            type="submit"
+            class="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition-all"
+          >
+            <span class="flex items-center justify-center gap-2">
+              <span class="material-icons">search</span>
+              {t.search}
+            </span>
+          </button>
+        </form>
+
+        <!-- Quick Stats -->
+        <div class="flex flex-wrap gap-8 mt-10 items-center">
+          <div class="text-white/90">
+            <span class="text-3xl font-bold text-orange-400">500+</span>
+            <p class="text-white/60 text-sm">{t.happyTravelers}</p>
+          </div>
+          <div class="text-white/90">
+            <span class="text-3xl font-bold text-orange-400">50+</span>
+            <p class="text-white/60 text-sm">{t.tourPackages}</p>
+          </div>
+          <div class="text-white/90">
+            <div class="flex gap-1 min-h-[35.5px] items-center">
+              {[1, 2, 3, 4].map(() => (
+                <span class="material-icons text-2xl text-orange-400">star</span>
+              ))}
+              <span class="material-icons text-2xl text-orange-400/50">star_half</span>
+            </div>
+            <p class="text-white/60 text-sm">{t.customerRating}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/50 animate-bounce">
+      <span class="material-icons text-3xl">keyboard_arrow_down</span>
+    </div>
+  </section>
+
+  <!-- Why Choose Us Section -->
+  <section class="py-20 bg-white relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-orange-50 to-transparent"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{t.whyChooseUs}</h2>
+        <div class="w-20 h-1 bg-gradient-to-r from-orange-500 to-amber-500 mx-auto rounded-full"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {whyUsItems.map((item) => (
+          <div class="group text-center p-8 rounded-2xl hover:bg-gradient-to-br hover:from-orange-50 hover:to-amber-50 transition-all duration-300">
+            <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-200/50 group-hover:scale-110 transition-transform duration-300">
+              <span class="material-icons text-white text-3xl">{item.icon}</span>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
+            <p class="text-gray-500">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Private Transfers Section -->
+  <section class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <span class="text-orange-500 font-bold tracking-widest uppercase text-sm mb-2 block">
+          Private Transfers
+        </span>
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{t.privateTransfers}</h2>
+        <p class="text-gray-500 max-w-2xl mx-auto">{t.transfersSubtitle}</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {transferRoutes.map((route) => (
+          <div class="group relative bg-white rounded-2xl border border-gray-200 p-6 hover:border-orange-500/50 hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <!-- Decorative corner -->
+            <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-orange-500/10 to-transparent rounded-bl-full"></div>
+
+            <!-- Icon -->
+            <div class="w-14 h-14 bg-gradient-to-br from-orange-500/10 to-orange-50 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <span class="material-icons text-orange-500 text-2xl">{route.icon}</span>
+            </div>
+
+            <!-- Route -->
+            <div class="mb-4">
+              <div class="font-bold text-gray-900 text-lg leading-relaxed">
+                {route.from}
+              </div>
+              <div class="text-orange-500 font-bold my-1">→</div>
+              <div class="font-bold text-gray-900 text-lg">
+                {route.to}
+              </div>
+            </div>
+
+            <!-- Price -->
+            <div class="mb-6">
+              <div class="flex items-baseline gap-1">
+                <span class="text-3xl font-bold text-gray-900">${route.price}</span>
+                <span class="text-gray-500 text-sm">{t.perVehicle}</span>
+              </div>
+            </div>
+
+            <!-- Booking button -->
+            <a
+              href={`${localePrefix}/private-transfers`}
+              class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-xl hover:shadow-lg transition-all"
+            >
+              <span class="material-icons">directions_car</span>
+              {t.bookNow}
+            </a>
+          </div>
+        ))}
+      </div>
+
+      <div class="text-center mt-10">
+        <a
+          href={`${localePrefix}/private-transfers`}
+          class="inline-flex items-center gap-2 px-8 py-4 bg-gray-100 hover:bg-orange-500 text-gray-700 hover:text-white font-semibold rounded-full transition-all duration-300"
+        >
+          <span class="material-icons">arrow_forward</span>
+          {t.viewAllTransfers}
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Tours Section -->
+  <section class="py-20 bg-white overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <span class="text-orange-500 font-bold tracking-widest uppercase text-sm mb-2 block">
+          Featured
+        </span>
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{t.featuredTours}</h2>
+        <p class="text-gray-500 max-w-2xl mx-auto">{t.featuredToursSubtitle}</p>
+      </div>
+
+      <!-- Tour Grid using TourCard component -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {featuredTours.map((tour) => (
+          <TourCard tour={tour} lang={lang} style="featured" />
+        ))}
+      </div>
+
+      <div class="text-center mt-12">
+        <a
+          href={`${localePrefix}/tours`}
+          class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-full hover:shadow-2xl hover:shadow-orange-500/30 hover:scale-105 transition-all duration-300"
+        >
+          <span class="material-icons">explore</span>
+          {t.viewAllTours}
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Customer Reviews Section -->
+  <section class="py-20 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <span class="text-orange-400 font-bold tracking-widest uppercase text-sm mb-2 block">
+          {t.testimonials}
+        </span>
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">{t.customerReviews}</h2>
+        <p class="text-white/60 max-w-2xl mx-auto">{t.reviewsSubtitle}</p>
+        <div class="w-20 h-1 bg-gradient-to-r from-orange-500 to-amber-500 mx-auto rounded-full mt-4"></div>
+      </div>
+
+      <div class="max-w-7xl mx-auto bg-white/5 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-white/10">
+        <!-- Review Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white/10 rounded-2xl p-6">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg">T</div>
+              <div>
+                <div class="font-semibold">Tom W.</div>
+                <div class="flex gap-0.5 text-orange-400">
+                  {[1,2,3,4,5].map(() => <span class="material-icons text-sm">star</span>)}
+                </div>
+              </div>
+            </div>
+            <p class="text-white/80 text-sm leading-relaxed">
+              "Absolutely fantastic experience! The guides were knowledgeable and friendly. Would highly recommend Qualitour to anyone visiting China."
+            </p>
+          </div>
+
+          <div class="bg-white/10 rounded-2xl p-6">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold text-lg">S</div>
+              <div>
+                <div class="font-semibold">Sarah L.</div>
+                <div class="flex gap-0.5 text-orange-400">
+                  {[1,2,3,4,5].map(() => <span class="material-icons text-sm">star</span>)}
+                </div>
+              </div>
+            </div>
+            <p class="text-white/80 text-sm leading-relaxed">
+              "The private transfer service was excellent. Professional driver, comfortable vehicle, and great value for money. Made our trip so much easier!"
+            </p>
+          </div>
+
+          <div class="bg-white/10 rounded-2xl p-6">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-lg">M</div>
+              <div>
+                <div class="font-semibold">Michael C.</div>
+                <div class="flex gap-0.5 text-orange-400">
+                  {[1,2,3,4,5].map(() => <span class="material-icons text-sm">star</span>)}
+                </div>
+              </div>
+            </div>
+            <p class="text-white/80 text-sm leading-relaxed">
+              "We had an amazing family trip with Qualitour. The small group size meant personalized attention. Can't wait to book our next adventure!"
+            </p>
+          </div>
+        </div>
+
+        <!-- Google Rating Badge -->
+        <div class="mt-8 text-center">
+          <div class="inline-flex items-center gap-3 px-6 py-3 bg-white/10 rounded-full">
+            <img src="https://www.google.com/favicon.ico" alt="Google" class="w-5 h-5" />
+            <span class="font-semibold">4.8</span>
+            <div class="flex gap-0.5 text-orange-400">
+              {[1,2,3,4,5].map(() => <span class="material-icons text-sm">star</span>)}
+            </div>
+            <span class="text-white/60 text-sm">Based on 100+ reviews</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA Section -->
+  <section class="py-20 bg-gradient-to-r from-orange-500 to-amber-500 relative overflow-hidden">
+    <!-- Pattern overlay -->
+    <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,#fff_1px,transparent_1px)] [background-size:24px_24px]"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="text-center text-white max-w-3xl mx-auto">
+        <div class="w-20 h-20 mx-auto mb-6 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+          <span class="material-icons text-white text-4xl">flight_takeoff</span>
+        </div>
+        <h2 class="text-3xl md:text-5xl font-bold mb-6">{t.readyToExplore}</h2>
+        <p class="text-xl opacity-90 mb-10">{t.ctaSubtitle}</p>
+        <div class="flex flex-wrap justify-center gap-4">
+          <a
+            href={`${localePrefix}/tours`}
+            class="inline-flex items-center gap-2 px-10 py-4 bg-white text-orange-500 font-bold rounded-full hover:shadow-2xl hover:scale-105 transition-all duration-300"
+          >
+            <span class="material-icons">explore</span>
+            {t.browseAllTours}
+          </a>
+          <a
+            href={`${localePrefix}/contact`}
+            class="inline-flex items-center gap-2 px-10 py-4 bg-white/20 backdrop-blur-sm text-white font-bold rounded-full border border-white/30 hover:bg-white/30 transition-all duration-300"
+          >
+            <span class="material-icons">mail</span>
+            {t.contactUs}
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
