@@ -19,34 +19,17 @@ import type {
 // Default timeout for fetch requests (5 seconds)
 const DEFAULT_FETCH_TIMEOUT_MS = 5000;
 
-// Get WordPress API URL from environment
+// Get WordPress API URL from environment (qualitour/v1 custom API)
 function getApiUrl(): string {
     const url = import.meta.env.PUBLIC_WORDPRESS_API_URL ||
         import.meta.env.WORDPRESS_API_URL ||
-        'https://handsome-cellar.localsite.io/wp-json/wp/v2';
+        'https://handsome-cellar.localsite.io/wp-json/qualitour/v1';
     return url.endsWith('/') ? url.slice(0, -1) : url;
 }
 
-// Get custom Qualitour API URL
+// Alias for backwards compatibility
 function getCustomApiUrl(): string {
-    const direct = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
-        import.meta.env.WORDPRESS_CUSTOM_API_URL;
-    if (direct) return direct.endsWith('/') ? direct.slice(0, -1) : direct;
-
-    const apiUrl = getApiUrl();
-    if (apiUrl.includes('/wp-json/qualitour/v1')) {
-        return apiUrl;
-    }
-    if (apiUrl.includes('/wp-json/wp/v2')) {
-        return apiUrl.replace('/wp-json/wp/v2', '/wp-json/qualitour/v1');
-    }
-
-    try {
-        const parsed = new URL(apiUrl);
-        return `${parsed.origin}/wp-json/qualitour/v1`;
-    } catch {
-        return apiUrl.replace('/wp-json/wp/v2', '/wp-json/qualitour/v1');
-    }
+    return getApiUrl();
 }
 
 // Get auth headers for authenticated requests
