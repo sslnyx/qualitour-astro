@@ -356,7 +356,8 @@ const currentYear = new Date().getFullYear();
                 class="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500"
             >
                 <p class="text-center md:text-left">
-                    © {currentYear} Qualitour Holiday Inc.
+                    © <span id="current-year">{currentYear}</span> Qualitour Holiday
+                    Inc.
                     <span class="hidden sm:inline">
                         All rights reserved. |</span
                     >
@@ -364,6 +365,7 @@ const currentYear = new Date().getFullYear();
                         >B.C. Reg. #62469</span
                     >
                 </p>
+
                 <div class="flex items-center gap-4 sm:gap-6">
                     <a
                         href={`${localePrefix}/privacy-policy`}
@@ -379,6 +381,13 @@ const currentYear = new Date().getFullYear();
         </div>
     </div>
 </footer>
+
+<script is:inline>
+    const yearSpan = document.getElementById("current-year");
+    if (yearSpan) {
+        yearSpan.textContent = new Date().getFullYear().toString();
+    }
+</script>
 
 <style>
     /* Custom Animations */
