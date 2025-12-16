@@ -75,6 +75,8 @@ const destinations = tour?.tour_terms?.destinations || [];
   title={tour ? `${tour.title.rendered.replace(/<[^>]*>/g, '')} | Qualitour` : 'Tour Not Found'}
   description={tour?.excerpt?.rendered?.replace(/<[^>]*>/g, '').substring(0, 160) || ''}
   lang={lang}
+  image={imageUrl}
+  type="article"
 >
   {error ? (
     <!-- Error State -->

@@ -123,8 +123,12 @@ const rightsItems = [
 ---
 
 <Layout
-    title="Privacy Policy | Qualitour"
-    description="Qualitour Privacy Policy - Learn how we collect, use, and protect your personal information."
+    title={currentLang === "zh"
+        ? "隐私政策 | Qualitour"
+        : "Privacy Policy | Qualitour"}
+    description={currentLang === "zh"
+        ? "Qualitour隐私政策 - 了解我们如何收集、使用和保护您的个人信息。"
+        : "Qualitour Privacy Policy - Learn how we collect, use, and protect your personal information."}
     lang={currentLang}
 >
     <!-- Hero Section -->

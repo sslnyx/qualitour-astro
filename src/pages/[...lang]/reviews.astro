@@ -55,7 +55,13 @@ const t = {
 };
 ---
 
-<Layout title="Customer Reviews | Qualitour" description="Read authentic reviews from our happy customers. See why travelers trust Qualitour for their tour experiences." lang={currentLang}>
+<Layout 
+    title={currentLang === 'zh' ? "客户评价 | Qualitour" : "Customer Reviews | Qualitour"} 
+    description={currentLang === 'zh' 
+        ? "阅读我们满意客户的真实评价。了解为什么旅客信任Qualitour的旅游体验。" 
+        : "Read authentic reviews from our happy customers. See why travelers trust Qualitour for their tour experiences."} 
+    lang={currentLang}
+>
     <main class="flex-grow">
         <!-- Hero Section -->
         <section class="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">

@@ -156,9 +156,14 @@ const requirements =
 ---
 
 <Layout
-    title="China Visa Services | Qualitour"
-    description="Hassle-free China visa support: document checklist, application guidance, and submission support."
+    title={lang === "zh"
+        ? "中国签证服务 | Qualitour"
+        : "China Visa Services | Qualitour"}
+    description={lang === "zh"
+        ? "无忧中国签证支持：材料清单、申请指导及提交申请支持。"
+        : "Hassle-free China visa support: document checklist, application guidance, and submission support."}
     lang={lang}
+    image={VISA_HERO_BG}
 >
     <!-- Hero Section -->
     <PageHero

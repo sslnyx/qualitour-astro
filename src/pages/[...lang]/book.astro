@@ -60,7 +60,9 @@ const t = {
 
 <Layout
     title={`${t.title} | Qualitour`}
-    description="Book your tour with Qualitour. Select from our curated selection of Canadian tours and experiences."
+    description={currentLang === "zh"
+        ? "预订Qualitour的专业导游团或私人接送服务。立即锁定您的真实加拿大体验。"
+        : "Book your expert-led tour or private transfer with Qualitour. Secure your spot for authentic Canadian experiences today."}
     lang={currentLang}
 >
     <!-- Hero Section -->

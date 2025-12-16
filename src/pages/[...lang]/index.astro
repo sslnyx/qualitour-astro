@@ -150,9 +150,14 @@ const transferRoutes = [
 ---
 
 <Layout
-  title="Qualitour - Premium China Tours"
-  description="Discover and book unforgettable travel experiences. Premium guided tours through China's most remarkable destinations."
+  title={lang === "zh"
+    ? "Qualitour | 温哥华高端旅游与私人接送专家"
+    : "Qualitour | Premium Tours & Private Transfers in Vancouver"}
+  description={lang === "zh"
+    ? "探索真实的加拿大之旅，预订前往惠斯勒的私人滑雪接送，以及专业的中国签证服务。立即与Qualitour预订您的难忘旅程。"
+    : "Discover authentic Canadian tours, private ski shuttles to Whistler, and expert China visa services. Book your unforgettable journey with Qualitour today."}
   lang={lang}
+  image={heroBackground.src}
 >
   <!-- Hero Section - Premium Dark Theme -->
   <section class="relative min-h-[85vh] flex items-center overflow-hidden">

@@ -323,9 +323,14 @@ function extractPriceNumber(caption: string): string | null {
 ---
 
 <Layout
-    title="Private Transfers | Qualitour"
-    description="Private transfer services across Greater Vancouver and the Lower Mainland: airport transfers, cruise ship transfers, and ski resort transfers."
+    title={lang === "zh"
+        ? "私人接送 | Qualitour"
+        : "Private Transfers | Qualitour"}
+    description={lang === "zh"
+        ? "大温哥华地区及低陆平原的私人接送服务：机场接送、邮轮接送和滑雪胜地接送。"
+        : "Private transfer services across Greater Vancouver and the Lower Mainland: airport transfers, cruise ship transfers, and ski resort transfers."}
     lang={lang}
+    image="/ski-shuttle.jpg"
 >
     <!-- Hero Section -->
     <PageHero

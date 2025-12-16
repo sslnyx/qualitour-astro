@@ -60,8 +60,11 @@ const t = {
 
 <Layout
     title={`${t.title} | Qualitour`}
-    description="Get in touch with Qualitour. Contact us by phone, email, or visit our office in Vancouver."
+    description={currentLang === "zh"
+        ? "联系温哥华Qualitour。有关旅游、接送或签证服务的咨询，请致电、发邮件或访问我们的办公室。"
+        : "Contact Qualitour in Vancouver. Call us, email, or visit our office for inquiries about tours, transfers, or visa services."}
     lang={currentLang}
+    image="/contact-hero.png"
 >
     <!-- Hero Section -->
     <PageHero

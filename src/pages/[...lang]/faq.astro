@@ -36,8 +36,11 @@ const t = {
 
 <Layout
     title={`${t.title} | Qualitour`}
-    description="Find answers to common questions about Qualitour tours, bookings, cancellations, payment methods, and travel requirements."
+    description={currentLang === "zh"
+        ? "查找有关Qualitour服务、预订政策和旅行要求的常见问题解答。"
+        : "Find answers to frequently asked questions about Qualitour's services, booking policies, and travel requirements."}
     lang={currentLang}
+    image="/faq-hero.png"
 >
     <!-- Hero Section -->
     <PageHero

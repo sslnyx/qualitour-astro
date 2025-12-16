@@ -75,19 +75,23 @@ const t = {
     contactUs: currentLang === "zh" ? "联系我们" : "Contact Us",
     browseTours: currentLang === "zh" ? "浏览所有行程" : "Browse All Tours",
 };
+
+const heroImage =
+    "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80";
 ---
 
 <Layout
     title={`${t.title} | Qualitour`}
     description={currentLang === "zh"
         ? "了解Qualitour - 温哥华顶级旅游运营商，致力于提供真实、安全和个性化的加拿大旅行体验。"
-        : "Discover the story behind Qualitour, Vancouver's premier tour operator dedicated to authentic, safe, and personalized Canadian travel experiences."}
+        : "Discover Qualitour, Vancouver's premier tour operator dedicated to authentic, safe, and personalized Canadian travel experiences."}
     lang={currentLang}
+    image={heroImage}
 >
     <main class="min-h-screen">
         <!-- Hero Section -->
         <PageHero
-            image="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80"
+            image={heroImage}
             title={t.title}
             subtitle={t.subtitle}
             badge={{ icon: "groups", text: t.title }}
