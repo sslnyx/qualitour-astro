@@ -75,17 +75,40 @@ export function wpUrl(localUrl: string): string {
         const parsed = new URL(localUrl);
         const path = parsed.pathname + parsed.search + parsed.hash;
 
+        // Ignore external domains that are not our WordPress instances
+        // But for this project, we primarily want to rewriting specific known WP paths regardless of domain if possible,
+        // OR we should be conservative.
+        // The user said: "lets not rewrite ... if its not in /wp-content/upload/"
+
+        // If it matches YouTube pattern (common in WP sites)
         if (isYouTubeThumbnail(path)) {
-            // Serve directly from YouTube CDN
             return `https://img.youtube.com${path}`;
         }
 
+        // Only rewrite if it's explicitly in wp-content/uploads
         if (isMediaPath(path)) {
-            // Serve media from R2 CDN
+            // Check if it's already on R2 or another external domain we shouldn't touch?
+            // If the user passes a full URL like "https://www.vikingrivercruisescanada.com/images/...", 
+            // isMediaPath("/images/...") would be false, so it won't be touched.
+            // If the user passes "https://website.com/wp-content/uploads/...", isMediaPath will be true.
+            // We want to rewrite in that case? Usually yes, assuming it's *our* site content.
+            // But if it's a truly external site, we might break it. 
+            // However, the rule "only rewrite if /wp-content/uploads/" is safe enough for now as requested.
+
             return `${R2_MEDIA_URL}${path}`;
         }
-        // Non-media paths go to WordPress
-        return `${getWpBaseUrl()}${path}`;
+
+        // If it's a local WordPress URL but NOT media, we might want to ensure it points to the correct API base?
+        // But the previous logic was:
+        // return `${getWpBaseUrl()}${path}`;
+        // This effectively rewrites ANY URL to our own backend if it's not media.
+        // This is dangerous for external links (e.g. vikingrivercruisescanada.com).
+
+        // FIX: Only rewrite non-media paths if they look like they belong to our site (relative or known domains).
+        // Since we can't easily know all "known domains", we should probably just return the original URL 
+        // if it wasn't a media path and it was a full URL.
+
+        return localUrl;
     } catch {
         return localUrl;
     }
