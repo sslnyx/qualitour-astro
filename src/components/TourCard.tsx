@@ -47,36 +47,60 @@ function getExcerptWords(html: string, wordCount: number): string {
 }
 
 /**
+ * Safely extract a URL string from an image size value.
+ * WordPress can return either a string URL or an object with url property.
+ */
+function extractUrl(value: unknown): string | null {
+    if (typeof value === 'string' && value.trim()) {
+        return value;
+    }
+    if (typeof value === 'object' && value !== null && 'url' in value) {
+        const obj = value as { url?: string };
+        if (typeof obj.url === 'string' && obj.url.trim()) {
+            return obj.url;
+        }
+    }
+    return null;
+}
+
+/**
  * Get the best available image URL from tour data,
- * rewriting WordPress URLs to R2 CDN
+ * rewriting WordPress URLs to R2 CDN.
+ * 
+ * IMPORTANT: We prefer medium/large sizes over full-size to avoid
+ * loading 5+ MB images for a 400px wide card.
  */
 function getImageUrl(tour: WPTour): string | null {
     const featuredImage = tour.featured_image_url;
     let rawUrl: string | null = null;
 
-    // String URL
+    // String URL - unfortunately we can't resize it
     if (typeof featuredImage === 'string' && featuredImage.trim()) {
         rawUrl = featuredImage;
     }
 
-    // Object with size properties
+    // Object with size properties - prefer appropriately sized image
     if (!rawUrl && typeof featuredImage === 'object' && featuredImage !== null) {
         const img = featuredImage as WPTourFeaturedImage;
 
-        // Check full size (can be string or object with url)
-        if (img.full) {
-            if (typeof img.full === 'string') rawUrl = img.full;
-            else if (typeof img.full === 'object' && 'url' in img.full) rawUrl = img.full.url;
-        }
+        // Prefer medium_large (~768px) or large (~1024px) for tour cards
+        // These are perfect for 400-600px card widths with 2x display density
+        if (!rawUrl) rawUrl = extractUrl(img.medium_large);
+        if (!rawUrl) rawUrl = extractUrl(img.large);
+        if (!rawUrl) rawUrl = extractUrl(img.medium);
 
-        // Fallback to other sizes
-        if (!rawUrl && img.large) rawUrl = img.large;
-        if (!rawUrl && img.medium) rawUrl = img.medium;
-        if (!rawUrl && img.thumbnail) rawUrl = img.thumbnail;
+        // Only use full size as last resort
+        if (!rawUrl) rawUrl = extractUrl(img.full);
+
+        // Thumbnail as final fallback
+        if (!rawUrl) rawUrl = extractUrl(img.thumbnail);
     }
 
-    // Rewrite URL to R2 CDN
-    return rawUrl ? wpUrl(rawUrl) : null;
+    // Rewrite URL to R2 CDN - ensure we have a valid string
+    if (rawUrl && typeof rawUrl === 'string') {
+        return wpUrl(rawUrl);
+    }
+    return null;
 }
 
 

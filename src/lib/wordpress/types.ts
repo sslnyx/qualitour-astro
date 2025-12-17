@@ -29,6 +29,7 @@ export interface WPPage {
 export interface WPTourFeaturedImage {
     full?: string | { url: string };
     large?: string;
+    medium_large?: string; // WordPress default: 768px width
     medium?: string;
     thumbnail?: string;
 }
