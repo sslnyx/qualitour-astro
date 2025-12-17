@@ -19,17 +19,19 @@ interface FilterState {
     destination: string;
     type: string;
     duration: string;
+    q: string;
 }
 
 function getFiltersFromUrl(): FilterState {
     if (typeof window === 'undefined') {
-        return { destination: '', type: '', duration: '' };
+        return { destination: '', type: '', duration: '', q: '' };
     }
     const params = new URLSearchParams(window.location.search);
     return {
         destination: params.get('destination') || '',
         type: params.get('type') || '',
         duration: params.get('duration') || '',
+        q: params.get('q') || '',
     };
 }
 
@@ -98,7 +100,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
     const clearAllFilters = () => {
         const localePrefix = lang === 'en' ? '' : `/${lang}`;
         window.history.pushState({}, '', `${localePrefix}/tours`);
-        setFilters({ destination: '', type: '', duration: '' });
+        setFilters({ destination: '', type: '', duration: '', q: '' });
         window.dispatchEvent(new Event('urlchange'));
     };
 
@@ -121,7 +123,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
         return txt.value;
     };
 
-    const hasActiveFilters = filters.destination || filters.type || filters.duration;
+    const hasActiveFilters = filters.destination || filters.type || filters.duration || filters.q;
 
     return (
         <aside className="tour-filter-sidebar bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
@@ -143,6 +145,18 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                        {filters.q && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-full text-xs border border-gray-200 text-gray-900">
+                                <span className="material-icons text-xs">search</span>
+                                "{filters.q}"
+                                <button
+                                    onClick={() => updateFilter('q', null)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        )}
                         {filters.duration && (
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-full text-xs border border-gray-200 text-gray-900">
                                 <span className="material-icons text-xs">schedule</span>
