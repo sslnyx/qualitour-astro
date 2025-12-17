@@ -8,7 +8,7 @@
 
 import { useState, useMemo } from 'react';
 import type { WPTour } from '../lib/wordpress/types';
-import { wpUrl } from '../lib/wp-url';
+import { wpUrl, processHtmlContent } from '../lib/wp-url';
 
 interface TourDetailProps {
     tour: WPTour;
@@ -74,27 +74,30 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
 
     // Extract additional tour content - check multiple possible field names
     const tourHighlights = useMemo(() => {
-        return gd?.tour_highlight ||
+        const content = gd?.tour_highlight ||
             gd?.['tourmaster-tour-highlight'] ||
             gd?.['_tourmaster-tour-highlight'] ||
             gd?.highlight ||
             '';
+        return processHtmlContent(content);
     }, [gd]);
 
     const tourIncludes = useMemo(() => {
-        return gd?.tour_include ||
+        const content = gd?.tour_include ||
             gd?.['tourmaster-tour-include'] ||
             gd?.['_tourmaster-tour-include'] ||
             gd?.include ||
             '';
+        return processHtmlContent(content);
     }, [gd]);
 
     const tourExcludes = useMemo(() => {
-        return gd?.tour_exclude ||
+        const content = gd?.tour_exclude ||
             gd?.['tourmaster-tour-exclude'] ||
             gd?.['_tourmaster-tour-exclude'] ||
             gd?.exclude ||
             '';
+        return processHtmlContent(content);
     }, [gd]);
 
     // Extract content blocks from detail/details section (like Next.js TourOverview)
@@ -120,7 +123,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 if (item.type === 'text-box' && item.value?.content) {
                     blocks.push({
                         type: 'text',
-                        content: item.value.content,
+                        content: processHtmlContent(item.value.content),
                         order: idx,
                     });
                 }
@@ -164,7 +167,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
             ?.map((item: any) => item.value?.content)
             ?.join('') || '';
 
-        return sectionContent || content || excerpt;
+        return processHtmlContent(sectionContent || content || excerpt);
     }, [tour, sections]);
 
     // Check for itinerary
@@ -501,7 +504,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                     <div className="p-4 border-t border-gray-200">
                                         <div
                                             className="prose prose-sm max-w-none text-gray-600"
-                                            dangerouslySetInnerHTML={{ __html: day.content || day.caption || '' }}
+                                            dangerouslySetInnerHTML={{ __html: processHtmlContent(day.content || day.caption || '') }}
                                         />
                                     </div>
                                 )}
@@ -549,7 +552,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                 <div className="p-4 border-t border-gray-200">
                                     <div
                                         className="prose prose-sm max-w-none text-gray-600"
-                                        dangerouslySetInnerHTML={{ __html: item.content || item.caption || '' }}
+                                        dangerouslySetInnerHTML={{ __html: processHtmlContent(item.content || item.caption || '') }}
                                     />
                                 </div>
                             </details>

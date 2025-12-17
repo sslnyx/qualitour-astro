@@ -90,3 +90,32 @@ export function wpUrl(localUrl: string): string {
         return localUrl;
     }
 }
+
+/**
+ * Process HTML content to replace local WordPress image URLs with R2 CDN URLs.
+ * This is useful for content rendered via dangerouslySetInnerHTML.
+ * Handles src, href, and CSS url().
+ */
+export function processHtmlContent(html: string): string {
+    if (!html) return html;
+
+    // Replace src="..." and src='...' and href="..." and href='...'
+    let processed = html.replace(/(?:src|href)=["']([^"']+)["']/g, (match, url) => {
+        const newUrl = wpUrl(url);
+        if (newUrl !== url) {
+            return match.replace(url, newUrl);
+        }
+        return match;
+    });
+
+    // Replace url(...) for CSS
+    processed = processed.replace(/url\(["']?([^"'\)]+)["']?\)/g, (match, url) => {
+        const newUrl = wpUrl(url);
+        if (newUrl !== url) {
+            return `url(${newUrl})`;
+        }
+        return match;
+    });
+
+    return processed;
+}
