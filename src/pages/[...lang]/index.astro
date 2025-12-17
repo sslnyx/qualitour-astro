@@ -57,7 +57,7 @@ const t = {
   searchPlaceholder:
     lang === "zh" ? "搜索目的地或行程..." : "Search destinations or tours...",
   search: lang === "zh" ? "搜索" : "Search",
-  category: lang === "zh" ? "选择类别" : "Select Category",
+  destination: lang === "zh" ? "选择目的地" : "Select Destination",
   whyChooseUs: lang === "zh" ? "为什么选择我们" : "Why Choose Qualitour",
   guidedTours: lang === "zh" ? "专业导游" : "Professional Guides",
   guidedToursDesc:
@@ -223,22 +223,20 @@ const transferRoutes = [
           </div>
           <div class="relative w-full md:w-auto">
             <select
-              name="duration"
-              class="w-full md:w-48 px-4 py-4 text-white bg-white/10 rounded-xl focus:outline-none appearance-none cursor-pointer"
+              name="destination"
+              class="w-full md:w-52 px-4 py-4 text-white bg-white/10 rounded-xl focus:outline-none appearance-none cursor-pointer"
             >
-              <option value="" class="text-gray-900">{t.category}</option>
-              <option value="1-day-tour" class="text-gray-900"
-                >1 Day Tour</option
-              >
-              <option value="2-3-days-tours" class="text-gray-900"
-                >2-3 Days Tours</option
-              >
-              <option value="4-6-days-tours" class="text-gray-900"
-                >4-6 Days Tours</option
-              >
-              <option value="7-9-days-tours" class="text-gray-900"
-                >7-9 Days Tours</option
-              >
+              <option value="" class="text-gray-900">{t.destination}</option>
+              {
+                navData.destinations
+                  .filter((d) => d.parent === 0)
+                  .slice(0, 10)
+                  .map((dest) => (
+                    <option value={dest.slug} class="text-gray-900">
+                      {dest.name}
+                    </option>
+                  ))
+              }
             </select>
             <span
               class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none"

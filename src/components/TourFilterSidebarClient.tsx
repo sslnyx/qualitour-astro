@@ -132,6 +132,30 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                 Filters
             </h2>
 
+            {/* Search Input */}
+            <div className="mb-6">
+                <div className="relative">
+                    <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
+                        search
+                    </span>
+                    <input
+                        type="text"
+                        placeholder="Search tours..."
+                        value={filters.q}
+                        onChange={(e) => updateFilter('q', e.target.value)}
+                        className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#f7941e]/30 focus:border-[#f7941e] transition-all duration-200"
+                    />
+                    {filters.q && (
+                        <button
+                            onClick={() => updateFilter('q', null)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <span className="material-icons text-lg">close</span>
+                        </button>
+                    )}
+                </div>
+            </div>
+
             {/* Active Filters Summary */}
             {hasActiveFilters && (
                 <div className="p-3 bg-[#f7941e]/5 rounded-xl border border-[#f7941e]/20 mb-6">

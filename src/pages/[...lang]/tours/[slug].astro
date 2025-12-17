@@ -8,18 +8,23 @@ import { wpUrl } from '../../../lib/wp-url';
 
 // Generate static paths for all tours in all locales
 export async function getStaticPaths() {
-  const tours = await getTours({ per_page: 300 });
   const locales = ['en', 'zh'] as const;
   
   const paths = [];
+  
+  // Fetch tours for each locale separately to get locale-specific slugs
   for (const locale of locales) {
+    const tours = await getTours({ per_page: 300 }, locale);
+    
     for (const tour of tours) {
+      // Decode the slug so it matches the browser's decoded URL format
+      const decodedSlug = decodeURIComponent(tour.slug);
       paths.push({
         params: { 
           lang: locale === 'en' ? undefined : locale,
-          slug: tour.slug 
+          slug: decodedSlug 
         },
-        props: { tourSlug: tour.slug }
+        props: { tourSlug: tour.slug, tourLang: locale }
       });
     }
   }
