@@ -88,15 +88,15 @@ export function SiteNav({
 
     // Tour types with icons
     const tourTypeLinks = [
-        { label: 'Land Tours', slug: 'land-tours', icon: 'hiking' },
-        { label: 'Cruises', slug: 'cruises', icon: 'sailing' },
-        { label: 'Tickets & Passes', slug: 'attraction-tickets', icon: 'confirmation_number' },
+        { label: lang === 'zh' ? '陆地游' : 'Land Tours', slug: 'land-tours', icon: 'hiking' },
+        { label: lang === 'zh' ? '邮轮' : 'Cruises', slug: 'cruises', icon: 'sailing' },
+        { label: lang === 'zh' ? '票务 & 通票' : 'Tickets & Passes', slug: 'attraction-tickets', icon: 'confirmation_number' },
     ];
 
     // Service links
     const serviceLinks = [
-        { label: 'Private Transfers', href: `${localePrefix}/private-transfers`, icon: 'airport_shuttle', desc: 'Airport, cruise & ski transfers' },
-        { label: 'China Visa', href: `${localePrefix}/visa`, icon: 'badge', desc: 'Visa application assistance' },
+        { label: lang === 'zh' ? '私人接送' : 'Private Transfers', href: `${localePrefix}/private-transfers`, icon: 'airport_shuttle', desc: lang === 'zh' ? '机场、游轮和滑雪接送' : 'Airport, cruise & ski transfers' },
+        { label: lang === 'zh' ? '中国签证' : 'China Visa', href: `${localePrefix}/visa`, icon: 'badge', desc: lang === 'zh' ? '签证申请协助' : 'Visa application assistance' },
     ];
 
     // Hot destinations (hardcoded for now)
@@ -133,7 +133,7 @@ export function SiteNav({
                                     href={`${localePrefix}/`}
                                     className="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group"
                                 >
-                                    Home
+                                    {lang === 'zh' ? '首页' : 'Home'}
                                     <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
                                 </a>
                             </li>
@@ -150,7 +150,7 @@ export function SiteNav({
                                 }}
                             >
                                 <button className="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium flex items-center gap-1 transition-colors group">
-                                    Services
+                                    {lang === 'zh' ? '服务' : 'Services'}
                                     <span className={`material-icons text-lg transition-transform duration-300 ${servicesOpen ? 'rotate-180' : ''}`}>
                                         expand_more
                                     </span>
@@ -194,7 +194,7 @@ export function SiteNav({
                                 }}
                             >
                                 <button className="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium flex items-center gap-1 transition-colors group">
-                                    Tours
+                                    {lang === 'zh' ? '行程' : 'Tours'}
                                     <span className={`material-icons text-lg transition-transform duration-300 ${megaOpen ? 'rotate-180' : ''}`}>
                                         expand_more
                                     </span>
@@ -213,8 +213,8 @@ export function SiteNav({
                                                         <span className="material-icons text-white text-2xl">explore</span>
                                                     </div>
                                                     <div>
-                                                        <h3 className="text-white font-bold text-xl">Discover Your Next Adventure</h3>
-                                                        <p className="text-white/80 text-sm">Explore our curated tours</p>
+                                                        <h3 className="text-white font-bold text-xl">{lang === 'zh' ? '开启您的下一段旅程' : 'Discover Your Next Adventure'}</h3>
+                                                        <p className="text-white/80 text-sm">{lang === 'zh' ? '探索我们精心策划的行程' : 'Explore our curated tours'}</p>
                                                     </div>
                                                 </div>
                                                 <a
@@ -222,7 +222,7 @@ export function SiteNav({
                                                     onClick={() => setMegaOpen(false)}
                                                     className="bg-white text-orange-500 px-6 py-3 rounded-full font-bold text-sm hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2"
                                                 >
-                                                    Browse All Tours
+                                                    {lang === 'zh' ? '浏览所有行程' : 'Browse All Tours'}
                                                     <span className="material-icons text-lg">arrow_forward</span>
                                                 </a>
                                             </div>
@@ -236,7 +236,7 @@ export function SiteNav({
                                                         <span className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
                                                             <span className="material-icons text-orange-500 text-lg">category</span>
                                                         </span>
-                                                        Tour Types
+                                                        {lang === 'zh' ? '旅游类型' : 'Tour Types'}
                                                     </h4>
                                                     <ul className="space-y-1">
                                                         {tourTypeLinks.map((link) => (
@@ -266,8 +266,8 @@ export function SiteNav({
                                                                 <span className="material-icons text-white text-lg">star</span>
                                                             </span>
                                                             <div>
-                                                                <span className="font-bold block">Featured Tours</span>
-                                                                <span className="text-xs text-amber-600/70">Our top picks</span>
+                                                                <span className="font-bold block">{lang === 'zh' ? '精选行程' : 'Featured Tours'}</span>
+                                                                <span className="text-xs text-amber-600/70">{lang === 'zh' ? '我们的首选推荐' : 'Our top picks'}</span>
                                                             </div>
                                                         </a>
                                                     </div>
@@ -279,7 +279,7 @@ export function SiteNav({
                                                         <span className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
                                                             <span className="material-icons text-blue-600 text-lg">public</span>
                                                         </span>
-                                                        Popular Destinations
+                                                        {lang === 'zh' ? '热门目的地' : 'Popular Destinations'}
                                                     </h4>
                                                     <div className="flex gap-6">
                                                         {/* Parent destinations - left column */}
@@ -344,6 +344,7 @@ export function SiteNav({
                                                                                 const grandchildren = destinations.filter(gc => gc.parent === child.id);
                                                                                 const hasGrandchildren = grandchildren.length > 0;
                                                                                 const isExpanded = expandedChildId === child.id;
+                                                                                // const isGrandchildActive = grandchildren.some(gc => currentPath.includes(`/tours/destination/${gc.slug}`));
                                                                                 const isGrandchildActive = grandchildren.some(gc => currentPath.includes(`/tours/destination/${gc.slug}`));
 
                                                                                 return (
@@ -419,7 +420,7 @@ export function SiteNav({
                                                             {hoveredDestId && destinations.filter(c => c.parent === hoveredDestId).length === 0 && (
                                                                 <div className="bg-gray-50 rounded-xl p-4 text-center text-gray-500 text-sm">
                                                                     <span className="material-icons text-2xl mb-2 text-gray-300 block">explore</span>
-                                                                    No sub-regions
+                                                                    {lang === 'zh' ? '无子区域' : 'No sub-regions'}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -432,8 +433,9 @@ export function SiteNav({
                                                         <span className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
                                                             <span className="material-icons text-red-600 text-lg">whatshot</span>
                                                         </span>
-                                                        Hot Locations
+                                                        {lang === 'zh' ? '热门地点' : 'Hot Locations'}
                                                     </h4>
+
                                                     <div className="space-y-3">
                                                         {hotDestinations.map((dest, idx) => (
                                                             <a
@@ -458,19 +460,19 @@ export function SiteNav({
 
                             <li>
                                 <a href={`${localePrefix}/about-us`} className="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group">
-                                    About
+                                    {lang === 'zh' ? '关于我们' : 'About'}
                                     <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
                                 </a>
                             </li>
                             <li>
                                 <a href={`${localePrefix}/contact`} className="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group">
-                                    Contact
+                                    {lang === 'zh' ? '联系我们' : 'Contact'}
                                     <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
                                 </a>
                             </li>
                             <li>
                                 <a href={`${localePrefix}/faq`} className="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group">
-                                    FAQ
+                                    {lang === 'zh' ? '常见问题' : 'FAQ'}
                                     <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
                                 </a>
                             </li>
@@ -575,7 +577,7 @@ export function SiteNav({
                                 <span className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
                                     <span className="material-icons text-orange-500">home</span>
                                 </span>
-                                Home
+                                {lang === 'zh' ? '首页' : 'Home'}
                             </a>
 
                             {/* Services Accordion */}
@@ -588,7 +590,7 @@ export function SiteNav({
                                         <span className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
                                             <span className="material-icons text-blue-600">support_agent</span>
                                         </span>
-                                        Services
+                                        {lang === 'zh' ? '服务' : 'Services'}
                                     </div>
                                     <span className={`material-icons text-gray-400 transition-transform duration-300 ${mobileServicesOpen ? 'rotate-180' : ''}`}>
                                         expand_more
@@ -626,7 +628,7 @@ export function SiteNav({
                                         <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-200/50">
                                             <span className="material-icons text-white">explore</span>
                                         </span>
-                                        Tours
+                                        {lang === 'zh' ? '行程' : 'Tours'}
                                     </div>
                                     <span className={`material-icons text-gray-400 transition-transform duration-300 ${mobileToursOpen ? 'rotate-180' : ''}`}>
                                         expand_more
@@ -641,14 +643,14 @@ export function SiteNav({
                                                 onClick={handleMobileNavClick}
                                                 className="flex items-center justify-center gap-2 bg-white text-orange-500 px-5 py-3 rounded-xl font-bold text-sm shadow-lg"
                                             >
-                                                Browse All Tours
+                                                {lang === 'zh' ? '浏览所有行程' : 'Browse All Tours'}
                                                 <span className="material-icons text-lg">arrow_forward</span>
                                             </a>
                                         </div>
 
                                         {/* Tour Types */}
                                         <div className="px-6 py-5 border-b border-gray-200">
-                                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Tour Types</h4>
+                                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{lang === 'zh' ? '旅游类型' : 'Tour Types'}</h4>
                                             <div className="space-y-2">
                                                 {tourTypeLinks.map((link) => (
                                                     <a
@@ -668,7 +670,7 @@ export function SiteNav({
 
                                         {/* Destinations */}
                                         <div className="px-6 py-5">
-                                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Destinations</h4>
+                                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{lang === 'zh' ? '热门目的地' : 'Destinations'}</h4>
                                             <div className="grid grid-cols-2 gap-3">
                                                 {destinations.filter(d => d.parent === 0).slice(0, 6).map((dest) => (
                                                     <a
@@ -694,19 +696,19 @@ export function SiteNav({
                                 <span className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
                                     <span className="material-icons text-green-600">info</span>
                                 </span>
-                                About Us
+                                {lang === 'zh' ? '关于我们' : 'About Us'}
                             </a>
                             <a href={`${localePrefix}/contact`} onClick={handleMobileNavClick} className="flex items-center gap-4 px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors border-t border-gray-100">
                                 <span className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
                                     <span className="material-icons text-purple-600">mail</span>
                                 </span>
-                                Contact Us
+                                {lang === 'zh' ? '联系我们' : 'Contact Us'}
                             </a>
                             <a href={`${localePrefix}/faq`} onClick={handleMobileNavClick} className="flex items-center gap-4 px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors border-t border-gray-100">
                                 <span className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center">
                                     <span className="material-icons text-cyan-600">help</span>
                                 </span>
-                                FAQ
+                                {lang === 'zh' ? '常见问题' : 'FAQ'}
                             </a>
                         </nav>
                     </div>

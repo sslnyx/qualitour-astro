@@ -10,9 +10,11 @@ import PhotoLightbox from './PhotoLightbox';
 
 interface ReviewsSliderProps {
     reviews: GoogleReview[];
+    totalReviews?: number;
+    lang?: string;
 }
 
-export default function ReviewsSlider({ reviews, totalReviews }: ReviewsSliderProps & { totalReviews?: number }) {
+export default function ReviewsSlider({ reviews, totalReviews, lang = 'en' }: ReviewsSliderProps) {
     const [emblaRef, emblaApi] = useEmblaCarousel({
         loop: true,
         align: 'start',
@@ -73,7 +75,7 @@ export default function ReviewsSlider({ reviews, totalReviews }: ReviewsSliderPr
     if (!reviews || reviews.length === 0) {
         return (
             <div className="text-center text-gray-500 py-12">
-                <p>No reviews available</p>
+                <p>{lang === 'zh' ? '暂无评论' : 'No reviews available'}</p>
             </div>
         );
     }
@@ -197,13 +199,18 @@ export default function ReviewsSlider({ reviews, totalReviews }: ReviewsSliderPr
             <div className="text-center mt-8">
                 <div className="inline-flex items-center gap-3 px-6 py-3 bg-white rounded-full shadow-sm border border-gray-200">
                     <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                    <span className="font-semibold text-gray-900">Google Reviews</span>
+                    <span className="font-semibold text-gray-900">{lang === 'zh' ? '谷歌评论' : 'Google Reviews'}</span>
                     <div className="flex gap-0.5 text-orange-400">
                         {Array.from({ length: 5 }).map((_, i) => (
                             <span key={i} className="material-icons text-sm">star</span>
                         ))}
                     </div>
-                    <span className="text-gray-600 text-sm">Based on {totalCount}+ reviews</span>
+                    <span className="text-gray-600 text-sm">
+                        {lang === 'zh'
+                            ? `基于 ${totalCount}+ 条评论`
+                            : `Based on ${totalCount}+ reviews`
+                        }
+                    </span>
                 </div>
             </div>
 

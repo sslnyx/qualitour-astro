@@ -183,7 +183,7 @@ export function TourCard({
                 {/* Price Badge (when no discount) */}
                 {price && !hasDiscount && (
                     <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full shadow-md">
-                        <span className="text-sm text-gray-500">From </span>
+                        <span className="text-sm text-gray-500">{lang === 'zh' ? '起价 ' : 'From '}</span>
                         <span className="font-bold text-orange-500">${price}</span>
                     </div>
                 )}

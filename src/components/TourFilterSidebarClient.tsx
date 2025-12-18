@@ -125,11 +125,21 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
 
     const hasActiveFilters = filters.destination || filters.type || filters.duration || filters.q;
 
+    const t = {
+        filters: lang === 'zh' ? '筛选' : 'Filters',
+        searchPlaceholder: lang === 'zh' ? '搜索行程...' : 'Search tours...',
+        activeFilters: lang === 'zh' ? '已选筛选条件' : 'Active Filters',
+        clearAll: lang === 'zh' ? '清除所有' : 'Clear All',
+        tourLength: lang === 'zh' ? '行程天数' : 'Tour Length',
+        tourType: lang === 'zh' ? '旅游类型' : 'Tour Type',
+        destinations: lang === 'zh' ? '目的地' : 'Destinations',
+    };
+
     return (
         <aside className="tour-filter-sidebar bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
             <h2 className="font-bold text-lg text-gray-900 mb-6 flex items-center gap-2">
                 <span className="material-icons text-[#f7941e]">filter_list</span>
-                Filters
+                {t.filters}
             </h2>
 
             {/* Search Input */}
@@ -140,7 +150,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                     </span>
                     <input
                         type="text"
-                        placeholder="Search tours..."
+                        placeholder={t.searchPlaceholder}
                         value={filters.q}
                         onChange={(e) => updateFilter('q', e.target.value)}
                         className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#f7941e]/30 focus:border-[#f7941e] transition-all duration-200"
@@ -160,12 +170,12 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
             {hasActiveFilters && (
                 <div className="p-3 bg-[#f7941e]/5 rounded-xl border border-[#f7941e]/20 mb-6">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Active Filters</span>
+                        <span className="text-sm font-medium text-gray-700">{t.activeFilters}</span>
                         <button
                             onClick={clearAllFilters}
                             className="text-xs text-[#f7941e] hover:text-[#d67a1a] font-medium"
                         >
-                            Clear All
+                            {t.clearAll}
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -230,7 +240,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                     >
                         <span className="font-semibold text-gray-900 flex items-center gap-2">
                             <span className="material-icons text-[#f7941e] text-lg">schedule</span>
-                            Tour Length
+                            {t.tourLength}
                         </span>
                         <span
                             className={`material-icons text-gray-500 transition-transform duration-200 ${collapsedSections.has('duration') ? '' : 'rotate-180'
@@ -273,7 +283,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                     >
                         <span className="font-semibold text-gray-900 flex items-center gap-2">
                             <span className="material-icons text-[#f7941e] text-lg">category</span>
-                            Tour Type
+                            {t.tourType}
                         </span>
                         <span
                             className={`material-icons text-gray-500 transition-transform duration-200 ${collapsedSections.has('types') ? '' : 'rotate-180'
@@ -325,7 +335,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                     >
                         <span className="font-semibold text-gray-900 flex items-center gap-2">
                             <span className="material-icons text-[#f7941e] text-lg">place</span>
-                            Destinations
+                            {t.destinations}
                         </span>
                         <span
                             className={`material-icons text-gray-500 transition-transform duration-200 ${collapsedSections.has('destinations') ? '' : 'rotate-180'

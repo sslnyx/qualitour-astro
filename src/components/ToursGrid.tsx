@@ -156,12 +156,24 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
     const hasActiveFilters = filters.destination || filters.type || filters.duration || filters.q;
     const localePrefix = lang === 'en' ? '' : `/${lang}`;
 
+    const t = {
+        showing: lang === 'zh' ? '显示' : 'Showing',
+        of: lang === 'zh' ? '共' : 'of',
+        tours: lang === 'zh' ? '个行程' : 'tours',
+        filters: lang === 'zh' ? '筛选' : 'Filters',
+        previous: lang === 'zh' ? '上一页' : 'Previous',
+        next: lang === 'zh' ? '下一页' : 'Next',
+        noTours: lang === 'zh' ? '未找到相关行程' : 'No tours found',
+        noToursDesc: lang === 'zh' ? '尝试调整您的筛选条件或搜索关键词' : 'Try adjusting your filters or search criteria',
+        viewAll: lang === 'zh' ? '查看所有行程' : 'View All Tours'
+    };
+
     return (
         <div className="flex-1" ref={gridRef}>
             {/* Results Count & Active Filters */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <p className="text-gray-600">
-                    Showing <span className="font-semibold text-gray-900">{startIndex + 1}-{Math.min(endIndex, filteredTours.length)}</span> of <span className="font-semibold text-gray-900">{filteredTours.length}</span> tours
+                    {t.showing} <span className="font-semibold text-gray-900">{startIndex + 1}-{Math.min(endIndex, filteredTours.length)}</span> {t.of} <span className="font-semibold text-gray-900">{filteredTours.length}</span> {t.tours}
                 </p>
 
                 {/* Mobile Filter Button */}
@@ -170,7 +182,7 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
                     className="lg:hidden flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                     <span className="material-icons text-lg">filter_list</span>
-                    Filters
+                    {t.filters}
                     {hasActiveFilters && (
                         <span className="bg-[#f7941e] text-white text-xs px-2 py-0.5 rounded-full">
                             {(filters.duration ? 1 : 0) + (filters.type ? 1 : 0) + (filters.destination ? 1 : 0)}
@@ -196,7 +208,7 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
                         className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                         <span className="material-icons text-sm">chevron_left</span>
-                        <span className="hidden sm:inline">Previous</span>
+                        <span className="hidden sm:inline">{t.previous}</span>
                     </button>
 
                     {/* Page Numbers */}
@@ -211,8 +223,8 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
                                     key={page}
                                     onClick={() => handlePageChange(page as number)}
                                     className={`px-4 py-2 rounded-lg border transition-colors ${currentPage === page
-                                            ? 'bg-orange-500 text-white border-orange-500'
-                                            : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                                        ? 'bg-orange-500 text-white border-orange-500'
+                                        : 'border-gray-200 text-gray-700 hover:bg-gray-50'
                                         }`}
                                 >
                                     {page}
@@ -227,7 +239,7 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
                         disabled={currentPage === totalPages}
                         className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
-                        <span className="hidden sm:inline">Next</span>
+                        <span className="hidden sm:inline">{t.next}</span>
                         <span className="material-icons text-sm">chevron_right</span>
                     </button>
                 </div>
@@ -237,13 +249,13 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
             {filteredTours.length === 0 && (
                 <div className="text-center py-16">
                     <span className="material-icons text-6xl text-gray-300 mb-4 block">search_off</span>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No tours found</h3>
-                    <p className="text-gray-500 mb-6">Try adjusting your filters or search criteria</p>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{t.noTours}</h3>
+                    <p className="text-gray-500 mb-6">{t.noToursDesc}</p>
                     <a
                         href={`${localePrefix}/tours`}
                         className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white font-semibold rounded-full hover:bg-orange-600 transition-colors"
                     >
-                        View All Tours
+                        {t.viewAll}
                     </a>
                 </div>
             )}
