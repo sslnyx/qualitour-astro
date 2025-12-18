@@ -74,6 +74,11 @@ const maxPeople = tour?.tour_meta?.max_people;
 const groupSize = minPeople && maxPeople ? `${minPeople} - ${maxPeople}` : maxPeople || minPeople;
 const categories = tour?.tour_terms?.categories || [];
 const destinations = tour?.tour_terms?.destinations || [];
+
+// Prepare translations for language switcher
+const tourTranslations = tour?.translations && typeof tour.translations === 'object' && Object.keys(tour.translations).length > 0
+  ? tour.translations as { en?: { id: number; slug: string }; zh?: { id: number; slug: string }; }
+  : undefined;
 ---
 
 <Layout 
@@ -82,6 +87,7 @@ const destinations = tour?.tour_terms?.destinations || [];
   lang={lang}
   image={imageUrl}
   type="article"
+  tourTranslations={tourTranslations}
 >
   {error ? (
     <!-- Error State -->

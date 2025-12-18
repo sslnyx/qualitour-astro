@@ -21,7 +21,7 @@ export function getWpBaseUrl(): string {
 
     // Fallback - only use local dev URL in development
     if (import.meta.env.DEV) {
-        return 'https://handsome-cellar.localsite.io';
+        return 'http://qualitour.local';
     }
 
     return '';
@@ -123,10 +123,39 @@ export function processHtmlContent(html: string): string {
     if (!html) return html;
 
     // Replace src="..." and src='...' and href="..." and href='...'
+    // This also coincidentally handles data-src because 'src' matches the end of 'data-src'
     let processed = html.replace(/(?:src|href)=["']([^"']+)["']/g, (match, url) => {
         const newUrl = wpUrl(url);
         if (newUrl !== url) {
             return match.replace(url, newUrl);
+        }
+        return match;
+    });
+
+    // Handle srcset and data-srcset
+    processed = processed.replace(/(?:srcset|data-srcset)=["']([^"']+)["']/g, (match, content) => {
+        // defined separators for srcset (comma usually)
+        // format: url width/density, url width/density
+        const parts = content.split(',');
+        const newParts = parts.map(part => {
+            // Trim whitespace
+            const trimmed = part.trim();
+            // Split by space to separate URL from descriptor
+            const [url, ...descriptor] = trimmed.split(/\s+/);
+
+            if (url) {
+                const newUrl = wpUrl(url);
+                if (descriptor.length > 0) {
+                    return `${newUrl} ${descriptor.join(' ')}`;
+                }
+                return newUrl;
+            }
+            return part;
+        });
+
+        const newContent = newParts.join(', ');
+        if (newContent !== content) {
+            return match.replace(content, newContent);
         }
         return match;
     });

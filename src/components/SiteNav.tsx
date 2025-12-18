@@ -8,39 +8,30 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { WPTourDestination, WPTourActivity, WPTourType } from '../lib/wordpress/types';
 
+interface TourTranslation {
+    id: number;
+    slug: string;
+}
+
 interface SiteNavProps {
     lang?: 'en' | 'zh';
     destinations?: WPTourDestination[];
     activities?: WPTourActivity[];
     types?: WPTourType[];
+    tourTranslations?: {
+        en?: TourTranslation;
+        zh?: TourTranslation;
+    };
 }
 
-// Build tree structure for hierarchical display
-type TreeNode<T> = T & { children: TreeNode<T>[] };
 
-function buildTree<T extends { id: number; parent: number }>(items: T[]): TreeNode<T>[] {
-    const map = new Map<number, TreeNode<T>>();
-    const roots: TreeNode<T>[] = [];
-
-    items.forEach((item) => {
-        map.set(item.id, { ...item, children: [] });
-    });
-
-    items.forEach((item) => {
-        if (item.parent !== 0 && map.has(item.parent)) {
-            map.get(item.parent)!.children.push(map.get(item.id)!);
-        } else {
-            roots.push(map.get(item.id)!);
-        }
-    });
-    return roots;
-}
 
 export function SiteNav({
     lang = 'en',
     destinations = [],
     activities = [],
-    types = []
+    types = [],
+    tourTranslations
 }: SiteNavProps) {
     const localePrefix = lang === 'en' ? '' : `/${lang}`;
 
@@ -93,10 +84,7 @@ export function SiteNav({
         setMobileOpen(false);
     }, []);
 
-    // Build destination tree
-    const destinationTree = buildTree(
-        destinations.filter(d => d.parent === 0)
-    );
+
 
     // Tour types with icons
     const tourTypeLinks = [
@@ -491,15 +479,36 @@ export function SiteNav({
                         {/* Right Side: Language & CTA */}
                         <div className="hidden lg:flex items-center gap-4">
                             {/* Language Toggle */}
-                            {/* Language Toggle */}
                             <button
                                 onClick={() => {
-                                    if (lang === 'en') {
-                                        const path = window.location.pathname;
-                                        window.location.href = `/zh${path}`;
+                                    const targetLang = lang === 'en' ? 'zh' : 'en';
+                                    const currentPath = window.location.pathname;
+
+                                    // Check if we're on a tour detail page and have translations
+                                    const isTourPage = currentPath.includes('/tours/') &&
+                                        !currentPath.includes('/tours/destination/') &&
+                                        !currentPath.includes('/tours/activity/') &&
+                                        !currentPath.includes('/tours/type/') &&
+                                        !currentPath.includes('/tours/duration/') &&
+                                        !currentPath.includes('/tours/featured') &&
+                                        currentPath !== '/tours' &&
+                                        currentPath !== '/zh/tours';
+
+                                    if (isTourPage && tourTranslations && tourTranslations[targetLang]) {
+                                        // Use the translated tour's slug
+                                        const translatedSlug = tourTranslations[targetLang]!.slug;
+                                        const newPath = targetLang === 'en'
+                                            ? `/tours/${encodeURIComponent(translatedSlug)}`
+                                            : `/zh/tours/${encodeURIComponent(translatedSlug)}`;
+                                        window.location.href = newPath;
                                     } else {
-                                        const path = window.location.pathname.replace(/^\/zh/, '');
-                                        window.location.href = path || '/';
+                                        // Default behavior for non-tour pages
+                                        if (lang === 'en') {
+                                            window.location.href = `/zh${currentPath}`;
+                                        } else {
+                                            const path = currentPath.replace(/^\/zh/, '');
+                                            window.location.href = path || '/';
+                                        }
                                     }
                                 }}
                                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 hover:text-orange-500 transition-all text-sm"
@@ -709,12 +718,34 @@ export function SiteNav({
                             <div className="flex items-center">
                                 <button
                                     onClick={() => {
-                                        if (lang === 'en') {
-                                            const path = window.location.pathname;
-                                            window.location.href = `/zh${path}`;
+                                        const targetLang = lang === 'en' ? 'zh' : 'en';
+                                        const currentPath = window.location.pathname;
+
+                                        // Check if we're on a tour detail page and have translations
+                                        const isTourPage = currentPath.includes('/tours/') &&
+                                            !currentPath.includes('/tours/destination/') &&
+                                            !currentPath.includes('/tours/activity/') &&
+                                            !currentPath.includes('/tours/type/') &&
+                                            !currentPath.includes('/tours/duration/') &&
+                                            !currentPath.includes('/tours/featured') &&
+                                            currentPath !== '/tours' &&
+                                            currentPath !== '/zh/tours';
+
+                                        if (isTourPage && tourTranslations && tourTranslations[targetLang]) {
+                                            // Use the translated tour's slug
+                                            const translatedSlug = tourTranslations[targetLang]!.slug;
+                                            const newPath = targetLang === 'en'
+                                                ? `/tours/${encodeURIComponent(translatedSlug)}`
+                                                : `/zh/tours/${encodeURIComponent(translatedSlug)}`;
+                                            window.location.href = newPath;
                                         } else {
-                                            const path = window.location.pathname.replace(/^\/zh/, '');
-                                            window.location.href = path || '/';
+                                            // Default behavior for non-tour pages
+                                            if (lang === 'en') {
+                                                window.location.href = `/zh${currentPath}`;
+                                            } else {
+                                                const path = currentPath.replace(/^\/zh/, '');
+                                                window.location.href = path || '/';
+                                            }
                                         }
                                     }}
                                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-white hover:shadow-sm transition-all text-sm"

@@ -70,6 +70,10 @@ export interface WPTour {
     };
     goodlayers_data?: Record<string, unknown>;
     acf_fields?: Record<string, unknown>;
+    translations?: {
+        en?: { id: number; slug: string };
+        zh?: { id: number; slug: string };
+    } | Record<string, never>;
 }
 
 export interface WPTourCategory {

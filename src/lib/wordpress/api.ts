@@ -24,7 +24,7 @@ function getApiUrl(): string {
     const url = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
         import.meta.env.PUBLIC_WORDPRESS_API_URL ||
         import.meta.env.WORDPRESS_API_URL ||
-        (import.meta.env.DEV ? 'https://handsome-cellar.localsite.io/wp-json/qualitour/v1' : '');
+        (import.meta.env.DEV ? 'http://qualitour.local/wp-json/qualitour/v1' : '');
     return url.endsWith('/') ? url.slice(0, -1) : url;
 }
 
@@ -105,6 +105,7 @@ export async function getTours(
     if (params.order) url.searchParams.set('order', params.order);
     if (params.search) url.searchParams.set('search', params.search);
     if (lang && lang !== 'en') url.searchParams.set('lang', lang);
+    else url.searchParams.set('lang', 'en'); // Always send lang for same-slug support
 
     console.log(`[Astro SSG] Fetching tours from: ${url.toString()}`);
 
@@ -119,7 +120,8 @@ export async function getTourBySlug(slug: string, lang?: string): Promise<WPTour
     // Use dedicated slug endpoint which returns full tour data including goodlayers_data
     const url = new URL(`${customApiUrl}/tours/slug/${encodeURIComponent(slug)}`);
 
-    if (lang && lang !== 'en') url.searchParams.set('lang', lang);
+    // Always send lang parameter to ensure correct tour when slugs match across languages
+    url.searchParams.set('lang', lang || 'en');
 
     console.log(`[Astro SSG] Fetching tour by slug: ${url.toString()}`);
 

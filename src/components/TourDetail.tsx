@@ -15,7 +15,7 @@ interface TourDetailProps {
     lang?: string;
 }
 
-type TabId = 'overview' | 'itinerary' | 'photos' | 'faq';
+type TabId = 'overview' | 'itinerary' | 'info' | 'photos' | 'faq';
 
 interface Tab {
     id: TabId;
@@ -26,6 +26,7 @@ interface Tab {
 const tabs: Tab[] = [
     { id: 'overview', label: { en: 'Overview', zh: '行程概述' }, icon: 'info' },
     { id: 'itinerary', label: { en: 'Itinerary', zh: '每日行程' }, icon: 'route' },
+    { id: 'info', label: { en: 'Additional Info', zh: '附加資訊' }, icon: 'article' },
     { id: 'photos', label: { en: 'Photos', zh: '照片' }, icon: 'photo_library' },
     { id: 'faq', label: { en: 'FAQ', zh: '常见问题' }, icon: 'help_outline' },
 ];
@@ -108,45 +109,67 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
     }
 
     const contentBlocks = useMemo((): ContentBlock[] => {
-        const detailSection = sections.find(
+        // Find ALL sections with id 'detail' or 'details' (not 'info' - that has its own tab)
+        const detailSections = sections.filter(
             (s: any) => s.value?.id === 'detail' || s.value?.id === 'details'
         );
 
         const blocks: ContentBlock[] = [];
 
-        if (detailSection?.items) {
-            detailSection.items.forEach((item: any, idx: number) => {
-                // Skip tour_title and dividers
-                if (item.type === 'tour_title' || item.type === 'divider') return;
+        // Recursive function to process items (handles nested columns)
+        const processItem = (item: any) => {
+            // Skip dividers and spacers
+            if (item.type === 'tour_title' || item.type === 'divider' || item.type === 'space') return;
 
-                // Handle text boxes
-                if (item.type === 'text-box' && item.value?.content) {
-                    blocks.push({
-                        type: 'text',
-                        content: processHtmlContent(item.value.content),
-                        order: idx,
-                    });
-                }
+            // Recursively process nested items in columns and other containers
+            if ((item.type === 'column' || item.type === 'row' || item.type === 'container') && item.items?.length > 0) {
+                item.items.forEach((nestedItem: any) => processItem(nestedItem));
+                return;
+            }
 
-                // Handle titles
-                if (item.type === 'title' && (item.value?.title || item.value?.caption)) {
-                    blocks.push({
-                        type: 'title',
-                        content: item.value?.title || item.value?.caption,
-                        order: idx,
-                    });
-                }
+            // Handle text boxes
+            if (item.type === 'text-box' && item.value?.content) {
+                blocks.push({
+                    type: 'text',
+                    content: processHtmlContent(item.value.content),
+                    order: blocks.length,
+                });
+            }
 
-                // Handle icon lists
-                if (item.type === 'icon-list' && item.value?.tabs?.length > 0) {
-                    blocks.push({
-                        type: 'icon-list',
-                        content: item.value.tabs,
-                        order: idx,
-                    });
-                }
-            });
-        }
+            // Handle titles
+            if (item.type === 'title' && (item.value?.title || item.value?.caption)) {
+                blocks.push({
+                    type: 'title',
+                    content: item.value?.title || item.value?.caption,
+                    order: blocks.length,
+                });
+            }
+
+            // Handle icon lists
+            if (item.type === 'icon-list' && item.value?.tabs?.length > 0) {
+                blocks.push({
+                    type: 'icon-list',
+                    content: item.value.tabs,
+                    order: blocks.length,
+                });
+            }
+
+            // Handle images
+            if (item.type === 'image' && item.value?.url) {
+                blocks.push({
+                    type: 'text',
+                    content: `<img src="${wpUrl(item.value.url)}" alt="${item.value.alt || ''}" class="rounded-lg max-w-full" />`,
+                    order: blocks.length,
+                });
+            }
+        };
+
+        // Process ALL matching sections
+        detailSections.forEach((detailSection: any) => {
+            if (detailSection?.items) {
+                detailSection.items.forEach((item: any) => processItem(item));
+            }
+        });
 
         return blocks;
     }, [sections]);
@@ -272,10 +295,44 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
         return gd?.tour_faq || [];
     }, [gd, sections]);
 
+    // Check for Additional Info section
+    const infoItems = useMemo((): ContentBlock[] => {
+        const infoSection = sections.find(
+            (s: any) => s.value?.id === 'info'
+        );
+
+        const blocks: ContentBlock[] = [];
+
+        if (infoSection?.items) {
+            infoSection.items.forEach((item: any) => {
+                if (item.type === 'divider') return;
+
+                if (item.type === 'title' && (item.value?.title || item.value?.caption)) {
+                    blocks.push({
+                        type: 'title',
+                        content: item.value?.title || item.value?.caption,
+                        order: blocks.length,
+                    });
+                }
+
+                if (item.type === 'text-box' && item.value?.content) {
+                    blocks.push({
+                        type: 'text',
+                        content: processHtmlContent(item.value.content),
+                        order: blocks.length,
+                    });
+                }
+            });
+        }
+
+        return blocks;
+    }, [sections]);
+
     // Filter tabs based on available content
     const availableTabs = tabs.filter(tab => {
         if (tab.id === 'overview') return true;
         if (tab.id === 'itinerary') return itinerary.length > 0;
+        if (tab.id === 'info') return infoItems.length > 0;
         if (tab.id === 'photos') return photos.length > 0;
         if (tab.id === 'faq') return faqItems.length > 0;
         return false;
@@ -317,8 +374,8 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 {/* Overview Tab */}
                 {activeTab === 'overview' && (
                     <div className="animate-fadeIn space-y-8">
-                        {/* Main Content */}
-                        {overviewContent && (
+                        {/* Main Content - only show if no text blocks in contentBlocks to avoid duplication */}
+                        {overviewContent && !contentBlocks.some(b => b.type === 'text') && (
                             <div className="bg-orange-50 rounded-xl p-8 border border-orange-200">
                                 <div
                                     className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
@@ -510,6 +567,33 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                 )}
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Additional Info Tab */}
+                {activeTab === 'info' && infoItems.length > 0 && (
+                    <div className="animate-fadeIn space-y-6">
+                        {infoItems.map((block, idx) => {
+                            switch (block.type) {
+                                case 'title':
+                                    return (
+                                        <h3 key={idx} className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                                            <span className="w-1 h-8 bg-orange-500 rounded-full"></span>
+                                            {block.content}
+                                        </h3>
+                                    );
+                                case 'text':
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className="prose prose-base max-w-none text-gray-700 leading-relaxed bg-white rounded-xl p-6 border border-gray-200"
+                                            dangerouslySetInnerHTML={{ __html: block.content }}
+                                        />
+                                    );
+                                default:
+                                    return null;
+                            }
+                        })}
                     </div>
                 )}
 

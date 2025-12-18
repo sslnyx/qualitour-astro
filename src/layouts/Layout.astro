@@ -6,6 +6,11 @@ import { getSiteNavData, type SiteNavData } from "../lib/wordpress/api";
 import Footer from "../components/Footer.astro";
 import SeoHead from "../components/SeoHead.astro";
 
+interface TourTranslation {
+  id: number;
+  slug: string;
+}
+
 interface Props {
   title?: string;
   description?: string;
@@ -14,6 +19,10 @@ interface Props {
   lang?: Locale;
   canonical?: string;
   noindex?: boolean;
+  tourTranslations?: {
+    en?: TourTranslation;
+    zh?: TourTranslation;
+  };
 }
 
 const {
@@ -24,6 +33,7 @@ const {
   lang,
   canonical,
   noindex,
+  tourTranslations,
 } = Astro.props;
 
 // Get current locale from URL or use provided lang
@@ -63,6 +73,7 @@ try {
       destinations={navData.destinations}
       activities={navData.activities}
       types={navData.types}
+      tourTranslations={tourTranslations}
       client:load
     />
 
