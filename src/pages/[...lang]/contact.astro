@@ -228,7 +228,11 @@ const t = {
                                     class="material-icons text-green-500 text-base"
                                     >lock</span
                                 >
-                                Secure SSL Connection
+                                {
+                                    currentLang === "zh"
+                                        ? "安全 SSL 连接"
+                                        : "Secure SSL Connection"
+                                }
                             </span>
                             <span
                                 >Qualitour &copy; {

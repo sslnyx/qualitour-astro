@@ -101,10 +101,10 @@ export function SiteNav({
 
     // Hot destinations (hardcoded for now)
     const hotDestinations = [
-        { label: lang === 'zh' ? '黄刀镇 (极光)' : 'Yellowknife (Aurora)', query: 'Yellowknife', icon: 'ac_unit' },
-        { label: lang === 'zh' ? '白马市 (极光)' : 'Whitehorse (Aurora)', query: 'Whitehorse', icon: 'auto_awesome' },
-        { label: lang === 'zh' ? '落基山脉' : 'Rocky Mountains', query: 'Rocky Mountains', icon: 'landscape' },
-        { label: lang === 'zh' ? '海洋三省' : 'Maritimes', query: 'Maritimes', icon: 'sailing' },
+        { label: lang === 'zh' ? '黄刀镇 (极光)' : 'Yellowknife (Aurora)', type: 'destination', value: 'yellowknife', icon: 'ac_unit' },
+        { label: lang === 'zh' ? '白马市 (极光)' : 'Whitehorse (Aurora)', type: 'destination', value: 'whitehorse', icon: 'auto_awesome' },
+        { label: lang === 'zh' ? '落基山脉' : 'Rocky Mountains', type: 'destination', value: 'banff', icon: 'landscape' },
+        { label: lang === 'zh' ? '海洋三省' : 'Maritimes', type: 'destination', value: 'atlantic-canada', icon: 'sailing' },
     ];
 
     return (
@@ -440,7 +440,7 @@ export function SiteNav({
                                                         {hotDestinations.map((dest, idx) => (
                                                             <a
                                                                 key={idx}
-                                                                href={`${localePrefix}/tours?search=${encodeURIComponent(dest.query)}`}
+                                                                href={`${localePrefix}/tours?${dest.type === 'destination' ? 'destination' : 'q'}=${encodeURIComponent(dest.value)}`}
                                                                 onClick={() => setMegaOpen(false)}
                                                                 className="flex items-center gap-3 p-2 rounded-xl hover:bg-red-50 transition-all group"
                                                             >

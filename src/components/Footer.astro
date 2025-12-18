@@ -47,8 +47,11 @@ const currentYear = new Date().getFullYear();
                 <p
                     class="mt-3 sm:mt-4 text-gray-400 text-sm sm:text-base lg:text-lg max-w-xl mx-auto px-4 sm:px-0"
                 >
-                    Your gateway to extraordinary Canadian adventures. Discover
-                    the beauty of nature with expert-guided tours.
+                    {
+                        currentLocale === "zh"
+                            ? "您通往非凡加拿大探险的门户。与专业导游一起探索自然之美。"
+                            : "Your gateway to extraordinary Canadian adventures. Discover the beauty of nature with expert-guided tours."
+                    }
                 </p>
                 <!-- Decorative Line with Gradient - Hidden on mobile for cleaner look -->
                 <div
@@ -85,7 +88,7 @@ const currentYear = new Date().getFullYear();
                                 >explore</span
                             >
                         </span>
-                        Explore
+                        {currentLocale === "zh" ? "探索" : "Explore"}
                     </h3>
                     <ul class="space-y-2 sm:space-y-3">
                         <li>
@@ -93,7 +96,7 @@ const currentYear = new Date().getFullYear();
                                 href={`${localePrefix}/tours`}
                                 class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
                             >
-                                Tours
+                                {currentLocale === "zh" ? "行程" : "Tours"}
                             </a>
                         </li>
                         <li>
@@ -101,7 +104,11 @@ const currentYear = new Date().getFullYear();
                                 href={`${localePrefix}/private-transfers`}
                                 class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
                             >
-                                Private Transfers
+                                {
+                                    currentLocale === "zh"
+                                        ? "私人接送"
+                                        : "Private Transfers"
+                                }
                             </a>
                         </li>
                         <li>
@@ -109,7 +116,11 @@ const currentYear = new Date().getFullYear();
                                 href={`${localePrefix}/visa`}
                                 class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
                             >
-                                China Visa
+                                {
+                                    currentLocale === "zh"
+                                        ? "中国签证"
+                                        : "China Visa"
+                                }
                             </a>
                         </li>
                         <li>
@@ -117,7 +128,7 @@ const currentYear = new Date().getFullYear();
                                 href={`${localePrefix}/faq`}
                                 class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
                             >
-                                FAQ
+                                {currentLocale === "zh" ? "常见问题" : "FAQ"}
                             </a>
                         </li>
                     </ul>
@@ -135,7 +146,7 @@ const currentYear = new Date().getFullYear();
                                 >business</span
                             >
                         </span>
-                        Company
+                        {currentLocale === "zh" ? "公司" : "Company"}
                     </h3>
                     <ul class="space-y-2 sm:space-y-3">
                         <li>
@@ -143,7 +154,11 @@ const currentYear = new Date().getFullYear();
                                 href={`${localePrefix}/about-us`}
                                 class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
                             >
-                                About Us
+                                {
+                                    currentLocale === "zh"
+                                        ? "关于我们"
+                                        : "About Us"
+                                }
                             </a>
                         </li>
                         <li>
@@ -151,7 +166,11 @@ const currentYear = new Date().getFullYear();
                                 href={`${localePrefix}/reviews`}
                                 class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
                             >
-                                Reviews
+                                {
+                                    currentLocale === "zh"
+                                        ? "客户评价"
+                                        : "Reviews"
+                                }
                             </a>
                         </li>
                         <li>
@@ -159,7 +178,11 @@ const currentYear = new Date().getFullYear();
                                 href={`${localePrefix}/contact`}
                                 class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
                             >
-                                Contact Us
+                                {
+                                    currentLocale === "zh"
+                                        ? "联系我们"
+                                        : "Contact Us"
+                                }
                             </a>
                         </li>
                         <li>
@@ -167,7 +190,11 @@ const currentYear = new Date().getFullYear();
                                 href={`${localePrefix}/privacy-policy`}
                                 class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
                             >
-                                Privacy Policy
+                                {
+                                    currentLocale === "zh"
+                                        ? "隐私政策"
+                                        : "Privacy Policy"
+                                }
                             </a>
                         </li>
                     </ul>
@@ -185,7 +212,7 @@ const currentYear = new Date().getFullYear();
                                 >contact_mail</span
                             >
                         </span>
-                        Contact
+                        {currentLocale === "zh" ? "联系方式" : "Contact"}
                     </h3>
                     <ul class="space-y-3">
                         <li>
@@ -223,7 +250,11 @@ const currentYear = new Date().getFullYear();
                                 >
                                     5635 Cambie Street<br />
                                     Vancouver, BC V5Z 3A3<br />
-                                    Canada
+                                    {
+                                        currentLocale === "zh"
+                                            ? "加拿大"
+                                            : "Canada"
+                                    }
                                 </span>
                             </div>
                         </li>
@@ -242,7 +273,7 @@ const currentYear = new Date().getFullYear();
                                 >verified</span
                             >
                         </span>
-                        Connect
+                        {currentLocale === "zh" ? "关注我们" : "Connect"}
                     </h3>
 
                     <!-- IATA Badge -->
@@ -266,7 +297,9 @@ const currentYear = new Date().getFullYear();
                     </div>
 
                     <!-- Social Links -->
-                    <p class="text-gray-400 text-sm mb-3">Follow us</p>
+                    <p class="text-gray-400 text-sm mb-3">
+                        {currentLocale === "zh" ? "关注我们" : "Follow us"}
+                    </p>
                     <div
                         class="flex items-center justify-center sm:justify-start gap-3"
                     >
@@ -322,11 +355,18 @@ const currentYear = new Date().getFullYear();
                                 <span class="material-icons text-orange-400"
                                     >mail_outline</span
                                 >
-                                Stay Updated
+                                {
+                                    currentLocale === "zh"
+                                        ? "保持更新"
+                                        : "Stay Updated"
+                                }
                             </h3>
                             <p class="text-gray-400">
-                                Get exclusive travel deals and tour updates
-                                delivered to your inbox
+                                {
+                                    currentLocale === "zh"
+                                        ? "获取独家旅行优惠和行程更新，直接发送到您的邮箱"
+                                        : "Get exclusive travel deals and tour updates delivered to your inbox"
+                                }
                             </p>
                         </div>
                         <div
@@ -334,13 +374,15 @@ const currentYear = new Date().getFullYear();
                         >
                             <input
                                 type="email"
-                                placeholder="Enter your email"
+                                placeholder={currentLocale === "zh"
+                                    ? "输入您的邮箱"
+                                    : "Enter your email"}
                                 class="px-5 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all w-full sm:w-72"
                             />
                             <button
                                 class="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-orange-500/25"
                             >
-                                Subscribe
+                                {currentLocale === "zh" ? "订阅" : "Subscribe"}
                             </button>
                         </div>
                     </div>
@@ -359,7 +401,11 @@ const currentYear = new Date().getFullYear();
                     © <span id="current-year">{currentYear}</span> Qualitour Holiday
                     Inc.
                     <span class="hidden sm:inline">
-                        All rights reserved. |</span
+                        {
+                            currentLocale === "zh"
+                                ? "保留所有权利。"
+                                : "All rights reserved."
+                        } |</span
                     >
                     <span class="block sm:inline mt-1 sm:mt-0"
                         >B.C. Reg. #62469</span
@@ -370,11 +416,12 @@ const currentYear = new Date().getFullYear();
                     <a
                         href={`${localePrefix}/privacy-policy`}
                         class="hover:text-orange-400 transition-colors"
-                        >Privacy</a
+                        >{currentLocale === "zh" ? "隐私" : "Privacy"}</a
                     >
                     <a
                         href={`${localePrefix}/terms`}
-                        class="hover:text-orange-400 transition-colors">Terms</a
+                        class="hover:text-orange-400 transition-colors"
+                        >{currentLocale === "zh" ? "条款" : "Terms"}</a
                     >
                 </div>
             </div>

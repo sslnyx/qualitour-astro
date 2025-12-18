@@ -47,17 +47,23 @@ const [tours, navData, durations, types] = await Promise.all([
           <nav class="text-sm mb-4">
             <a
               href={`${localePrefix}/`}
-              class="text-gray-400 hover:text-white transition-colors">Home</a
+              class="text-gray-400 hover:text-white transition-colors"
+              >{lang === "zh" ? "首页" : "Home"}</a
             >
             <span class="mx-2 text-gray-600">/</span>
-            <span class="text-orange-400">Tours</span>
+            <span class="text-orange-400"
+              >{lang === "zh" ? "行程" : "Tours"}</span
+            >
           </nav>
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            Explore Our Tours
+            {lang === "zh" ? "探索我们的行程" : "Explore Our Tours"}
           </h1>
           <p class="text-xl text-gray-300 max-w-2xl mx-auto">
-            Discover unforgettable journeys through our most remarkable
-            destinations
+            {
+              lang === "zh"
+                ? "在我们最精彩的目的地中发现难忘的旅程"
+                : "Discover unforgettable journeys through our most remarkable destinations"
+            }
           </p>
         </div>
       </div>
@@ -98,10 +104,10 @@ const [tours, navData, durations, types] = await Promise.all([
           <span
             class="text-orange-500 font-medium text-sm uppercase tracking-wider"
           >
-            Browse Tours
+            {lang === "zh" ? "浏览行程" : "Browse Tours"}
           </span>
           <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mt-2">
-            Explore by Destination
+            {lang === "zh" ? "按目的地探索" : "Explore by Destination"}
           </h2>
         </div>
 
@@ -120,7 +126,9 @@ const [tours, navData, durations, types] = await Promise.all([
                 <h3 class="font-medium text-gray-900 group-hover:text-orange-600 transition-colors">
                   {dest.name}
                 </h3>
-                <p class="text-sm text-gray-500 mt-1">{dest.count} tours</p>
+                <p class="text-sm text-gray-500 mt-1">
+                  {dest.count} {lang === "zh" ? "个行程" : "tours"}
+                </p>
               </a>
             ))
           }
@@ -134,17 +142,25 @@ const [tours, navData, durations, types] = await Promise.all([
         class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white"
       >
         <h2 class="text-3xl md:text-4xl font-bold mb-4">
-          Can't Find What You're Looking For?
+          {
+            lang === "zh"
+              ? "找不到您想要的行程？"
+              : "Can't Find What You're Looking For?"
+          }
         </h2>
         <p class="text-xl opacity-90 mb-8">
-          Let us create a custom tour tailored to your preferences
+          {
+            lang === "zh"
+              ? "让我们为您量身定制专属行程"
+              : "Let us create a custom tour tailored to your preferences"
+          }
         </p>
         <a
           href={`${localePrefix}/contact`}
           class="inline-flex items-center gap-2 px-8 py-4 bg-white text-orange-500 font-bold rounded-full hover:shadow-xl hover:scale-105 transition-all"
         >
           <span class="material-icons">mail</span>
-          Contact Us
+          {lang === "zh" ? "联系我们" : "Contact Us"}
         </a>
       </div>
     </section>

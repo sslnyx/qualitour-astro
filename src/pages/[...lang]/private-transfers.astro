@@ -120,73 +120,155 @@ const whyUsItems = [
     },
 ];
 
-const fleetItems = [
-    {
-        imageUrl: wpUrl("/wp-content/uploads/2020/12/2-Sienna-300x207.png"),
-        label: "Mini-van",
-        capacity: "4 passengers",
-        features: ["Comfortable seating", "Air conditioning", "Luggage space"],
-    },
-    {
-        imageUrl: wpUrl(
-            "/wp-content/uploads/2020/10/transfer-standard-van-1-300x200.jpg",
-        ),
-        label: "Standard Van",
-        capacity: "11 passengers",
-        features: [
-            "Spacious interior",
-            "Premium comfort",
-            "Extra luggage room",
-        ],
-    },
-    {
-        imageUrl: wpUrl(
-            "/wp-content/uploads/2020/10/transfer-deluxe-van-1-300x200.jpg",
-        ),
-        label: "Deluxe Van",
-        capacity: "14 passengers",
-        features: ["Luxury seating", "Entertainment system", "Maximum comfort"],
-    },
-];
+const fleetItems =
+    lang === "zh"
+        ? [
+              {
+                  imageUrl: wpUrl(
+                      "/wp-content/uploads/2020/12/2-Sienna-300x207.png",
+                  ),
+                  label: "迷你面包车",
+                  capacity: "4 位乘客",
+                  features: ["舒适座椅", "空调", "行李空间"],
+              },
+              {
+                  imageUrl: wpUrl(
+                      "/wp-content/uploads/2020/10/transfer-standard-van-1-300x200.jpg",
+                  ),
+                  label: "标准版面包车",
+                  capacity: "11 位乘客",
+                  features: ["宽敞内部空间", "优质舒适度", "额外行李空间"],
+              },
+              {
+                  imageUrl: wpUrl(
+                      "/wp-content/uploads/2020/10/transfer-deluxe-van-1-300x200.jpg",
+                  ),
+                  label: "豪华版面包车",
+                  capacity: "14 位乘客",
+                  features: ["豪华座椅", "娱乐系统", "极致舒适"],
+              },
+          ]
+        : [
+              {
+                  imageUrl: wpUrl(
+                      "/wp-content/uploads/2020/12/2-Sienna-300x207.png",
+                  ),
+                  label: "Mini-van",
+                  capacity: "4 passengers",
+                  features: [
+                      "Comfortable seating",
+                      "Air conditioning",
+                      "Luggage space",
+                  ],
+              },
+              {
+                  imageUrl: wpUrl(
+                      "/wp-content/uploads/2020/10/transfer-standard-van-1-300x200.jpg",
+                  ),
+                  label: "Standard Van",
+                  capacity: "11 passengers",
+                  features: [
+                      "Spacious interior",
+                      "Premium comfort",
+                      "Extra luggage room",
+                  ],
+              },
+              {
+                  imageUrl: wpUrl(
+                      "/wp-content/uploads/2020/10/transfer-deluxe-van-1-300x200.jpg",
+                  ),
+                  label: "Deluxe Van",
+                  capacity: "14 passengers",
+                  features: [
+                      "Luxury seating",
+                      "Entertainment system",
+                      "Maximum comfort",
+                  ],
+              },
+          ];
 
-const charterRates = [
-    {
-        imageUrl: wpUrl("/wp-content/uploads/2020/12/2-Van.png"),
-        title: "Mercedes Sprinter Van (Standard)",
-        priceNumber: "95",
-        priceUnit: "/ Hr",
-        bullets: [
-            "Up to 11 passengers with luggage",
-            "Min. 2.5 hours",
-            "Within Greater Vancouver only",
-        ],
-    },
-    {
-        imageUrl: wpUrl("/wp-content/uploads/2020/12/3-Deluxe-Van.png"),
-        title: "Mercedes Sprinter Van (Deluxe)",
-        priceNumber: "110",
-        priceUnit: "/ Hr",
-        bullets: [
-            "Up to 14 passengers with luggage",
-            "Min. 2.5 hours",
-            "Within Greater Vancouver only",
-        ],
-        popular: true,
-    },
-    {
-        imageUrl: wpUrl(
-            "/wp-content/uploads/2024/10/Weixin-Image_20240924131059.jpg",
-        ),
-        title: "Premium Charter Package",
-        priceNumber: "110",
-        priceUnit: "/ Hr",
-        bullets: [
-            "Up to 14 passengers with luggage",
-            "Min. 2.5 hours",
-            "Within Greater Vancouver only",
-        ],
-    },
-];
+const charterRates =
+    lang === "zh"
+        ? [
+              {
+                  imageUrl: wpUrl("/wp-content/uploads/2020/12/2-Van.png"),
+                  title: "奔驰斯普林特面包车 (标准版)",
+                  priceNumber: "95",
+                  priceUnit: "/ 小时",
+                  bullets: [
+                      "最多 11 位带行李乘客",
+                      "最少 2.5 小时",
+                      "仅限大温哥华地区",
+                  ],
+              },
+              {
+                  imageUrl: wpUrl(
+                      "/wp-content/uploads/2020/12/3-Deluxe-Van.png",
+                  ),
+                  title: "奔驰斯普林特面包车 (豪华版)",
+                  priceNumber: "110",
+                  priceUnit: "/ 小时",
+                  bullets: [
+                      "最多 14 位带行李乘客",
+                      "最少 2.5 小时",
+                      "仅限大温哥华地区",
+                  ],
+                  popular: true,
+              },
+              {
+                  imageUrl: wpUrl(
+                      "/wp-content/uploads/2024/10/Weixin-Image_20240924131059.jpg",
+                  ),
+                  title: "高端包车套餐",
+                  priceNumber: "110",
+                  priceUnit: "/ 小时",
+                  bullets: [
+                      "最多 14 位带行李乘客",
+                      "最少 2.5 小时",
+                      "仅限大温哥华地区",
+                  ],
+              },
+          ]
+        : [
+              {
+                  imageUrl: wpUrl("/wp-content/uploads/2020/12/2-Van.png"),
+                  title: "Mercedes Sprinter Van (Standard)",
+                  priceNumber: "95",
+                  priceUnit: "/ Hr",
+                  bullets: [
+                      "Up to 11 passengers with luggage",
+                      "Min. 2.5 hours",
+                      "Within Greater Vancouver only",
+                  ],
+              },
+              {
+                  imageUrl: wpUrl(
+                      "/wp-content/uploads/2020/12/3-Deluxe-Van.png",
+                  ),
+                  title: "Mercedes Sprinter Van (Deluxe)",
+                  priceNumber: "110",
+                  priceUnit: "/ Hr",
+                  bullets: [
+                      "Up to 14 passengers with luggage",
+                      "Min. 2.5 hours",
+                      "Within Greater Vancouver only",
+                  ],
+                  popular: true,
+              },
+              {
+                  imageUrl: wpUrl(
+                      "/wp-content/uploads/2024/10/Weixin-Image_20240924131059.jpg",
+                  ),
+                  title: "Premium Charter Package",
+                  priceNumber: "110",
+                  priceUnit: "/ Hr",
+                  bullets: [
+                      "Up to 14 passengers with luggage",
+                      "Min. 2.5 hours",
+                      "Within Greater Vancouver only",
+                  ],
+              },
+          ];
 
 const transferOffers = [
     {
@@ -419,7 +501,7 @@ function extractPriceNumber(caption: string): string | null {
                         >
                             {rate.popular && (
                                 <div class="absolute top-4 right-4 px-3 py-1 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] text-white text-xs font-bold rounded-full">
-                                    POPULAR
+                                    {lang === "zh" ? "热门" : "POPULAR"}
                                 </div>
                             )}
                             <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 p-6 flex items-center justify-center">

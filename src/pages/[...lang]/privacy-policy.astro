@@ -15,111 +15,293 @@ const { lang } = Astro.params;
 const currentLang: Locale = (lang as Locale) || "en";
 const localePrefix = currentLang === "en" ? "" : `/${currentLang}`;
 
+// Translations
+const t = {
+    heroTitle: currentLang === "zh" ? "隐私政策" : "Privacy Policy",
+    heroSubtitle:
+        currentLang === "zh"
+            ? "我们致力于保护您的个人信息，并对其使用方式保持透明。"
+            : "We are committed to protecting your personal information and being transparent about how we use it.",
+    heroBadge: currentLang === "zh" ? "您的隐私很重要" : "Your Privacy Matters",
+    lastUpdated:
+        currentLang === "zh"
+            ? "最后更新：2024年12月15日"
+            : "Last updated: December 15, 2024",
+    introText:
+        currentLang === "zh"
+            ? "本隐私政策描述了Qualitour Travel & Tour Experiences（'我们'或'本公司'）如何在您访问我们的网站www.qualitour.ca（'本站'）或使用我们的旅游预订服务时收集、使用和共享您的个人信息。"
+            : 'This Privacy Policy describes how Qualitour Travel & Tour Experiences ("we", "us", or "our") collects, uses, and shares your personal information when you visit our website at www.qualitour.ca (the "Site") or use our tour booking services.',
+    deviceInfoTitle: currentLang === "zh" ? "设备信息" : "Device Information",
+    deviceInfoIntro:
+        currentLang === "zh"
+            ? "当您访问本站时，我们会自动收集有关您设备的某些信息，包括："
+            : "When you visit our Site, we automatically collect certain information about your device, including:",
+    bookingInfoTitle: currentLang === "zh" ? "预订信息" : "Booking Information",
+    bookingInfoIntro:
+        currentLang === "zh"
+            ? "当您进行预订咨询或购买时，我们会收集："
+            : "When you make a booking inquiry or purchase, we collect:",
+    sharingIntro:
+        currentLang === "zh"
+            ? "我们可能会与受信任的第三方共享您的信息，以帮助我们提供和改进服务："
+            : "We may share your information with trusted third parties to help us provide and improve our services:",
+    noSellNotice:
+        currentLang === "zh"
+            ? "我们绝不会将您的个人信息出售给第三方用于营销目的。"
+            : "We never sell your personal information to third parties for marketing purposes.",
+    rightsIntro:
+        currentLang === "zh"
+            ? "您对您的个人信息拥有以下权利："
+            : "You have the following rights regarding your personal information:",
+    gdprTitle:
+        currentLang === "zh" ? "欧盟居民（GDPR）" : "For EU Residents (GDPR)",
+    gdprText:
+        currentLang === "zh"
+            ? "如果您是欧洲经济区的居民，您在GDPR下享有额外权利。请注意，您的信息可能会被转移到欧洲以外的地区，包括加拿大。"
+            : "If you are a resident of the European Economic Area, you have additional rights under GDPR. Please note that your information may be transferred outside of Europe, including to Canada.",
+    retentionTitle: currentLang === "zh" ? "数据保留" : "Data Retention",
+    retentionText:
+        currentLang === "zh"
+            ? "除非您请求删除，否则我们会保留您的预订信息以供记录。设备信息通常保留最多2年用于分析目的。"
+            : "We retain your booking information for our records unless you request deletion. Device information is typically retained for up to 2 years for analytics purposes.",
+    contactIntro:
+        currentLang === "zh"
+            ? "如有关于我们隐私惯例的问题、行使您的权利或投诉，请联系我们："
+            : "For questions about our privacy practices, to exercise your rights, or to make a complaint, please contact us:",
+    email: currentLang === "zh" ? "电子邮件" : "Email",
+    phone: currentLang === "zh" ? "电话" : "Phone",
+    mailingAddress: currentLang === "zh" ? "邮寄地址" : "Mailing Address",
+    policyUpdateNotice:
+        currentLang === "zh"
+            ? "我们可能会不时更新本隐私政策。任何更改都将在此页面发布，并附有更新的修订日期。"
+            : "We may update this privacy policy from time to time. Any changes will be posted on this page with an updated revision date.",
+    ctaTitle:
+        currentLang === "zh"
+            ? "对隐私有疑问？"
+            : "Have Questions About Your Privacy?",
+    ctaText:
+        currentLang === "zh"
+            ? "我们随时为您提供帮助。如有任何隐私相关问题，请联系我们的团队。"
+            : "We're here to help. Reach out to our team for any privacy-related concerns.",
+    contactUs: currentLang === "zh" ? "联系我们" : "Contact Us",
+};
+
 // Policy sections with Material Icons
 const policySections = [
     {
         id: "information-collect",
         icon: "description",
-        title: "Information We Collect",
+        title:
+            currentLang === "zh" ? "我们收集的信息" : "Information We Collect",
     },
     {
         id: "how-we-use",
         icon: "settings",
-        title: "How We Use Your Information",
-    },
-    { id: "sharing", icon: "share", title: "Information Sharing" },
-    { id: "your-rights", icon: "verified_user", title: "Your Rights" },
-    { id: "contact", icon: "mail", title: "Contact Us" },
-];
-
-const deviceInfoItems = [
-    { label: "Browser Information", desc: "Your web browser type and version" },
-    { label: "IP Address", desc: "Your device's Internet Protocol address" },
-    {
-        label: "Cookies",
-        desc: "Data files placed on your device to enhance your experience",
+        title:
+            currentLang === "zh"
+                ? "我们如何使用您的信息"
+                : "How We Use Your Information",
     },
     {
-        label: "Usage Data",
-        desc: "Pages visited, time spent, and interaction patterns",
-    },
-];
-
-const bookingInfoItems = [
-    { label: "Contact Details", desc: "Name, email address, and phone number" },
-    {
-        label: "Travel Information",
-        desc: "Preferred dates, destinations, and group size",
+        id: "sharing",
+        icon: "share",
+        title: currentLang === "zh" ? "信息共享" : "Information Sharing",
     },
     {
-        label: "Payment Information",
-        desc: "Billing details (processed securely via third-party providers)",
+        id: "your-rights",
+        icon: "verified_user",
+        title: currentLang === "zh" ? "您的权利" : "Your Rights",
     },
     {
-        label: "Special Requirements",
-        desc: "Dietary needs, accessibility requirements, etc.",
+        id: "contact",
+        icon: "mail",
+        title: currentLang === "zh" ? "联系我们" : "Contact Us",
     },
 ];
 
-const usageItems = [
-    {
-        icon: "flight",
-        title: "Fulfill Your Bookings",
-        desc: "Process tour reservations, arrange itineraries, and provide booking confirmations.",
-    },
-    {
-        icon: "chat",
-        title: "Communicate With You",
-        desc: "Send booking updates, respond to inquiries, and provide customer support.",
-    },
-    {
-        icon: "trending_up",
-        title: "Improve Our Services",
-        desc: "Analyze usage patterns to enhance our website and tour offerings.",
-    },
-    {
-        icon: "security",
-        title: "Protect Against Fraud",
-        desc: "Screen transactions for potential risk and ensure secure operations.",
-    },
-];
+const deviceInfoItems =
+    currentLang === "zh"
+        ? [
+              { label: "浏览器信息", desc: "您的网络浏览器类型和版本" },
+              { label: "IP地址", desc: "您设备的互联网协议地址" },
+              { label: "Cookies", desc: "放置在您设备上以增强体验的数据文件" },
+              { label: "使用数据", desc: "访问的页面、停留时间和交互模式" },
+          ]
+        : [
+              {
+                  label: "Browser Information",
+                  desc: "Your web browser type and version",
+              },
+              {
+                  label: "IP Address",
+                  desc: "Your device's Internet Protocol address",
+              },
+              {
+                  label: "Cookies",
+                  desc: "Data files placed on your device to enhance your experience",
+              },
+              {
+                  label: "Usage Data",
+                  desc: "Pages visited, time spent, and interaction patterns",
+              },
+          ];
 
-const sharingItems = [
-    {
-        icon: "confirmation_number",
-        title: "Booking Partners",
-        desc: "We work with tour operators and booking platforms to fulfill your travel arrangements.",
-    },
-    {
-        icon: "analytics",
-        title: "Analytics Services",
-        desc: "We use Google Analytics to understand how visitors use our Site.",
-    },
-    {
-        icon: "gavel",
-        title: "Legal Requirements",
-        desc: "We may disclose information when required by law or to protect our rights.",
-    },
-];
+const bookingInfoItems =
+    currentLang === "zh"
+        ? [
+              { label: "联系方式", desc: "姓名、电子邮件地址和电话号码" },
+              { label: "旅行信息", desc: "首选日期、目的地和团队规模" },
+              {
+                  label: "支付信息",
+                  desc: "账单详情（通过第三方提供商安全处理）",
+              },
+              { label: "特殊要求", desc: "饮食需求、无障碍要求等" },
+          ]
+        : [
+              {
+                  label: "Contact Details",
+                  desc: "Name, email address, and phone number",
+              },
+              {
+                  label: "Travel Information",
+                  desc: "Preferred dates, destinations, and group size",
+              },
+              {
+                  label: "Payment Information",
+                  desc: "Billing details (processed securely via third-party providers)",
+              },
+              {
+                  label: "Special Requirements",
+                  desc: "Dietary needs, accessibility requirements, etc.",
+              },
+          ];
 
-const rightsItems = [
-    {
-        icon: "visibility",
-        title: "Right to Access",
-        desc: "Request a copy of your data",
-    },
-    {
-        icon: "edit",
-        title: "Right to Correct",
-        desc: "Update inaccurate information",
-    },
-    { icon: "delete", title: "Right to Delete", desc: "Request data removal" },
-    {
-        icon: "block",
-        title: "Right to Opt-Out",
-        desc: "Unsubscribe from marketing",
-    },
-];
+const usageItems =
+    currentLang === "zh"
+        ? [
+              {
+                  icon: "flight",
+                  title: "完成您的预订",
+                  desc: "处理旅游预订、安排行程并提供预订确认。",
+              },
+              {
+                  icon: "chat",
+                  title: "与您沟通",
+                  desc: "发送预订更新、回复咨询并提供客户支持。",
+              },
+              {
+                  icon: "trending_up",
+                  title: "改进我们的服务",
+                  desc: "分析使用模式以增强我们的网站和旅游产品。",
+              },
+              {
+                  icon: "security",
+                  title: "防范欺诈",
+                  desc: "筛查交易以识别潜在风险并确保安全运营。",
+              },
+          ]
+        : [
+              {
+                  icon: "flight",
+                  title: "Fulfill Your Bookings",
+                  desc: "Process tour reservations, arrange itineraries, and provide booking confirmations.",
+              },
+              {
+                  icon: "chat",
+                  title: "Communicate With You",
+                  desc: "Send booking updates, respond to inquiries, and provide customer support.",
+              },
+              {
+                  icon: "trending_up",
+                  title: "Improve Our Services",
+                  desc: "Analyze usage patterns to enhance our website and tour offerings.",
+              },
+              {
+                  icon: "security",
+                  title: "Protect Against Fraud",
+                  desc: "Screen transactions for potential risk and ensure secure operations.",
+              },
+          ];
+
+const sharingItems =
+    currentLang === "zh"
+        ? [
+              {
+                  icon: "confirmation_number",
+                  title: "预订合作伙伴",
+                  desc: "我们与旅行社和预订平台合作，以完成您的旅行安排。",
+              },
+              {
+                  icon: "analytics",
+                  title: "分析服务",
+                  desc: "我们使用Google Analytics来了解访客如何使用本站。",
+              },
+              {
+                  icon: "gavel",
+                  title: "法律要求",
+                  desc: "当法律要求或为保护我们的权利时，我们可能会披露信息。",
+              },
+          ]
+        : [
+              {
+                  icon: "confirmation_number",
+                  title: "Booking Partners",
+                  desc: "We work with tour operators and booking platforms to fulfill your travel arrangements.",
+              },
+              {
+                  icon: "analytics",
+                  title: "Analytics Services",
+                  desc: "We use Google Analytics to understand how visitors use our Site.",
+              },
+              {
+                  icon: "gavel",
+                  title: "Legal Requirements",
+                  desc: "We may disclose information when required by law or to protect our rights.",
+              },
+          ];
+
+const rightsItems =
+    currentLang === "zh"
+        ? [
+              {
+                  icon: "visibility",
+                  title: "访问权",
+                  desc: "请求获取您的数据副本",
+              },
+              {
+                  icon: "edit",
+                  title: "更正权",
+                  desc: "更新不准确的信息",
+              },
+              { icon: "delete", title: "删除权", desc: "请求删除数据" },
+              {
+                  icon: "block",
+                  title: "退出权",
+                  desc: "取消订阅营销信息",
+              },
+          ]
+        : [
+              {
+                  icon: "visibility",
+                  title: "Right to Access",
+                  desc: "Request a copy of your data",
+              },
+              {
+                  icon: "edit",
+                  title: "Right to Correct",
+                  desc: "Update inaccurate information",
+              },
+              {
+                  icon: "delete",
+                  title: "Right to Delete",
+                  desc: "Request data removal",
+              },
+              {
+                  icon: "block",
+                  title: "Right to Opt-Out",
+                  desc: "Unsubscribe from marketing",
+              },
+          ];
 ---
 
 <Layout
@@ -134,12 +316,12 @@ const rightsItems = [
     <!-- Hero Section -->
     <PageHero
         image="/privacy-hero.png"
-        title="Privacy Policy"
-        subtitle="We are committed to protecting your personal information and being transparent about how we use it."
-        badge={{ icon: "lock", text: "Your Privacy Matters" }}
+        title={t.heroTitle}
+        subtitle={t.heroSubtitle}
+        badge={{ icon: "lock", text: t.heroBadge }}
     >
         <p class="text-white/50 text-sm mb-10">
-            Last updated: December 15, 2024
+            {t.lastUpdated}
         </p>
 
         <!-- Quick Jump Links -->
@@ -167,16 +349,7 @@ const rightsItems = [
                 <!-- Introduction Card -->
                 <div class="bg-white rounded-2xl shadow-lg p-8 mb-12">
                     <p class="text-lg text-gray-700 leading-relaxed">
-                        This Privacy Policy describes how <strong
-                            class="text-gray-900"
-                            >Qualitour Travel & Tour Experiences</strong
-                        > ("we", "us", or "our") collects, uses, and shares your personal
-                        information when you visit our website at{" "}
-                        <a
-                            href="https://www.qualitour.ca"
-                            class="text-[#f7941e] hover:text-[#e68a1c] font-medium"
-                            >www.qualitour.ca</a
-                        > (the "Site") or use our tour booking services.
+                        {t.introText}
                     </p>
                 </div>
 
@@ -193,16 +366,15 @@ const rightsItems = [
                         <h2
                             class="text-2xl md:text-3xl font-bold text-gray-900"
                         >
-                            Information We Collect
+                            {policySections[0].title}
                         </h2>
                     </div>
                     <div class="bg-white rounded-2xl shadow-lg p-8">
                         <h3 class="text-xl font-semibold text-gray-900 mb-4">
-                            Device Information
+                            {t.deviceInfoTitle}
                         </h3>
                         <p class="text-gray-600 mb-4">
-                            When you visit our Site, we automatically collect
-                            certain information about your device, including:
+                            {t.deviceInfoIntro}
                         </p>
                         <ul class="space-y-3 mb-8">
                             {
@@ -223,11 +395,10 @@ const rightsItems = [
                         </ul>
 
                         <h3 class="text-xl font-semibold text-gray-900 mb-4">
-                            Booking Information
+                            {t.bookingInfoTitle}
                         </h3>
                         <p class="text-gray-600 mb-4">
-                            When you make a booking inquiry or purchase, we
-                            collect:
+                            {t.bookingInfoIntro}
                         </p>
                         <ul class="space-y-3">
                             {
@@ -262,7 +433,7 @@ const rightsItems = [
                         <h2
                             class="text-2xl md:text-3xl font-bold text-gray-900"
                         >
-                            How We Use Your Information
+                            {policySections[1].title}
                         </h2>
                     </div>
                     <div class="bg-white rounded-2xl shadow-lg p-8">
@@ -303,13 +474,12 @@ const rightsItems = [
                         <h2
                             class="text-2xl md:text-3xl font-bold text-gray-900"
                         >
-                            Information Sharing
+                            {policySections[2].title}
                         </h2>
                     </div>
                     <div class="bg-white rounded-2xl shadow-lg p-8">
                         <p class="text-gray-600 mb-6">
-                            We may share your information with trusted third
-                            parties to help us provide and improve our services:
+                            {t.sharingIntro}
                         </p>
 
                         <div class="space-y-4">
@@ -341,8 +511,7 @@ const rightsItems = [
                                 >info</span
                             >
                             <p class="text-gray-600 text-sm">
-                                We never sell your personal information to third
-                                parties for marketing purposes.
+                                {t.noSellNotice}
                             </p>
                         </div>
                     </div>
@@ -361,13 +530,12 @@ const rightsItems = [
                         <h2
                             class="text-2xl md:text-3xl font-bold text-gray-900"
                         >
-                            Your Rights
+                            {policySections[3].title}
                         </h2>
                     </div>
                     <div class="bg-white rounded-2xl shadow-lg p-8">
                         <p class="text-gray-600 mb-6">
-                            You have the following rights regarding your
-                            personal information:
+                            {t.rightsIntro}
                         </p>
 
                         <div class="grid sm:grid-cols-2 gap-4 mb-6">
@@ -403,11 +571,7 @@ const rightsItems = [
                                 For EU Residents (GDPR)
                             </h4>
                             <p class="text-gray-600 text-sm">
-                                If you are a resident of the European Economic
-                                Area, you have additional rights under GDPR.
-                                Please note that your information may be
-                                transferred outside of Europe, including to
-                                Canada.
+                                {t.gdprText}
                             </p>
                         </div>
 
@@ -421,13 +585,10 @@ const rightsItems = [
                                     class="material-icons text-gray-600 text-lg"
                                     >schedule</span
                                 >
-                                Data Retention
+                                {t.retentionTitle}
                             </h4>
                             <p class="text-gray-600 text-sm">
-                                We retain your booking information for our
-                                records unless you request deletion. Device
-                                information is typically retained for up to 2
-                                years for analytics purposes.
+                                {t.retentionText}
                             </p>
                         </div>
                     </div>
@@ -446,14 +607,12 @@ const rightsItems = [
                         <h2
                             class="text-2xl md:text-3xl font-bold text-gray-900"
                         >
-                            Contact Us
+                            {policySections[4].title}
                         </h2>
                     </div>
                     <div class="bg-white rounded-2xl shadow-lg p-8">
                         <p class="text-gray-600 mb-6">
-                            For questions about our privacy practices, to
-                            exercise your rights, or to make a complaint, please
-                            contact us:
+                            {t.contactIntro}
                         </p>
 
                         <div class="grid md:grid-cols-2 gap-6 mb-6">
@@ -472,7 +631,7 @@ const rightsItems = [
                                 <div>
                                     <span
                                         class="font-semibold text-gray-900 block"
-                                        >Email</span
+                                        >{t.email}</span
                                     >
                                     <span class="text-[#f7941e]"
                                         >info@qualitour.ca</span
@@ -495,7 +654,7 @@ const rightsItems = [
                                 <div>
                                     <span
                                         class="font-semibold text-gray-900 block"
-                                        >Phone</span
+                                        >{t.phone}</span
                                     >
                                     <span class="text-[#f7941e]"
                                         >(778) 945-6000</span
@@ -513,7 +672,7 @@ const rightsItems = [
                                 <span class="material-icons text-gray-600"
                                     >location_on</span
                                 >
-                                Mailing Address
+                                {t.mailingAddress}
                             </h4>
                             <p class="text-gray-600">
                                 Qualitour Travel & Tour Experiences<br />
@@ -530,9 +689,7 @@ const rightsItems = [
                     class="bg-white rounded-2xl p-6 text-center border border-gray-200"
                 >
                     <p class="text-gray-500 text-sm">
-                        We may update this privacy policy from time to time. Any
-                        changes will be posted on this page with an updated
-                        revision date.
+                        {t.policyUpdateNotice}
                     </p>
                 </div>
             </div>
@@ -565,11 +722,10 @@ const rightsItems = [
                     </div>
 
                     <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
-                        Have Questions About Your Privacy?
+                        {t.ctaTitle}
                     </h2>
                     <p class="text-white/70 text-lg mb-8 max-w-xl mx-auto">
-                        We're here to help. Reach out to our team for any
-                        privacy-related concerns.
+                        {t.ctaText}
                     </p>
 
                     <div class="flex flex-wrap justify-center gap-4">
@@ -578,7 +734,7 @@ const rightsItems = [
                             class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] text-white font-bold rounded-full hover:shadow-2xl hover:shadow-orange-500/30 hover:scale-105 transition-all duration-300"
                         >
                             <span class="material-icons">mail</span>
-                            Contact Us
+                            {t.contactUs}
                         </a>
                         <a
                             href="tel:+17789456000"
