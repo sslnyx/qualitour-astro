@@ -3,14 +3,15 @@ import Layout from '../../../../layouts/Layout.astro';
 import { getTours, getTourActivities, getSiteNavData } from '../../../../lib/wordpress/api';
 import { type Locale } from '../../../../i18n/config';
 import { TourCard } from '../../../../components/TourCard';
+import { decodeHtml } from '../../../../lib/utils';
 
 // Generate static paths for all activities in all locales
 export async function getStaticPaths() {
-  const activities = await getTourActivities();
   const locales = ['en', 'zh'] as const;
   
   const paths = [];
   for (const locale of locales) {
+    const activities = await getTourActivities(locale);
     for (const activity of activities) {
       paths.push({
         params: { 
@@ -30,22 +31,38 @@ const { activity } = Astro.props;
 const lang: Locale = (langParam as Locale) || 'en';
 const localePrefix = lang === 'en' ? '' : `/${lang}`;
 
-// Fetch all tours and filter by activity
+// Fetch all tours and available activities
 const [allTours, navData] = await Promise.all([
   getTours({ per_page: 1000 }, lang),
   getSiteNavData(lang),
 ]);
 
-// Filter tours that belong to this activity
+// Helper to get all descendant IDs for an activity
+function getDescendantIds(parentId: number, allActivities: any[]): number[] {
+  const children = allActivities.filter(a => a.parent === parentId);
+  let ids = children.map(c => c.id);
+  for (const child of children) {
+    ids = [...ids, ...getDescendantIds(child.id, allActivities)];
+  }
+  return ids;
+}
+
+// Get all relevant activity IDs (current + all children)
+const relevantActivityIds = [
+  activity.id,
+  ...getDescendantIds(activity.id, navData.activities)
+];
+
+// Filter tours that belong to this activity or any of its children
 const filteredTours = allTours.filter(tour => {
   const tourActivities = tour.tour_terms?.activities || [];
-  return tourActivities.some(a => a.slug === slug);
+  return tourActivities.some(a => relevantActivityIds.includes(a.id));
 });
 ---
 
 <Layout 
-  title={`${activity?.name || 'Activity'} Tours | Qualitour`}
-  description={`Explore our ${activity?.name} tours. Discover unforgettable experiences and book your next adventure.`}
+  title={`${decodeHtml(activity?.name) || 'Activity'} Tours | Qualitour`}
+  description={`Explore our ${decodeHtml(activity?.name)} tours. Discover unforgettable experiences and book your next adventure.`}
   lang={lang}
 >
   <main class="min-h-screen bg-gray-50">
@@ -62,7 +79,7 @@ const filteredTours = allTours.filter(tour => {
             <span class="text-gray-600">/</span>
             <a href={`${localePrefix}/tours`} class="text-gray-400 hover:text-white transition-colors">Tours</a>
             <span class="text-gray-600">/</span>
-            <span class="text-orange-400">{activity?.name}</span>
+            <span class="text-orange-400">{decodeHtml(activity?.name)}</span>
           </nav>
           
           <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6">
@@ -71,10 +88,10 @@ const filteredTours = allTours.filter(tour => {
           </div>
           
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            {activity?.name} Tours
+            {decodeHtml(activity?.name)} Tours
           </h1>
           <p class="text-xl text-gray-300 max-w-2xl mx-auto">
-            Discover {filteredTours.length} amazing {activity?.name} experiences
+            Discover {filteredTours.length} amazing {decodeHtml(activity?.name)} experiences
           </p>
         </div>
       </div>
@@ -112,7 +129,7 @@ const filteredTours = allTours.filter(tour => {
             <span class="material-icons text-6xl text-gray-300 mb-4 block">travel_explore</span>
             <h3 class="text-xl font-semibold text-gray-900 mb-2">No tours available yet</h3>
             <p class="text-gray-500 mb-6">
-              We're working on adding more {activity?.name} tours. Check back soon!
+              We're working on adding more {decodeHtml(activity?.name)} tours. Check back soon!
             </p>
             <a
               href={`${localePrefix}/tours`}
@@ -145,7 +162,7 @@ const filteredTours = allTours.filter(tour => {
               class="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-300 text-gray-700 hover:text-orange-600 rounded-full transition-all"
             >
               <span class="material-icons text-sm">directions_run</span>
-              {act.name}
+              {decodeHtml(act.name)}
               <span class="text-xs text-gray-400">({act.count})</span>
             </a>
           ))}
@@ -157,7 +174,7 @@ const filteredTours = allTours.filter(tour => {
     <section class="py-16 bg-gradient-to-r from-orange-500 to-amber-500">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
         <h2 class="text-3xl md:text-4xl font-bold mb-4">
-          Ready for Your {activity?.name} Adventure?
+          Ready for Your {decodeHtml(activity?.name)} Adventure?
         </h2>
         <p class="text-xl opacity-90 mb-8">
           Contact us for personalized recommendations and custom itineraries

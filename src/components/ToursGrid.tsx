@@ -65,14 +65,45 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
         };
     }, []);
 
+    // Map destination slugs to their descendant IDs for recursive filtering
+    const destinationIdMap = useMemo(() => {
+        const map = new Map<string, number[]>();
+
+        const getDescendantIds = (parentId: number): number[] => {
+            const children = destinations.filter(d => d.parent === parentId);
+            let ids = children.map(c => c.id);
+            children.forEach(c => {
+                ids = [...ids, ...getDescendantIds(c.id)];
+            });
+            return ids;
+        };
+
+        destinations.forEach(dest => {
+            map.set(dest.slug, [dest.id, ...getDescendantIds(dest.id)]);
+        });
+
+        return map;
+    }, [destinations]);
+
     // Filter tours based on current filters
     const filteredTours = useMemo(() => {
         let result = tours;
 
         if (filters.duration) {
-            result = result.filter((tour) =>
-                tour.tour_terms?.durations?.some((d) => d.slug === filters.duration)
-            );
+            result = result.filter((tour) => {
+                // Check in durations taxonomy
+                const hasDuration = tour.tour_terms?.durations?.some((d) => d.slug === filters.duration);
+                if (hasDuration) return true;
+
+                // Check in categories taxonomy (fallback for tours tagged with categories instead of durations)
+                const hasCategory = tour.tour_terms?.categories?.some((c) => {
+                    if (c.slug === filters.duration) return true;
+                    // Special case for single-day duration which often maps to '1-day-tour' category
+                    if (filters.duration === 'single-day' && c.slug === '1-day-tour') return true;
+                    return false;
+                });
+                return hasCategory;
+            });
         }
 
         if (filters.type) {
@@ -82,8 +113,9 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
         }
 
         if (filters.destination) {
+            const allowedIds = destinationIdMap.get(filters.destination) || [];
             result = result.filter((tour) =>
-                tour.tour_terms?.destinations?.some((d) => d.slug === filters.destination)
+                tour.tour_terms?.destinations?.some((d) => allowedIds.includes(d.id))
             );
         }
 
@@ -97,7 +129,7 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
         }
 
         return result;
-    }, [tours, filters]);
+    }, [tours, filters, destinationIdMap]);
 
     // Reset to page 1 when filters change
     useEffect(() => {

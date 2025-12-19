@@ -31,8 +31,9 @@ export interface CF7Response {
  * In Astro, we submit directly to WordPress since we're a static site
  */
 function getWordPressOrigin(): string {
-    // Use public env var
-    const apiUrl = import.meta.env.PUBLIC_WORDPRESS_API_URL;
+    const apiUrl = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
+        import.meta.env.PUBLIC_WORDPRESS_API_URL ||
+        import.meta.env.WORDPRESS_API_URL;
 
     if (apiUrl) {
         try {
@@ -45,10 +46,11 @@ function getWordPressOrigin(): string {
 
     // Development fallback - only use in DEV mode
     if (import.meta.env.DEV) {
-        return 'https://handsome-cellar.localsite.io';
+        return 'http://qualitour.local';
     }
 
-    return '';
+    // Final production fallback
+    return 'https://qualitour.ca';
 }
 
 /**

@@ -103,7 +103,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
 
     // Extract content blocks from detail/details section (like Next.js TourOverview)
     interface ContentBlock {
-        type: 'title' | 'text' | 'icon-list';
+        type: 'title' | 'text' | 'icon-list' | 'image';
         content: any;
         order: number;
     }
@@ -157,8 +157,11 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
             // Handle images
             if (item.type === 'image' && item.value?.url) {
                 blocks.push({
-                    type: 'text',
-                    content: `<img src="${wpUrl(item.value.url)}" alt="${item.value.alt || ''}" class="rounded-lg max-w-full" />`,
+                    type: 'image',
+                    content: {
+                        url: wpUrl(item.value.url),
+                        alt: item.value.alt || '',
+                    },
                     order: blocks.length,
                 });
             }
@@ -370,7 +373,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
             </div>
 
             {/* Tab Content */}
-            <div className="p-6 md:p-8">
+            <div className="p-6 md:p-8 tour-detail-tabs-content">
                 {/* Overview Tab */}
                 {activeTab === 'overview' && (
                     <div className="animate-fadeIn space-y-8">
@@ -421,6 +424,16 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                                     </li>
                                                 ))}
                                             </ul>
+                                        </div>
+                                    );
+                                case 'image':
+                                    return (
+                                        <div key={idx} className="overflow-hidden">
+                                            <img
+                                                src={block.content.url}
+                                                alt={block.content.alt}
+                                                className="w-full h-auto block"
+                                            />
                                         </div>
                                     );
                                 default:

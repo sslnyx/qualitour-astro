@@ -242,4 +242,14 @@
     .animate-fadeIn {
         animation: fadeIn 0.3s ease-out;
     }
+
+    /* Tour Detail Image Enhancements */
+    .tour-detail-tabs-content img {
+        @apply w-full h-auto rounded-2xl shadow-sm my-8 block clear-both;
+    }
+
+    /* Ensure no container constraints for images intended to be full-width */
+    .tour-detail-tabs-content .prose img {
+        @apply max-w-none w-full;
+    }
 }

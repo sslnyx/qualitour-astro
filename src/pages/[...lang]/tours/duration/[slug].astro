@@ -6,11 +6,11 @@ import { TourCard } from '../../../../components/TourCard';
 
 // Generate static paths for all durations in all locales
 export async function getStaticPaths() {
-  const durations = await getTourDurations();
   const locales = ['en', 'zh'] as const;
   
   const paths = [];
   for (const locale of locales) {
+    const durations = await getTourDurations(locale);
     for (const duration of durations) {
       paths.push({
         params: { 

@@ -1,0 +1,203 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHero from "../../components/PageHero.astro";
+import { type Locale } from "../../i18n/config";
+
+// Generate paths for both locales
+export function getStaticPaths() {
+    return [
+        { params: { lang: undefined } }, // English: /terms
+        { params: { lang: "zh" } }, // Chinese: /zh/terms
+    ];
+}
+
+const { lang } = Astro.params;
+const currentLang: Locale = (lang as Locale) || "en";
+const localePrefix = currentLang === "en" ? "" : `/${currentLang}`;
+
+// Translations
+const t = {
+    heroTitle: currentLang === "zh" ? "服务条款" : "Terms & Conditions",
+    heroSubtitle:
+        currentLang === "zh"
+            ? "在预订我们的旅游服务之前，请仔细阅读这些条款。"
+            : "Please read these terms carefully before booking our travel services.",
+    heroBadge: currentLang === "zh" ? "重要预订信息" : "Important Booking Info",
+    lastUpdated:
+        currentLang === "zh"
+            ? "最后更新：2024年12月18日"
+            : "Last updated: December 18, 2024",
+    introTitle:
+        currentLang === "zh" ? "欢迎使用 Qualitour" : "Welcome to Qualitour",
+    introText:
+        currentLang === "zh"
+            ? "本条款及细则（'条款'）适用于 Qualitour Holiday Inc.（'我们'、'本公司'）提供的所有旅游、接送和旅游相关服务。通过预订我们的服务，即表示您同意受这些条款的约束。"
+            : 'These Terms & Conditions ("Terms") apply to all tours, transfers, and travel-related services provided by Qualitour Holiday Inc. ("we", "us", or "our"). By booking our services, you agree to be bound by these Terms.',
+
+    bookingTitle:
+        currentLang === "zh" ? "1. 预订与确认" : "1. Booking & Confirmation",
+    bookingText:
+        currentLang === "zh"
+            ? "所有预订均需视供应情况而定。预订在收到定金或全额付款并由我们发出书面确认后正式生效。"
+            : "All bookings are subject to availability. A booking is confirmed only after receipt of a deposit or full payment and issuance of a written confirmation by us.",
+
+    paymentTitle: currentLang === "zh" ? "2. 付款政策" : "2. Payment Policy",
+    paymentText:
+        currentLang === "zh"
+            ? "全额付款通常需在出发前 30 天完成。对于临近预订，需在预订时支付全款。我们接受主要信用卡、电子转账（E-Transfer）和银行汇款。"
+            : "Full payment is generally required 30 days prior to departure. For late bookings, full payment is due at the time of reservation. We accept major credit cards, E-Transfers, and bank wire transfers.",
+
+    cancellationTitle:
+        currentLang === "zh" ? "3. 取消与退款" : "3. Cancellation & Refunds",
+    cancellationText:
+        currentLang === "zh"
+            ? "取消必须以书面形式通知。退款金额取决于取消通知的时间：\n- 出发前 30 天以上：扣除手续费后退款。\n- 出发前 15-29 天：扣除 50% 费用。\n- 出发前 14 天及以内：不予退款。"
+            : "Cancellations must be made in writing. Refunds depend on the notice period:\n- More than 30 days before departure: Refund minus admin fee.\n- 15-29 days before departure: 50% cancellation fee.\n- 14 days or less before departure: No refund.",
+
+    itineraryTitle:
+        currentLang === "zh" ? "4. 行程变更" : "4. Itinerary Changes",
+    itineraryText:
+        currentLang === "zh"
+            ? "我们保留根据天气、交通或不可抗力因素修改行程、交通或住宿的权利，以确保客户的安全和舒适。"
+            : "We reserve the right to modify itineraries, transportation, or accommodation due to weather, traffic, or force majeure events to ensure client safety and comfort.",
+
+    liabilityTitle:
+        currentLang === "zh" ? "5. 责任声明" : "5. Liability & Disclaimer",
+    liabilityText:
+        currentLang === "zh"
+            ? "Qualitour 对因非我们控制范围内的延误、事故、伤害、丢失或财产损坏不承担责任。强烈建议每位客户购买旅游保险。"
+            : "Qualitour acts as an agent and is not liable for delays, accidents, injuries, losses, or damage to property beyond our control. Travel insurance is strongly recommended for all clients.",
+
+    ctaTitle: currentLang === "zh" ? "有任何疑问？" : "Have Questions?",
+    ctaText:
+        currentLang === "zh"
+            ? "如果您对预订或条款有任何疑问，请随时联系我们的团队。"
+            : "If you have any questions regarding your booking or our terms, please feel free to reach out to our team.",
+    contactUs: currentLang === "zh" ? "联系我们" : "Contact Us",
+};
+
+const sections = [
+    {
+        id: "booking",
+        icon: "event_available",
+        title: t.bookingTitle,
+        content: t.bookingText,
+    },
+    {
+        id: "payment",
+        icon: "payments",
+        title: t.paymentTitle,
+        content: t.paymentText,
+    },
+    {
+        id: "cancellation",
+        icon: "cancel",
+        title: t.cancellationTitle,
+        content: t.cancellationText,
+    },
+    {
+        id: "itinerary",
+        icon: "map",
+        title: t.itineraryTitle,
+        content: t.itineraryText,
+    },
+    {
+        id: "liability",
+        icon: "gavel",
+        title: t.liabilityTitle,
+        content: t.liabilityText,
+    },
+];
+---
+
+<Layout
+    title={currentLang === "zh"
+        ? "服务条款 | Qualitour"
+        : "Terms & Conditions | Qualitour"}
+    description={currentLang === "zh"
+        ? "Qualitour 服务条款 - 了解预订细则、取消政策及责任范围。"
+        : "Qualitour Terms & Conditions - Learn about booking details, cancellation policies, and liability."}
+    lang={currentLang}
+>
+    <!-- Hero Section -->
+    <PageHero
+        image="/about-hero.png"
+        title={t.heroTitle}
+        subtitle={t.heroSubtitle}
+        badge={{ icon: "gavel", text: t.heroBadge }}
+    >
+        <p class="text-white/50 text-sm mb-10">
+            {t.lastUpdated}
+        </p>
+    </PageHero>
+
+    <!-- Main Content -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-4xl mx-auto">
+                <!-- Introduction -->
+                <div
+                    class="bg-white rounded-2xl shadow-lg p-8 mb-12 border border-gray-100"
+                >
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">
+                        {t.introTitle}
+                    </h2>
+                    <p class="text-lg text-gray-700 leading-relaxed">
+                        {t.introText}
+                    </p>
+                </div>
+
+                <!-- Terms Sections -->
+                <div class="space-y-8">
+                    {
+                        sections.map((section) => (
+                            <div id={section.id} class="scroll-mt-24">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-200">
+                                        <span class="material-icons text-white text-xl">
+                                            {section.icon}
+                                        </span>
+                                    </div>
+                                    <h3 class="text-xl md:text-2xl font-bold text-gray-900">
+                                        {section.title}
+                                    </h3>
+                                </div>
+                                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+                                    <p class="text-gray-700 leading-relaxed whitespace-pre-line">
+                                        {section.content}
+                                    </p>
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+
+                <!-- Law Notice -->
+                <div class="mt-12 p-6 bg-gray-100 rounded-2xl text-center">
+                    <p class="text-gray-500 text-sm italic">
+                        {
+                            currentLang === "zh"
+                                ? "本条款受加拿大不列颠哥伦比亚省法律管辖并按其解释。"
+                                : "These Terms shall be governed by and construed in accordance with the laws of British Columbia, Canada."
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support CTA -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">{t.ctaTitle}</h2>
+            <p class="text-gray-600 mb-8 max-w-xl mx-auto">{t.ctaText}</p>
+            <a
+                href={`${localePrefix}/contact`}
+                class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-full hover:shadow-xl hover:scale-105 transition-all"
+            >
+                <span class="material-icons">support_agent</span>
+                {t.contactUs}
+            </a>
+        </div>
+    </section>
+</Layout>

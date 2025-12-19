@@ -8,7 +8,9 @@ const R2_MEDIA_URL = 'https://qualitour-assets.isquarestudio.com';
  * Get WordPress base URL for API calls (not for media).
  */
 export function getWpBaseUrl(): string {
-    const apiUrl = import.meta.env.PUBLIC_WORDPRESS_API_URL || import.meta.env.WORDPRESS_API_URL;
+    const apiUrl = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
+        import.meta.env.PUBLIC_WORDPRESS_API_URL ||
+        import.meta.env.WORDPRESS_API_URL;
 
     if (apiUrl) {
         try {
@@ -19,12 +21,13 @@ export function getWpBaseUrl(): string {
         }
     }
 
-    // Fallback - only use local dev URL in development
+    // Development fallback - only use in DEV mode
     if (import.meta.env.DEV) {
         return 'http://qualitour.local';
     }
 
-    return '';
+    // Final production fallback
+    return 'https://qualitour.ca';
 }
 
 /**
@@ -50,7 +53,7 @@ function isYouTubeThumbnail(path: string): boolean {
  * @returns CDN URL for media, or original URL for non-media
  * 
  * @example
- * wpUrl('https://handsome-cellar.localsite.io/wp-content/uploads/2021/02/photo.jpg')
+ * wpUrl('http://qualitour.local/wp-content/uploads/2021/02/photo.jpg')
  * // Returns: 'https://qualitour-assets.isquarestudio.com/qualitour/wp-content/uploads/2021/02/photo.jpg'
  */
 export function wpUrl(localUrl: string): string {
@@ -137,7 +140,7 @@ export function processHtmlContent(html: string): string {
         // defined separators for srcset (comma usually)
         // format: url width/density, url width/density
         const parts = content.split(',');
-        const newParts = parts.map(part => {
+        const newParts = parts.map((part: string) => {
             // Trim whitespace
             const trimmed = part.trim();
             // Split by space to separate URL from descriptor

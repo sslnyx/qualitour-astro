@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { WPTourDestination, WPTourDuration, WPTourType } from '../lib/wordpress/types';
+import { decodeHtml } from '../lib/utils';
 
 interface Props {
     destinations: WPTourDestination[];
@@ -116,12 +117,6 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
         });
     };
 
-    // Decode HTML entities in names
-    const decodeHtml = (html: string) => {
-        const txt = document.createElement("textarea");
-        txt.innerHTML = html;
-        return txt.value;
-    };
 
     const hasActiveFilters = filters.destination || filters.type || filters.duration || filters.q;
 
@@ -262,7 +257,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                                             : 'bg-white text-gray-700 border-gray-200 hover:border-[#f7941e] hover:text-[#f7941e] hover:shadow-sm'
                                             }`}
                                     >
-                                        {dur.name}
+                                        {decodeHtml(dur.name)}
                                         <span className={`ml-1.5 text-xs ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
                                             ({dur.count || 0})
                                         </span>
@@ -313,7 +308,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                                             )}
                                         </span>
                                         <span className={`flex-1 text-sm ${isSelected ? 'text-[#f7941e] font-medium' : 'text-gray-700'}`}>
-                                            {type.name}
+                                            {decodeHtml(type.name)}
                                         </span>
                                         <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
                                             {type.count || 0}
@@ -366,7 +361,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                                                 )}
                                             </span>
                                             <span className={`flex-1 text-sm ${isSelected ? 'text-[#f7941e] font-medium' : 'text-gray-700'}`}>
-                                                {dest.name}
+                                                {decodeHtml(dest.name)}
                                             </span>
                                             <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
                                                 {dest.count || 0}
@@ -396,7 +391,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                                                                 className={`flex-1 text-xs ${isChildSelected ? 'text-[#f7941e] font-medium' : 'text-gray-600'
                                                                     }`}
                                                             >
-                                                                {child.name}
+                                                                {decodeHtml(child.name)}
                                                             </span>
                                                             <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full text-[10px]">
                                                                 {child.count || 0}

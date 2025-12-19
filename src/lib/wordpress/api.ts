@@ -147,16 +147,17 @@ type V1TermMinimal = {
     name: string;
     parent: number;
     count: number;
+    translations?: Record<string, string>;
 };
 
 async function fetchTerms(taxonomy: string, lang?: string): Promise<V1TermMinimal[]> {
     const customApiUrl = getCustomApiUrl();
     const url = new URL(`${customApiUrl}/terms/${taxonomy}`);
 
-    url.searchParams.set('per_page', '100');
+    url.searchParams.set('per_page', '200');
     if (lang && lang !== 'en') url.searchParams.set('lang', lang);
 
-    console.log(`[Astro SSG] Fetching terms for ${taxonomy}: ${url.toString()}`);
+    console.log(`[Astro SSG] Fetching terms for ${taxonomy} (${lang || 'en'}): ${url.toString()}`);
 
     const response = await fetchWithTimeout(url.toString());
     const terms = await response.json();
@@ -298,6 +299,7 @@ function mapToActivity(term: V1TermMinimal): WPTourActivity {
         taxonomy: 'tour-activity',
         description: '',
         link: '',
+        translations: term.translations,
     };
 }
 
@@ -311,6 +313,7 @@ function mapToDestination(term: V1TermMinimal): WPTourDestination {
         taxonomy: 'tour-destination',
         description: '',
         link: '',
+        translations: term.translations,
     };
 }
 
@@ -323,6 +326,7 @@ function mapToDuration(term: V1TermMinimal): WPTourDuration {
         taxonomy: 'tour_duration',
         description: '',
         link: '',
+        translations: term.translations,
     };
 }
 
@@ -335,6 +339,7 @@ function mapToType(term: V1TermMinimal): WPTourType {
         taxonomy: 'tour_type',
         description: '',
         link: '',
+        translations: term.translations,
     };
 }
 

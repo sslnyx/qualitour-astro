@@ -6,7 +6,8 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { WPTourDestination, WPTourActivity, WPTourType } from '../lib/wordpress/types';
+import type { WPTourDestination, WPTourActivity, WPTourType, WPTourDuration } from '../lib/wordpress/types';
+import { decodeHtml } from '../lib/utils';
 
 interface TourTranslation {
     id: number;
@@ -18,6 +19,7 @@ interface SiteNavProps {
     destinations?: WPTourDestination[];
     activities?: WPTourActivity[];
     types?: WPTourType[];
+    durations?: WPTourDuration[];
     tourTranslations?: {
         en?: TourTranslation;
         zh?: TourTranslation;
@@ -26,14 +28,103 @@ interface SiteNavProps {
 
 
 
+// Destination name translations (Client-side fallback)
+const DESTINATION_TRANSLATIONS: Record<string, string> = {
+    // Continents & Major Regions
+    'Africa': '非洲',
+    'Asia': '亞洲',
+    'Europe': '歐洲',
+    'North America': '北美',
+    'Oceania': '大洋洲',
+    'South America': '南美',
+    'Antarctica': '南極洲',
+    'Central America': '中美',
+    'Middle East': '中東',
+    'Worldwide': '全球',
+
+    // Countries & Regions
+    'America': '美國',
+    'Egypt': '埃及',
+    'Kenya': '肯尼亞',
+    'Tanzania': '坦桑尼亞',
+    'Morocco': '摩洛哥',
+    'South Africa': '南非',
+    'Japan': '日本',
+    'Korea': '韓國',
+    'Vietnam': '越南',
+    'Thailand': '泰國',
+    'Turkey': '土耳其',
+    'Greece': '希臘',
+    'India': '印度',
+    'United Arab Emirates': '阿聯酋',
+    'Canada': '加拿大',
+    'USA': '美國',
+    'United States': '美國',
+    'Mexico': '墨西哥',
+    'Peru': '秘魯',
+    'Brazil': '巴西',
+    'Argentina': '阿根廷',
+    'Chile': '智利',
+    'Australia': '澳洲',
+    'New Zealand': '紐西蘭',
+    'Taiwan': '台灣',
+    'Caribbean': '加勒比海',
+
+    // Canada Cities/Regions
+    'Atlantic Canada': '大西洋省份',
+    'Maritimes': '海洋三省',
+    'Yellowknife': '黃刀鎮',
+    'Whitehorse': '白馬市',
+    'Banff': '班夫',
+    'Jasper': '賈斯珀',
+    'Vancouver': '溫哥華',
+    'Victoria': '維多利亞',
+    'Toronto': '多倫多',
+    'Montreal': '滿地可',
+    'Quebec City': '魁北克市',
+    'Quebec': '魁北克',
+    'Ottawa': '渥太華',
+    'Calgary': '卡加利',
+    'Halifax': '哈利法克斯',
+    'Niagara Falls': '尼亞加拉大瀑布',
+    'Yukon': '育空',
+    'Northwest Territories': '西北地區',
+
+    // Europe Regions
+    'Eastern Europe': '東歐',
+    'Western Europe': '西歐',
+    'Central Europe': '中歐',
+    'Northern Europe': '北歐',
+    'Southern Europe': '南歐',
+
+    'Alaska': '阿拉斯加',
+    'Scandinavia': '斯堪的納維亞',
+    'Nordic': '北歐',
+    'Iceland': '冰島',
+    'Norway': '挪威',
+    'Sweden': '瑞典',
+    'Denmark': '丹麥',
+    'Finland': '芬蘭',
+};
+
 export function SiteNav({
     lang = 'en',
     destinations = [],
     activities = [],
     types = [],
+    durations = [],
     tourTranslations
 }: SiteNavProps) {
     const localePrefix = lang === 'en' ? '' : `/${lang}`;
+
+    // Helper to get translated destination name
+    const getDestName = (name: string) => {
+        const decodedName = decodeHtml(name);
+        if (lang === 'zh' && DESTINATION_TRANSLATIONS[name]) {
+            return DESTINATION_TRANSLATIONS[name];
+        }
+        return decodedName;
+    };
 
     const [megaOpen, setMegaOpen] = useState(false);
     const [servicesOpen, setServicesOpen] = useState(false);
@@ -249,7 +340,7 @@ export function SiteNav({
                                                                     <span className="w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-white group-hover:shadow-md flex items-center justify-center transition-all">
                                                                         <span className="material-icons text-lg text-gray-500 group-hover:text-orange-500 transition-colors">{link.icon}</span>
                                                                     </span>
-                                                                    <span className="font-medium">{link.label}</span>
+                                                                    <span className="font-medium">{decodeHtml(link.label)}</span>
                                                                 </a>
                                                             </li>
                                                         ))}
@@ -310,9 +401,9 @@ export function SiteNav({
                                                                                     ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white'
                                                                                     : 'bg-gradient-to-br from-orange-500/10 to-amber-500/10 text-orange-500 group-hover:from-orange-500 group-hover:to-amber-500 group-hover:text-white'
                                                                                     }`}>
-                                                                                    {dest.name.charAt(0)}
+                                                                                    {getDestName(dest.name).charAt(0)}
                                                                                 </span>
-                                                                                <span className="font-medium">{dest.name}</span>
+                                                                                <span className="font-medium">{getDestName(dest.name)}</span>
                                                                             </div>
                                                                             {hasChildren && (
                                                                                 <span className="material-icons text-sm text-gray-400">chevron_right</span>
@@ -336,7 +427,7 @@ export function SiteNav({
                                                                     >
                                                                         <h5 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                                                                             <span className="material-icons text-sm text-orange-500">subdirectory_arrow_right</span>
-                                                                            {parent.name}
+                                                                            {getDestName(parent.name)}
                                                                         </h5>
                                                                         <div className="space-y-1">
                                                                             {children.map((child) => {
@@ -362,9 +453,9 @@ export function SiteNav({
                                                                                                     ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white'
                                                                                                     : 'bg-white text-orange-400'
                                                                                                     }`}>
-                                                                                                    {child.name.charAt(0)}
+                                                                                                    {getDestName(child.name).charAt(0)}
                                                                                                 </span>
-                                                                                                <span className="font-medium">{child.name}</span>
+                                                                                                <span className="font-medium">{getDestName(child.name)}</span>
                                                                                                 {child.count > 0 && (
                                                                                                     <span className="ml-auto text-xs text-gray-400">{child.count}</span>
                                                                                                 )}
@@ -399,7 +490,7 @@ export function SiteNav({
                                                                                                                     }`}
                                                                                                             >
                                                                                                                 <span className="w-1 h-1 rounded-full bg-orange-300"></span>
-                                                                                                                <span className="font-medium">{grandchild.name}</span>
+                                                                                                                <span className="font-medium">{getDestName(grandchild.name)}</span>
                                                                                                                 {grandchild.count > 0 && (
                                                                                                                     <span className="ml-auto text-xs text-gray-400">{grandchild.count}</span>
                                                                                                                 )}
@@ -497,20 +588,50 @@ export function SiteNav({
                                         currentPath !== '/zh/tours';
 
                                     if (isTourPage && tourTranslations && tourTranslations[targetLang]) {
-                                        // Use the translated tour's slug
+                                        // 1. Handle single tour pages
                                         const translatedSlug = tourTranslations[targetLang]!.slug;
                                         const newPath = targetLang === 'en'
                                             ? `/tours/${encodeURIComponent(translatedSlug)}`
                                             : `/zh/tours/${encodeURIComponent(translatedSlug)}`;
                                         window.location.href = newPath;
-                                    } else {
-                                        // Default behavior for non-tour pages
-                                        if (lang === 'en') {
-                                            window.location.href = `/zh${currentPath}`;
-                                        } else {
-                                            const path = currentPath.replace(/^\/zh/, '');
-                                            window.location.href = path || '/';
+                                        return;
+                                    }
+
+                                    // 2. Handle taxonomy pages (destinations, activities, etc.)
+                                    const taxPathRegex = /\/tours\/(destination|activity|type|duration)\/([^\/\?#]+)/;
+                                    const taxMatch = currentPath.match(taxPathRegex);
+
+                                    if (taxMatch) {
+                                        const taxType = taxMatch[1];
+                                        const currentSlug = decodeURIComponent(taxMatch[2]).trim().replace(/\/$/, '');
+                                        let term = null;
+
+                                        if (taxType === 'destination') {
+                                            term = destinations.find(d => d.slug === currentSlug);
+                                        } else if (taxType === 'activity') {
+                                            term = activities.find(a => a.slug === currentSlug);
+                                        } else if (taxType === 'type') {
+                                            term = types.find(t => t.slug === currentSlug);
+                                        } else if (taxType === 'duration') {
+                                            term = durations.find(d => d.slug === currentSlug);
                                         }
+
+                                        if (term?.translations?.[targetLang]) {
+                                            const targetSlug = term.translations[targetLang];
+                                            const newPath = targetLang === 'en'
+                                                ? `/tours/${taxType}/${targetSlug}`
+                                                : `/zh/tours/${taxType}/${targetSlug}`;
+                                            window.location.href = newPath;
+                                            return;
+                                        }
+                                    }
+
+                                    // 3. Fallback for all other pages
+                                    if (lang === 'en') {
+                                        window.location.href = `/zh${currentPath}`;
+                                    } else {
+                                        const path = currentPath.replace(/^\/zh/, '');
+                                        window.location.href = path || '/';
                                     }
                                 }}
                                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 hover:text-orange-500 transition-all text-sm"
@@ -580,6 +701,150 @@ export function SiteNav({
                                 {lang === 'zh' ? '首页' : 'Home'}
                             </a>
 
+                            {/* Tours Accordion */}
+                            <div className="border-t border-gray-100">
+                                <button
+                                    onClick={() => setMobileToursOpen(!mobileToursOpen)}
+                                    className="flex items-center justify-between w-full px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-200/50">
+                                            <span className="material-icons text-white">explore</span>
+                                        </span>
+                                        {lang === 'zh' ? '行程' : 'Tours'}
+                                    </div>
+                                    <span className={`material-icons text-gray-400 transition-transform duration-300 ${mobileToursOpen ? 'rotate-180' : ''}`}>
+                                        expand_more
+                                    </span>
+                                </button>
+                                <div className={`overflow-hidden transition-all duration-300 ${mobileToursOpen ? 'max-h-[2000px]' : 'max-h-0'}`}>
+                                    <div className="bg-gray-50">
+                                        {/* Browse All CTA */}
+                                        <div className="p-4 bg-gradient-to-r from-orange-500 to-amber-500">
+                                            <a
+                                                href={`${localePrefix}/tours`}
+                                                onClick={handleMobileNavClick}
+                                                className="flex items-center justify-center gap-2 bg-white text-orange-500 px-5 py-3 rounded-xl font-bold text-sm shadow-lg"
+                                            >
+                                                {lang === 'zh' ? '浏览所有行程' : 'Browse All Tours'}
+                                                <span className="material-icons text-lg">arrow_forward</span>
+                                            </a>
+                                        </div>
+
+                                        {/* Featured Tours */}
+                                        <div className="px-6 py-5 border-b border-gray-200">
+                                            <a
+                                                href={`${localePrefix}/tours/featured`}
+                                                onClick={handleMobileNavClick}
+                                                className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 shadow-sm"
+                                            >
+                                                <span className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md">
+                                                    <span className="material-icons text-white text-lg">star</span>
+                                                </span>
+                                                <span className="font-bold">{lang === 'zh' ? '精选行程' : 'Featured Tours'}</span>
+                                            </a>
+                                        </div>
+
+                                        {/* Tour Types */}
+                                        <div className="px-6 py-5 border-b border-gray-200">
+                                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{lang === 'zh' ? '旅游类型' : 'Tour Types'}</h4>
+                                            <div className="space-y-2">
+                                                {tourTypeLinks.map((link) => (
+                                                    <a
+                                                        key={link.slug}
+                                                        href={`${localePrefix}/tours/type/${link.slug}`}
+                                                        onClick={handleMobileNavClick}
+                                                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition-colors"
+                                                    >
+                                                        <span className="w-9 h-9 rounded-lg bg-white shadow flex items-center justify-center">
+                                                            <span className="material-icons text-gray-500 text-lg">{link.icon}</span>
+                                                        </span>
+                                                        <span className="font-medium text-gray-700">{link.label}</span>
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Destinations */}
+                                        <div className="px-6 py-5 border-b border-gray-200">
+                                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{lang === 'zh' ? '目的地' : 'Destinations'}</h4>
+                                            <div className="space-y-2">
+                                                {destinations.filter(d => d.parent === 0).map((dest) => {
+                                                    const children = destinations.filter(c => c.parent === dest.id);
+                                                    const hasChildren = children.length > 0;
+                                                    const isExpanded = expandedChildId === dest.id;
+
+                                                    return (
+                                                        <div key={dest.id} className="space-y-1">
+                                                            <div className="flex items-center justify-between">
+                                                                <a
+                                                                    href={`${localePrefix}/tours/destination/${dest.slug}`}
+                                                                    onClick={handleMobileNavClick}
+                                                                    className="flex-1 flex items-center gap-3 p-2 rounded-xl hover:bg-white transition-colors"
+                                                                >
+                                                                    <span className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-xs font-bold text-orange-500">
+                                                                        {getDestName(dest.name).charAt(0)}
+                                                                    </span>
+                                                                    <span className="text-sm font-semibold text-gray-700">{getDestName(dest.name)}</span>
+                                                                </a>
+                                                                {hasChildren && (
+                                                                    <button
+                                                                        onClick={() => setExpandedChildId(isExpanded ? null : dest.id)}
+                                                                        className="p-2 hover:bg-white rounded-lg transition-colors"
+                                                                    >
+                                                                        <span className={`material-icons text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                                                                            expand_more
+                                                                        </span>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            {hasChildren && isExpanded && (
+                                                                <div className="ml-10 space-y-1 border-l-2 border-orange-100 pl-4 py-1 animate-fadeIn">
+                                                                    {children.map((child) => (
+                                                                        <a
+                                                                            key={child.id}
+                                                                            href={`${localePrefix}/tours/destination/${child.slug}`}
+                                                                            onClick={handleMobileNavClick}
+                                                                            className="flex items-center justify-between p-2 rounded-lg text-sm text-gray-600 hover:text-orange-500 hover:bg-white transition-colors"
+                                                                        >
+                                                                            <span>{getDestName(child.name)}</span>
+                                                                            {child.count > 0 && (
+                                                                                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{child.count}</span>
+                                                                            )}
+                                                                        </a>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Hot Locations */}
+                                        <div className="px-6 py-5">
+                                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{lang === 'zh' ? '热门地点' : 'Hot Locations'}</h4>
+                                            <div className="space-y-2">
+                                                {hotDestinations.map((dest, idx) => (
+                                                    <a
+                                                        key={idx}
+                                                        href={`${localePrefix}/tours?${dest.type === 'destination' ? 'destination' : 'q'}=${encodeURIComponent(dest.value)}`}
+                                                        onClick={handleMobileNavClick}
+                                                        className="flex items-center gap-3 p-2 rounded-xl hover:bg-white transition-all group"
+                                                    >
+                                                        <span className="w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 flex items-center justify-center">
+                                                            <span className="material-icons text-gray-500 text-sm">{dest.icon}</span>
+                                                        </span>
+                                                        <span className="text-sm font-medium text-gray-700">{dest.label}</span>
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Services Accordion */}
                             <div className="border-t border-gray-100">
                                 <button
@@ -618,91 +883,18 @@ export function SiteNav({
                                 </div>
                             </div>
 
-                            {/* Tours Accordion */}
-                            <div className="border-t border-gray-100">
-                                <button
-                                    onClick={() => setMobileToursOpen(!mobileToursOpen)}
-                                    className="flex items-center justify-between w-full px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-200/50">
-                                            <span className="material-icons text-white">explore</span>
-                                        </span>
-                                        {lang === 'zh' ? '行程' : 'Tours'}
-                                    </div>
-                                    <span className={`material-icons text-gray-400 transition-transform duration-300 ${mobileToursOpen ? 'rotate-180' : ''}`}>
-                                        expand_more
-                                    </span>
-                                </button>
-                                <div className={`overflow-hidden transition-all duration-300 ${mobileToursOpen ? 'max-h-[1000px]' : 'max-h-0'}`}>
-                                    <div className="bg-gray-50">
-                                        {/* Browse All CTA */}
-                                        <div className="p-4 bg-gradient-to-r from-orange-500 to-amber-500">
-                                            <a
-                                                href={`${localePrefix}/tours`}
-                                                onClick={handleMobileNavClick}
-                                                className="flex items-center justify-center gap-2 bg-white text-orange-500 px-5 py-3 rounded-xl font-bold text-sm shadow-lg"
-                                            >
-                                                {lang === 'zh' ? '浏览所有行程' : 'Browse All Tours'}
-                                                <span className="material-icons text-lg">arrow_forward</span>
-                                            </a>
-                                        </div>
-
-                                        {/* Tour Types */}
-                                        <div className="px-6 py-5 border-b border-gray-200">
-                                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{lang === 'zh' ? '旅游类型' : 'Tour Types'}</h4>
-                                            <div className="space-y-2">
-                                                {tourTypeLinks.map((link) => (
-                                                    <a
-                                                        key={link.slug}
-                                                        href={`${localePrefix}/tours/type/${link.slug}`}
-                                                        onClick={handleMobileNavClick}
-                                                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition-colors"
-                                                    >
-                                                        <span className="w-9 h-9 rounded-lg bg-white shadow flex items-center justify-center">
-                                                            <span className="material-icons text-gray-500 text-lg">{link.icon}</span>
-                                                        </span>
-                                                        <span className="font-medium text-gray-700">{link.label}</span>
-                                                    </a>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* Destinations */}
-                                        <div className="px-6 py-5">
-                                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{lang === 'zh' ? '热门目的地' : 'Destinations'}</h4>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {destinations.filter(d => d.parent === 0).slice(0, 6).map((dest) => (
-                                                    <a
-                                                        key={dest.id}
-                                                        href={`${localePrefix}/tours/destination/${dest.slug}`}
-                                                        onClick={handleMobileNavClick}
-                                                        className="flex items-center gap-2 p-2 rounded-lg hover:bg-white transition-colors"
-                                                    >
-                                                        <span className="w-7 h-7 rounded-full bg-orange-500/10 flex items-center justify-center text-xs font-bold text-orange-500">
-                                                            {dest.name.charAt(0)}
-                                                        </span>
-                                                        <span className="text-sm font-medium text-gray-700">{dest.name}</span>
-                                                    </a>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* Other Links */}
                             <a href={`${localePrefix}/about-us`} onClick={handleMobileNavClick} className="flex items-center gap-4 px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors border-t border-gray-100">
                                 <span className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
                                     <span className="material-icons text-green-600">info</span>
                                 </span>
-                                {lang === 'zh' ? '关于我们' : 'About Us'}
+                                {lang === 'zh' ? '关于我们' : 'About'}
                             </a>
                             <a href={`${localePrefix}/contact`} onClick={handleMobileNavClick} className="flex items-center gap-4 px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors border-t border-gray-100">
                                 <span className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
                                     <span className="material-icons text-purple-600">mail</span>
                                 </span>
-                                {lang === 'zh' ? '联系我们' : 'Contact Us'}
+                                {lang === 'zh' ? '联系我们' : 'Contact'}
                             </a>
                             <a href={`${localePrefix}/faq`} onClick={handleMobileNavClick} className="flex items-center gap-4 px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors border-t border-gray-100">
                                 <span className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center">
@@ -734,20 +926,51 @@ export function SiteNav({
                                             currentPath !== '/zh/tours';
 
                                         if (isTourPage && tourTranslations && tourTranslations[targetLang]) {
-                                            // Use the translated tour's slug
+                                            // 1. Handle single tour pages
                                             const translatedSlug = tourTranslations[targetLang]!.slug;
                                             const newPath = targetLang === 'en'
                                                 ? `/tours/${encodeURIComponent(translatedSlug)}`
                                                 : `/zh/tours/${encodeURIComponent(translatedSlug)}`;
                                             window.location.href = newPath;
-                                        } else {
-                                            // Default behavior for non-tour pages
-                                            if (lang === 'en') {
-                                                window.location.href = `/zh${currentPath}`;
-                                            } else {
-                                                const path = currentPath.replace(/^\/zh/, '');
-                                                window.location.href = path || '/';
+                                            return;
+                                        }
+
+                                        // 2. Handle taxonomy pages (destinations, activities, etc.)
+                                        // Path pattern: /zh/tours/destination/slug or /tours/destination/slug
+                                        const taxPathRegex = /\/tours\/(destination|activity|type|duration)\/([^\/\?#]+)/;
+                                        const taxMatch = currentPath.match(taxPathRegex);
+
+                                        if (taxMatch) {
+                                            const taxType = taxMatch[1];
+                                            const currentSlug = decodeURIComponent(taxMatch[2]).trim().replace(/\/$/, '');
+                                            let term = null;
+
+                                            if (taxType === 'destination') {
+                                                term = destinations.find(d => d.slug === currentSlug);
+                                            } else if (taxType === 'activity') {
+                                                term = activities.find(a => a.slug === currentSlug);
+                                            } else if (taxType === 'type') {
+                                                term = types.find(t => t.slug === currentSlug);
+                                            } else if (taxType === 'duration') {
+                                                term = durations.find(d => d.slug === currentSlug);
                                             }
+
+                                            if (term?.translations?.[targetLang]) {
+                                                const targetSlug = term.translations[targetLang];
+                                                const newPath = targetLang === 'en'
+                                                    ? `/tours/${taxType}/${targetSlug}`
+                                                    : `/zh/tours/${taxType}/${targetSlug}`;
+                                                window.location.href = newPath;
+                                                return;
+                                            }
+                                        }
+
+                                        // 3. Fallback for all other pages
+                                        if (lang === 'en') {
+                                            window.location.href = `/zh${currentPath}`;
+                                        } else {
+                                            const path = currentPath.replace(/^\/zh/, '');
+                                            window.location.href = path || '/';
                                         }
                                     }}
                                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-white hover:shadow-sm transition-all text-sm"

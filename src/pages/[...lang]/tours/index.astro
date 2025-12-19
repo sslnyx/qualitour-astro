@@ -24,12 +24,11 @@ const localePrefix = lang === "en" ? "" : `/${lang}`;
 
 // Fetch all tours and filter data at build time
 // Client-side filtering will handle URL params
-const [tours, navData, durations, types] = await Promise.all([
+const [tours, navData] = await Promise.all([
   getTours({ per_page: 1000 }, lang),
   getSiteNavData(lang),
-  getTourDurations(lang),
-  getTourTypes(lang),
 ]);
+const { durations, types } = navData;
 ---
 
 <Layout

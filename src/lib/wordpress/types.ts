@@ -85,6 +85,7 @@ export interface WPTourCategory {
     count: number;
     taxonomy: string;
     link?: string;
+    translations?: Record<string, string>;
 }
 
 export interface WPTourTag {
@@ -95,6 +96,7 @@ export interface WPTourTag {
     count: number;
     taxonomy: string;
     link?: string;
+    translations?: Record<string, string>;
 }
 
 export interface WPTourActivity {
@@ -106,6 +108,7 @@ export interface WPTourActivity {
     count: number;
     taxonomy: string;
     link?: string;
+    translations?: Record<string, string>;
 }
 
 export interface WPTourDestination {
@@ -119,6 +122,7 @@ export interface WPTourDestination {
     link?: string;
     meta?: unknown[];
     acf?: unknown[];
+    translations?: Record<string, string>;
 }
 
 export interface WPTourDuration {
@@ -129,6 +133,7 @@ export interface WPTourDuration {
     count: number;
     taxonomy: string;
     link?: string;
+    translations?: Record<string, string>;
 }
 
 export interface WPTourType {
@@ -139,6 +144,7 @@ export interface WPTourType {
     count: number;
     taxonomy: string;
     link?: string;
+    translations?: Record<string, string>;
 }
 
 export interface WPApiParams {
