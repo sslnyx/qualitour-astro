@@ -1,0 +1,11 @@
+# Qualitour SEO Robots
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://qualitour.isquarestudio.com/sitemap.xml
+
+# Block admin and private paths
+Disallow: /api/
+Disallow: /_astro/
+Disallow: /*.json$

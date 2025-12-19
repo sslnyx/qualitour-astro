@@ -158,15 +158,21 @@ const transferRoutes = [
     : "Discover authentic Canadian tours, private ski shuttles to Whistler, and expert China visa services. Book your unforgettable journey with Qualitour today."}
   lang={lang}
   image={heroBackground.src}
+  heroImage={heroBackground.src}
 >
   <!-- Hero Section - Premium Dark Theme -->
   <section class="relative min-h-[85vh] flex items-center overflow-hidden">
     <!-- Background Image with Overlay -->
     <img
       src={heroBackground.src}
-      alt=""
+      alt="Scenic Canadian landscape"
       class="absolute inset-0 w-full h-full object-cover object-bottom"
       style="z-index: -2;"
+      fetchpriority="high"
+      loading="eager"
+      decoding="async"
+      width="1920"
+      height="1080"
     />
     <div
       class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"
@@ -210,11 +216,15 @@ const transferRoutes = [
           method="GET"
         >
           <div class="relative grow w-full md:w-auto">
+            <label for="hero-search" class="sr-only"
+              >{t.searchPlaceholder}</label
+            >
             <span
               class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-white/50"
-              >search</span
+              aria-hidden="true">search</span
             >
             <input
+              id="hero-search"
               type="text"
               name="q"
               placeholder={t.searchPlaceholder}
@@ -222,7 +232,10 @@ const transferRoutes = [
             />
           </div>
           <div class="relative w-full md:w-auto">
+            <label for="hero-destination" class="sr-only">{t.destination}</label
+            >
             <select
+              id="hero-destination"
               name="destination"
               class="w-full md:w-52 px-4 py-4 text-white bg-white/10 rounded-xl focus:outline-none appearance-none cursor-pointer"
             >

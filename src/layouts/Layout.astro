@@ -15,6 +15,7 @@ interface Props {
   title?: string;
   description?: string;
   image?: string;
+  heroImage?: string; // LCP image to preload
   type?: "website" | "article" | "profile";
   lang?: Locale;
   canonical?: string;
@@ -29,6 +30,7 @@ const {
   title = "Qualitour | Vancouver Tour Operator & China Visa Services",
   description = "Qualitour offers premium Canadian tours, private transfers in Vancouver, and expert China visa services. Experience authentic journeys with our professional team.",
   image,
+  heroImage,
   type = "website",
   lang,
   canonical,
@@ -61,6 +63,7 @@ try {
       title={title}
       description={description}
       image={image}
+      heroImage={heroImage}
       type={type}
       canonical={canonical}
       noindex={noindex}
