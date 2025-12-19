@@ -54,10 +54,25 @@ const imageUrl = image?.startsWith("http")
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 {!noindex && <meta name="robots" content="index, follow" />}
 
-<!-- Preload LCP Hero Image -->
+<!-- Preload LCP Hero Image (responsive: desktop vs mobile) -->
 {
     heroImage && (
-        <link rel="preload" as="image" href={heroImage} fetchpriority="high" />
+        <>
+            <link
+                rel="preload"
+                as="image"
+                href={heroImage}
+                media="(min-width: 769px)"
+                fetchpriority="high"
+            />
+            <link
+                rel="preload"
+                as="image"
+                href={heroImage.replace(".webp", "-mobile.webp")}
+                media="(max-width: 768px)"
+                fetchpriority="high"
+            />
+        </>
     )
 }
 

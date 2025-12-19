@@ -7,6 +7,7 @@ import {
 } from "../../lib/wordpress/api";
 import { type Locale } from "../../i18n/config";
 import heroBackground from "../../assets/hero-background.webp";
+import heroBackgroundMobile from "../../assets/hero-background-mobile.webp";
 import TourCard from "../../components/TourCard";
 import ReviewsSlider from "../../components/ReviewsSlider";
 import TransferBookingModalButton from "../../components/TransferBookingModalButton";
@@ -163,17 +164,26 @@ const transferRoutes = [
   <!-- Hero Section - Premium Dark Theme -->
   <section class="relative min-h-[85vh] flex items-center overflow-hidden">
     <!-- Background Image with Overlay -->
-    <img
-      src={heroBackground.src}
-      alt="Scenic Canadian landscape"
-      class="absolute inset-0 w-full h-full object-cover object-bottom"
-      style="z-index: -2;"
-      fetchpriority="high"
-      loading="eager"
-      decoding="async"
-      width="1920"
-      height="1080"
-    />
+    <!-- Responsive hero image: mobile (640px, 25KB) vs desktop (1920px, 135KB) -->
+    <picture>
+      <source
+        media="(max-width: 768px)"
+        srcset={heroBackgroundMobile.src}
+        width="640"
+        height="640"
+      />
+      <img
+        src={heroBackground.src}
+        alt="Scenic Canadian landscape"
+        class="absolute inset-0 w-full h-full object-cover object-bottom"
+        style="z-index: -2;"
+        fetchpriority="high"
+        loading="eager"
+        decoding="async"
+        width="1920"
+        height="1920"
+      />
+    </picture>
     <div
       class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"
       style="z-index: -1;"
