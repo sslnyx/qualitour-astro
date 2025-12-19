@@ -1,14 +1,12 @@
 ---
 import { wpUrl } from "../lib/wp-url";
 
-// Import self-hosted fonts (only what we need)
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/500.css";
-import "@fontsource/inter/600.css";
-import "@fontsource/inter/700.css";
+// Self-hosted: Material Icons (used throughout site)
 import "@fontsource/material-icons";
-// NOTE: Kaushan Script removed - using SVG image instead to save ~35KB
-// NOTE: Font Awesome removed - using inline SVGs for social icons to save ~99KB
+
+// CDN: Inter font loaded via async link below for better caching
+// CDN: Kaushan Script removed - using SVG image instead (~35KB saved)
+// CDN: Font Awesome removed - using inline SVGs for social icons (~99KB saved)
 
 export interface Props {
     title?: string;
@@ -63,6 +61,24 @@ const imageUrl = image?.startsWith("http")
         <link rel="preload" as="image" href={heroImage} fetchpriority="high" />
     )
 }
+
+<!-- Preconnect to Google Fonts (limit to 2 origins) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+<!-- Inter Font - Async loading from Google Fonts CDN -->
+<link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    onload="this.onload=null;this.rel='stylesheet'"
+/>
+<noscript>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    />
+</noscript>
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content={type} />

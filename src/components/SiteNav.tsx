@@ -213,7 +213,7 @@ export function SiteNav({
                                 alt="Qualitour"
                                 width={175}
                                 height={48}
-                                className="w-[160px] lg:w-[175px] h-auto -ml-4 transition-transform duration-300 group-hover:scale-[1.02]"
+                                className="w-[160px] lg:w-[175px] h-auto transition-transform duration-300 group-hover:scale-[1.02]"
                             />
                         </a>
 
@@ -634,7 +634,7 @@ export function SiteNav({
                                         window.location.href = path || '/';
                                     }
                                 }}
-                                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 hover:text-orange-500 transition-all text-sm"
+                                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 hover:text-orange-500 transition-all text-sm cursor-pointer"
                                 aria-label={lang === 'en' ? "Switch to Chinese" : "Switch to English"}
                             >
                                 <span className="material-icons text-xl">language</span>
