@@ -1,7 +1,7 @@
 ---
 import "../styles/global.css";
 import { getCurrentLocale, type Locale } from "../i18n/config";
-import { SiteNav } from "../components/SiteNav";
+import SiteNavAstro from "../components/SiteNavAstro.astro";
 import { getSiteNavData, type SiteNavData } from "../lib/wordpress/api";
 import Footer from "../components/Footer.astro";
 import SeoHead from "../components/SeoHead.astro";
@@ -70,15 +70,14 @@ try {
     />
   </head>
   <body class="min-h-screen bg-gray-900 text-gray-100 antialiased">
-    <!-- Navigation -->
-    <SiteNav
+    <!-- Navigation (Pure Astro - no React runtime needed) -->
+    <SiteNavAstro
       lang={currentLocale}
       destinations={navData.destinations}
       activities={navData.activities}
       types={navData.types}
       durations={navData.durations}
       tourTranslations={tourTranslations}
-      client:idle
     />
 
     <!-- Main Content -->

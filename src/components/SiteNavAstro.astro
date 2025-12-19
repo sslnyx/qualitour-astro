@@ -1,0 +1,1413 @@
+---
+/**
+ * SiteNav Component for Astro
+ *
+ * Premium navigation with megamenu, mobile drawer, and smooth animations.
+ * Uses vanilla JavaScript for interactivity - no React runtime needed.
+ */
+
+import type {
+    WPTourDestination,
+    WPTourActivity,
+    WPTourType,
+    WPTourDuration,
+} from "../lib/wordpress/types";
+import { decodeHtml } from "../lib/utils";
+
+interface TourTranslation {
+    id: number;
+    slug: string;
+}
+
+interface Props {
+    lang?: "en" | "zh";
+    destinations?: WPTourDestination[];
+    activities?: WPTourActivity[];
+    types?: WPTourType[];
+    durations?: WPTourDuration[];
+    tourTranslations?: {
+        en?: TourTranslation;
+        zh?: TourTranslation;
+    };
+}
+
+const {
+    lang = "en",
+    destinations = [],
+    activities = [],
+    types = [],
+    durations = [],
+    tourTranslations,
+} = Astro.props;
+
+const localePrefix = lang === "en" ? "" : `/${lang}`;
+const currentPath = Astro.url.pathname;
+
+// Destination name translations
+const DESTINATION_TRANSLATIONS: Record<string, string> = {
+    Africa: "非洲",
+    Asia: "亞洲",
+    Europe: "歐洲",
+    "North America": "北美",
+    Oceania: "大洋洲",
+    "South America": "南美",
+    Antarctica: "南極洲",
+    "Central America": "中美",
+    "Middle East": "中東",
+    Worldwide: "全球",
+    America: "美國",
+    Egypt: "埃及",
+    Kenya: "肯尼亞",
+    Tanzania: "坦桑尼亞",
+    Morocco: "摩洛哥",
+    "South Africa": "南非",
+    Japan: "日本",
+    Korea: "韓國",
+    Vietnam: "越南",
+    Thailand: "泰國",
+    Turkey: "土耳其",
+    Greece: "希臘",
+    India: "印度",
+    "United Arab Emirates": "阿聯酋",
+    Canada: "加拿大",
+    USA: "美國",
+    "United States": "美國",
+    Mexico: "墨西哥",
+    Peru: "秘魯",
+    Brazil: "巴西",
+    Argentina: "阿根廷",
+    Chile: "智利",
+    Australia: "澳洲",
+    "New Zealand": "紐西蘭",
+    Taiwan: "台灣",
+    Caribbean: "加勒比海",
+    "Atlantic Canada": "大西洋省份",
+    Maritimes: "海洋三省",
+    Yellowknife: "黃刀鎮",
+    Whitehorse: "白馬市",
+    Banff: "班夫",
+    Jasper: "賈斯珀",
+    Vancouver: "溫哥華",
+    Victoria: "維多利亞",
+    Toronto: "多倫多",
+    Montreal: "滿地可",
+    "Quebec City": "魁北克市",
+    Quebec: "魁北克",
+    Ottawa: "渥太華",
+    Calgary: "卡加利",
+    Halifax: "哈利法克斯",
+    "Niagara Falls": "尼亞加拉大瀑布",
+    Yukon: "育空",
+    "Northwest Territories": "西北地區",
+    "Eastern Europe": "東歐",
+    "Western Europe": "西歐",
+    "Central Europe": "中歐",
+    "Northern Europe": "北歐",
+    "Southern Europe": "南歐",
+    Alaska: "阿拉斯加",
+    Scandinavia: "斯堪的納維亞",
+    Nordic: "北歐",
+    Iceland: "冰島",
+    Norway: "挪威",
+    Sweden: "瑞典",
+    Denmark: "丹麥",
+    Finland: "芬蘭",
+};
+
+function getDestName(name: string): string {
+    const decodedName = decodeHtml(name);
+    if (lang === "zh" && DESTINATION_TRANSLATIONS[name]) {
+        return DESTINATION_TRANSLATIONS[name];
+    }
+    return decodedName;
+}
+
+// Tour types with icons
+const tourTypeLinks = [
+    {
+        label: lang === "zh" ? "陆地游" : "Land Tours",
+        slug: "land-tours",
+        icon: "hiking",
+    },
+    {
+        label: lang === "zh" ? "邮轮" : "Cruises",
+        slug: "cruises",
+        icon: "sailing",
+    },
+    {
+        label: lang === "zh" ? "票务 & 通票" : "Tickets & Passes",
+        slug: "attraction-tickets",
+        icon: "confirmation_number",
+    },
+];
+
+// Service links
+const serviceLinks = [
+    {
+        label: lang === "zh" ? "私人接送" : "Private Transfers",
+        href: `${localePrefix}/private-transfers`,
+        icon: "airport_shuttle",
+        desc:
+            lang === "zh"
+                ? "机场、游轮和滑雪接送"
+                : "Airport, cruise & ski transfers",
+    },
+    {
+        label: lang === "zh" ? "中国签证" : "China Visa",
+        href: `${localePrefix}/visa`,
+        icon: "badge",
+        desc: lang === "zh" ? "签证申请协助" : "Visa application assistance",
+    },
+];
+
+// Hot destinations
+const hotDestinations = [
+    {
+        label: lang === "zh" ? "黄刀镇 (极光)" : "Yellowknife (Aurora)",
+        type: "destination",
+        value: "yellowknife",
+        icon: "ac_unit",
+    },
+    {
+        label: lang === "zh" ? "白马市 (极光)" : "Whitehorse (Aurora)",
+        type: "destination",
+        value: "whitehorse",
+        icon: "auto_awesome",
+    },
+    {
+        label: lang === "zh" ? "落基山脉" : "Rocky Mountains",
+        type: "destination",
+        value: "banff",
+        icon: "landscape",
+    },
+    {
+        label: lang === "zh" ? "海洋三省" : "Maritimes",
+        type: "destination",
+        value: "atlantic-canada",
+        icon: "sailing",
+    },
+];
+
+// Parent destinations
+const parentDestinations = destinations
+    .filter((d) => d.parent === 0)
+    .slice(0, 8);
+
+// Serialize data for client-side JS
+const navData = JSON.stringify({
+    lang,
+    localePrefix,
+    destinations,
+    activities,
+    types,
+    durations,
+    tourTranslations,
+    currentPath,
+});
+---
+
+<!-- Navigation -->
+<nav
+    id="site-nav"
+    class="w-full sticky top-0 z-50 transition-all duration-300 bg-white border-b border-gray-100"
+>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-18 py-3">
+            <!-- Logo -->
+            <a href={`${localePrefix}/`} class="flex items-center group">
+                <img
+                    src="/logo.svg"
+                    alt="Qualitour"
+                    width="175"
+                    height="48"
+                    class="w-[160px] lg:w-[175px] h-auto transition-transform duration-300 group-hover:scale-[1.02]"
+                />
+            </a>
+
+            <!-- Desktop Nav -->
+            <ul class="hidden lg:flex items-center">
+                <li>
+                    <a
+                        href={`${localePrefix}/`}
+                        class="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group"
+                    >
+                        {lang === "zh" ? "首页" : "Home"}
+                        <span
+                            class="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full"
+                        ></span>
+                    </a>
+                </li>
+
+                <!-- Services Dropdown -->
+                <li class="relative" data-dropdown="services">
+                    <button
+                        class="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium flex items-center gap-1 transition-colors group"
+                    >
+                        {lang === "zh" ? "服务" : "Services"}
+                        <span
+                            class="material-icons text-lg transition-transform duration-300 dropdown-arrow"
+                            >expand_more</span
+                        >
+                        <span
+                            class="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full dropdown-indicator"
+                        ></span>
+                    </button>
+
+                    <!-- Services Dropdown Panel -->
+                    <div
+                        class="absolute left-1/2 -translate-x-1/2 top-full pt-2 transition-all duration-300 opacity-0 -translate-y-2 pointer-events-none dropdown-panel"
+                    >
+                        <div
+                            class="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden min-w-[320px]"
+                        >
+                            <div class="p-2">
+                                {
+                                    serviceLinks.map((item) => (
+                                        <a
+                                            href={item.href}
+                                            class="flex items-start gap-4 p-4 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 transition-all group"
+                                        >
+                                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange-200/50 group-hover:scale-110 transition-transform">
+                                                <span class="material-icons text-white text-xl">
+                                                    {item.icon}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span class="font-semibold text-gray-900 group-hover:text-orange-500 transition-colors block">
+                                                    {item.label}
+                                                </span>
+                                                <span class="text-sm text-gray-500">
+                                                    {item.desc}
+                                                </span>
+                                            </div>
+                                        </a>
+                                    ))
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </li>
+
+                <!-- Tours Megamenu -->
+                <li class="relative" data-dropdown="mega">
+                    <button
+                        class="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium flex items-center gap-1 transition-colors group"
+                    >
+                        {lang === "zh" ? "行程" : "Tours"}
+                        <span
+                            class="material-icons text-lg transition-transform duration-300 dropdown-arrow"
+                            >expand_more</span
+                        >
+                        <span
+                            class="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full dropdown-indicator"
+                        ></span>
+                    </button>
+
+                    <!-- Mega Menu Panel -->
+                    <div
+                        class="fixed left-0 right-0 top-[72px] z-[100] flex justify-center transition-all duration-300 ease-out opacity-0 -translate-y-4 pointer-events-none"
+                        id="mega-panel"
+                    >
+                        <div
+                            class="w-full max-w-6xl mx-4 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden"
+                        >
+                            <!-- Gradient Header -->
+                            <div
+                                class="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-400 px-8 py-5"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-4">
+                                        <div
+                                            class="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center"
+                                        >
+                                            <span
+                                                class="material-icons text-white text-2xl"
+                                                >explore</span
+                                            >
+                                        </div>
+                                        <div>
+                                            <h3
+                                                class="text-white font-bold text-xl"
+                                            >
+                                                {
+                                                    lang === "zh"
+                                                        ? "开启您的下一段旅程"
+                                                        : "Discover Your Next Adventure"
+                                                }
+                                            </h3>
+                                            <p class="text-white/80 text-sm">
+                                                {
+                                                    lang === "zh"
+                                                        ? "探索我们精心策划的行程"
+                                                        : "Explore our curated tours"
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <a
+                                        href={`${localePrefix}/tours`}
+                                        class="bg-white text-orange-500 px-6 py-3 rounded-full font-bold text-sm hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+                                    >
+                                        {
+                                            lang === "zh"
+                                                ? "浏览所有行程"
+                                                : "Browse All Tours"
+                                        }
+                                        <span class="material-icons text-lg"
+                                            >arrow_forward</span
+                                        >
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="p-8">
+                                <div class="grid grid-cols-12 gap-8">
+                                    <!-- Tour Types -->
+                                    <div class="col-span-3">
+                                        <h4
+                                            class="font-bold text-gray-900 text-xs uppercase tracking-widest mb-5 flex items-center gap-2"
+                                        >
+                                            <span
+                                                class="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center"
+                                            >
+                                                <span
+                                                    class="material-icons text-orange-500 text-lg"
+                                                    >category</span
+                                                >
+                                            </span>
+                                            {
+                                                lang === "zh"
+                                                    ? "旅游类型"
+                                                    : "Tour Types"
+                                            }
+                                        </h4>
+                                        <ul class="space-y-1">
+                                            {
+                                                tourTypeLinks.map((link) => (
+                                                    <li>
+                                                        <a
+                                                            href={`${localePrefix}/tours/type/${link.slug}`}
+                                                            class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-500 transition-all group"
+                                                        >
+                                                            <span class="w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-white group-hover:shadow-md flex items-center justify-center transition-all">
+                                                                <span class="material-icons text-lg text-gray-500 group-hover:text-orange-500 transition-colors">
+                                                                    {link.icon}
+                                                                </span>
+                                                            </span>
+                                                            <span class="font-medium">
+                                                                {link.label}
+                                                            </span>
+                                                        </a>
+                                                    </li>
+                                                ))
+                                            }
+                                        </ul>
+
+                                        <!-- Featured Tours -->
+                                        <div
+                                            class="mt-6 pt-6 border-t border-gray-100"
+                                        >
+                                            <a
+                                                href={`${localePrefix}/tours/featured`}
+                                                class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 hover:from-amber-100 hover:to-yellow-100 transition-all group"
+                                            >
+                                                <span
+                                                    class="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg shadow-amber-200/50"
+                                                >
+                                                    <span
+                                                        class="material-icons text-white text-lg"
+                                                        >star</span
+                                                    >
+                                                </span>
+                                                <div>
+                                                    <span
+                                                        class="font-bold block"
+                                                        >{
+                                                            lang === "zh"
+                                                                ? "精选行程"
+                                                                : "Featured Tours"
+                                                        }</span
+                                                    >
+                                                    <span
+                                                        class="text-xs text-amber-600/70"
+                                                        >{
+                                                            lang === "zh"
+                                                                ? "我们的首选推荐"
+                                                                : "Our top picks"
+                                                        }</span
+                                                    >
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <!-- Destinations -->
+                                    <div
+                                        class="col-span-6 border-x border-gray-100 px-8"
+                                    >
+                                        <h4
+                                            class="font-bold text-gray-900 text-xs uppercase tracking-widest mb-5 flex items-center gap-2"
+                                        >
+                                            <span
+                                                class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center"
+                                            >
+                                                <span
+                                                    class="material-icons text-blue-600 text-lg"
+                                                    >public</span
+                                                >
+                                            </span>
+                                            {
+                                                lang === "zh"
+                                                    ? "热门目的地"
+                                                    : "Popular Destinations"
+                                            }
+                                        </h4>
+                                        <div class="flex gap-6">
+                                            <!-- Parent destinations -->
+                                            <div
+                                                class="flex-1 space-y-1"
+                                                id="dest-parents"
+                                            >
+                                                {
+                                                    parentDestinations.map(
+                                                        (dest, idx) => {
+                                                            const children =
+                                                                destinations.filter(
+                                                                    (c) =>
+                                                                        c.parent ===
+                                                                        dest.id,
+                                                                );
+                                                            const hasChildren =
+                                                                children.length >
+                                                                0;
+                                                            const isActive =
+                                                                currentPath.includes(
+                                                                    `/tours/destination/${dest.slug}`,
+                                                                );
+
+                                                            return (
+                                                                <div
+                                                                    class="relative"
+                                                                    data-dest-id={
+                                                                        dest.id
+                                                                    }
+                                                                    data-has-children={
+                                                                        hasChildren
+                                                                    }
+                                                                >
+                                                                    <a
+                                                                        href={`${localePrefix}/tours/destination/${dest.slug}`}
+                                                                        class={`dest-parent-link flex items-center justify-between gap-3 py-2 px-3 rounded-xl transition-all group ${
+                                                                            idx ===
+                                                                                0 ||
+                                                                            isActive
+                                                                                ? "bg-gradient-to-r from-orange-50 to-amber-50 text-orange-600"
+                                                                                : "text-gray-800 hover:bg-gray-50 hover:text-orange-500"
+                                                                        }`}
+                                                                    >
+                                                                        <div class="flex items-center gap-3">
+                                                                            <span
+                                                                                class={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold transition-all shadow-sm ${
+                                                                                    idx ===
+                                                                                        0 ||
+                                                                                    isActive
+                                                                                        ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white"
+                                                                                        : "bg-gradient-to-br from-orange-500/10 to-amber-500/10 text-orange-500 group-hover:from-orange-500 group-hover:to-amber-500 group-hover:text-white"
+                                                                                }`}
+                                                                            >
+                                                                                {getDestName(
+                                                                                    dest.name,
+                                                                                ).charAt(
+                                                                                    0,
+                                                                                )}
+                                                                            </span>
+                                                                            <span class="font-medium">
+                                                                                {getDestName(
+                                                                                    dest.name,
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
+                                                                        {hasChildren && (
+                                                                            <span class="material-icons text-sm text-gray-400">
+                                                                                chevron_right
+                                                                            </span>
+                                                                        )}
+                                                                    </a>
+                                                                </div>
+                                                            );
+                                                        },
+                                                    )
+                                                }
+                                            </div>
+
+                                            <!-- Child destinations panel -->
+                                            <div
+                                                class="flex-1"
+                                                id="dest-children"
+                                            >
+                                                {
+                                                    parentDestinations.map(
+                                                        (parent, idx) => {
+                                                            const children =
+                                                                destinations.filter(
+                                                                    (c) =>
+                                                                        c.parent ===
+                                                                        parent.id,
+                                                                );
+                                                            if (
+                                                                children.length ===
+                                                                0
+                                                            )
+                                                                return null;
+
+                                                            return (
+                                                                <div
+                                                                    class={`bg-gray-50 rounded-xl p-4 ${idx === 0 ? "" : "hidden"}`}
+                                                                    data-children-for={
+                                                                        parent.id
+                                                                    }
+                                                                >
+                                                                    <h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                                        <span class="material-icons text-sm text-orange-500">
+                                                                            subdirectory_arrow_right
+                                                                        </span>
+                                                                        {getDestName(
+                                                                            parent.name,
+                                                                        )}
+                                                                    </h5>
+                                                                    <div class="space-y-1">
+                                                                        {children.map(
+                                                                            (
+                                                                                child,
+                                                                            ) => {
+                                                                                const isChildActive =
+                                                                                    currentPath.includes(
+                                                                                        `/tours/destination/${child.slug}`,
+                                                                                    );
+                                                                                return (
+                                                                                    <a
+                                                                                        href={`${localePrefix}/tours/destination/${child.slug}`}
+                                                                                        class={`flex items-center gap-2 py-1.5 px-2 rounded-lg transition-all text-sm ${
+                                                                                            isChildActive
+                                                                                                ? "text-orange-600 bg-white font-semibold shadow-sm"
+                                                                                                : "text-gray-700 hover:text-orange-500 hover:bg-white"
+                                                                                        }`}
+                                                                                    >
+                                                                                        <span
+                                                                                            class={`w-5 h-5 rounded-full shadow-sm flex items-center justify-center text-xs font-bold ${
+                                                                                                isChildActive
+                                                                                                    ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white"
+                                                                                                    : "bg-white text-orange-400"
+                                                                                            }`}
+                                                                                        >
+                                                                                            {getDestName(
+                                                                                                child.name,
+                                                                                            ).charAt(
+                                                                                                0,
+                                                                                            )}
+                                                                                        </span>
+                                                                                        <span class="font-medium">
+                                                                                            {getDestName(
+                                                                                                child.name,
+                                                                                            )}
+                                                                                        </span>
+                                                                                        {child.count >
+                                                                                            0 && (
+                                                                                            <span class="ml-auto text-xs text-gray-400">
+                                                                                                {
+                                                                                                    child.count
+                                                                                                }
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </a>
+                                                                                );
+                                                                            },
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        },
+                                                    )
+                                                }
+                                                <!-- No children placeholder -->
+                                                <div
+                                                    class="hidden bg-gray-50 rounded-xl p-4 text-center text-gray-500 text-sm"
+                                                    id="no-children-placeholder"
+                                                >
+                                                    <span
+                                                        class="material-icons text-2xl mb-2 text-gray-300 block"
+                                                        >explore</span
+                                                    >
+                                                    {
+                                                        lang === "zh"
+                                                            ? "无子区域"
+                                                            : "No sub-regions"
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Hot Locations -->
+                                    <div class="col-span-3">
+                                        <h4
+                                            class="font-bold text-gray-900 text-xs uppercase tracking-widest mb-5 flex items-center gap-2"
+                                        >
+                                            <span
+                                                class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center"
+                                            >
+                                                <span
+                                                    class="material-icons text-red-600 text-lg"
+                                                    >whatshot</span
+                                                >
+                                            </span>
+                                            {
+                                                lang === "zh"
+                                                    ? "热门地点"
+                                                    : "Hot Locations"
+                                            }
+                                        </h4>
+
+                                        <div class="space-y-3">
+                                            {
+                                                hotDestinations.map((dest) => (
+                                                    <a
+                                                        href={`${localePrefix}/tours?${dest.type === "destination" ? "destination" : "q"}=${encodeURIComponent(dest.value)}`}
+                                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-red-50 transition-all group"
+                                                    >
+                                                        <span class="w-10 h-10 rounded-lg bg-white shadow-sm border border-gray-100 group-hover:border-red-200 flex items-center justify-center transition-colors">
+                                                            <span class="material-icons text-gray-500 group-hover:text-red-500 transition-colors">
+                                                                {dest.icon}
+                                                            </span>
+                                                        </span>
+                                                        <span class="font-medium text-gray-700 group-hover:text-red-600 transition-colors">
+                                                            {dest.label}
+                                                        </span>
+                                                    </a>
+                                                ))
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+
+                <li>
+                    <a
+                        href={`${localePrefix}/about-us`}
+                        class="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group"
+                    >
+                        {lang === "zh" ? "关于我们" : "About"}
+                        <span
+                            class="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full"
+                        ></span>
+                    </a>
+                </li>
+                <li>
+                    <a
+                        href={`${localePrefix}/contact`}
+                        class="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group"
+                    >
+                        {lang === "zh" ? "联系我们" : "Contact"}
+                        <span
+                            class="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full"
+                        ></span>
+                    </a>
+                </li>
+                <li>
+                    <a
+                        href={`${localePrefix}/faq`}
+                        class="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group"
+                    >
+                        {lang === "zh" ? "常见问题" : "FAQ"}
+                        <span
+                            class="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full"
+                        ></span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Right Side: Language & CTA -->
+            <div class="hidden lg:flex items-center gap-4">
+                <!-- Language Toggle -->
+                <button
+                    id="lang-toggle-desktop"
+                    class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 hover:text-orange-500 transition-all text-sm cursor-pointer"
+                    aria-label={lang === "en"
+                        ? "Switch to Chinese"
+                        : "Switch to English"}
+                >
+                    <span class="material-icons text-xl">language</span>
+                    <span>{lang === "en" ? "中文" : "EN"}</span>
+                </button>
+                <a
+                    href={`${localePrefix}/tours`}
+                    class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-2.5 rounded-full font-semibold text-sm hover:shadow-lg hover:shadow-orange-300/40 hover:scale-105 transition-all flex items-center gap-2"
+                >
+                    <span class="material-icons text-lg">explore</span>
+                    {lang === "zh" ? "探索行程" : "Explore Tours"}
+                </a>
+            </div>
+
+            <!-- Mobile Hamburger -->
+            <button
+                id="mobile-menu-btn"
+                class="lg:hidden p-2.5 hover:bg-gray-100 rounded-xl transition-colors -mr-2"
+            >
+                <span class="sr-only">Open menu</span>
+                <div class="w-6 h-5 flex flex-col justify-between">
+                    <span
+                        class="hamburger-line w-full h-0.5 bg-gray-700 rounded-full transform transition-all duration-300"
+                    ></span>
+                    <span
+                        class="hamburger-line w-full h-0.5 bg-gray-700 rounded-full transition-all duration-300"
+                    ></span>
+                    <span
+                        class="hamburger-line w-full h-0.5 bg-gray-700 rounded-full transform transition-all duration-300"
+                    ></span>
+                </div>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Mobile Menu Drawer -->
+<div
+    id="mobile-drawer"
+    class="fixed inset-0 z-[200] lg:hidden transition-all duration-300 pointer-events-none"
+>
+    <!-- Backdrop -->
+    <div
+        id="mobile-backdrop"
+        class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 opacity-0"
+    >
+    </div>
+
+    <!-- Drawer -->
+    <div
+        id="mobile-panel"
+        class="absolute right-0 top-0 bottom-0 w-[90%] max-w-md bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col translate-x-full"
+    >
+        <!-- Header -->
+        <div
+            class="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white"
+        >
+            <img src="/logo.svg" alt="Qualitour" class="h-10 w-auto -ml-2" />
+            <button
+                id="mobile-close-btn"
+                class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-xl transition-colors"
+            >
+                <span class="material-icons text-gray-600">close</span>
+            </button>
+        </div>
+
+        <!-- Menu Content -->
+        <div class="flex-1 overflow-y-auto">
+            <nav class="py-4">
+                <!-- Home -->
+                <a
+                    href={`${localePrefix}/`}
+                    class="flex items-center gap-4 px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors"
+                >
+                    <span
+                        class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center"
+                    >
+                        <span class="material-icons text-orange-500">home</span>
+                    </span>
+                    {lang === "zh" ? "首页" : "Home"}
+                </a>
+
+                <!-- Tours Accordion -->
+                <div class="border-t border-gray-100">
+                    <button
+                        id="mobile-tours-btn"
+                        class="flex items-center justify-between w-full px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors"
+                    >
+                        <div class="flex items-center gap-4">
+                            <span
+                                class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-200/50"
+                            >
+                                <span class="material-icons text-white"
+                                    >explore</span
+                                >
+                            </span>
+                            {lang === "zh" ? "行程" : "Tours"}
+                        </div>
+                        <span
+                            class="material-icons text-gray-400 transition-transform duration-300 mobile-accordion-arrow"
+                            >expand_more</span
+                        >
+                    </button>
+                    <div
+                        id="mobile-tours-content"
+                        class="overflow-hidden transition-all duration-300 max-h-0"
+                    >
+                        <div class="bg-gray-50">
+                            <!-- Browse All CTA -->
+                            <div
+                                class="p-4 bg-gradient-to-r from-orange-500 to-amber-500"
+                            >
+                                <a
+                                    href={`${localePrefix}/tours`}
+                                    class="flex items-center justify-center gap-2 bg-white text-orange-500 px-5 py-3 rounded-xl font-bold text-sm shadow-lg"
+                                >
+                                    {
+                                        lang === "zh"
+                                            ? "浏览所有行程"
+                                            : "Browse All Tours"
+                                    }
+                                    <span class="material-icons text-lg"
+                                        >arrow_forward</span
+                                    >
+                                </a>
+                            </div>
+
+                            <!-- Featured Tours -->
+                            <div class="px-6 py-5 border-b border-gray-200">
+                                <a
+                                    href={`${localePrefix}/tours/featured`}
+                                    class="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 shadow-sm"
+                                >
+                                    <span
+                                        class="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md"
+                                    >
+                                        <span
+                                            class="material-icons text-white text-lg"
+                                            >star</span
+                                        >
+                                    </span>
+                                    <span class="font-bold"
+                                        >{
+                                            lang === "zh"
+                                                ? "精选行程"
+                                                : "Featured Tours"
+                                        }</span
+                                    >
+                                </a>
+                            </div>
+
+                            <!-- Tour Types -->
+                            <div class="px-6 py-5 border-b border-gray-200">
+                                <h4
+                                    class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4"
+                                >
+                                    {lang === "zh" ? "旅游类型" : "Tour Types"}
+                                </h4>
+                                <div class="space-y-2">
+                                    {
+                                        tourTypeLinks.map((link) => (
+                                            <a
+                                                href={`${localePrefix}/tours/type/${link.slug}`}
+                                                class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition-colors"
+                                            >
+                                                <span class="w-9 h-9 rounded-lg bg-white shadow flex items-center justify-center">
+                                                    <span class="material-icons text-gray-500 text-lg">
+                                                        {link.icon}
+                                                    </span>
+                                                </span>
+                                                <span class="font-medium text-gray-700">
+                                                    {link.label}
+                                                </span>
+                                            </a>
+                                        ))
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Destinations -->
+                            <div class="px-6 py-5 border-b border-gray-200">
+                                <h4
+                                    class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4"
+                                >
+                                    {lang === "zh" ? "目的地" : "Destinations"}
+                                </h4>
+                                <div class="space-y-2">
+                                    {
+                                        parentDestinations.map((dest) => (
+                                            <a
+                                                href={`${localePrefix}/tours/destination/${dest.slug}`}
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-white transition-colors"
+                                            >
+                                                <span class="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-xs font-bold text-orange-500">
+                                                    {getDestName(
+                                                        dest.name,
+                                                    ).charAt(0)}
+                                                </span>
+                                                <span class="text-sm font-semibold text-gray-700">
+                                                    {getDestName(dest.name)}
+                                                </span>
+                                            </a>
+                                        ))
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Hot Locations -->
+                            <div class="px-6 py-5">
+                                <h4
+                                    class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4"
+                                >
+                                    {
+                                        lang === "zh"
+                                            ? "热门地点"
+                                            : "Hot Locations"
+                                    }
+                                </h4>
+                                <div class="space-y-2">
+                                    {
+                                        hotDestinations.map((dest) => (
+                                            <a
+                                                href={`${localePrefix}/tours?${dest.type === "destination" ? "destination" : "q"}=${encodeURIComponent(dest.value)}`}
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-white transition-all group"
+                                            >
+                                                <span class="w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 flex items-center justify-center">
+                                                    <span class="material-icons text-gray-500 text-sm">
+                                                        {dest.icon}
+                                                    </span>
+                                                </span>
+                                                <span class="text-sm font-medium text-gray-700">
+                                                    {dest.label}
+                                                </span>
+                                            </a>
+                                        ))
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Services Accordion -->
+                <div class="border-t border-gray-100">
+                    <button
+                        id="mobile-services-btn"
+                        class="flex items-center justify-between w-full px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors"
+                    >
+                        <div class="flex items-center gap-4">
+                            <span
+                                class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center"
+                            >
+                                <span class="material-icons text-blue-600"
+                                    >support_agent</span
+                                >
+                            </span>
+                            {lang === "zh" ? "服务" : "Services"}
+                        </div>
+                        <span
+                            class="material-icons text-gray-400 transition-transform duration-300 mobile-accordion-arrow"
+                            >expand_more</span
+                        >
+                    </button>
+                    <div
+                        id="mobile-services-content"
+                        class="overflow-hidden transition-all duration-300 max-h-0"
+                    >
+                        <div class="bg-gray-50 py-3 px-6 space-y-2">
+                            {
+                                serviceLinks.map((item) => (
+                                    <a
+                                        href={item.href}
+                                        class="flex items-center gap-4 p-3 rounded-xl hover:bg-white transition-colors"
+                                    >
+                                        <span class="w-9 h-9 rounded-lg bg-white shadow flex items-center justify-center">
+                                            <span class="material-icons text-orange-500 text-lg">
+                                                {item.icon}
+                                            </span>
+                                        </span>
+                                        <div>
+                                            <span class="font-medium text-gray-800 block">
+                                                {item.label}
+                                            </span>
+                                            <span class="text-xs text-gray-500">
+                                                {item.desc}
+                                            </span>
+                                        </div>
+                                    </a>
+                                ))
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other Links -->
+                <a
+                    href={`${localePrefix}/about-us`}
+                    class="flex items-center gap-4 px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors border-t border-gray-100"
+                >
+                    <span
+                        class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center"
+                    >
+                        <span class="material-icons text-green-600">info</span>
+                    </span>
+                    {lang === "zh" ? "关于我们" : "About"}
+                </a>
+                <a
+                    href={`${localePrefix}/contact`}
+                    class="flex items-center gap-4 px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors border-t border-gray-100"
+                >
+                    <span
+                        class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center"
+                    >
+                        <span class="material-icons text-purple-600">mail</span>
+                    </span>
+                    {lang === "zh" ? "联系我们" : "Contact"}
+                </a>
+                <a
+                    href={`${localePrefix}/faq`}
+                    class="flex items-center gap-4 px-6 py-4 text-gray-800 font-medium hover:bg-gray-50 transition-colors border-t border-gray-100"
+                >
+                    <span
+                        class="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center"
+                    >
+                        <span class="material-icons text-cyan-600">help</span>
+                    </span>
+                    {lang === "zh" ? "常见问题" : "FAQ"}
+                </a>
+            </nav>
+        </div>
+
+        <!-- Footer -->
+        <div
+            class="border-t border-gray-100 px-6 py-5 bg-gradient-to-r from-gray-50 to-white"
+        >
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-medium text-gray-600"
+                    >{lang === "zh" ? "语言" : "Language"}</span
+                >
+                <button
+                    id="lang-toggle-mobile"
+                    class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium hover:bg-white hover:shadow-sm transition-all text-sm"
+                >
+                    <span class="material-icons text-lg">language</span>
+                    <span>{lang === "en" ? "中文" : "EN"}</span>
+                </button>
+            </div>
+            <a
+                href={`${localePrefix}/tours`}
+                class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3.5 rounded-xl font-bold text-center flex items-center justify-center gap-2 shadow-lg shadow-orange-200/50"
+            >
+                <span class="material-icons text-lg">explore</span>
+                {lang === "zh" ? "探索所有行程" : "Explore All Tours"}
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Client-side JavaScript for interactivity -->
+<script define:vars={{ navData }}>
+    const data = JSON.parse(navData);
+
+    // Scroll tracking
+    let scrolled = false;
+    const nav = document.getElementById("site-nav");
+
+    function updateNavStyle() {
+        const isScrolled = window.scrollY > 10;
+        if (isScrolled !== scrolled) {
+            scrolled = isScrolled;
+            if (scrolled) {
+                nav.classList.remove("bg-white", "border-b", "border-gray-100");
+                nav.classList.add(
+                    "bg-white/95",
+                    "backdrop-blur-lg",
+                    "shadow-lg",
+                    "shadow-black/5",
+                );
+            } else {
+                nav.classList.remove(
+                    "bg-white/95",
+                    "backdrop-blur-lg",
+                    "shadow-lg",
+                    "shadow-black/5",
+                );
+                nav.classList.add("bg-white", "border-b", "border-gray-100");
+            }
+        }
+    }
+
+    window.addEventListener("scroll", updateNavStyle, { passive: true });
+    updateNavStyle();
+
+    // Desktop dropdowns
+    const dropdowns = document.querySelectorAll("[data-dropdown]");
+    let dropdownTimers = {};
+
+    dropdowns.forEach((dropdown) => {
+        const type = dropdown.dataset.dropdown;
+        const panel =
+            type === "mega"
+                ? document.getElementById("mega-panel")
+                : dropdown.querySelector(".dropdown-panel");
+        const arrow = dropdown.querySelector(".dropdown-arrow");
+        const indicator = dropdown.querySelector(".dropdown-indicator");
+
+        function showDropdown() {
+            if (dropdownTimers[type]) clearTimeout(dropdownTimers[type]);
+            if (panel) {
+                panel.classList.remove(
+                    "opacity-0",
+                    "-translate-y-2",
+                    "-translate-y-4",
+                    "pointer-events-none",
+                );
+                panel.classList.add(
+                    "opacity-100",
+                    "translate-y-0",
+                    "pointer-events-auto",
+                );
+            }
+            if (arrow) arrow.classList.add("rotate-180");
+            if (indicator) indicator.classList.add("scale-x-100");
+        }
+
+        function hideDropdown() {
+            dropdownTimers[type] = setTimeout(() => {
+                if (panel) {
+                    panel.classList.add(
+                        "opacity-0",
+                        type === "mega" ? "-translate-y-4" : "-translate-y-2",
+                        "pointer-events-none",
+                    );
+                    panel.classList.remove(
+                        "opacity-100",
+                        "translate-y-0",
+                        "pointer-events-auto",
+                    );
+                }
+                if (arrow) arrow.classList.remove("rotate-180");
+                if (indicator) indicator.classList.remove("scale-x-100");
+            }, 200);
+        }
+
+        dropdown.addEventListener("mouseenter", showDropdown);
+        dropdown.addEventListener("mouseleave", hideDropdown);
+
+        if (panel && type === "mega") {
+            panel.addEventListener("mouseenter", showDropdown);
+            panel.addEventListener("mouseleave", hideDropdown);
+        }
+    });
+
+    // Destination hover in megamenu
+    const destParents = document.querySelectorAll("[data-dest-id]");
+    const destChildPanels = document.querySelectorAll("[data-children-for]");
+    const noChildrenPlaceholder = document.getElementById(
+        "no-children-placeholder",
+    );
+
+    destParents.forEach((parent) => {
+        parent.addEventListener("mouseenter", () => {
+            const destId = parent.dataset.destId;
+            const hasChildren = parent.dataset.hasChildren === "true";
+
+            // Update parent styles
+            destParents.forEach((p) => {
+                const link = p.querySelector(".dest-parent-link");
+                const circle = link.querySelector("span:first-child");
+                if (p === parent) {
+                    link.classList.add(
+                        "bg-gradient-to-r",
+                        "from-orange-50",
+                        "to-amber-50",
+                        "text-orange-600",
+                    );
+                    link.classList.remove(
+                        "text-gray-800",
+                        "hover:bg-gray-50",
+                        "hover:text-orange-500",
+                    );
+                    circle.classList.add(
+                        "bg-gradient-to-br",
+                        "from-orange-500",
+                        "to-amber-500",
+                        "text-white",
+                    );
+                    circle.classList.remove(
+                        "from-orange-500/10",
+                        "to-amber-500/10",
+                        "text-orange-500",
+                    );
+                } else {
+                    link.classList.remove(
+                        "bg-gradient-to-r",
+                        "from-orange-50",
+                        "to-amber-50",
+                        "text-orange-600",
+                    );
+                    link.classList.add(
+                        "text-gray-800",
+                        "hover:bg-gray-50",
+                        "hover:text-orange-500",
+                    );
+                    circle.classList.remove(
+                        "from-orange-500",
+                        "to-amber-500",
+                        "text-white",
+                    );
+                    circle.classList.add(
+                        "from-orange-500/10",
+                        "to-amber-500/10",
+                        "text-orange-500",
+                    );
+                }
+            });
+
+            // Show corresponding children panel
+            destChildPanels.forEach((panel) => {
+                if (panel.dataset.childrenFor === destId) {
+                    panel.classList.remove("hidden");
+                } else {
+                    panel.classList.add("hidden");
+                }
+            });
+
+            // Show/hide no children placeholder
+            if (!hasChildren && noChildrenPlaceholder) {
+                destChildPanels.forEach((p) => p.classList.add("hidden"));
+                noChildrenPlaceholder.classList.remove("hidden");
+            } else if (noChildrenPlaceholder) {
+                noChildrenPlaceholder.classList.add("hidden");
+            }
+        });
+    });
+
+    // Mobile menu
+    const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+    const mobileCloseBtn = document.getElementById("mobile-close-btn");
+    const mobileDrawer = document.getElementById("mobile-drawer");
+    const mobileBackdrop = document.getElementById("mobile-backdrop");
+    const mobilePanel = document.getElementById("mobile-panel");
+    const hamburgerLines = document.querySelectorAll(".hamburger-line");
+
+    function openMobileMenu() {
+        mobileDrawer.classList.remove("pointer-events-none");
+        mobileDrawer.classList.add("pointer-events-auto");
+        mobileBackdrop.classList.remove("opacity-0");
+        mobileBackdrop.classList.add("opacity-100");
+        mobilePanel.classList.remove("translate-x-full");
+        mobilePanel.classList.add("translate-x-0");
+        hamburgerLines[0].classList.add("rotate-45", "translate-y-2");
+        hamburgerLines[1].classList.add("opacity-0");
+        hamburgerLines[2].classList.add("-rotate-45", "-translate-y-2");
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeMobileMenu() {
+        mobileDrawer.classList.add("pointer-events-none");
+        mobileDrawer.classList.remove("pointer-events-auto");
+        mobileBackdrop.classList.add("opacity-0");
+        mobileBackdrop.classList.remove("opacity-100");
+        mobilePanel.classList.add("translate-x-full");
+        mobilePanel.classList.remove("translate-x-0");
+        hamburgerLines[0].classList.remove("rotate-45", "translate-y-2");
+        hamburgerLines[1].classList.remove("opacity-0");
+        hamburgerLines[2].classList.remove("-rotate-45", "-translate-y-2");
+        document.body.style.overflow = "";
+    }
+
+    mobileMenuBtn.addEventListener("click", openMobileMenu);
+    mobileCloseBtn.addEventListener("click", closeMobileMenu);
+    mobileBackdrop.addEventListener("click", closeMobileMenu);
+
+    // Mobile accordions
+    function setupAccordion(btnId, contentId) {
+        const btn = document.getElementById(btnId);
+        const content = document.getElementById(contentId);
+        const arrow = btn.querySelector(".mobile-accordion-arrow");
+        let isOpen = false;
+
+        btn.addEventListener("click", () => {
+            isOpen = !isOpen;
+            if (isOpen) {
+                content.style.maxHeight = content.scrollHeight + "px";
+                arrow.classList.add("rotate-180");
+            } else {
+                content.style.maxHeight = "0";
+                arrow.classList.remove("rotate-180");
+            }
+        });
+    }
+
+    setupAccordion("mobile-tours-btn", "mobile-tours-content");
+    setupAccordion("mobile-services-btn", "mobile-services-content");
+
+    // Language toggle
+    function handleLanguageSwitch() {
+        const lang = data.lang;
+        const targetLang = lang === "en" ? "zh" : "en";
+        const currentPath = window.location.pathname;
+        const { destinations, activities, types, durations, tourTranslations } =
+            data;
+
+        // Check if we're on a tour detail page
+        const isTourPage =
+            currentPath.includes("/tours/") &&
+            !currentPath.includes("/tours/destination/") &&
+            !currentPath.includes("/tours/activity/") &&
+            !currentPath.includes("/tours/type/") &&
+            !currentPath.includes("/tours/duration/") &&
+            !currentPath.includes("/tours/featured") &&
+            currentPath !== "/tours" &&
+            currentPath !== "/zh/tours";
+
+        if (isTourPage && tourTranslations && tourTranslations[targetLang]) {
+            const translatedSlug = tourTranslations[targetLang].slug;
+            const newPath =
+                targetLang === "en"
+                    ? `/tours/${encodeURIComponent(translatedSlug)}`
+                    : `/zh/tours/${encodeURIComponent(translatedSlug)}`;
+            window.location.href = newPath;
+            return;
+        }
+
+        // Handle taxonomy pages
+        const taxPathRegex =
+            /\/tours\/(destination|activity|type|duration)\/([^\/\?#]+)/;
+        const taxMatch = currentPath.match(taxPathRegex);
+
+        if (taxMatch) {
+            const taxType = taxMatch[1];
+            const currentSlug = decodeURIComponent(taxMatch[2])
+                .trim()
+                .replace(/\/$/, "");
+            let term = null;
+
+            if (taxType === "destination") {
+                term = destinations.find((d) => d.slug === currentSlug);
+            } else if (taxType === "activity") {
+                term = activities.find((a) => a.slug === currentSlug);
+            } else if (taxType === "type") {
+                term = types.find((t) => t.slug === currentSlug);
+            } else if (taxType === "duration") {
+                term = durations.find((d) => d.slug === currentSlug);
+            }
+
+            if (term?.translations?.[targetLang]) {
+                const targetSlug = term.translations[targetLang];
+                const newPath =
+                    targetLang === "en"
+                        ? `/tours/${taxType}/${targetSlug}`
+                        : `/zh/tours/${taxType}/${targetSlug}`;
+                window.location.href = newPath;
+                return;
+            }
+        }
+
+        // Fallback
+        if (lang === "en") {
+            window.location.href = `/zh${currentPath}`;
+        } else {
+            const path = currentPath.replace(/^\/zh/, "");
+            window.location.href = path || "/";
+        }
+    }
+
+    document
+        .getElementById("lang-toggle-desktop")
+        .addEventListener("click", handleLanguageSwitch);
+    document
+        .getElementById("lang-toggle-mobile")
+        .addEventListener("click", handleLanguageSwitch);
+</script>
