@@ -1,12 +1,11 @@
 ---
 import { wpUrl } from "../lib/wp-url";
 
-// Self-hosted: Material Icons (used throughout site)
-import "@fontsource/material-icons";
-
-// CDN: Inter font loaded via async link below for better caching
-// CDN: Kaushan Script removed - using SVG image instead (~35KB saved)
-// CDN: Font Awesome removed - using inline SVGs for social icons (~99KB saved)
+// All fonts loaded from CDN with async loading for better performance
+// - Inter: Google Fonts CDN
+// - Material Icons: Google Fonts CDN
+// - Kaushan Script: Removed - using SVG image (~35KB saved)
+// - Font Awesome: Removed - using inline SVGs (~99KB saved)
 
 export interface Props {
     title?: string;
@@ -62,20 +61,20 @@ const imageUrl = image?.startsWith("http")
     )
 }
 
-<!-- Preconnect to Google Fonts (limit to 2 origins) -->
+<!-- Preconnect to Google Fonts (2 origins max) -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-<!-- Inter Font - Async loading from Google Fonts CDN -->
+<!-- Inter + Material Icons - Combined async loading from Google Fonts CDN -->
 <link
     rel="preload"
     as="style"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Icons&display=swap"
     onload="this.onload=null;this.rel='stylesheet'"
 />
 <noscript>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Icons&display=swap"
         rel="stylesheet"
     />
 </noscript>
