@@ -1,13 +1,14 @@
 ---
 import { wpUrl } from "../lib/wp-url";
 
-// Import self-hosted fonts
+// Import self-hosted fonts (only what we need)
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
 import "@fontsource/inter/600.css";
 import "@fontsource/inter/700.css";
-import "@fontsource/kaushan-script/400.css";
 import "@fontsource/material-icons";
+// NOTE: Kaushan Script removed - using SVG image instead to save ~35KB
+// NOTE: Font Awesome removed - using inline SVGs for social icons to save ~99KB
 
 export interface Props {
     title?: string;

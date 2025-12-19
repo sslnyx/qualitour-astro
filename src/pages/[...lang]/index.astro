@@ -199,11 +199,25 @@ const transferRoutes = [
           {t.heroTagline}
         </span>
 
-        <h1
-          class="text-4xl md:text-6xl lg:text-7xl font-kaushan text-white mb-6 leading-tight"
-        >
-          {t.heroTitle}
-        </h1>
+        {
+          /* Hero Title - Using SVG to avoid loading Kaushan Script font (~35KB) */
+        }
+        {
+          lang === "en" ? (
+            <img
+              src="/explore-again.svg"
+              alt={t.heroTitle}
+              class="h-16 md:h-24 lg:h-32 mb-6 drop-shadow-lg"
+              width="435"
+              height="96"
+              loading="eager"
+            />
+          ) : (
+            <h1 class="text-4xl md:text-6xl lg:text-7xl text-white mb-6 leading-tight font-bold italic">
+              {t.heroTitle}
+            </h1>
+          )
+        }
 
         <p class="text-xl md:text-2xl text-white/80 mb-10 leading-relaxed">
           {t.heroSubtitle}

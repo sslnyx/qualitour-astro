@@ -1,5 +1,5 @@
-/* Icon Fonts - All loaded as self-hosted npm packages */
-@import "@fortawesome/fontawesome-free/css/all.css";
+/* Icon Fonts - Only Material Icons loaded, Font Awesome replaced with inline SVGs */
+/* NOTE: Font Awesome removed to save ~99KB - using inline SVGs for social icons */
 
 /* Material Icons class rules (required since @fontsource only provides @font-face) */
 .material-icons {
@@ -28,9 +28,6 @@
 @import "tailwindcss";
 
 @layer utilities {
-    .font-kaushan {
-        font-family: var(--font-kaushan-script), cursive;
-    }
 
     /* Standardized container: 1200px max-width, 22px horizontal padding */
     .container-qualitour {
