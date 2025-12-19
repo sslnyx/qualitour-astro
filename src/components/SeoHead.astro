@@ -88,30 +88,30 @@ const imageUrl = image?.startsWith("http")
     />
 </noscript>
 
-<!-- Material Icons - Async loading -->
+<!-- Material Icons - Async loading with font-display swap -->
 <link
     rel="preload"
     as="style"
-    href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap"
     onload="this.onload=null;this.rel='stylesheet'"
 />
 <noscript>
     <link
-        href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap"
         rel="stylesheet"
     />
 </noscript>
-<!-- Material Symbols - Async loading -->
+<!-- Material Symbols - Async loading with font-display swap -->
 <link
     rel="preload"
     as="style"
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
     onload="this.onload=null;this.rel='stylesheet'"
 />
 <noscript>
     <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
     />
 </noscript>
 
@@ -132,3 +132,15 @@ const imageUrl = image?.startsWith("http")
         crossorigin="anonymous"
     />
 </noscript>
+
+<!-- Font Awesome font-display override -->
+<style>
+    @font-face {
+        font-family: "Font Awesome 6 Brands";
+        font-display: swap;
+    }
+    @font-face {
+        font-family: "Font Awesome 6 Free";
+        font-display: swap;
+    }
+</style>

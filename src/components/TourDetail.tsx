@@ -558,7 +558,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                     className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center text-white font-bold">
+                                        <div className="min-w-10 w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center text-white font-bold">
                                             {index + 1}
                                         </div>
                                         <h4 className="font-semibold text-gray-900 text-left">
