@@ -177,6 +177,7 @@ export interface GoogleReview {
     local_guide?: boolean;
     reviewer_reviews?: number;
     reviewer_photos?: number;
+    source?: 'google' | 'tripadvisor'; // Review source platform
 }
 
 export interface PlaceDetails {

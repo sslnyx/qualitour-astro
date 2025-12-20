@@ -113,11 +113,31 @@ function PremiumReviewCard({
                 )}
             </div>
 
-            {/* Photos preview */}
+            {/* Photos preview - show actual thumbnails */}
             {review.images && review.images.length > 0 && (
                 <div className="mt-4 flex items-center gap-2">
-                    <span className="material-icons text-gray-400 text-sm">photo_library</span>
-                    <span className="text-xs text-gray-400">{review.images.length} photo{review.images.length > 1 ? 's' : ''}</span>
+                    {review.images.slice(0, 4).map((src, idx) => (
+                        <div
+                            key={`thumb-${idx}`}
+                            className="w-12 h-12 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0"
+                        >
+                            <img
+                                src={src}
+                                alt={`Review photo ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                                referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                                }}
+                            />
+                        </div>
+                    ))}
+                    {review.images.length > 4 && (
+                        <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-xs text-gray-500 font-medium flex-shrink-0">
+                            +{review.images.length - 4}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -218,7 +238,7 @@ function PremiumReviewModal({
                         {/* Close button */}
                         <button
                             onClick={onClose}
-                            className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
+                            className="p-2 flex items-center justify-center cursor-pointer rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
                             aria-label="Close"
                         >
                             <span className="material-icons">close</span>

@@ -3,6 +3,7 @@
  * 
  * Updates URL params and dispatches events for client-side filtering.
  * Works with ToursGrid.tsx for seamless filtering without page reloads.
+ * Supports both desktop (sticky sidebar) and mobile (slide-in drawer) views.
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -56,6 +57,7 @@ function buildDestinationTree(destinations: WPTourDestination[]) {
 export function TourFilterSidebarClient({ destinations, durations, types, lang }: Props) {
     const [filters, setFilters] = useState<FilterState>(getFiltersFromUrl);
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     const { topLevel: topLevelDestinations, parentMap: destinationChildren } = useMemo(
         () => buildDestinationTree(destinations),
@@ -71,6 +73,41 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
         window.addEventListener('popstate', handleUrlChange);
         return () => window.removeEventListener('popstate', handleUrlChange);
     }, []);
+
+    // Listen for mobile filter toggle events
+    useEffect(() => {
+        const handleToggle = () => {
+            setMobileOpen(prev => !prev);
+        };
+
+        // Wire up the mobile filter toggle button from ToursGrid
+        const toggleBtn = document.getElementById('mobile-filter-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', handleToggle);
+        }
+
+        // Also listen for custom event
+        window.addEventListener('toggle-mobile-filters', handleToggle);
+
+        return () => {
+            if (toggleBtn) {
+                toggleBtn.removeEventListener('click', handleToggle);
+            }
+            window.removeEventListener('toggle-mobile-filters', handleToggle);
+        };
+    }, []);
+
+    // Lock body scroll when mobile drawer is open
+    useEffect(() => {
+        if (mobileOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [mobileOpen]);
 
     const updateFilter = (key: keyof FilterState, value: string | null) => {
         const localePrefix = lang === 'en' ? '' : `/${lang}`;
@@ -117,8 +154,8 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
         });
     };
 
-
     const hasActiveFilters = filters.destination || filters.type || filters.duration || filters.q;
+    const activeFilterCount = (filters.duration ? 1 : 0) + (filters.type ? 1 : 0) + (filters.destination ? 1 : 0) + (filters.q ? 1 : 0);
 
     const t = {
         filters: lang === 'zh' ? '筛选' : 'Filters',
@@ -128,15 +165,13 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
         tourLength: lang === 'zh' ? '行程天数' : 'Tour Length',
         tourType: lang === 'zh' ? '旅游类型' : 'Tour Type',
         destinations: lang === 'zh' ? '目的地' : 'Destinations',
+        applyFilters: lang === 'zh' ? '应用筛选' : 'Apply Filters',
+        close: lang === 'zh' ? '关闭' : 'Close',
     };
 
-    return (
-        <aside className="tour-filter-sidebar bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
-            <h2 className="font-bold text-lg text-gray-900 mb-6 flex items-center gap-2">
-                <span className="material-icons text-[#f7941e]">filter_list</span>
-                {t.filters}
-            </h2>
-
+    // Shared filter content component
+    const FilterContent = ({ isMobile = false }: { isMobile?: boolean }) => (
+        <>
             {/* Search Input */}
             <div className="mb-6">
                 <div className="relative">
@@ -340,7 +375,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                         </span>
                     </button>
                     {!collapsedSections.has('destinations') && (
-                        <div className="mt-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                        <div className={`mt-2 ${isMobile ? 'max-h-48' : 'max-h-64'} overflow-y-auto pr-2 custom-scrollbar`}>
                             {topLevelDestinations.map((dest) => {
                                 const isSelected = filters.destination === dest.slug;
                                 const children = destinationChildren.get(dest.id) || [];
@@ -408,6 +443,68 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                     )}
                 </div>
             )}
+        </>
+    );
+
+    return (
+        <>
+            {/* Desktop Sidebar */}
+            <aside className="tour-filter-sidebar w-72 flex-shrink-0 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24 hidden lg:block">
+                <h2 className="font-bold text-lg text-gray-900 mb-6 flex items-center gap-2">
+                    <span className="material-icons text-[#f7941e]">filter_list</span>
+                    {t.filters}
+                </h2>
+                <FilterContent />
+            </aside>
+
+            {/* Mobile Drawer */}
+            <div className={`lg:hidden fixed inset-0 z-50 ${mobileOpen ? 'visible' : 'invisible'}`}>
+                {/* Backdrop */}
+                <div
+                    className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${mobileOpen ? 'opacity-100' : 'opacity-0'}`}
+                    onClick={() => setMobileOpen(false)}
+                />
+
+                {/* Drawer Panel */}
+                <div
+                    className={`absolute left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                >
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                        <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                            <span className="material-icons text-[#f7941e]">filter_list</span>
+                            {t.filters}
+                            {activeFilterCount > 0 && (
+                                <span className="bg-[#f7941e] text-white text-xs px-2 py-0.5 rounded-full">
+                                    {activeFilterCount}
+                                </span>
+                            )}
+                        </h2>
+                        <button
+                            onClick={() => setMobileOpen(false)}
+                            className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-xl transition-colors"
+                            aria-label={t.close}
+                        >
+                            <span className="material-icons text-gray-500">close</span>
+                        </button>
+                    </div>
+
+                    {/* Scrollable Content */}
+                    <div className="flex-1 overflow-y-auto p-6">
+                        <FilterContent isMobile={true} />
+                    </div>
+
+                    {/* Footer with Apply Button */}
+                    <div className="p-4 border-t border-gray-100 bg-white">
+                        <button
+                            onClick={() => setMobileOpen(false)}
+                            className="w-full py-3 bg-gradient-to-r from-[#f7941e] to-[#ffb347] text-white font-semibold rounded-xl shadow-lg shadow-orange-200 hover:shadow-xl transition-all"
+                        >
+                            {t.applyFilters}
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar {
@@ -425,7 +522,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                     background: #9ca3af;
                 }
             `}</style>
-        </aside>
+        </>
     );
 }
 

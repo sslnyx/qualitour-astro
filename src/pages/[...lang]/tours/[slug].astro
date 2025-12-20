@@ -1,10 +1,11 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
 import { Image } from 'astro:assets';
-import { getTours, getTourBySlug } from '../../../lib/wordpress/api';
+import { getTours, getTourBySlug, getGoogleReviews } from '../../../lib/wordpress/api';
 import { type Locale } from '../../../i18n/config';
 import { TourDetail } from '../../../components/TourDetail';
 import TourSidebarForm from '../../../components/TourSidebarForm';
+import TourReviewsSection from '../../../components/TourReviewsSection';
 import { wpUrl } from '../../../lib/wp-url';
 
 // Generate static paths for all tours in all locales
@@ -75,6 +76,75 @@ const maxPeople = tour?.tour_meta?.max_people;
 const groupSize = minPeople && maxPeople ? `${minPeople} - ${maxPeople}` : maxPeople || minPeople;
 const categories = tour?.tour_terms?.categories || [];
 const destinations = tour?.tour_terms?.destinations || [];
+
+// Fetch and filter reviews related to this tour
+let tourReviews: any[] = [];
+try {
+  const allReviews = await getGoogleReviews();
+  
+  // Build search terms from tour data
+  const tourTitleLower = (tour?.title?.rendered || '').toLowerCase().replace(/<[^>]*>/g, '');
+  const destinationNames = destinations.map((d: any) => d.name?.toLowerCase() || '');
+  const categoryNames = categories.map((c: any) => c.name?.toLowerCase() || '');
+  const countryLower = (country || '').toLowerCase();
+  const locationLower = (location || '').toLowerCase();
+  
+  // Extract keywords from tour title
+  const titleKeywords = tourTitleLower
+    .split(/[\s\-–—,()（）]+/)
+    .filter((word: string) => word.length > 3)
+    .filter((word: string) => !['tour', 'tours', 'days', 'day', 'trip', 'night', 'nights', 'the', 'and', 'with', 'from'].includes(word));
+
+  // Score each review for relevance
+  const scoredReviews = allReviews
+    .filter((r: any) => r.rating >= 4 && r.text)
+    .map((review: any) => {
+      const text = (review.text || '').toLowerCase();
+      let score = 0;
+      
+      // Score for destination match (highest weight)
+      destinationNames.forEach((dest: string) => {
+        if (dest && text.includes(dest)) score += 30;
+      });
+      
+      // Score for country match
+      if (countryLower && text.includes(countryLower)) score += 20;
+      if (locationLower && text.includes(locationLower)) score += 15;
+      
+      // Score for category match
+      categoryNames.forEach((cat: string) => {
+        if (cat && text.includes(cat)) score += 15;
+      });
+      
+      // Score for title keywords
+      titleKeywords.forEach((keyword: string) => {
+        if (keyword && text.includes(keyword)) score += 10;
+      });
+      
+      // Bonus for 5-star reviews
+      if (review.rating === 5) score += 5;
+      
+      // Bonus for reviews with photos
+      if (review.images && review.images.length > 0) score += 3;
+      
+      return { ...review, relevanceScore: score };
+    })
+    .filter((r: any) => r.relevanceScore > 0) // Only keep reviews with some relevance
+    .sort((a: any, b: any) => b.relevanceScore - a.relevanceScore)
+    .slice(0, 6);
+  
+  // If no relevant reviews found, show some generic high-quality reviews
+  if (scoredReviews.length < 3) {
+    const genericReviews = allReviews
+      .filter((r: any) => r.rating >= 5 && r.text && r.text.length > 100)
+      .slice(0, 6 - scoredReviews.length);
+    tourReviews = [...scoredReviews, ...genericReviews].slice(0, 6);
+  } else {
+    tourReviews = scoredReviews;
+  }
+} catch (e) {
+  console.error('Failed to fetch reviews for tour:', e);
+}
 
 // Prepare translations for language switcher
 const tourTranslations = tour?.translations && typeof tour.translations === 'object' && Object.keys(tour.translations).length > 0
@@ -285,8 +355,18 @@ const tourTranslations = tour?.translations && typeof tour.translations === 'obj
         </div>
       </section>
 
+      <!-- Customer Reviews Section -->
+      {tourReviews.length > 0 && (
+        <TourReviewsSection 
+          reviews={tourReviews}
+          tourTitle={tour.title.rendered.replace(/<[^>]*>/g, '')}
+          lang={lang}
+          client:visible
+        />
+      )}
+
       <!-- CTA Section -->
-      <section class="py-16 mt-16 bg-gradient-to-r from-orange-500 to-amber-500 relative overflow-hidden">
+      <section class="py-16 bg-gradient-to-r from-orange-500 to-amber-500 relative overflow-hidden">
         <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,#fff_1px,transparent_1px)] [background-size:24px_24px]"></div>
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

@@ -63,17 +63,19 @@ export default function PhotoLightbox({
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90" onClick={onClose}>
-            {/* Close button */}
             <button
-                onClick={onClose}
-                className="absolute top-4 right-4 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                onClick={(e) => { e.stopPropagation(); onClose(); }}
+                className="absolute top-4 right-4 z-10 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
                 aria-label="Close"
             >
                 <span className="material-icons text-2xl">close</span>
             </button>
 
-            {/* Carousel */}
-            <div className="w-full h-full flex items-center justify-center" ref={emblaRef} onClick={(e) => e.stopPropagation()}>
+            {/* Carousel - clicking on the container (outside image) closes lightbox */}
+            <div
+                className="w-full h-full flex items-center justify-center"
+                ref={emblaRef}
+            >
                 <div className="flex h-full">
                     {images.map((src, idx) => (
                         <div
@@ -83,9 +85,10 @@ export default function PhotoLightbox({
                             <img
                                 src={src}
                                 alt={`${authorName}'s photo ${idx + 1}`}
-                                className="max-w-full max-h-[85vh] object-contain rounded-lg"
+                                className="max-w-full max-h-[85vh] object-contain rounded-lg cursor-default"
                                 loading="lazy"
                                 referrerPolicy="no-referrer"
+                                onClick={(e) => e.stopPropagation()}
                                 onError={(e) => {
                                     (e.target as HTMLImageElement).style.display = 'none';
                                 }}
@@ -95,19 +98,19 @@ export default function PhotoLightbox({
                 </div>
             </div>
 
-            {/* Navigation arrows */}
+            {/* Navigation arrows - properly centered with flex */}
             {images.length > 1 && (
                 <>
                     <button
                         onClick={(e) => { e.stopPropagation(); scrollPrev(); }}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
                         aria-label="Previous"
                     >
                         <span className="material-icons text-3xl">chevron_left</span>
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); scrollNext(); }}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
                         aria-label="Next"
                     >
                         <span className="material-icons text-3xl">chevron_right</span>

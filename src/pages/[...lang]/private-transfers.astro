@@ -27,27 +27,70 @@ try {
     console.error("Failed to fetch reviews:", e);
 }
 
-// Filter transfer-related reviews
+// Filter transfer-related reviews with improved keywords
 const transferKeywords = [
+    // Core transfer terms
     "transfer",
+    "transportation",
+    "pick up",
+    "pickup",
+    "pick-up",
+    // Locations/routes
     "airport",
     "yvr",
-    "cruise",
+    "cruise terminal",
+    "cruise port",
+    "downtown",
     "whistler",
+    "kelowna",
+    "vancouver island",
+    "seattle",
+    // Vehicles
     "shuttle",
-    "driver",
     "van",
+    "suv",
+    "sienna",
+    "bus",
+    "limousine",
+    // Service keywords
+    "driver",
+    "ride",
+    "road trip",
+    "arrival",
+    "departure",
+    // Chinese keywords
     "接送",
     "机场",
     "司机",
+    "接机",
+    "送机",
 ];
+
+// Keywords that indicate it's NOT about transfer services
+const excludeKeywords = [
+    "visa",
+    "viking",
+    "aurora",
+    "northern lights",
+    "yellowknife",
+    "whitehorse",
+    "morocco",
+    "極光",
+    "极光",
+];
+
 const transferReviews = reviews
     .filter((r) => {
         const text = (r.text || "").toLowerCase();
-        return (
-            r.rating >= 4 &&
-            transferKeywords.some((k) => text.includes(k.toLowerCase()))
+        // Must have at least one transfer keyword
+        const hasTransferKeyword = transferKeywords.some((k) =>
+            text.includes(k.toLowerCase()),
         );
+        // Must NOT be primarily about excluded topics
+        const hasExcludeKeyword = excludeKeywords.some((k) =>
+            text.includes(k.toLowerCase()),
+        );
+        return r.rating >= 4 && hasTransferKeyword && !hasExcludeKeyword;
     })
     .slice(0, 6);
 
