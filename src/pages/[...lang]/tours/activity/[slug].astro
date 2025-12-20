@@ -2,7 +2,7 @@
 import Layout from '../../../../layouts/Layout.astro';
 import { getTours, getTourActivities, getSiteNavData } from '../../../../lib/wordpress/api';
 import { type Locale } from '../../../../i18n/config';
-import { TourCard } from '../../../../components/TourCard';
+import TourCardOptimized from '../../../../components/TourCardOptimized.astro';
 import { decodeHtml } from '../../../../lib/utils';
 
 // Generate static paths for all activities in all locales
@@ -119,7 +119,7 @@ const filteredTours = allTours.filter(tour => {
             <!-- Tour Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {filteredTours.map((tour) => (
-                <TourCard tour={tour} lang={lang} />
+                <TourCardOptimized tour={tour} lang={lang} />
               ))}
             </div>
           </>
