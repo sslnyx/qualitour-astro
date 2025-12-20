@@ -213,7 +213,9 @@ const transferRoutes = [
           /* Hero Title - Using SVG to avoid loading Kaushan Script font (~35KB) */
         }
         <img
-          src={lang === "en" ? "/explore-again.svg" : "/explore-again-zh.svg"}
+          src={lang === "en"
+            ? "/explore-again.svg?v=2"
+            : "/explore-again-zh.svg?v=2"}
           alt={t.heroTitle}
           class="h-16 md:h-24 lg:h-32 mb-6 drop-shadow-lg"
           width={lang === "en" ? "435" : "484"}
