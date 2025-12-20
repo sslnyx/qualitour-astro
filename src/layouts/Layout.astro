@@ -69,7 +69,9 @@ try {
       noindex={noindex}
     />
   </head>
-  <body class="min-h-screen bg-gray-900 text-gray-100 antialiased">
+  <body
+    class="min-h-screen flex flex-col bg-gray-900 text-gray-100 antialiased"
+  >
     <!-- Navigation (Pure Astro - no React runtime needed) -->
     <SiteNavAstro
       lang={currentLocale}
@@ -81,7 +83,7 @@ try {
     />
 
     <!-- Main Content -->
-    <main>
+    <main class="flex-1">
       <slot />
     </main>
 

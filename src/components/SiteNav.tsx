@@ -209,7 +209,7 @@ export function SiteNav({
                         {/* Logo */}
                         <a href={`${localePrefix}/`} className="flex items-center group">
                             <img
-                                src="/logo.svg"
+                                src="/logo.svg?v2"
                                 alt="Qualitour"
                                 width={175}
                                 height={48}
@@ -677,7 +677,7 @@ export function SiteNav({
                 <div className={`absolute right-0 top-0 bottom-0 w-[90%] max-w-md bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col ${mobileOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                     {/* Header */}
                     <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                        <img src="/logo.svg" alt="Qualitour" className="h-10 w-auto -ml-2" />
+                        <img src="/logo.svg?v2" alt="Qualitour" className="h-10 w-auto -ml-2" />
                         <button
                             onClick={() => setMobileOpen(false)}
                             className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-xl transition-colors"
