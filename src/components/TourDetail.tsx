@@ -9,6 +9,7 @@
 import { useState, useMemo } from 'react';
 import type { WPTour } from '../lib/wordpress/types';
 import { wpUrl, processHtmlContent } from '../lib/wp-url';
+import PhotoLightbox from './PhotoLightbox';
 
 interface TourDetailProps {
     tour: WPTour;
@@ -58,6 +59,7 @@ const translations = {
 export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const [expandedDay, setExpandedDay] = useState<number | null>(null);
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
     const t = translations[lang as keyof typeof translations] || translations.en;
 
@@ -613,22 +615,37 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 {/* Photos Tab */}
                 {activeTab === 'photos' && photos.length > 0 && (
                     <div className="animate-fadeIn">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {photos.map((photo, index) => (
                                 <div
                                     key={index}
                                     className="relative aspect-[4/3] rounded-xl overflow-hidden group cursor-pointer"
+                                    onClick={() => setLightboxIndex(index)}
                                 >
                                     <img
                                         src={photo}
                                         alt={`Tour photo ${index + 1}`}
-                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                        className="absolute inset-0 !w-full !h-full object-cover transition-transform duration-300 group-hover:scale-110 !m-0"
                                         loading="lazy"
                                     />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                        <span className="material-icons text-white text-3xl opacity-0 group-hover:opacity-100 transition-opacity transform scale-75 group-hover:scale-100 duration-300">
+                                            zoom_in
+                                        </span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
+
+                        {/* Photo Lightbox */}
+                        {lightboxIndex !== null && (
+                            <PhotoLightbox
+                                images={photos}
+                                authorName={tour.title?.rendered || 'Tour'}
+                                initialIndex={lightboxIndex}
+                                onClose={() => setLightboxIndex(null)}
+                            />
+                        )}
                     </div>
                 )}
 

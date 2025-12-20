@@ -6,7 +6,7 @@
 
 import Layout from '../../layouts/Layout.astro';
 import { getBusinessReviews } from '../../lib/wordpress/api';
-import PremiumReviewsGrid from '../../components/PremiumReviewsGrid';
+import SimpleReviewsGrid from '../../components/SimpleReviewsGrid';
 import type { GoogleReview } from '../../lib/wordpress/types';
 import { type Locale } from '../../i18n/config';
 
@@ -204,7 +204,7 @@ const t = {
                         </div>
 
                         <!-- Reviews Grid Component -->
-                        <PremiumReviewsGrid reviews={reviews} lang={currentLang} client:load />
+                        <SimpleReviewsGrid reviews={reviews} initialCount={12} showLoadMore={true} client:load />
                     </>
                 )}
             </div>

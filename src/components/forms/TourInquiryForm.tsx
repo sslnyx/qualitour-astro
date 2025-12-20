@@ -13,6 +13,8 @@ interface TourInquiryFormProps {
     tourCode?: string;
     tourTitle: string;
     className?: string;
+    hidePhone?: boolean;
+    compact?: boolean;
     onSuccess?: () => void;
 }
 
@@ -21,6 +23,8 @@ export default function TourInquiryForm({
     tourCode,
     tourTitle,
     className,
+    hidePhone = false,
+    compact = false,
     onSuccess,
 }: TourInquiryFormProps) {
     const [formData, setFormData] = useState({
@@ -46,7 +50,7 @@ export default function TourInquiryForm({
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.email = 'Please enter a valid email address';
         }
-        if (!formData.phone.trim()) {
+        if (!hidePhone && !formData.phone.trim()) {
             newErrors.phone = 'Phone number is required';
         }
         if (!formData.travelDate) {
@@ -137,17 +141,19 @@ export default function TourInquiryForm({
 
     const today = new Date().toISOString().split('T')[0];
 
-    const inputClasses = "w-full px-4 py-3 text-base text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70";
+    const inputClasses = compact
+        ? "w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"
+        : "w-full px-4 py-3 text-base text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70";
     const inputErrorClasses = "border-red-500 focus:border-red-500 focus:ring-red-500/20";
-    const errorTextClasses = "text-sm text-red-600 mt-1";
-    const labelClasses = "text-sm font-medium text-gray-700 mb-1";
+    const errorTextClasses = "text-xs text-red-600 mt-0.5";
+    const labelClasses = compact ? "text-xs font-medium text-gray-700 mb-0.5" : "text-sm font-medium text-gray-700 mb-1";
 
     return (
-        <form onSubmit={handleSubmit} className={`flex flex-col gap-4 ${className || ''}`}>
+        <form onSubmit={handleSubmit} className={`flex flex-col ${compact ? 'gap-2.5' : 'gap-4'} ${className || ''}`}>
             {/* Tour info */}
-            <div className="bg-orange-50 rounded-lg p-3 border border-orange-100">
-                <span className="text-sm text-gray-600">Inquiring about:</span>
-                <div className="font-semibold text-gray-900 text-sm">{tourTitle}</div>
+            <div className={`bg-orange-50 rounded-lg ${compact ? 'p-2' : 'p-3'} border border-orange-100`}>
+                <span className="text-xs text-gray-600">Inquiring about:</span>
+                <div className={`font-semibold text-gray-900 ${compact ? 'text-xs' : 'text-sm'}`}>{tourTitle}</div>
                 {tourCode && (
                     <span className="text-xs text-orange-600">Tour Code: {tourCode}</span>
                 )}
@@ -156,8 +162,8 @@ export default function TourInquiryForm({
             {result && (
                 <div
                     className={`p-4 rounded-lg text-sm ${result.status === 'mail_sent'
-                            ? 'bg-green-50 text-green-800 border border-green-200'
-                            : 'bg-red-50 text-red-800 border border-red-200'
+                        ? 'bg-green-50 text-green-800 border border-green-200'
+                        : 'bg-red-50 text-red-800 border border-red-200'
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -195,18 +201,20 @@ export default function TourInquiryForm({
                 {errors.email && <span className={errorTextClasses}>{errors.email}</span>}
             </div>
 
-            <div className="flex flex-col gap-1">
-                <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="Phone Number*"
-                    className={`${inputClasses} ${errors.phone ? inputErrorClasses : ''}`}
-                    disabled={isSubmitting}
-                />
-                {errors.phone && <span className={errorTextClasses}>{errors.phone}</span>}
-            </div>
+            {!hidePhone && (
+                <div className="flex flex-col gap-1">
+                    <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder="Phone Number*"
+                        className={`${inputClasses} ${errors.phone ? inputErrorClasses : ''}`}
+                        disabled={isSubmitting}
+                    />
+                    {errors.phone && <span className={errorTextClasses}>{errors.phone}</span>}
+                </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
@@ -253,7 +261,7 @@ export default function TourInquiryForm({
 
             <button
                 type="submit"
-                className="w-full px-6 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-orange-200/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className={`w-full ${compact ? 'px-4 py-2.5' : 'px-6 py-4'} bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold ${compact ? 'rounded-lg text-sm' : 'rounded-xl'} hover:shadow-lg hover:shadow-orange-200/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
                 disabled={isSubmitting}
             >
                 {isSubmitting ? (
