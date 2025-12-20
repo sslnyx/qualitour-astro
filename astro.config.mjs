@@ -7,6 +7,20 @@ import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
+  // Image optimization for remote images
+  image: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'qualitour-assets.isquarestudio.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.googleusercontent.com', // For Google profile images
+      },
+    ],
+  },
+
   // Use SSG (static) output for Cloudflare Pages - no runtime CPU concerns!
   output: 'static',
 
@@ -51,8 +65,10 @@ export default defineConfig({
   },
 
   // Cloudflare Pages adapter for static deployment
+  // Using 'compile' imageService for build-time optimization (free!)
+  // This avoids Cloudflare's 5,000 transformations/month limit
   adapter: cloudflare({
-    imageService: 'cloudflare',
+    imageService: 'compile',
   }),
 
   // Site configuration

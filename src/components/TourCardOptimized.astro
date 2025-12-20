@@ -1,0 +1,238 @@
+---
+/**
+ * TourCardOptimized - Astro-native TourCard with <Image> optimization
+ *
+ * Use this component for static pages (homepage, featured tours, etc.)
+ * where images can be optimized at build time.
+ *
+ * For client-side filtered grids (ToursGrid), use the React TourCard instead.
+ */
+import { Image } from "astro:assets";
+import type { WPTour, WPTourFeaturedImage } from "../lib/wordpress/types";
+import { wpUrl } from "../lib/wp-url";
+
+interface Props {
+    tour: WPTour;
+    lang?: string;
+    style?: "grid" | "compact" | "featured";
+    showExcerpt?: boolean;
+    excerptWords?: number;
+}
+
+const {
+    tour,
+    lang = "en",
+    style = "grid",
+    showExcerpt = false,
+    excerptWords = 14,
+} = Astro.props;
+
+// Helper functions
+function cleanTitle(title: string): string {
+    return title
+        .replace(/<[^>]*>/g, "")
+        .replace(/\(All\s+rates\s+are\s+listed\s+in\s+USD\.?\)/gi, "")
+        .replace(/\(updated\)/gi, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function getExcerptWords(html: string, wordCount: number): string {
+    if (wordCount === 0) return "";
+    const text = html.replace(/<[^>]*>/g, "");
+    const words = text.split(/\s+/).filter(Boolean).slice(0, wordCount);
+    return words.join(" ") + (words.length >= wordCount ? "..." : "");
+}
+
+function extractUrl(value: unknown): string | null {
+    if (typeof value === "string" && value.trim()) {
+        return value;
+    }
+    if (typeof value === "object" && value !== null && "url" in value) {
+        const obj = value as { url?: string };
+        if (typeof obj.url === "string" && obj.url.trim()) {
+            return obj.url;
+        }
+    }
+    return null;
+}
+
+function getImageUrl(tour: WPTour): string | null {
+    const featuredImage = tour.featured_image_url;
+    let rawUrl: string | null = null;
+
+    if (typeof featuredImage === "string" && featuredImage.trim()) {
+        rawUrl = featuredImage;
+    }
+
+    if (
+        !rawUrl &&
+        typeof featuredImage === "object" &&
+        featuredImage !== null
+    ) {
+        const img = featuredImage as WPTourFeaturedImage;
+        if (!rawUrl) rawUrl = extractUrl(img.medium_large);
+        if (!rawUrl) rawUrl = extractUrl(img.large);
+        if (!rawUrl) rawUrl = extractUrl(img.medium);
+        if (!rawUrl) rawUrl = extractUrl(img.full);
+        if (!rawUrl) rawUrl = extractUrl(img.thumbnail);
+    }
+
+    if (rawUrl && typeof rawUrl === "string") {
+        return wpUrl(rawUrl);
+    }
+    return null;
+}
+
+function getDurationText(tour: WPTour): string | null {
+    if (tour.tour_meta?.duration_text) {
+        return tour.tour_meta.duration_text;
+    }
+    const titleMatch = tour.title.rendered.match(
+        /(\d+)\s*Days?(?:\s*\/?\s*(\d+)\s*Nights?)?/i,
+    );
+    if (titleMatch) {
+        const days = titleMatch[1];
+        const nights = titleMatch[2];
+        return nights ? `${days} Days / ${nights} Nights` : `${days} Days`;
+    }
+    return null;
+}
+
+// Computed values
+const imageUrl = getImageUrl(tour);
+const localePrefix = lang === "en" ? "" : `/${lang}`;
+const cleanedTitle = cleanTitle(tour.title.rendered);
+const durationText = getDurationText(tour);
+
+const price = tour.tour_meta?.["tour-price-text"] || tour.tour_meta?.price;
+const discountPrice = tour.tour_meta?.["tour-price-discount-text"];
+const hasDiscount =
+    tour.tour_meta?.["tourmaster-tour-discount"] === "true" && discountPrice;
+const ribbon = tour.tour_meta?.ribbon;
+
+const isCompact = style === "compact";
+const isFeatured = style === "featured";
+
+// Image dimensions for optimization
+const imageWidth = isFeatured ? 600 : isCompact ? 400 : 500;
+const imageHeight = isCompact
+    ? Math.round((imageWidth * 9) / 16)
+    : Math.round((imageWidth * 3) / 4);
+---
+
+<a
+    href={`${localePrefix}/tours/${tour.slug}`}
+    class="group block bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100"
+>
+    <!-- Image -->
+    <div
+        class={`relative overflow-hidden bg-gray-100 ${isCompact ? "aspect-[16/9]" : "aspect-[4/3]"}`}
+    >
+        {
+            imageUrl ? (
+                <Image
+                    src={imageUrl}
+                    alt={cleanedTitle}
+                    width={imageWidth}
+                    height={imageHeight}
+                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    loading="lazy"
+                    decoding="async"
+                    format="webp"
+                    quality={80}
+                />
+            ) : (
+                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-400 to-amber-300">
+                    <span class="material-icons text-white/50 text-6xl">
+                        landscape
+                    </span>
+                </div>
+            )
+        }
+
+        <!-- Discount Badge -->
+        {
+            hasDiscount && (
+                <div class="absolute top-4 right-4 z-10">
+                    <div class="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                        ${discountPrice}
+                    </div>
+                    <div class="bg-gray-800/80 text-white px-2 py-0.5 rounded text-xs line-through mt-1 text-right">
+                        ${price}
+                    </div>
+                </div>
+            )
+        }
+
+        <!-- Price Badge (when no discount) -->
+        {
+            price && !hasDiscount && (
+                <div class="absolute bottom-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full shadow-md">
+                    <span class="text-sm text-gray-500">
+                        {lang === "zh" ? "起价 " : "From "}
+                    </span>
+                    <span class="font-bold text-orange-500">${price}</span>
+                </div>
+            )
+        }
+
+        <!-- Ribbon -->
+        {
+            ribbon && (
+                <div class="absolute top-4 left-4">
+                    <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-3 py-1 text-xs font-bold rounded-full shadow-md">
+                        {ribbon}
+                    </div>
+                </div>
+            )
+        }
+    </div>
+
+    <!-- Content -->
+    <div class={`p-5 ${isFeatured ? "p-6" : ""}`}>
+        <!-- Title -->
+        <h3
+            class="font-semibold text-gray-900 mb-2 group-hover:text-orange-500 transition-colors line-clamp-2 text-lg"
+        >
+            {cleanedTitle}
+        </h3>
+
+        <!-- Duration -->
+        {
+            durationText && (
+                <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                    <span class="material-icons text-base text-orange-400">
+                        schedule
+                    </span>
+                    <span>{durationText}</span>
+                </div>
+            )
+        }
+
+        <!-- Destination badges -->
+        {
+            tour.tour_terms?.destinations &&
+                tour.tour_terms.destinations.length > 0 && (
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        {tour.tour_terms.destinations
+                            .slice(0, 2)
+                            .map((dest) => (
+                                <span class="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full">
+                                    {dest.name}
+                                </span>
+                            ))}
+                    </div>
+                )
+        }
+
+        <!-- Excerpt (optional) -->
+        {
+            showExcerpt && excerptWords > 0 && tour.excerpt?.rendered && (
+                <p class="text-gray-500 text-sm line-clamp-2 mt-2">
+                    {getExcerptWords(tour.excerpt.rendered, excerptWords)}
+                </p>
+            )
+        }
+    </div>
+</a>

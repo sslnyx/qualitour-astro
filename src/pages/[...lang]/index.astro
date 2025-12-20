@@ -8,7 +8,7 @@ import {
 import { type Locale } from "../../i18n/config";
 import heroBackground from "../../assets/hero-background.webp";
 import heroBackgroundMobile from "../../assets/hero-background-mobile.webp";
-import TourCard from "../../components/TourCard";
+import TourCardOptimized from "../../components/TourCardOptimized.astro";
 import ReviewsSlider from "../../components/ReviewsSlider";
 import TransferBookingModalButton from "../../components/TransferBookingModalButton";
 
@@ -451,7 +451,7 @@ const transferRoutes = [
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {
           featuredTours.map((tour) => (
-            <TourCard tour={tour} lang={lang} style="featured" />
+            <TourCardOptimized tour={tour} lang={lang} style="featured" />
           ))
         }
       </div>
