@@ -89,6 +89,24 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
     const filteredTours = useMemo(() => {
         let result = tours;
 
+        // Filter by guide language and explicit visibility settings
+        if (lang === 'zh') {
+            result = result.filter(tour => {
+                // Hide if explicitly hidden for ZH site
+                if (tour.tour_meta?.show_on_zh_site === false) return false;
+                // Fallback to guide language
+                return tour.tour_meta?.guide_language !== 'en';
+            });
+        }
+        if (lang === 'en') {
+            result = result.filter(tour => {
+                // Hide if explicitly hidden for EN site
+                if (tour.tour_meta?.show_on_en_site === false) return false;
+                // Fallback to guide language
+                return tour.tour_meta?.guide_language !== 'zh';
+            });
+        }
+
         if (filters.duration) {
             result = result.filter((tour) => {
                 // Check in durations taxonomy
@@ -123,8 +141,11 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
             const query = filters.q.toLowerCase();
             result = result.filter(
                 (tour) =>
-                    tour.title.rendered.toLowerCase().includes(query) ||
-                    tour.excerpt.rendered.toLowerCase().includes(query)
+                    // Match against title (stripping only HTML tags)
+                    tour.title.rendered
+                        .replace(/<[^>]*>/g, '')
+                        .toLowerCase()
+                        .includes(query)
             );
         }
 

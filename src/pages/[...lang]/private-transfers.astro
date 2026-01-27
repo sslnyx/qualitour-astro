@@ -3,9 +3,10 @@ import Layout from "../../layouts/Layout.astro";
 import PageHero from "../../components/PageHero.astro";
 import { type Locale } from "../../i18n/config";
 import { wpUrl } from "../../lib/wp-url";
-import TransferBookingModalButton from "../../components/TransferBookingModalButton";
+import TransferRoutesGrid from "../../components/TransferRoutesGrid";
 import PremiumReviewsGrid from "../../components/PremiumReviewsGrid";
 import { getGoogleReviews } from "../../lib/wordpress/api";
+import { getPrivateTransfersWithPricing } from "../../lib/zaui/zaui";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -25,6 +26,16 @@ try {
     reviews = await getGoogleReviews();
 } catch (e) {
     console.error("Failed to fetch reviews:", e);
+}
+
+// Fetch transfer routes from Zaui API
+let transferRoutes: Awaited<ReturnType<typeof getPrivateTransfersWithPricing>> =
+    [];
+try {
+    transferRoutes = await getPrivateTransfersWithPricing();
+    console.log(`Fetched ${transferRoutes.length} transfer routes from Zaui`);
+} catch (e) {
+    console.error("Failed to fetch transfer routes from Zaui:", e);
 }
 
 // Filter transfer-related reviews with improved keywords
@@ -313,83 +324,7 @@ const charterRates =
               },
           ];
 
-const transferOffers = [
-    {
-        titleLines: ["Vancouver Airport (YVR)", "→", "Whistler"],
-        caption: "From $465",
-        icon: "flight_land",
-        book: [
-            { actId: "19", label: "11-seater" },
-            { actId: "54", label: "14-seater" },
-        ],
-    },
-    {
-        titleLines: ["Greater Vancouver", "→", "Whistler"],
-        caption: "From $435",
-        icon: "downhill_skiing",
-        book: [
-            { actId: "19", label: "11-seater" },
-            { actId: "54", label: "14-seater" },
-        ],
-    },
-    {
-        titleLines: ["Whistler", "→", "YVR / Vancouver"],
-        caption: "From $435",
-        icon: "flight_takeoff",
-        book: [
-            { actId: "20", label: "11-seater" },
-            { actId: "55", label: "14-seater" },
-        ],
-    },
-    {
-        titleLines: ["Vancouver", "→", "Sun Peaks"],
-        caption: "From $960",
-        icon: "ac_unit",
-        book: [{ actId: "82", label: "11-seater" }],
-    },
-    {
-        titleLines: ["Sun Peaks", "→", "Vancouver"],
-        caption: "From $960",
-        icon: "ac_unit",
-        book: [{ actId: "83", label: "11-seater" }],
-    },
-    {
-        titleLines: ["Vancouver", "→", "Seattle"],
-        caption: "From $950",
-        icon: "directions_car",
-        book: [
-            { actId: "84", label: "11-seater" },
-            { actId: "97", label: "14-seater" },
-        ],
-    },
-    {
-        titleLines: ["Seattle", "→", "Vancouver"],
-        caption: "From $1050",
-        icon: "directions_car",
-        book: [
-            { actId: "85", label: "11-seater" },
-            { actId: "98", label: "14-seater" },
-        ],
-    },
-    {
-        titleLines: ["YVR Airport", "→", "Canada Place Cruise"],
-        caption: "From $245",
-        icon: "directions_boat",
-        book: [
-            { actId: "88", label: "11-seater" },
-            { actId: "96", label: "14-seater" },
-        ],
-    },
-    {
-        titleLines: ["Canada Place Cruise", "→", "YVR Airport"],
-        caption: "From $240",
-        icon: "directions_boat",
-        book: [
-            { actId: "89", label: "11-seater" },
-            { actId: "95", label: "14-seater" },
-        ],
-    },
-];
+// Transfer routes are now fetched from Zaui API (see above)
 
 const faqItems = [
     {
@@ -642,57 +577,27 @@ function extractPriceNumber(caption: string): string | null {
                 </h2>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {
-                    transferOffers.map((offer) => {
-                        const price = extractPriceNumber(offer.caption);
-                        return (
-                            <div class="group relative bg-white rounded-2xl border border-gray-200 p-6 hover:border-[#f7941e]/50 hover:shadow-xl transition-all duration-300 overflow-hidden">
-                                <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-[#f7941e]/10 to-transparent rounded-bl-full" />
-                                <div class="w-14 h-14 bg-gradient-to-br from-[#f7941e]/10 to-orange-50 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <span class="material-icons text-[#f7941e] text-2xl">
-                                        {offer.icon || "airport_shuttle"}
-                                    </span>
-                                </div>
-                                <div class="mb-4">
-                                    <div class="font-bold text-gray-900 text-lg leading-relaxed">
-                                        {offer.titleLines[0]}
-                                    </div>
-                                    <div class="text-[#f7941e] font-bold my-1">
-                                        {offer.titleLines[1]}
-                                    </div>
-                                    <div class="font-bold text-gray-900 text-lg">
-                                        {offer.titleLines[2]}
-                                    </div>
-                                </div>
-                                <div class="mb-6">
-                                    {price && (
-                                        <div class="flex items-baseline gap-1">
-                                            <span class="text-3xl font-bold text-gray-900">
-                                                ${price}
-                                            </span>
-                                            <span class="text-gray-500 text-sm">
-                                                {t.perVehicle}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                                <div class="flex flex-wrap gap-2">
-                                    {offer.book.map((b) => (
-                                        <TransferBookingModalButton
-                                            label={b.label}
-                                            activityId={b.actId}
-                                            localePrefix={localePrefix}
-                                            lang={lang}
-                                            client:visible
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    })
-                }
-            </div>
+            {
+                transferRoutes.length > 0 ? (
+                    <TransferRoutesGrid
+                        routes={transferRoutes}
+                        lang={lang}
+                        localePrefix={localePrefix}
+                        client:load
+                    />
+                ) : (
+                    <div class="text-center py-12 text-gray-500">
+                        <span class="material-icons text-4xl mb-4">
+                            sync_problem
+                        </span>
+                        <p>
+                            {lang === "zh"
+                                ? "无法加载路线信息"
+                                : "Unable to load routes"}
+                        </p>
+                    </div>
+                )
+            }
         </div>
     </section>
 

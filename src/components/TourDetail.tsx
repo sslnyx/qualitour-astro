@@ -218,7 +218,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
         return gd?.tour_itinerary || gd?.['tourmaster-tour-itinerary'] || [];
     }, [gd, sections]);
 
-    // Check for photos - collect from multiple sources and convert to R2 URLs
+    // Check for photos - collect from multiple sources and process URLs
     const photos = useMemo(() => {
         const photoList: string[] = [];
 

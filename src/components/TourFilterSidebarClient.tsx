@@ -24,6 +24,21 @@ interface FilterState {
     q: string;
 }
 
+interface FilterContentProps {
+    filters: FilterState;
+    updateFilter: (key: keyof FilterState, value: string | null) => void;
+    clearAllFilters: () => void;
+    t: any;
+    durations: WPTourDuration[];
+    types: WPTourType[];
+    topLevelDestinations: WPTourDestination[];
+    destinationChildren: Map<number, WPTourDestination[]>;
+    collapsedSections: Set<string>;
+    toggleSection: (section: string) => void;
+    hasActiveFilters: boolean;
+    isMobile?: boolean;
+}
+
 function getFiltersFromUrl(): FilterState {
     if (typeof window === 'undefined') {
         return { destination: '', type: '', duration: '', q: '' };
@@ -54,123 +69,22 @@ function buildDestinationTree(destinations: WPTourDestination[]) {
     return { topLevel, parentMap };
 }
 
-export function TourFilterSidebarClient({ destinations, durations, types, lang }: Props) {
-    const [filters, setFilters] = useState<FilterState>(getFiltersFromUrl);
-    const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
-    const [mobileOpen, setMobileOpen] = useState(false);
-
-    const { topLevel: topLevelDestinations, parentMap: destinationChildren } = useMemo(
-        () => buildDestinationTree(destinations),
-        [destinations]
-    );
-
-    // Sync with URL on mount and popstate
-    useEffect(() => {
-        const handleUrlChange = () => {
-            setFilters(getFiltersFromUrl());
-        };
-        handleUrlChange();
-        window.addEventListener('popstate', handleUrlChange);
-        return () => window.removeEventListener('popstate', handleUrlChange);
-    }, []);
-
-    // Listen for mobile filter toggle events
-    useEffect(() => {
-        const handleToggle = () => {
-            setMobileOpen(prev => !prev);
-        };
-
-        // Wire up the mobile filter toggle button from ToursGrid
-        const toggleBtn = document.getElementById('mobile-filter-toggle');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', handleToggle);
-        }
-
-        // Also listen for custom event
-        window.addEventListener('toggle-mobile-filters', handleToggle);
-
-        return () => {
-            if (toggleBtn) {
-                toggleBtn.removeEventListener('click', handleToggle);
-            }
-            window.removeEventListener('toggle-mobile-filters', handleToggle);
-        };
-    }, []);
-
-    // Lock body scroll when mobile drawer is open
-    useEffect(() => {
-        if (mobileOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
-        return () => {
-            document.body.style.overflow = '';
-        };
-    }, [mobileOpen]);
-
-    const updateFilter = (key: keyof FilterState, value: string | null) => {
-        const localePrefix = lang === 'en' ? '' : `/${lang}`;
-        const params = new URLSearchParams(window.location.search);
-
-        if (value === null || value === '') {
-            params.delete(key);
-        } else {
-            params.set(key, value);
-        }
-
-        const queryString = params.toString();
-        const newUrl = queryString ? `${localePrefix}/tours?${queryString}` : `${localePrefix}/tours`;
-
-        // Update URL without reload
-        window.history.pushState({}, '', newUrl);
-
-        // Update local state
-        setFilters((prev) => ({
-            ...prev,
-            [key]: value || '',
-        }));
-
-        // Dispatch event for ToursGrid to pick up
-        window.dispatchEvent(new Event('urlchange'));
-    };
-
-    const clearAllFilters = () => {
-        const localePrefix = lang === 'en' ? '' : `/${lang}`;
-        window.history.pushState({}, '', `${localePrefix}/tours`);
-        setFilters({ destination: '', type: '', duration: '', q: '' });
-        window.dispatchEvent(new Event('urlchange'));
-    };
-
-    const toggleSection = (section: string) => {
-        setCollapsedSections((prev) => {
-            const next = new Set(prev);
-            if (next.has(section)) {
-                next.delete(section);
-            } else {
-                next.add(section);
-            }
-            return next;
-        });
-    };
-
-    const hasActiveFilters = filters.destination || filters.type || filters.duration || filters.q;
-    const activeFilterCount = (filters.duration ? 1 : 0) + (filters.type ? 1 : 0) + (filters.destination ? 1 : 0) + (filters.q ? 1 : 0);
-
-    const t = {
-        filters: lang === 'zh' ? '筛选' : 'Filters',
-        searchPlaceholder: lang === 'zh' ? '搜索行程...' : 'Search tours...',
-        activeFilters: lang === 'zh' ? '已选筛选条件' : 'Active Filters',
-        clearAll: lang === 'zh' ? '清除所有' : 'Clear All',
-        tourLength: lang === 'zh' ? '行程天数' : 'Tour Length',
-        tourType: lang === 'zh' ? '旅游类型' : 'Tour Type',
-        destinations: lang === 'zh' ? '目的地' : 'Destinations',
-        applyFilters: lang === 'zh' ? '应用筛选' : 'Apply Filters',
-        close: lang === 'zh' ? '关闭' : 'Close',
-    };
-
-    // Shared filter content component
-    const FilterContent = ({ isMobile = false }: { isMobile?: boolean }) => (
+// Extracted FilterContent component to prevent re-renders losing focus
+function FilterContent({
+    filters,
+    updateFilter,
+    clearAllFilters,
+    t,
+    durations,
+    types,
+    topLevelDestinations,
+    destinationChildren,
+    collapsedSections,
+    toggleSection,
+    hasActiveFilters,
+    isMobile = false
+}: FilterContentProps) {
+    return (
         <>
             {/* Search Input */}
             <div className="mb-6">
@@ -248,7 +162,9 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                         {filters.destination && (
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-full text-xs border border-gray-200 text-gray-900">
                                 <span className="material-icons text-xs">place</span>
-                                {decodeHtml(destinations.find((d) => d.slug === filters.destination)?.name || filters.destination)}
+                                {decodeHtml(topLevelDestinations.find((d) => d.slug === filters.destination)?.name ||
+                                    [...destinationChildren.values()].flat().find(d => d.slug === filters.destination)?.name ||
+                                    filters.destination)}
                                 <button
                                     onClick={() => updateFilter('destination', null)}
                                     className="text-gray-400 hover:text-gray-600"
@@ -357,7 +273,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
             )}
 
             {/* Destinations Section */}
-            {destinations.length > 0 && (
+            {topLevelDestinations.length > 0 && (
                 <div className="pb-4">
                     <button
                         className="flex items-center justify-between w-full py-2 text-left group"
@@ -445,6 +361,136 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
             )}
         </>
     );
+}
+
+export function TourFilterSidebarClient({ destinations, durations, types, lang }: Props) {
+    const [filters, setFilters] = useState<FilterState>(getFiltersFromUrl);
+    const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    const { topLevel: topLevelDestinations, parentMap: destinationChildren } = useMemo(
+        () => buildDestinationTree(destinations),
+        [destinations]
+    );
+
+    // Sync with URL on mount and popstate
+    useEffect(() => {
+        const handleUrlChange = () => {
+            setFilters(getFiltersFromUrl());
+        };
+        handleUrlChange();
+        window.addEventListener('popstate', handleUrlChange);
+        return () => window.removeEventListener('popstate', handleUrlChange);
+    }, []);
+
+    // Listen for mobile filter toggle events
+    useEffect(() => {
+        const handleToggle = () => {
+            setMobileOpen(prev => !prev);
+        };
+
+        // Wire up the mobile filter toggle button from ToursGrid
+        const toggleBtn = document.getElementById('mobile-filter-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', handleToggle);
+        }
+
+        // Also listen for custom event
+        window.addEventListener('toggle-mobile-filters', handleToggle);
+
+        return () => {
+            if (toggleBtn) {
+                toggleBtn.removeEventListener('click', handleToggle);
+            }
+            window.removeEventListener('toggle-mobile-filters', handleToggle);
+        };
+    }, []);
+
+    // Lock body scroll when mobile drawer is open
+    useEffect(() => {
+        if (mobileOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [mobileOpen]);
+
+    const updateFilter = (key: keyof FilterState, value: string | null) => {
+        const localePrefix = lang === 'en' ? '' : `/${lang}`;
+        const params = new URLSearchParams(window.location.search);
+
+        if (value === null || value === '') {
+            params.delete(key);
+        } else {
+            params.set(key, value);
+        }
+
+        const queryString = params.toString();
+        const newUrl = queryString ? `${localePrefix}/tours?${queryString}` : `${localePrefix}/tours`;
+
+        // Update URL without reload
+        window.history.pushState({}, '', newUrl);
+
+        // Update local state
+        setFilters((prev) => ({
+            ...prev,
+            [key]: value || '',
+        }));
+
+        // Dispatch event for ToursGrid to pick up
+        window.dispatchEvent(new Event('urlchange'));
+    };
+
+    const clearAllFilters = () => {
+        const localePrefix = lang === 'en' ? '' : `/${lang}`;
+        window.history.pushState({}, '', `${localePrefix}/tours`);
+        setFilters({ destination: '', type: '', duration: '', q: '' });
+        window.dispatchEvent(new Event('urlchange'));
+    };
+
+    const toggleSection = (section: string) => {
+        setCollapsedSections((prev) => {
+            const next = new Set(prev);
+            if (next.has(section)) {
+                next.delete(section);
+            } else {
+                next.add(section);
+            }
+            return next;
+        });
+    };
+
+    const hasActiveFilters = !!(filters.destination || filters.type || filters.duration || filters.q);
+    const activeFilterCount = (filters.duration ? 1 : 0) + (filters.type ? 1 : 0) + (filters.destination ? 1 : 0) + (filters.q ? 1 : 0);
+
+    const t = {
+        filters: lang === 'zh' ? '筛选' : 'Filters',
+        searchPlaceholder: lang === 'zh' ? '搜索行程...' : 'Search tours...',
+        activeFilters: lang === 'zh' ? '已选筛选条件' : 'Active Filters',
+        clearAll: lang === 'zh' ? '清除所有' : 'Clear All',
+        tourLength: lang === 'zh' ? '行程天数' : 'Tour Length',
+        tourType: lang === 'zh' ? '旅游类型' : 'Tour Type',
+        destinations: lang === 'zh' ? '目的地' : 'Destinations',
+        applyFilters: lang === 'zh' ? '应用筛选' : 'Apply Filters',
+        close: lang === 'zh' ? '关闭' : 'Close',
+    };
+
+    const contentProps = {
+        filters,
+        updateFilter,
+        clearAllFilters,
+        t,
+        durations,
+        types,
+        topLevelDestinations,
+        destinationChildren,
+        collapsedSections,
+        toggleSection,
+        hasActiveFilters
+    };
 
     return (
         <>
@@ -454,7 +500,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
                     <span className="material-icons text-[#f7941e]">filter_list</span>
                     {t.filters}
                 </h2>
-                <FilterContent />
+                <FilterContent {...contentProps} />
             </aside>
 
             {/* Mobile Drawer */}
@@ -491,7 +537,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
 
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto p-6">
-                        <FilterContent isMobile={true} />
+                        <FilterContent {...contentProps} isMobile={true} />
                     </div>
 
                     {/* Footer with Apply Button */}

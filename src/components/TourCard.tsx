@@ -4,7 +4,7 @@
  * Features:
  * - Cleans up titles (removes "All rates..." and "(updated)")
  * - Handles various image URL formats from WordPress
- * - Rewrites image URLs to R2 CDN
+ * - Rewrites image URLs if necessary
  * - Responsive card design with hover effects
  * - Shows price, duration, and optional excerpt
  */
@@ -65,7 +65,7 @@ function extractUrl(value: unknown): string | null {
 
 /**
  * Get the best available image URL from tour data,
- * rewriting WordPress URLs to R2 CDN.
+ * rewriting WordPress URLs if necessary.
  * 
  * IMPORTANT: We prefer medium/large sizes over full-size to avoid
  * loading 5+ MB images for a 400px wide card.
@@ -96,7 +96,7 @@ function getImageUrl(tour: WPTour): string | null {
         if (!rawUrl) rawUrl = extractUrl(img.thumbnail);
     }
 
-    // Rewrite URL to R2 CDN - ensure we have a valid string
+    // Rewrite URL if necessary - ensure we have a valid string
     if (rawUrl && typeof rawUrl === 'string') {
         return wpUrl(rawUrl);
     }

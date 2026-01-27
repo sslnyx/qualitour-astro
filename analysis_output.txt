@@ -1,0 +1,255 @@
+npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+======================================================================
+Tour Matching Analysis: EN ↔ ZH (Multi-Strategy)
+======================================================================
+
+Fetching EN tours...
+  EN: Processed 20/138 tours...
+  EN: Processed 40/138 tours...
+  EN: Processed 60/138 tours...
+  EN: Processed 80/138 tours...
+  EN: Processed 100/138 tours...
+  EN: Processed 120/138 tours...
+  EN: Found 138 published tours
+Fetching ZH tours...
+  ZH: Processed 20/51 tours...
+  ZH: Processed 40/51 tours...
+  ZH: Found 51 published tours
+
+======================================================================
+TOUR STATISTICS
+======================================================================
+EN Published Tours: 138
+  - With Tour Code: 22
+  - With Price: 134
+
+ZH Published Tours: 51
+  - With Tour Code: 48
+  - With Price: 46
+
+======================================================================
+MATCHED TOURS
+======================================================================
+Total Matched Pairs: 12
+
+
+--- TOUR_CODE (8 matches) ---
+
+✓ Confidence: 100% | Code: SEL5D4ETOUR15
+  EN [36595]: Korea  5 Days Seoul Snapshot Tour (All rates are listed in U
+  ZH [15659]: 韓國精緻包團 首爾精華遊 5天4晚 (美金計價)
+  Price: $822
+
+✓ Confidence: 100% | Code: TPE7D5AHA15
+  EN [22366]: Taiwan  7 Days/6 Nights Enchanting Taiwan: Sun Moon Lake, Ta
+  ZH [9464]: 台灣七日六夜魅力之旅：日月潭、台南、高雄、墾丁、花蓮(美金計價)
+  Price: $959
+
+✓ Confidence: 100% | Code: YZF
+  EN [18459]: Winter Yellowknife Aurora Viewing Classic 4 Days
+  ZH [7877]: 【極光體驗】黃刀鎮北極光-經典 (冬季) 4日遊
+  Price: $615
+
+✓ Confidence: 100% | Code: YXY
+  EN [7748]: Winter Whitehorse Aurora Viewing Classic 3 Days (with Roundt
+  ZH [8019]: 【極光體驗】白馬市北極光-經典 (冬季) 4日遊（包溫哥華出發來回機票）
+  Price: $979
+
+✓ Confidence: 100% | Code: CWSF
+  EN [7112]: Classic Whistler Tour
+  ZH [6922]: 威士拿經典一日遊
+
+✓ Confidence: 100% | Code: CVBG
+  EN [7096]: Classic Victoria City Tour + Butchart Gardens
+  ZH [6896]: 維多利亞-寶翠花園經典一日遊
+
+✓ Confidence: 100% | Code: CVFD
+  EN [7070]: Classic Vancouver City Tour + Capilano Suspension Bridge
+  ZH [6730]: 溫哥華-卡佩蘭奴吊橋經典一日遊
+
+✓ Confidence: 100% | Code: CVHD
+  EN [7033]: Classic Vancouver City Tour - Half Day
+  ZH [6712]: 溫哥華經典半日遊
+
+--- SLUG_MATCH (1 matches) ---
+
+✓ Confidence: 95%
+  EN [21454]: Capilano Suspension Bridge Park Admission Ticket
+  ZH [6762]: Capilano Suspension Bridge Park 卡佩蘭奴吊橋公園門票
+  Price: $78.95
+
+--- IMAGE_MATCH (2 matches) ---
+
+✓ Confidence: 90%
+  EN [21468]: FlyOver Canada in Vancouver Admission Ticket
+  ZH [9244]: FlyOver Canada in Vancouver 飛越加拿大溫哥華門票
+  Price: $29
+
+✓ Confidence: 90%
+  EN [21447]: Britannia Mine Museum Admission Ticket
+  ZH [9328]: Britannia Mine Museum 不列顛尼亞礦業博物館門票
+  Price: $41.95
+
+--- PRICE_MATCH (1 matches) ---
+
+✓ Confidence: 70%
+  EN [18460]: Winter Yellowknife Aurora Viewing Classic 3 Days
+  ZH [9415]: 【極光體驗】黃刀鎮北極光-經典 (冬季) 3日遊
+  Price: $442
+
+======================================================================
+UNMATCHED TOURS
+======================================================================
+EN Unmatched: 126
+ZH Unmatched: 39
+
+Sample EN Unmatched (first 15):
+  [78861] NTT | $12450 | treasures-of-namibia-15-days-all-rates-are-listed-
+  [78840] NTT | $4200 | the-o-region-9-days-all-rates-are-listed-in-usd
+  [78814] NTT | $6550 | splendid-deserts-of-namibia-15-days-all-rates-are-
+  [78800] NTT | $6700 | adventure-namibia-17-days-all-rates-are-listed-in-
+  [78760] no-code | $6899 | viking-oceans-cruises-cities-of-antiquity-italy-ma
+  [78712] NTT | $5300 | culture-wildlife-in-north-eastern-namibia-10-days-
+  [78704] NTT | $7400 | hello-namibia-12-days-all-rates-are-listed-in-usd
+  [78653] NTT | $10200 | untamed-caprivi-14-days-all-rates-are-listed-in-us
+  [78636] NTT | $4800 | classic-namibia-12-days-all-rates-are-listed-in-us
+  [78510] NTT | $7350 | experience-namibia-18-days-all-rates-are-listed-in
+  [78366] no-code | $11999 | viking-oceans-cruises-canada-new-england-scenic-sh
+  [78363] no-code | $11999 | viking-oceans-cruises-eastern-seaboard-explorer-ca
+  [78359] no-code | $19499 | viking-oceans-cruises-grand-australia-circumnaviga
+  [78356] no-code | $9399 | viking-oceans-cruises-north-pacific-passage-japan-
+  [78352] no-code | $16499 | viking-oceans-cruises-far-eastern-horizons-china-j
+
+Sample ZH Unmatched (first 15):
+  [18445] STYHZ05D15 | $1299 | 海洋三省-新蘇格蘭、愛德華王子島、新布倫斯瑞-3
+  [18438] STYHZ07D15 | $1799 | 加拿大海洋三省雙飛全景7日遊-提早30天報名可享買2-2
+  [18431] STYHZYYT8D15 | $2599 | 穿越征服紐芬蘭全景哈利法克斯進、聖瓊斯出8日遊
+  [18428] STYYTYHZ8D15 | $2599 | 穿越征服紐芬蘭全景聖瓊斯進、哈利法克斯出8日-2
+  [18415] QRKD5 | $4568 | 「洛磯山登山者號」5天優悠之旅-2026
+  [18404] QRKE5 | $1704 | 夏季洛磯山-5天經典之旅-2026溫哥華出發
+  [18398] QRKJ5 | $2074 | 夏季洛磯山-5天瑰麗之旅-2026溫哥華出發
+  [18362] QRKM5 | $1654 | 夏季洛磯山-5天情深之旅-2026溫哥華出發
+  [18355] QRKL5 | $1394 | 夏季洛機山5天閃亮之旅-2026溫哥華出發
+  [18340] QRKC4 | $1194 | 夏季洛磯山-4天皇御之旅
+  [18337] QRKB4 | $924 | 夏季洛磯山-4天尊貴之旅
+  [18302] PVG | $999 | 江南江西三峽15天，2026年首航五星遊輪團
+  [18276] AST | $709 | 極光之約・阿拉斯加：費爾班克斯-5天4晚-美景遊美
+  [18223] AST | $1469 | 極光之約・阿拉斯加：費爾班克斯－安克拉治-7天6
+  [8107] YXY | $768 | 【極光體驗】白馬市北極光-經典-冬季-3日遊
+
+======================================================================
+JSON OUTPUT (for Polylang linking)
+======================================================================
+[
+  {
+    "en_id": 36595,
+    "zh_id": 15659,
+    "match_type": "tour_code",
+    "confidence": 100,
+    "tour_code": "SEL5D4ETOUR15",
+    "en_slug": "korea-5-days-seoul-snapshot-tour-all-rates-are-listed-in-usd",
+    "zh_slug": "%e9%9f%93%e5%9c%8b%e7%b2%be%e7%b7%bb%e5%8c%85%e5%9c%98-%e9%a6%96%e7%88%be%e7%b2%be%e8%8f%af%e9%81%8a-5%e5%a4%a94%e6%99%9a-%e7%be%8e%e9%87%91%e8%a8%88%e5%83%b9"
+  },
+  {
+    "en_id": 22366,
+    "zh_id": 9464,
+    "match_type": "tour_code",
+    "confidence": 100,
+    "tour_code": "TPE7D5AHA15",
+    "en_slug": "taiwan-7-days-6-nights-enchanting-taiwan-sun-moon-lake-tainan-kaohsiung-kenting-hualien-all-rates-are-listed-in-usd",
+    "zh_slug": "%e5%8f%b0%e7%81%a3%e4%b8%83%e6%97%a5%e5%85%ad%e5%a4%9c%e9%ad%85%e5%8a%9b%e4%b9%8b%e6%97%85%ef%bc%9a%e6%97%a5%e6%9c%88%e6%bd%ad%e3%80%81%e5%8f%b0%e5%8d%97%e3%80%81%e9%ab%98%e9%9b%84%e3%80%81%e5%a2%be"
+  },
+  {
+    "en_id": 18459,
+    "zh_id": 7877,
+    "match_type": "tour_code",
+    "confidence": 100,
+    "tour_code": "YZF",
+    "en_slug": "winter-yellowknife-aurora-viewing-classic-4-days",
+    "zh_slug": "yellowknife-winter-aurora-viewing-classic-4-days"
+  },
+  {
+    "en_id": 7748,
+    "zh_id": 8019,
+    "match_type": "tour_code",
+    "confidence": 100,
+    "tour_code": "YXY",
+    "en_slug": "whitehorse-winter-aurora-viewing-classic-3-days-with-roundtrip-flight-from-vancouver",
+    "zh_slug": "whitehorse-winter-aurora-viewing-lodge-classic-4-days-with-roundtrip-flights-from-vancouver"
+  },
+  {
+    "en_id": 7112,
+    "zh_id": 6922,
+    "match_type": "tour_code",
+    "confidence": 100,
+    "tour_code": "CWSF",
+    "en_slug": "classic-whistler-tour-shannon-falls",
+    "zh_slug": "classic-whistler-tour-shannon-falls"
+  },
+  {
+    "en_id": 7096,
+    "zh_id": 6896,
+    "match_type": "tour_code",
+    "confidence": 100,
+    "tour_code": "CVBG",
+    "en_slug": "classic-victoria-city-tour-butchart-gardens",
+    "zh_slug": "classic-victoria-city-tour-butchart-gardens"
+  },
+  {
+    "en_id": 7070,
+    "zh_id": 6730,
+    "match_type": "tour_code",
+    "confidence": 100,
+    "tour_code": "CVFD",
+    "en_slug": "classic-vancouver-city-tour-capilano-suspension-bridge",
+    "zh_slug": "classic-vancouver-city-tour-capilano-suspension-bridge"
+  },
+  {
+    "en_id": 7033,
+    "zh_id": 6712,
+    "match_type": "tour_code",
+    "confidence": 100,
+    "tour_code": "CVHD",
+    "en_slug": "classic-vancouver-city-tour-half-day",
+    "zh_slug": "classic-vancouver-city-tour-half-day"
+  },
+  {
+    "en_id": 21454,
+    "zh_id": 6762,
+    "match_type": "slug_match",
+    "confidence": 95,
+    "tour_code": null,
+    "en_slug": "capilano-suspension-bridge-park-admission-ticket-2",
+    "zh_slug": "capilano-suspension-bridge-park-admission-ticket"
+  },
+  {
+    "en_id": 21468,
+    "zh_id": 9244,
+    "match_type": "image_match",
+    "confidence": 90,
+    "tour_code": null,
+    "en_slug": "flyover-canada-in-vancouver-admission-ticket",
+    "zh_slug": "flyover-canada-in-vancouver-%e9%a3%9b%e8%b6%8a%e5%8a%a0%e6%8b%bf%e5%a4%a7%e6%ba%ab%e5%93%a5%e8%8f%af%e9%96%80%e7%a5%a8"
+  },
+  {
+    "en_id": 21447,
+    "zh_id": 9328,
+    "match_type": "image_match",
+    "confidence": 90,
+    "tour_code": null,
+    "en_slug": "britannia-mine-museum-admission-ticket",
+    "zh_slug": "britannia-mine-museum-%e4%b8%8d%e5%88%97%e9%a1%9b%e5%b0%bc%e4%ba%9e%e7%a4%a6%e6%a5%ad%e5%8d%9a%e7%89%a9%e9%a4%a8%e9%96%80%e7%a5%a8"
+  },
+  {
+    "en_id": 18460,
+    "zh_id": 9415,
+    "match_type": "price_match",
+    "confidence": 70,
+    "tour_code": null,
+    "en_slug": "winter-yellowknife-aurora-viewing-classic-3-days",
+    "zh_slug": "%e9%bb%83%e5%88%80%e9%8e%ae%e5%8c%97%e6%a5%b5%e5%85%89-%e7%b6%93%e5%85%b8-%e5%86%ac%e5%ad%a3-3%e6%97%a5%e9%81%8a"
+  }
+]

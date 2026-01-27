@@ -1,0 +1,586 @@
+npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+======================================================================
+Tour Matching Analysis: LOCAL WordPress (qualitour.local)
+======================================================================
+
+Fetching EN tours from http://qualitour.local/wp-json/qualitour/v1/tours?per_page=200&_fields=id,slug,status,title,featured_image_url,tour_meta...
+  EN: Processed 20/124...
+  EN: Processed 40/124...
+  EN: Processed 60/124...
+  EN: Processed 80/124...
+  EN: Processed 100/124...
+  EN: Processed 120/124...
+  EN: Found 124 published tours
+Fetching ZH tours from http://qualitour.local/wp-json/qualitour/v1/tours?per_page=200&_fields=id,slug,status,title,featured_image_url,tour_meta&lang=zh...
+  ZH: Processed 20/124...
+  ZH: Processed 40/124...
+  ZH: Processed 60/124...
+  ZH: Processed 80/124...
+  ZH: Processed 100/124...
+  ZH: Processed 120/124...
+  ZH: Found 124 published tours
+
+EN Tours: 124 | ZH Tours: 124
+
+======================================================================
+MATCHED TOURS: 110 pairs (90%+ confidence)
+======================================================================
+
+✓ tour_code (100%) | Code: STYHZ05D15
+  EN [41030]: 5-Day All-Inclusive Tour of the Maritime Provinces
+  ZH [40371]: 海洋三省 (新蘇格蘭、愛德華王子島、新布倫斯瑞克) 雙飛全景5日遊 (提早30天報名可享買2送1/買
+
+✓ tour_code (100%) | Code: STYHZ03D15
+  EN [41031]: Classic 3-Day Tour of the Maritime Provinces (Nova
+  ZH [40370]: 海洋三省 (新蘇格蘭、愛德華王子島、新布倫斯瑞克) 經典3日遊 (提早30天報名可享買2送1/買3送
+
+✓ tour_code (100%) | Code: CT
+  EN [41024]: Turkey Istanbul + Ankara + Cappadocia + Konya + Pa
+  ZH [40372]: 土耳其 伊斯坦布爾+安卡拉+卡帕多奇亞+孔亞+棉花堡+庫薩達斯+伊茲密爾+恰納卡萊 12天11晚遊(
+
+✓ tour_code (100%) | Code: CRHNBO11S
+  EN [40994]: Kenya & Tanzania Exquisite Private Tour, Slow-Pace
+  ZH [40389]: 肯尼亞激情狂野、極致探險之旅10日遊(美金計價)
+
+✓ tour_code (100%) | Code: OKW02
+  EN [40962]: 2-Day Golden Autumn Okanagan Vineyard Exploration 
+  ZH [40406]: 金秋奧肯拿根葡萄園探索品酒之旅2日遊
+
+✓ tour_code (100%) | Code: FVB01
+  EN [40408]: Fraser Valley Bald Eagle Festival & Wildlife Watch
+  ZH [40697]: 菲沙河谷白頭鷹遷徙野生動物觀賞1日遊
+
+✓ tour_code (100%) | Code: CVFD
+  EN [40404]: Classic Vancouver City Tour + Capilano Suspension 
+  ZH [40695]: 溫哥華-卡佩蘭奴吊橋經典一日遊
+
+✓ tour_code (100%) | Code: CVHD
+  EN [40405]: Classic Vancouver City Tour - Half Day
+  ZH [40696]: 溫哥華經典半日遊
+
+✓ tour_code (100%) | Code: CWSF
+  EN [40401]: Classic Whistler Tour + Shannon Falls
+  ZH [40693]: 威士拿-香農瀑布經典一日遊
+
+✓ tour_code (100%) | Code: CVBG
+  EN [40402]: Classic Victoria City Tour + Butchart Gardens
+  ZH [40694]: 維多利亞-寶翠花園經典一日遊
+
+✓ tour_code (100%) | Code: SEL5D4ETOUR15
+  EN [39364]: Korea  5 Days Seoul Snapshot Tour (All rates are l
+  ZH [40364]: 韓國精緻包團 首爾精華遊 5天4晚 (美金計價)
+
+✓ tour_code (100%) | Code: TPE7D5AHA15
+  EN [22366]: Taiwan  7 Days/6 Nights Enchanting Taiwan: Sun Moo
+  ZH [40507]: 台灣七日六夜魅力之旅：日月潭、台南、高雄、墾丁、花蓮(美金計價)
+
+✓ tour_code (100%) | Code: YXY
+  EN [18460]: Winter Yellowknife Aurora Viewing Classic 3 Days
+  ZH [40396]: 【極光體驗】白馬市北極光-經典 (冬季) 4日遊（包溫哥華出發來回機票）
+
+✓ slug_match (95%)
+  EN [41020]: Relaxing 3-Day Summer Rockies Getaway (From Calgar
+  ZH [40376]: 夏季洛磯山 悠閒三日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [41021]: Summer Rockies Deep Dive 3-Day Tour (From Calgary)
+  ZH [40375]: 夏季洛磯山 深度三日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [41022]: Summer Rockies Highlights 3-Day Tour (Departure fr
+  ZH [40374]: 夏季洛磯山 精華三日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [41023]: Summer Rockies 3-Day Tour (From Calgary)
+  ZH [40373]: 夏季洛磯山 精彩三日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [41010]: Summer Rockies Deep Dive 5-Day Tour (From Calgary)
+  ZH [40381]: 夏季洛磯山 深度五日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [41011]: Summer Rockies Classic 5-Day Tour (Departure from 
+  ZH [40380]: 夏季洛磯山 經典五日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [41012]: Summer Rockies Classic 4-Day Tour (From Calgary)
+  ZH [40379]: 夏季洛磯山 經典四日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [41013]: Relaxing 4-Day Summer Rockies Tour (From Calgary)
+  ZH [40378]: 夏季洛磯山 悠閒四日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [41014]: Summer Rockies Highlights 4-Day Tour (From Calgary
+  ZH [40377]: 夏季洛磯山 精華四日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [41002]: Summer Rockies 6-Day Tour (Departure from Calgary)
+  ZH [40384]: 夏季洛磯山 精選六日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [41003]: Summer Rockies Five-Day Tour (Departure from Calga
+  ZH [40383]: 夏季洛磯山 精選五日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [40949]: Summer Alberta + Rockies 7-Day Tour (Departure fro
+  ZH [40511]: 夏季亞伯達+洛磯山七日遊(卡加利出發)
+
+✓ slug_match (95%)
+  EN [39361]: Viking Rivers Cruises - Rhine Getaway (Switzerland
+  ZH [40953]: 維京河輪 - 萊茵河逍遙遊 (瑞士、德國、法國、荷蘭) 8天
+
+✓ slug_match (95%)
+  EN [39363]: Viking Rivers Cruises - Mississippi River Odyssey 
+  ZH [40950]: 維京河輪 - 密西西比河奧德賽 (美國) 22天
+
+✓ slug_match (95%)
+  EN [39359]: Viking Rivers Cruises - NEW! Rhine & Main Explorer
+  ZH [40954]: 維京河輪 - 全新！萊茵河與美因河探索之旅（德國、法國、瑞士）11天
+
+✓ slug_match (95%)
+  EN [39357]: Viking Rivers Cruises - NEW! Castles, Vineyards & 
+  ZH [40955]: 維京河輪 - 全新！城堡、葡萄園與村莊 (德國、荷蘭) 8天
+
+✓ slug_match (95%)
+  EN [39355]: Viking Rivers Cruises - NEW! Wonders of India I 15
+  ZH [40956]: 維京河輪 - 全新！印度奇觀 I 15天
+
+✓ slug_match (95%)
+  EN [39353]: Viking Rivers Cruises - NEW! Wonders of India II 1
+  ZH [40957]: 維京河輪 - 全新！ 印度奇觀 II 15日遊
+
+✓ slug_match (95%)
+  EN [39343]: Viking Rivers Cruises - NEW! New Orleans to Memphi
+  ZH [40981]: 維京河輪 - 全新！紐奧良至曼菲斯（美國）11日遊
+
+✓ slug_match (95%)
+  EN [39341]: Viking Rivers Cruises - NEW! Christmastime in Pari
+  ZH [40982]: 維京河輪 - 全新！巴黎與諾曼第聖誕時光（法國）8日遊
+
+✓ slug_match (95%)
+  EN [39339]: Viking Rivers Cruises - NEW! Christmas on the Rhin
+  ZH [40985]: 維京河輪 - 全新！萊茵河與美茵河聖誕之旅（德國、法國、瑞士）11天
+
+✓ slug_match (95%)
+  EN [39337]: Viking Rivers Cruises - NEW! Total Eclipse on the 
+  ZH [40986]: 維京河輪 - 全新行程！尼羅河日全蝕之旅（埃及）12天
+
+✓ slug_match (95%)
+  EN [39335]: Viking Rivers Cruises - Rhine & Viking Shores & Fj
+  ZH [40987]: 維京河輪 - 萊茵河 & 維京海岸與峽灣 (6國) 15日遊
+
+✓ slug_match (95%)
+  EN [39333]: Viking Rivers Cruises - Grand European & Viking Fj
+  ZH [40988]: 維京河輪 - 壯遊歐洲 & 維京峽灣 (6國) 22天
+
+✓ slug_match (95%)
+  EN [39331]: Viking Rivers Cruises - NEW! Rhine, Main & Danube 
+  ZH [40989]: 維京河輪 - 全新！萊茵河、美茵河與多瑙河之旅（五國）18天
+
+✓ slug_match (95%)
+  EN [39329]: Viking Rivers Cruises - NEW! Iberian Odyssey (3 Co
+  ZH [40995]: 維京河輪 - 全新！伊比利亞半島之旅（三國）17天
+
+✓ slug_match (95%)
+  EN [39327]: Viking Expeditions Cruises - NEW! Arctic to Antarc
+  ZH [40996]: 維京遊輪探險之旅 - 全新！北極到南極探險家（10國）81天
+
+✓ slug_match (95%)
+  EN [39325]: Viking Expeditions Cruises - NEW! Great Lakes Trea
+  ZH [40997]: 維京探險郵輪 - 全新！五大湖珍寶（美國、加拿大）10天
+
+✓ slug_match (95%)
+  EN [39323]: Viking Expeditions Cruises - NEW! Into the Antarct
+  ZH [40998]: 維京遊輪探險之旅 - 全新！ 前進南極圈（阿根廷、南極洲）15天
+
+✓ slug_match (95%)
+  EN [39321]: Viking Expeditions Cruises - NEW! Panama Canal & t
+  ZH [40999]: 維京遊輪遠征航程 - 全新！巴拿馬運河與美洲（智利、秘魯、巴拿馬、牙買加、巴哈馬、美國）20天
+
+✓ slug_match (95%)
+  EN [39319]: Viking Expeditions Cruises - NEW! Niagara & Great 
+  ZH [41005]: 維京遊輪探險之旅 - 全新！尼加拉瀑布與五大湖珍寶（加拿大、美國）17天
+
+✓ slug_match (95%)
+  EN [39317]: Viking Expeditions Cruises - NEW! Longitudinal Wor
+  ZH [41006]: 維京遊輪遠征 - 全新！縱向環球航程 VII (9 國) 63 天
+
+✓ slug_match (95%)
+  EN [39315]: Viking Expeditions Cruises - NEW! Longitudinal Wor
+  ZH [41007]: 維京遊輪遠征 - 全新！縱向環球航行 VI (11 國) 69 天
+
+✓ slug_match (95%)
+  EN [39313]: Viking Expeditions Cruises - NEW! From the Arctic 
+  ZH [41008]: 維京探險郵輪 - 全新航程！從北極到南極（12國）87天
+
+✓ slug_match (95%)
+  EN [39311]: Korea 8 Days Authentic Tour (All rates are listed 
+  ZH [41009]: 韓國八天深度之旅 (所有價格均以美元計價)
+
+✓ slug_match (95%)
+  EN [39309]: Korea 12 Days Authentic Tour (All rates are listed
+  ZH [41015]: 韓國12日深度之旅（所有價格均以美元計價。）
+
+✓ slug_match (95%)
+  EN [22381]: Taiwan  8 Days/7 Nights Enchanting Taiwan: Sun Moo
+  ZH [41016]: 台灣 8 天/7 夜迷人台灣：日月潭、台南、高雄、墾丁、花蓮（所有價格均以美元列出。）
+
+✓ slug_match (95%)
+  EN [21454]: Capilano Suspension Bridge Park Admission Ticket
+  ZH [40403]: Capilano Suspension Bridge Park 卡佩蘭奴吊橋公園門票
+
+✓ slug_match (95%)
+  EN [19444]: Kenya  10 Days/9 Nights Discovering Kenya's Wildli
+  ZH [41017]: 肯亞 10天/9夜 奢華探索肯亞野生動物：一趟狂野非洲狩獵之旅 (所有價格均以美元計價。)
+
+✓ slug_match (95%)
+  EN [18459]: Winter Yellowknife Aurora Viewing Classic 4 Days
+  ZH [40963]: 黃刀鎮冬季極光經典四日遊
+
+✓ slug_match (95%)
+  EN [11746]: Viking Rivers Cruises - London, Paris & D-Day (Eng
+  ZH [41018]: 維京河輪 - 倫敦、巴黎與諾曼第登陸 (英國、法國) 12日遊
+
+✓ slug_match (95%)
+  EN [11137]: Viking Expeditions Cruises - NEW! Canada & the Nor
+  ZH [41065]: 維京河輪 - 萊茵河與摩澤爾河聖誕之旅 (法國、德國、盧森堡、瑞士) 12天
+
+✓ slug_match (95%)
+  EN [11138]: Viking Expeditions Cruises - NEW! Canada & Greenla
+  ZH [41025]: 維京遊輪探險之旅 - 全新！加拿大與格陵蘭探險家（加拿大、格陵蘭）15天
+
+✓ slug_match (95%)
+  EN [11133]: Viking Expeditions Cruises - NEW! Into the Northwe
+  ZH [41026]: 維京探險郵輪 - 全新！勇闖西北航道（格陵蘭、加拿大）13天
+
+✓ slug_match (95%)
+  EN [11134]: Viking Expeditions Cruises - Canada & East Coast E
+  ZH [41027]: 維京遊輪 - 加拿大及東岸探索之旅 (加拿大、美國) 15天
+
+✓ slug_match (95%)
+  EN [11130]: Viking Expeditions Cruises - The Americas & Antarc
+  ZH [41028]: 維京遊輪探險之旅 - 美洲與南極探險家 (8國) 41天
+
+✓ slug_match (95%)
+  EN [11124]: Viking Expeditions Cruises - NEW! Longitudinal Wor
+  ZH [41037]: 維京遊輪遠征 - 全新！縱向環球航程 IV (9 個國家) 62 天
+
+✓ slug_match (95%)
+  EN [11113]: Viking Expeditions Cruises - Niagara & the Great L
+  ZH [41039]: 維京遊輪 - 尼加拉瀑布與五大湖 (加拿大、美國) 8天
+
+✓ slug_match (95%)
+  EN [11116]: Viking Expeditions Cruises - Antarctica & South Ge
+  ZH [41041]: 維京探險郵輪 - 南極洲與南喬治亞島 (阿根廷、福克蘭群島、南極洲) 19天
+
+✓ slug_match (95%)
+  EN [11036]: Viking Oceans Cruises - Iconic Western Mediterrane
+  ZH [41043]: 維京海洋遊輪 - 經典西地中海 (西班牙、法國、摩納哥、義大利) 8天
+
+✓ slug_match (95%)
+  EN [11023]: Viking Rivers Cruises - Danube Christmas Delights 
+  ZH [41044]: 維京河輪 - 多瑙河聖誕巡禮 (匈牙利、斯洛伐克、奧地利、德國) 8天
+
+✓ slug_match (95%)
+  EN [11024]: Viking Rivers Cruises - America’s Great River (Uni
+  ZH [41045]: 維京河輪 - 美國大河 (美國) 15日
+
+✓ slug_match (95%)
+  EN [11017]: Viking Rivers Cruises - Grand Mississippi Voyage (
+  ZH [41046]: 維京河輪 - 壯遊密西西比河 (美國) 22天
+
+✓ slug_match (95%)
+  EN [11018]: Viking Rivers Cruises - New Orleans & Southern Cha
+  ZH [41047]: 維京河輪 - 紐奧良與南方魅力 (美國) 8日遊
+
+✓ slug_match (95%)
+  EN [11019]: Viking Rivers Cruises - America’s Heartland (Unite
+  ZH [41048]: 維京河輪 - 美國中心地帶 (美國) 12天
+
+✓ slug_match (95%)
+  EN [11013]: Viking Rivers Cruises - Magnificent Mekong (Vietna
+  ZH [41049]: 維京河輪 - 壯麗湄公河 (越南、柬埔寨) 15日
+
+✓ slug_match (95%)
+  EN [11009]: Viking Rivers Cruises - Portugal’s River of Gold (
+  ZH [41054]: 維京河輪 - 葡萄牙黃金河之旅 (葡萄牙、西班牙) 10天
+
+✓ slug_match (95%)
+  EN [11010]: Viking Rivers Cruises - Capitals of Eastern Europe
+  ZH [41055]: 維京河輪 - 東歐首都之旅（奧地利、斯洛伐克、匈牙利、克羅埃西亞、塞爾維亞、保加利亞、羅馬尼亞）17
+
+✓ slug_match (95%)
+  EN [11011]: Viking Rivers Cruises - Passage to Eastern Europe 
+  ZH [41056]: 維京河輪 - 東歐之旅（羅馬尼亞、保加利亞、塞爾維亞、克羅埃西亞、匈牙利）11天
+
+✓ slug_match (95%)
+  EN [11004]: Viking Rivers Cruises - Lyon, Provence & the Rhine
+  ZH [41058]: 維京河輪 - 里昂、普羅旺斯與萊茵河之旅 (法國、瑞士、德國、荷蘭) 15日
+
+✓ slug_match (95%)
+  EN [11005]: Viking Rivers Cruises - France’s Finest (France) 1
+  ZH [41059]: 維京河輪 - 法國精華遊 (法國) 15天
+
+✓ slug_match (95%)
+  EN [11006]: Viking Rivers Cruises - Paris to the Swiss Alps (F
+  ZH [41060]: 維京河輪 - 巴黎至瑞士阿爾卑斯山 (法國、盧森堡、德國、瑞士) 12天
+
+✓ slug_match (95%)
+  EN [11001]: Viking Rivers Cruises - Châteaux, Rivers & Wine (F
+  ZH [41062]: 維京河輪 - 法國酒鄉巡禮 8日遊
+
+✓ slug_match (95%)
+  EN [11002]: Viking Rivers Cruises - London, Paris & D-Day (Eng
+  ZH [41063]: 維京河輪 - 倫敦、巴黎與諾曼第登陸 (英國、法國) 12日遊
+
+✓ slug_match (95%)
+  EN [11003]: Viking Rivers Cruises - Paris & the Heart of Norma
+  ZH [41064]: 維京河輪 - 巴黎與諾曼第之心 (法國) 8日遊
+
+✓ slug_match (95%)
+  EN [9769]: Viking Rivers Cruises - Christmas on the Main & Mo
+  ZH [41066]: 維京河輪 - 萊茵河與摩澤爾河的聖誕之旅 (法國、盧森堡、德國、捷克) 12天
+
+✓ slug_match (95%)
+  EN [9753]: Viking Rivers Cruises - Christmas Along the Elbe (
+  ZH [41067]: 維京河輪 - 易北河聖誕之旅 (德國、捷克) 10天
+
+✓ slug_match (95%)
+  EN [9744]: Viking Rivers Cruises - Christmas on the Danube (H
+  ZH [41068]: 維京河輪 - 多瑙河聖誕之旅 (匈牙利、奧地利、德國) 8天
+
+✓ slug_match (95%)
+  EN [9743]: Viking Rivers Cruises - Christmas on the Rhine (Th
+  ZH [41069]: 維京河輪 - 萊茵河聖誕之旅 (荷蘭、德國、法國、瑞士) 8天
+
+✓ slug_match (95%)
+  EN [9730]: Viking Rivers Cruises - Grand European Tour (Austr
+  ZH [41071]: 維京河輪 - 里昂與普羅旺斯（法國）8日遊
+
+✓ slug_match (95%)
+  EN [9719]: Viking Rivers Cruises - Danube Waltz (Hungary, Slo
+  ZH [41072]: 維京河輪 - 多瑙河華爾滋 (匈牙利、斯洛伐克、奧地利、德國) 8天
+
+✓ slug_match (95%)
+  EN [8313]: Viking Rivers Cruises - Romantic Danube (Austria, 
+  ZH [41073]: 維京河輪 - 浪漫多瑙河 (奧地利、德國、匈牙利) 8天
+
+✓ slug_match (95%)
+  EN [7748]: Winter Whitehorse Aurora Viewing Classic 3 Days (w
+  ZH [41074]: 冬季白馬市極光觀賞經典三日遊 (含溫哥華來回機票)
+
+✓ slug_match (95%)
+  EN [7733]: Winter Whitehorse Aurora Viewing Classic 4 Days (w
+  ZH [41075]: 冬季白馬市極光觀賞經典四日遊（含溫哥華來回機票）
+
+✓ image_match (90%)
+  EN [41032]: Aurora Experience: Yellowknife Northern Lights - C
+  ZH [40365]: 【極光體驗】黃刀鎮北極光-經典 (冬季) 3日遊
+
+✓ image_match (90%)
+  EN [41033]: Fraser Valley Wildlife Migration Viewing Day Trip
+  ZH [40363]: 菲沙河谷野生動物遷徙觀賞1日遊
+
+✓ image_match (90%)
+  EN [40990]: Summer Rockies 4-Day Diamond Tour 2025 (Departure 
+  ZH [40368]: 夏季洛磯山 5天魅力之旅 2025(溫哥華出發)
+
+✓ image_match (90%)
+  EN [40991]: Summer Rockies 4-Day Royal Tour 2025 (Departure fr
+  ZH [40391]: 夏季洛磯山 4天皇御之旅 2025(溫哥華出發)
+
+✓ image_match (90%)
+  EN [40983]: Summer Rockies 5-Day Romantic Getaway 2025 (Depart
+  ZH [40393]: 夏季洛磯山 5天情深之旅 2025(溫哥華出發)
+
+✓ image_match (90%)
+  EN [40984]: Summer Rockies 5-Day Classic Tour 2025 (Departure 
+  ZH [40390]: 夏季洛磯山 5天經典之旅 2025(溫哥華出發)
+
+✓ image_match (90%)
+  EN [40958]: Summer Rockies 4-Day Deluxe Tour 2025 (Departure f
+  ZH [40493]: 夏季洛磯山 4天尊貴之旅 2025(溫哥華出發)
+
+✓ image_match (90%)
+  EN [40959]: Summer Rockies 5-Day Sparkling Tour 2025 (Departur
+  ZH [40492]: 夏季洛磯山 5天閃亮之旅 2025(溫哥華出發)
+
+✓ image_match (90%)
+  EN [40961]: Golden Autumn Fraser Valley Farmland Scenery Natur
+  ZH [40407]: 金秋菲沙河谷田園風光自然攝影1日遊
+
+✓ image_match (90%)
+  EN [21468]: FlyOver Canada in Vancouver Admission Ticket
+  ZH [40369]: FlyOver Canada in Vancouver 飛越加拿大溫哥華門票
+
+✓ image_match (90%)
+  EN [21447]: Britannia Mine Museum Admission Ticket
+  ZH [40367]: Britannia Mine Museum 不列顛尼亞礦業博物館門票
+
+✓ image_match (90%)
+  EN [11131]: Viking Expeditions Cruises - Antarctic Explorer & 
+  ZH [41029]: 維京遊輪探險之旅 - 南極探險家 & 美洲 (8國) 42天
+
+✓ image_match (90%)
+  EN [11132]: Viking Expeditions Cruises - Argentina & the Chile
+  ZH [41034]: 維京遊輪 - 阿根廷與智利峽灣 (阿根廷、智利) 14天
+
+✓ image_match (90%)
+  EN [11125]: Viking Expeditions Cruises - Chilean Fjords & Scen
+  ZH [41035]: 維京遊輪 - 智利峽灣與壯麗海岸 (智利、阿根廷) 13日
+
+✓ image_match (90%)
+  EN [11128]: Viking Expeditions Cruises - Panama & Scenic South
+  ZH [41036]: 維京遊輪 - 巴拿馬及南美洲風光之旅（美國、墨西哥、巴拿馬、厄瓜多、秘魯、智利）18天
+
+✓ image_match (90%)
+  EN [11120]: Viking Expeditions Cruises - Canadian Discovery (U
+  ZH [41038]: 維京探險郵輪 - 加拿大探索之旅 (美國、加拿大) 13天
+
+✓ image_match (90%)
+  EN [11114]: Viking Expeditions Cruises - Great Lakes Collectio
+  ZH [41040]: 維京遊輪 - 五大湖系列 (加拿大、美國) 15天
+
+✓ image_match (90%)
+  EN [11014]: Viking Rivers Cruises - Pharaohs & Pyramids (Egypt
+  ZH [41050]: 維京河輪 - 法老與金字塔 (埃及) 12天
+
+✓ image_match (90%)
+  EN [11015]: Viking Rivers Cruises - European Sojourn (8 Countr
+  ZH [41051]: 維京河輪 - 歐洲之旅 (8國) 23天
+
+✓ image_match (90%)
+  EN [11016]: Viking Rivers Cruises - Tulips & Windmills (The Ne
+  ZH [41052]: 維京河輪 - 鬱金香與風車 (荷蘭、比利時) 10日遊
+
+✓ image_match (90%)
+  EN [11008]: Viking Rivers Cruises - Holland & Belgium (The Net
+  ZH [41053]: 維京河輪 - 荷蘭與比利時 (荷蘭、德國、比利時) 10日遊
+
+✓ image_match (90%)
+  EN [11012]: Viking Rivers Cruises - Elegant Elbe (Germany, Cze
+  ZH [41057]: 維京河輪 - 優雅易北河 (德國、捷克) 10天
+
+✓ image_match (90%)
+  EN [11007]: Viking Rivers Cruises - Cities of Light (France, L
+  ZH [41061]: 維京河輪 - 光之城 (法國、盧森堡、德國、捷克) 12日遊
+
+======================================================================
+PHP ARRAY FOR PLUGIN:
+======================================================================
+$matched_pairs = array(
+    array( 'en_id' => 41030, 'zh_id' => 40371, 'match_type' => 'tour_code (100%)', 'code' => 'STYHZ05D15', 'name' => '5-Day All-Inclusive Tour of the Maritime Provinces' ),
+    array( 'en_id' => 41031, 'zh_id' => 40370, 'match_type' => 'tour_code (100%)', 'code' => 'STYHZ03D15', 'name' => 'Classic 3-Day Tour of the Maritime Provinces (Nova' ),
+    array( 'en_id' => 41024, 'zh_id' => 40372, 'match_type' => 'tour_code (100%)', 'code' => 'CT', 'name' => 'Turkey Istanbul + Ankara + Cappadocia + Konya + Pa' ),
+    array( 'en_id' => 40994, 'zh_id' => 40389, 'match_type' => 'tour_code (100%)', 'code' => 'CRHNBO11S', 'name' => 'Kenya & Tanzania Exquisite Private Tour, Slow-Pace' ),
+    array( 'en_id' => 40962, 'zh_id' => 40406, 'match_type' => 'tour_code (100%)', 'code' => 'OKW02', 'name' => '2-Day Golden Autumn Okanagan Vineyard Exploration ' ),
+    array( 'en_id' => 40408, 'zh_id' => 40697, 'match_type' => 'tour_code (100%)', 'code' => 'FVB01', 'name' => 'Fraser Valley Bald Eagle Festival & Wildlife Watch' ),
+    array( 'en_id' => 40404, 'zh_id' => 40695, 'match_type' => 'tour_code (100%)', 'code' => 'CVFD', 'name' => 'Classic Vancouver City Tour + Capilano Suspension ' ),
+    array( 'en_id' => 40405, 'zh_id' => 40696, 'match_type' => 'tour_code (100%)', 'code' => 'CVHD', 'name' => 'Classic Vancouver City Tour - Half Day' ),
+    array( 'en_id' => 40401, 'zh_id' => 40693, 'match_type' => 'tour_code (100%)', 'code' => 'CWSF', 'name' => 'Classic Whistler Tour + Shannon Falls' ),
+    array( 'en_id' => 40402, 'zh_id' => 40694, 'match_type' => 'tour_code (100%)', 'code' => 'CVBG', 'name' => 'Classic Victoria City Tour + Butchart Gardens' ),
+    array( 'en_id' => 39364, 'zh_id' => 40364, 'match_type' => 'tour_code (100%)', 'code' => 'SEL5D4ETOUR15', 'name' => 'Korea  5 Days Seoul Snapshot Tour (All rates are l' ),
+    array( 'en_id' => 22366, 'zh_id' => 40507, 'match_type' => 'tour_code (100%)', 'code' => 'TPE7D5AHA15', 'name' => 'Taiwan  7 Days/6 Nights Enchanting Taiwan: Sun Moo' ),
+    array( 'en_id' => 18460, 'zh_id' => 40396, 'match_type' => 'tour_code (100%)', 'code' => 'YXY', 'name' => 'Winter Yellowknife Aurora Viewing Classic 3 Days' ),
+    array( 'en_id' => 41020, 'zh_id' => 40376, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Relaxing 3-Day Summer Rockies Getaway (From Calgar' ),
+    array( 'en_id' => 41021, 'zh_id' => 40375, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Summer Rockies Deep Dive 3-Day Tour (From Calgary)' ),
+    array( 'en_id' => 41022, 'zh_id' => 40374, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Summer Rockies Highlights 3-Day Tour (Departure fr' ),
+    array( 'en_id' => 41023, 'zh_id' => 40373, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Summer Rockies 3-Day Tour (From Calgary)' ),
+    array( 'en_id' => 41010, 'zh_id' => 40381, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Summer Rockies Deep Dive 5-Day Tour (From Calgary)' ),
+    array( 'en_id' => 41011, 'zh_id' => 40380, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Summer Rockies Classic 5-Day Tour (Departure from ' ),
+    array( 'en_id' => 41012, 'zh_id' => 40379, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Summer Rockies Classic 4-Day Tour (From Calgary)' ),
+    array( 'en_id' => 41013, 'zh_id' => 40378, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Relaxing 4-Day Summer Rockies Tour (From Calgary)' ),
+    array( 'en_id' => 41014, 'zh_id' => 40377, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Summer Rockies Highlights 4-Day Tour (From Calgary' ),
+    array( 'en_id' => 41002, 'zh_id' => 40384, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Summer Rockies 6-Day Tour (Departure from Calgary)' ),
+    array( 'en_id' => 41003, 'zh_id' => 40383, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Summer Rockies Five-Day Tour (Departure from Calga' ),
+    array( 'en_id' => 40949, 'zh_id' => 40511, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Summer Alberta + Rockies 7-Day Tour (Departure fro' ),
+    array( 'en_id' => 39361, 'zh_id' => 40953, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Rhine Getaway (Switzerland' ),
+    array( 'en_id' => 39363, 'zh_id' => 40950, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Mississippi River Odyssey ' ),
+    array( 'en_id' => 39359, 'zh_id' => 40954, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - NEW! Rhine & Main Explorer' ),
+    array( 'en_id' => 39357, 'zh_id' => 40955, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - NEW! Castles, Vineyards & ' ),
+    array( 'en_id' => 39355, 'zh_id' => 40956, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - NEW! Wonders of India I 15' ),
+    array( 'en_id' => 39353, 'zh_id' => 40957, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - NEW! Wonders of India II 1' ),
+    array( 'en_id' => 39343, 'zh_id' => 40981, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - NEW! New Orleans to Memphi' ),
+    array( 'en_id' => 39341, 'zh_id' => 40982, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - NEW! Christmastime in Pari' ),
+    array( 'en_id' => 39339, 'zh_id' => 40985, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - NEW! Christmas on the Rhin' ),
+    array( 'en_id' => 39337, 'zh_id' => 40986, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - NEW! Total Eclipse on the ' ),
+    array( 'en_id' => 39335, 'zh_id' => 40987, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Rhine & Viking Shores & Fj' ),
+    array( 'en_id' => 39333, 'zh_id' => 40988, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Grand European & Viking Fj' ),
+    array( 'en_id' => 39331, 'zh_id' => 40989, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - NEW! Rhine, Main & Danube ' ),
+    array( 'en_id' => 39329, 'zh_id' => 40995, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - NEW! Iberian Odyssey (3 Co' ),
+    array( 'en_id' => 39327, 'zh_id' => 40996, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! Arctic to Antarc' ),
+    array( 'en_id' => 39325, 'zh_id' => 40997, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! Great Lakes Trea' ),
+    array( 'en_id' => 39323, 'zh_id' => 40998, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! Into the Antarct' ),
+    array( 'en_id' => 39321, 'zh_id' => 40999, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! Panama Canal & t' ),
+    array( 'en_id' => 39319, 'zh_id' => 41005, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! Niagara & Great ' ),
+    array( 'en_id' => 39317, 'zh_id' => 41006, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! Longitudinal Wor' ),
+    array( 'en_id' => 39315, 'zh_id' => 41007, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! Longitudinal Wor' ),
+    array( 'en_id' => 39313, 'zh_id' => 41008, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! From the Arctic ' ),
+    array( 'en_id' => 39311, 'zh_id' => 41009, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Korea 8 Days Authentic Tour (All rates are listed ' ),
+    array( 'en_id' => 39309, 'zh_id' => 41015, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Korea 12 Days Authentic Tour (All rates are listed' ),
+    array( 'en_id' => 22381, 'zh_id' => 41016, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Taiwan  8 Days/7 Nights Enchanting Taiwan: Sun Moo' ),
+    array( 'en_id' => 21454, 'zh_id' => 40403, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Capilano Suspension Bridge Park Admission Ticket' ),
+    array( 'en_id' => 19444, 'zh_id' => 41017, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Kenya  10 Days/9 Nights Discovering Kenya\'s Wildl' ),
+    array( 'en_id' => 18459, 'zh_id' => 40963, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Winter Yellowknife Aurora Viewing Classic 4 Days' ),
+    array( 'en_id' => 11746, 'zh_id' => 41018, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - London, Paris & D-Day (Eng' ),
+    array( 'en_id' => 11137, 'zh_id' => 41065, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! Canada & the Nor' ),
+    array( 'en_id' => 11138, 'zh_id' => 41025, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! Canada & Greenla' ),
+    array( 'en_id' => 11133, 'zh_id' => 41026, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! Into the Northwe' ),
+    array( 'en_id' => 11134, 'zh_id' => 41027, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - Canada & East Coast E' ),
+    array( 'en_id' => 11130, 'zh_id' => 41028, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - The Americas & Antarc' ),
+    array( 'en_id' => 11124, 'zh_id' => 41037, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - NEW! Longitudinal Wor' ),
+    array( 'en_id' => 11113, 'zh_id' => 41039, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - Niagara & the Great L' ),
+    array( 'en_id' => 11116, 'zh_id' => 41041, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - Antarctica & South Ge' ),
+    array( 'en_id' => 11036, 'zh_id' => 41043, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Oceans Cruises - Iconic Western Mediterrane' ),
+    array( 'en_id' => 11023, 'zh_id' => 41044, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Danube Christmas Delights ' ),
+    array( 'en_id' => 11024, 'zh_id' => 41045, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - America’s Great River (Uni' ),
+    array( 'en_id' => 11017, 'zh_id' => 41046, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Grand Mississippi Voyage (' ),
+    array( 'en_id' => 11018, 'zh_id' => 41047, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - New Orleans & Southern Cha' ),
+    array( 'en_id' => 11019, 'zh_id' => 41048, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - America’s Heartland (Unite' ),
+    array( 'en_id' => 11013, 'zh_id' => 41049, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Magnificent Mekong (Vietna' ),
+    array( 'en_id' => 11009, 'zh_id' => 41054, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Portugal’s River of Gold (' ),
+    array( 'en_id' => 11010, 'zh_id' => 41055, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Capitals of Eastern Europe' ),
+    array( 'en_id' => 11011, 'zh_id' => 41056, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Passage to Eastern Europe ' ),
+    array( 'en_id' => 11004, 'zh_id' => 41058, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Lyon, Provence & the Rhine' ),
+    array( 'en_id' => 11005, 'zh_id' => 41059, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - France’s Finest (France) 1' ),
+    array( 'en_id' => 11006, 'zh_id' => 41060, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Paris to the Swiss Alps (F' ),
+    array( 'en_id' => 11001, 'zh_id' => 41062, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Châteaux, Rivers & Wine (F' ),
+    array( 'en_id' => 11002, 'zh_id' => 41063, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - London, Paris & D-Day (Eng' ),
+    array( 'en_id' => 11003, 'zh_id' => 41064, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Paris & the Heart of Norma' ),
+    array( 'en_id' => 9769, 'zh_id' => 41066, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Christmas on the Main & Mo' ),
+    array( 'en_id' => 9753, 'zh_id' => 41067, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Christmas Along the Elbe (' ),
+    array( 'en_id' => 9744, 'zh_id' => 41068, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Christmas on the Danube (H' ),
+    array( 'en_id' => 9743, 'zh_id' => 41069, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Christmas on the Rhine (Th' ),
+    array( 'en_id' => 9730, 'zh_id' => 41071, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Grand European Tour (Austr' ),
+    array( 'en_id' => 9719, 'zh_id' => 41072, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Danube Waltz (Hungary, Slo' ),
+    array( 'en_id' => 8313, 'zh_id' => 41073, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Romantic Danube (Austria, ' ),
+    array( 'en_id' => 7748, 'zh_id' => 41074, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Winter Whitehorse Aurora Viewing Classic 3 Days (w' ),
+    array( 'en_id' => 7733, 'zh_id' => 41075, 'match_type' => 'slug_match (95%)', 'code' => '-', 'name' => 'Winter Whitehorse Aurora Viewing Classic 4 Days (w' ),
+    array( 'en_id' => 41032, 'zh_id' => 40365, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Aurora Experience: Yellowknife Northern Lights - C' ),
+    array( 'en_id' => 41033, 'zh_id' => 40363, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Fraser Valley Wildlife Migration Viewing Day Trip' ),
+    array( 'en_id' => 40990, 'zh_id' => 40368, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Summer Rockies 4-Day Diamond Tour 2025 (Departure ' ),
+    array( 'en_id' => 40991, 'zh_id' => 40391, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Summer Rockies 4-Day Royal Tour 2025 (Departure fr' ),
+    array( 'en_id' => 40983, 'zh_id' => 40393, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Summer Rockies 5-Day Romantic Getaway 2025 (Depart' ),
+    array( 'en_id' => 40984, 'zh_id' => 40390, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Summer Rockies 5-Day Classic Tour 2025 (Departure ' ),
+    array( 'en_id' => 40958, 'zh_id' => 40493, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Summer Rockies 4-Day Deluxe Tour 2025 (Departure f' ),
+    array( 'en_id' => 40959, 'zh_id' => 40492, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Summer Rockies 5-Day Sparkling Tour 2025 (Departur' ),
+    array( 'en_id' => 40961, 'zh_id' => 40407, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Golden Autumn Fraser Valley Farmland Scenery Natur' ),
+    array( 'en_id' => 21468, 'zh_id' => 40369, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'FlyOver Canada in Vancouver Admission Ticket' ),
+    array( 'en_id' => 21447, 'zh_id' => 40367, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Britannia Mine Museum Admission Ticket' ),
+    array( 'en_id' => 11131, 'zh_id' => 41029, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - Antarctic Explorer & ' ),
+    array( 'en_id' => 11132, 'zh_id' => 41034, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - Argentina & the Chile' ),
+    array( 'en_id' => 11125, 'zh_id' => 41035, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - Chilean Fjords & Scen' ),
+    array( 'en_id' => 11128, 'zh_id' => 41036, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - Panama & Scenic South' ),
+    array( 'en_id' => 11120, 'zh_id' => 41038, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - Canadian Discovery (U' ),
+    array( 'en_id' => 11114, 'zh_id' => 41040, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Expeditions Cruises - Great Lakes Collectio' ),
+    array( 'en_id' => 11014, 'zh_id' => 41050, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Pharaohs & Pyramids (Egypt' ),
+    array( 'en_id' => 11015, 'zh_id' => 41051, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - European Sojourn (8 Countr' ),
+    array( 'en_id' => 11016, 'zh_id' => 41052, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Tulips & Windmills (The Ne' ),
+    array( 'en_id' => 11008, 'zh_id' => 41053, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Holland & Belgium (The Net' ),
+    array( 'en_id' => 11012, 'zh_id' => 41057, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Elegant Elbe (Germany, Cze' ),
+    array( 'en_id' => 11007, 'zh_id' => 41061, 'match_type' => 'image_match (90%)', 'code' => '-', 'name' => 'Viking Rivers Cruises - Cities of Light (France, L' ),
+);
