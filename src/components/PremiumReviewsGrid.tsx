@@ -7,6 +7,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import type { GoogleReview } from '../lib/wordpress/types';
+import { getCfTransformUrl, wpUrl } from '../lib/wp-url';
 
 // Premium star rating with filled gradient stars
 function PremiumStars({ rating }: { rating: number }) {
@@ -48,7 +49,7 @@ function PremiumAvatar({ src, name }: { src?: string; name: string }) {
         <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-[#f7941e] to-[#ff6b35] rounded-full animate-pulse opacity-50 blur-sm" />
             <img
-                src={src}
+                src={getCfTransformUrl(wpUrl(src), { width: 120, height: 120, format: 'webp' })}
                 alt={name ? `${name} profile photo` : 'Reviewer profile photo'}
                 className="relative w-14 h-14 rounded-full border-2 border-white object-cover shadow-lg"
                 loading="lazy"
@@ -122,7 +123,7 @@ function PremiumReviewCard({
                             className="w-12 h-12 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0"
                         >
                             <img
-                                src={src}
+                                src={getCfTransformUrl(wpUrl(src), { width: 400, height: 400, format: 'webp' })}
                                 alt={`Review photo ${idx + 1}`}
                                 className="w-full h-full object-cover"
                                 loading="lazy"
@@ -259,7 +260,7 @@ function PremiumReviewModal({
                                         className="relative aspect-square rounded-xl overflow-hidden group cursor-pointer"
                                     >
                                         <img
-                                            src={src}
+                                            src={getCfTransformUrl(wpUrl(src), { width: 400, height: 400, format: 'webp' })}
                                             alt={`${review.author_name} review photo ${idx + 1}`}
                                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                                             loading="lazy"

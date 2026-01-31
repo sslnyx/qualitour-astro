@@ -12,11 +12,22 @@ export default defineConfig({
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'qualitour-assets.isquarestudio.com',
+        hostname: '**.googleusercontent.com', // For Google profile images
       },
       {
+        // Local WordPress development
+        protocol: 'http',
+        hostname: 'qualitour.local',
+      },
+      {
+        // Production WordPress (isquarestudio staging/subdomain)
         protocol: 'https',
-        hostname: '**.googleusercontent.com', // For Google profile images
+        hostname: '**.isquarestudio.com',
+      },
+      {
+        // Real Production WordPress
+        protocol: 'https',
+        hostname: '**.qualitour.ca',
       },
     ],
   },
@@ -65,14 +76,14 @@ export default defineConfig({
   },
 
   // Cloudflare Pages adapter for static deployment
-  // Using 'compile' imageService for build-time optimization (free!)
-  // This avoids Cloudflare's 5,000 transformations/month limit
+  // Using 'passthrough' to COMPLETELY DISABLE build-time image optimization.
+  // This ensures lightning fast builds and lets Cloudflare Transformations handle resizing at the edge.
   adapter: cloudflare({
-    imageService: 'compile',
+    imageService: 'passthrough',
   }),
 
   // Site configuration
-  site: 'https://qualitour-fe.sslnyx.workers.dev',
+  site: 'https://qualitour.isquarestudio.com',
 
   // Build configuration
   build: {

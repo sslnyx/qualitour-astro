@@ -53,11 +53,16 @@ const relevantTypeIds = [
   ...getDescendantIds(tourType.id, navData.types)
 ];
 
-// Filter tours that belong to this type or any of its children
-const filteredTours = allTours.filter(tour => {
+import { optimizeTourImages } from '../../../../lib/wordpress/image';
+
+// Filter tours that belong to this type
+const rawFilteredTours = allTours.filter(tour => {
   const tourTypes = tour.tour_terms?.types || [];
-  return tourTypes.some(t => relevantTypeIds.includes(t.id));
+  return tourTypes.some(t => t.slug === slug);
 });
+
+// Pre-optimize filtered tours
+const filteredTours = await optimizeTourImages(rawFilteredTours, { concurrency: 20 });
 ---
 
 <Layout 

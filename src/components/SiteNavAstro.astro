@@ -125,17 +125,17 @@ function getDestName(name: string): string {
 // Tour types with icons
 const tourTypeLinks = [
     {
-        label: lang === "zh" ? "陆地游" : "Land Tours",
+        label: lang === "zh" ? "陸地遊" : "Land Tours",
         slug: "land-tours",
         icon: "hiking",
     },
     {
-        label: lang === "zh" ? "邮轮" : "Cruises",
+        label: lang === "zh" ? "郵輪" : "Cruises",
         slug: "cruises",
         icon: "sailing",
     },
     {
-        label: lang === "zh" ? "票务 & 通票" : "Tickets & Passes",
+        label: lang === "zh" ? "票務 & 通票" : "Tickets & Passes",
         slug: "attraction-tickets",
         icon: "confirmation_number",
     },
@@ -149,33 +149,33 @@ const serviceLinks = [
         icon: "airport_shuttle",
         desc:
             lang === "zh"
-                ? "机场、游轮和滑雪接送"
+                ? "機場、遊輪和滑雪接送"
                 : "Airport, cruise & ski transfers",
     },
     {
-        label: lang === "zh" ? "中国签证" : "China Visa",
+        label: lang === "zh" ? "中國簽證" : "China Visa",
         href: `${localePrefix}/visa`,
         icon: "badge",
-        desc: lang === "zh" ? "签证申请协助" : "Visa application assistance",
+        desc: lang === "zh" ? "簽證申請協助" : "Visa application assistance",
     },
 ];
 
 // Hot destinations
 const hotDestinations = [
     {
-        label: lang === "zh" ? "黄刀镇 (极光)" : "Yellowknife (Aurora)",
+        label: lang === "zh" ? "黃刀鎮 (極光)" : "Yellowknife (Aurora)",
         type: "destination",
         value: "yellowknife",
         icon: "ac_unit",
     },
     {
-        label: lang === "zh" ? "白马市 (极光)" : "Whitehorse (Aurora)",
+        label: lang === "zh" ? "白馬市 (極光)" : "Whitehorse (Aurora)",
         type: "destination",
         value: "whitehorse",
         icon: "auto_awesome",
     },
     {
-        label: lang === "zh" ? "落基山脉" : "Rocky Mountains",
+        label: lang === "zh" ? "落基山脈" : "Rocky Mountains",
         type: "destination",
         value: "banff",
         icon: "landscape",
@@ -231,7 +231,7 @@ const navData = JSON.stringify({
                         href={`${localePrefix}/`}
                         class="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group"
                     >
-                        {lang === "zh" ? "首页" : "Home"}
+                        {lang === "zh" ? "首頁" : "Home"}
                         <span
                             class="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full"
                         ></span>
@@ -243,7 +243,7 @@ const navData = JSON.stringify({
                     <button
                         class="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium flex items-center gap-1 transition-colors group"
                     >
-                        {lang === "zh" ? "服务" : "Services"}
+                        {lang === "zh" ? "服務" : "Services"}
                         <span
                             class="material-icons text-lg transition-transform duration-300 dropdown-arrow"
                             >expand_more</span
@@ -331,14 +331,14 @@ const navData = JSON.stringify({
                                             >
                                                 {
                                                     lang === "zh"
-                                                        ? "开启您的下一段旅程"
+                                                        ? "開啓您的下一段旅程"
                                                         : "Discover Your Next Adventure"
                                                 }
                                             </h3>
                                             <p class="text-white/80 text-sm">
                                                 {
                                                     lang === "zh"
-                                                        ? "探索我们精心策划的行程"
+                                                        ? "探索我們精心策劃的行程"
                                                         : "Explore our curated tours"
                                                 }
                                             </p>
@@ -350,7 +350,7 @@ const navData = JSON.stringify({
                                     >
                                         {
                                             lang === "zh"
-                                                ? "浏览所有行程"
+                                                ? "瀏覽所有行程"
                                                 : "Browse All Tours"
                                         }
                                         <span class="material-icons text-lg"
@@ -377,7 +377,7 @@ const navData = JSON.stringify({
                                             </span>
                                             {
                                                 lang === "zh"
-                                                    ? "旅游类型"
+                                                    ? "旅遊類型"
                                                     : "Tour Types"
                                             }
                                         </h4>
@@ -424,7 +424,7 @@ const navData = JSON.stringify({
                                                         class="font-bold block"
                                                         >{
                                                             lang === "zh"
-                                                                ? "精选行程"
+                                                                ? "精選行程"
                                                                 : "Featured Tours"
                                                         }</span
                                                     >
@@ -432,7 +432,7 @@ const navData = JSON.stringify({
                                                         class="text-xs text-amber-600/70"
                                                         >{
                                                             lang === "zh"
-                                                                ? "我们的首选推荐"
+                                                                ? "我們的首選推薦"
                                                                 : "Our top picks"
                                                         }</span
                                                     >
@@ -458,7 +458,7 @@ const navData = JSON.stringify({
                                             </span>
                                             {
                                                 lang === "zh"
-                                                    ? "热门目的地"
+                                                    ? "熱門目的地"
                                                     : "Popular Destinations"
                                             }
                                         </h4>
@@ -640,7 +640,7 @@ const navData = JSON.stringify({
                                                     >
                                                     {
                                                         lang === "zh"
-                                                            ? "无子区域"
+                                                            ? "無子區域"
                                                             : "No sub-regions"
                                                     }
                                                 </div>
@@ -663,7 +663,7 @@ const navData = JSON.stringify({
                                             </span>
                                             {
                                                 lang === "zh"
-                                                    ? "热门地点"
+                                                    ? "熱門地點"
                                                     : "Hot Locations"
                                             }
                                         </h4>
@@ -672,7 +672,7 @@ const navData = JSON.stringify({
                                             {
                                                 hotDestinations.map((dest) => (
                                                     <a
-                                                        href={`${localePrefix}/tours?${dest.type === "destination" ? "destination" : "q"}=${encodeURIComponent(dest.value)}`}
+                                                        href={`${localePrefix}/destinations/${dest.value}`}
                                                         class="flex items-center gap-3 p-2 rounded-xl hover:bg-red-50 transition-all group"
                                                     >
                                                         <span class="w-10 h-10 rounded-lg bg-white shadow-sm border border-gray-100 group-hover:border-red-200 flex items-center justify-center transition-colors">
@@ -699,7 +699,7 @@ const navData = JSON.stringify({
                         href={`${localePrefix}/about-us`}
                         class="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group"
                     >
-                        {lang === "zh" ? "关于我们" : "About"}
+                        {lang === "zh" ? "關於我們" : "About"}
                         <span
                             class="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full"
                         ></span>
@@ -710,7 +710,7 @@ const navData = JSON.stringify({
                         href={`${localePrefix}/contact`}
                         class="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group"
                     >
-                        {lang === "zh" ? "联系我们" : "Contact"}
+                        {lang === "zh" ? "聯繫我們" : "Contact"}
                         <span
                             class="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full"
                         ></span>
@@ -721,7 +721,7 @@ const navData = JSON.stringify({
                         href={`${localePrefix}/faq`}
                         class="relative px-4 py-2 text-gray-700 hover:text-orange-500 font-medium transition-colors group"
                     >
-                        {lang === "zh" ? "常见问题" : "FAQ"}
+                        {lang === "zh" ? "常見問題" : "FAQ"}
                         <span
                             class="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full"
                         ></span>
@@ -959,7 +959,7 @@ const navData = JSON.stringify({
                                     {
                                         hotDestinations.map((dest) => (
                                             <a
-                                                href={`${localePrefix}/tours?${dest.type === "destination" ? "destination" : "q"}=${encodeURIComponent(dest.value)}`}
+                                                href={`${localePrefix}/destinations/${dest.value}`}
                                                 class="flex items-center gap-3 p-2 rounded-xl hover:bg-white transition-all group"
                                             >
                                                 <span class="w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 flex items-center justify-center">
@@ -1352,14 +1352,21 @@ const navData = JSON.stringify({
             currentPath !== "/tours" &&
             currentPath !== "/zh/tours";
 
-        if (isTourPage && tourTranslations && tourTranslations[targetLang]) {
-            const translatedSlug = tourTranslations[targetLang].slug;
-            const newPath =
-                targetLang === "en"
-                    ? `/tours/${encodeURIComponent(translatedSlug)}`
-                    : `/zh/tours/${encodeURIComponent(translatedSlug)}`;
-            window.location.href = newPath;
-            return;
+        if (isTourPage) {
+            if (tourTranslations && tourTranslations[targetLang]) {
+                const translatedSlug = tourTranslations[targetLang].slug;
+                const newPath =
+                    targetLang === "en"
+                        ? `/tours/${encodeURIComponent(translatedSlug)}`
+                        : `/zh/tours/${encodeURIComponent(translatedSlug)}`;
+                window.location.href = newPath;
+                return;
+            } else {
+                // If translation doesn't exist, go to the main tours page of the target language
+                window.location.href =
+                    targetLang === "en" ? "/tours" : "/zh/tours";
+                return;
+            }
         }
 
         // Handle taxonomy pages

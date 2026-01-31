@@ -16,6 +16,8 @@ const { lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || 'en';
 const localePrefix = lang === 'en' ? '' : `/${lang}`;
 
+import { optimizeTourImages } from '../../../../lib/wordpress/image';
+
 // Fetch all tours and nav data
 const [allTours, navData] = await Promise.all([
   getTours({ per_page: 200 }, lang),
@@ -23,7 +25,7 @@ const [allTours, navData] = await Promise.all([
 ]);
 
 // Filter featured tours (those with featured flag or premium pricing)
-const featuredTours = allTours.filter(tour => {
+const rawFeaturedTours = allTours.filter(tour => {
   const meta = tour.tour_meta || {};
   // Consider a tour "featured" if it has the featured flag or is marked as popular
   return meta.featured === '1' || 
@@ -33,8 +35,11 @@ const featuredTours = allTours.filter(tour => {
 });
 
 // If no explicitly featured tours, show the first 12 as "popular"
-const displayTours = featuredTours.length > 0 ? featuredTours : allTours.slice(0, 12);
-const isFallback = featuredTours.length === 0;
+const rawDisplayTours = rawFeaturedTours.length > 0 ? rawFeaturedTours : allTours.slice(0, 12);
+const isFallback = rawFeaturedTours.length === 0;
+
+// Pre-optimize tour images
+const displayTours = await optimizeTourImages(rawDisplayTours, { concurrency: 12 });
 ---
 
 <Layout 

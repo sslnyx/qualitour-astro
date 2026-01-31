@@ -6,6 +6,7 @@ import { wpUrl } from "../../lib/wp-url";
 import { VisaInquiryForm } from "../../components/forms";
 import PremiumReviewsGrid from "../../components/PremiumReviewsGrid";
 import { getGoogleReviews } from "../../lib/wordpress/api";
+import { optimizeImageUrl } from "../../lib/wordpress/image";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -20,7 +21,7 @@ const lang: Locale = (langParam as Locale) || "en";
 const localePrefix = lang === "en" ? "" : `/${lang}`;
 
 // Visa hero background
-const VISA_HERO_BG = wpUrl(
+const VISA_HERO_BG = await optimizeImageUrl(
     "/wp-content/uploads/2023/08/nuno-alberto-MykFFC5zolE-unsplash1-scaled.jpg",
 );
 

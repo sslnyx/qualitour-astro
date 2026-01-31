@@ -5,12 +5,19 @@ import {
   getSiteNavData,
   getGoogleReviews,
 } from "../../lib/wordpress/api";
+import {
+  getPrivateTransfersWithPricing,
+  type TransferRoute,
+} from "../../lib/zaui/zaui";
 import { type Locale } from "../../i18n/config";
+import { wpUrl, sanitizeUrls } from "../../lib/wp-url";
 import heroBackground from "../../assets/hero-background.webp";
 import heroBackgroundMobile from "../../assets/hero-background-mobile.webp";
 import TourCardOptimized from "../../components/TourCardOptimized.astro";
 import ReviewsSlider from "../../components/ReviewsSlider";
-import TransferBookingModalButton from "../../components/TransferBookingModalButton";
+import TransferRoutesGrid from "../../components/TransferRoutesGrid";
+import FeaturedToursHero from "../../components/FeaturedToursHero";
+import LegacyHero from "../../components/LegacyHero.astro";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -24,17 +31,23 @@ const { lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || "en";
 const localePrefix = lang === "en" ? "" : `/${lang}`;
 
+import { optimizeTourImages } from "../../lib/wordpress/image";
+
 // Fetch data at build time
-const [tours, navData, reviews] = await Promise.all([
+const [rawTours, navData, reviews, transferRoutes] = await Promise.all([
   getTours({ per_page: 12 }, lang),
   getSiteNavData(lang),
   getGoogleReviews(),
+  getPrivateTransfersWithPricing(),
 ]);
 
-const featuredTours = tours.slice(0, 6);
+// Use top 3 transfer routes for homepage
+const featuredTransfers = transferRoutes.slice(0, 3);
+
+// Use raw tours, TourCardOptimized handles optimization via CdnImage
+const featuredTours = rawTours.slice(0, 6);
 
 // Filter reviews for 5 stars, prioritize those with photos, and limit to 15
-const totalReviewsCount = reviews.length;
 const displayedReviews = reviews
   .filter((r) => r.rating === 5)
   .sort((a, b) => {
@@ -47,71 +60,73 @@ const displayedReviews = reviews
   })
   .slice(0, 15);
 
+const totalReviewsCount = reviews.length;
+
 // Translations
 const t = {
   heroTagline: "QUALITOUR",
   heroTitle: lang === "zh" ? "重新出發" : "Explore Again",
   heroSubtitle:
     lang === "zh"
-      ? "发现并预订难忘的旅行体验"
+      ? "發現並預訂難忘的旅行體驗"
       : "Discover and book unforgettable travel experiences",
   searchPlaceholder:
-    lang === "zh" ? "搜索目的地或行程..." : "Search destinations or tours...",
-  search: lang === "zh" ? "搜索" : "Search",
-  destination: lang === "zh" ? "选择目的地" : "Select Destination",
-  whyChooseUs: lang === "zh" ? "为什么选择我们" : "Why Choose Qualitour",
-  guidedTours: lang === "zh" ? "专业导游" : "Professional Guides",
+    lang === "zh" ? "搜尋目的地或行程..." : "Search destinations or tours...",
+  search: lang === "zh" ? "搜尋" : "Search",
+  destination: lang === "zh" ? "選擇目的地" : "Select Destination",
+  whyChooseUs: lang === "zh" ? "為什麼選擇我們" : "Why Choose Qualitour",
+  guidedTours: lang === "zh" ? "專業導游" : "Professional Guides",
   guidedToursDesc:
     lang === "zh"
-      ? "经验丰富的本地导游带您探索"
+      ? "經驗豐富的本地導游帶您探索"
       : "Experienced local guides for authentic experiences",
-  smallGroups: lang === "zh" ? "小团出行" : "Small Groups",
+  smallGroups: lang === "zh" ? "小團出行" : "Small Groups",
   smallGroupsDesc:
     lang === "zh"
-      ? "亲密的家庭式小团体旅行"
+      ? "親密的家庭式小團體旅行"
       : "Intimate travel with family and friends",
-  premiumService: lang === "zh" ? "优质服务" : "Premium Service",
+  premiumService: lang === "zh" ? "優質服務" : "Premium Service",
   premiumServiceDesc:
     lang === "zh"
-      ? "从预订到旅程结束全程服务"
+      ? "從預訂到旅程結束全程服務"
       : "24/7 support from booking to return",
-  bestValue: lang === "zh" ? "超值价格" : "Best Value",
+  bestValue: lang === "zh" ? "超值價格" : "Best Value",
   bestValueDesc:
     lang === "zh"
-      ? "质优价廉的旅游体验"
+      ? "質優價廉的旅遊體驗"
       : "Quality experiences at competitive prices",
   privateTransfers:
-    lang === "zh" ? "私人接送服务" : "Private Transfer Services",
+    lang === "zh" ? "私人接送服務" : "Private Transfer Services",
   transfersSubtitle:
     lang === "zh"
-      ? "小团体私人接送，最多可容纳14人"
+      ? "小團體私人接送，最多可容納14人"
       : "Specialized in small group transfers for up to 14 passengers",
-  perVehicle: lang === "zh" ? "每车" : "per vehicle",
-  viewAllTransfers: lang === "zh" ? "查看全部接送服务" : "View All Transfers",
-  featuredTours: lang === "zh" ? "精选行程" : "Featured Tours",
+  perVehicle: lang === "zh" ? "每車" : "per vehicle",
+  viewAllTransfers: lang === "zh" ? "查看全部接送服務" : "View All Transfers",
+  featuredTours: lang === "zh" ? "精選行程" : "Featured Tours",
   featuredToursSubtitle:
     lang === "zh"
-      ? "探索我们最受欢迎的旅游套餐"
+      ? "探索我們最受歡迎的旅遊套餐"
       : "Explore our most popular tour packages",
   viewAllTours: lang === "zh" ? "查看全部行程" : "View All Tours",
-  customerReviews: lang === "zh" ? "客户评价" : "What Our Customers Say",
+  customerReviews: lang === "zh" ? "客戶評價" : "What Our Customers Say",
   reviewsSubtitle:
     lang === "zh"
-      ? "真实旅客的真实体验"
+      ? "真實旅客的真實體驗"
       : "Real experiences from real travelers",
   readyToExplore:
-    lang === "zh" ? "准备好开始探索了吗？" : "Ready to Start Your Adventure?",
+    lang === "zh" ? "準備好開始探索了嗎？" : "Ready to Start Your Adventure?",
   ctaSubtitle:
     lang === "zh"
-      ? "让我们帮您规划一次难忘的旅程"
+      ? "讓我們幫您規劃一次難忘的旅程"
       : "Let us help you plan an unforgettable journey",
-  browseAllTours: lang === "zh" ? "浏览所有行程" : "Browse All Tours",
-  contactUs: lang === "zh" ? "联系我们" : "Contact Us",
-  happyTravelers: lang === "zh" ? "满意客户" : "Happy Travelers",
-  tourPackages: lang === "zh" ? "精选行程" : "Tour Packages",
-  customerRating: lang === "zh" ? "客户评分" : "Customer Rating",
-  bookNow: lang === "zh" ? "立即预订" : "Book Now",
-  testimonials: lang === "zh" ? "客户反馈" : "TESTIMONIALS",
+  browseAllTours: lang === "zh" ? "瀏覽所有行程" : "Browse All Tours",
+  contactUs: lang === "zh" ? "聯絡我們" : "Contact Us",
+  happyTravelers: lang === "zh" ? "滿意客戶" : "Happy Travelers",
+  tourPackages: lang === "zh" ? "精選行程" : "Tour Packages",
+  customerRating: lang === "zh" ? "客戶評分" : "Customer Rating",
+  bookNow: lang === "zh" ? "立即預訂" : "Book Now",
+  testimonials: lang === "zh" ? "客戶回饋" : "TESTIMONIALS",
 };
 
 const whyUsItems = [
@@ -123,30 +138,6 @@ const whyUsItems = [
     desc: t.premiumServiceDesc,
   },
   { icon: "verified", title: t.bestValue, desc: t.bestValueDesc },
-];
-
-const transferRoutes = [
-  {
-    from: "Vancouver Airport (YVR)",
-    to: "Whistler",
-    price: "465",
-    icon: "flight_land",
-    activityId: "18", // 11-seater zaui ID
-  },
-  {
-    from: "Greater Vancouver",
-    to: "Whistler",
-    price: "435",
-    icon: "downhill_skiing",
-    activityId: "16", // 11-seater zaui ID
-  },
-  {
-    from: "Whistler",
-    to: "YVR / Vancouver",
-    price: "435",
-    icon: "flight_takeoff",
-    activityId: "20", // 11-seater zaui ID
-  },
 ];
 ---
 
@@ -161,166 +152,20 @@ const transferRoutes = [
   image={heroBackground.src}
   heroImage={heroBackground.src}
 >
-  <!-- Hero Section - Premium Dark Theme -->
-  <section class="relative min-h-[85vh] flex items-center overflow-hidden">
-    <!-- Background Image with Overlay -->
-    <!-- Responsive hero image: mobile (640px, 25KB) vs desktop (1920px, 135KB) -->
-    <picture>
-      <source
-        media="(max-width: 768px)"
-        srcset={heroBackgroundMobile.src}
-        width="640"
-        height="640"
-      />
-      <img
-        src={heroBackground.src}
-        alt="Scenic Canadian landscape"
-        class="absolute inset-0 w-full h-full object-cover object-bottom"
-        style="z-index: -2;"
-        fetchpriority="high"
-        loading="eager"
-        decoding="async"
-        width="1920"
-        height="1920"
-      />
-    </picture>
-    <div
-      class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"
-      style="z-index: -1;"
-    >
-    </div>
+  <FeaturedToursHero
+    tours={sanitizeUrls(featuredTours)}
+    lang={lang}
+    localePrefix={localePrefix}
+    client:load
+  />
 
-    <!-- Decorative elements -->
-    <div
-      class="absolute top-20 right-20 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl"
-    >
-    </div>
-    <div
-      class="absolute bottom-40 left-10 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl"
-    >
-    </div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20">
-      <div class="max-w-3xl">
-        <span
-          class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500/20 backdrop-blur-sm rounded-full text-orange-400 text-sm font-bold tracking-widest mb-6"
-        >
-          <span class="material-icons text-lg">public</span>
-          {t.heroTagline}
-        </span>
-
-        {
-          /* Hero Title - Using SVG to avoid loading Kaushan Script font (~35KB) */
-        }
-        <img
-          src={lang === "en"
-            ? "/explore-again.svg?v=2"
-            : "/explore-again-zh.svg?v=2"}
-          alt={t.heroTitle}
-          class="h-16 md:h-24 lg:h-32 mb-6 drop-shadow-lg"
-          width={lang === "en" ? "435" : "484"}
-          height={lang === "en" ? "96" : "115"}
-          loading="eager"
-        />
-
-        <p class="text-xl md:text-2xl text-white/80 mb-10 leading-relaxed">
-          {t.heroSubtitle}
-        </p>
-
-        <!-- Search Bar -->
-        <form
-          class="bg-white/10 backdrop-blur-md rounded-2xl p-2 flex flex-col md:flex-row items-center gap-2 border border-white/20"
-          action={`${localePrefix}/tours`}
-          method="GET"
-        >
-          <div class="relative grow w-full md:w-auto">
-            <label for="hero-search" class="sr-only"
-              >{t.searchPlaceholder}</label
-            >
-            <span
-              class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-white/50"
-              aria-hidden="true">search</span
-            >
-            <input
-              id="hero-search"
-              type="text"
-              name="q"
-              placeholder={t.searchPlaceholder}
-              class="w-full pl-12 pr-4 py-4 bg-transparent text-white placeholder-white/50 focus:outline-none"
-            />
-          </div>
-          <div class="relative w-full md:w-auto">
-            <label for="hero-destination" class="sr-only">{t.destination}</label
-            >
-            <select
-              id="hero-destination"
-              name="destination"
-              class="w-full md:w-52 px-4 py-4 text-white bg-white/10 rounded-xl focus:outline-none appearance-none cursor-pointer"
-            >
-              <option value="" class="text-gray-900">{t.destination}</option>
-              {
-                navData.destinations
-                  .filter((d) => d.parent === 0)
-                  .slice(0, 10)
-                  .map((dest) => (
-                    <option value={dest.slug} class="text-gray-900">
-                      {dest.name}
-                    </option>
-                  ))
-              }
-            </select>
-            <span
-              class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none"
-              >expand_more</span
-            >
-          </div>
-          <button
-            type="submit"
-            class="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition-all"
-          >
-            <span class="flex items-center justify-center gap-2">
-              <span class="material-icons">search</span>
-              {t.search}
-            </span>
-          </button>
-        </form>
-
-        <!-- Quick Stats -->
-        <div class="flex flex-wrap gap-8 mt-10 items-center">
-          <div class="text-white/90">
-            <span class="text-3xl font-bold text-orange-400">500+</span>
-            <p class="text-white/60 text-sm">{t.happyTravelers}</p>
-          </div>
-          <div class="text-white/90">
-            <span class="text-3xl font-bold text-orange-400">50+</span>
-            <p class="text-white/60 text-sm">{t.tourPackages}</p>
-          </div>
-          <div class="text-white/90">
-            <div class="flex gap-1 min-h-[35.5px] items-center">
-              {
-                [1, 2, 3, 4, 5].map(() => (
-                  <span class="material-icons text-2xl text-orange-400">
-                    star
-                  </span>
-                ))
-              }
-              <!-- <span class="material-icons text-2xl text-orange-400/50"
-                >star_half</span
-              > -->
-            </div>
-            <p class="text-white/60 text-sm">{t.customerRating}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Scroll indicator -->
-    <div
-      class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/50 animate-bounce"
-    >
-      <span class="material-icons text-3xl">keyboard_arrow_down</span>
-    </div>
-  </section>
+  <!-- Legacy Hero (Saved) -->
+  <!-- <LegacyHero
+    lang={lang}
+    localePrefix={localePrefix}
+    navData={navData}
+    t={t}
+  /> -->
 
   <!-- Why Choose Us Section -->
   <!-- <section class="py-20 bg-white relative overflow-hidden">
@@ -373,54 +218,23 @@ const transferRoutes = [
         <p class="text-gray-600 max-w-2xl mx-auto">{t.transfersSubtitle}</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {
-          transferRoutes.map((route) => (
-            <div class="group relative bg-white rounded-2xl border border-gray-200 p-6 hover:border-orange-300 hover:shadow-xl transition-all duration-300 overflow-hidden">
-              {/* Decorative corner */}
-              <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-orange-100 to-transparent rounded-bl-full" />
-
-              {/* Icon */}
-              <div class="w-14 h-14 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <span class="material-icons text-orange-500 text-2xl">
-                  {route.icon}
-                </span>
-              </div>
-
-              {/* Route */}
-              <div class="mb-4">
-                <div class="font-bold text-gray-900 text-lg leading-relaxed">
-                  {route.from}
-                </div>
-                <div class="text-orange-500 font-bold my-1">→</div>
-                <div class="font-bold text-gray-900 text-lg">{route.to}</div>
-              </div>
-
-              {/* Price */}
-              <div class="mb-6">
-                <div class="flex items-baseline gap-1">
-                  <span class="text-3xl font-bold text-gray-900">
-                    ${route.price}
-                  </span>
-                  <span class="text-gray-500 text-sm">{t.perVehicle}</span>
-                </div>
-                <div class="text-xs text-orange-600 font-semibold mt-1">
-                  11-Seater Available
-                </div>
-              </div>
-
-              {/* Booking button */}
-              <TransferBookingModalButton
-                client:visible
-                label={t.bookNow}
-                activityId={route.activityId}
-                localePrefix={localePrefix}
-                lang={lang}
-              />
-            </div>
-          ))
-        }
-      </div>
+      {
+        featuredTransfers.length > 0 ? (
+          <TransferRoutesGrid
+            routes={featuredTransfers}
+            lang={lang}
+            localePrefix={localePrefix}
+            client:visible
+          />
+        ) : (
+          <div class="text-center py-12 text-gray-500">
+            <span class="material-icons text-4xl mb-4">sync_problem</span>
+            <p>
+              {lang === "zh" ? "无法加载路线信息" : "Unable to load routes"}
+            </p>
+          </div>
+        )
+      }
 
       <div class="text-center mt-10">
         <a

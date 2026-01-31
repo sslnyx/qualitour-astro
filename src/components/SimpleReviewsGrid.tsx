@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { GoogleReview } from '../lib/wordpress/types';
 import PhotoLightbox from './PhotoLightbox';
+import { getCfTransformUrl, wpUrl } from '../lib/wp-url';
 
 interface SimpleReviewsGridProps {
     reviews: GoogleReview[];
@@ -48,7 +49,7 @@ function Avatar({ src, name }: { src?: string; name: string }) {
     if (src) {
         return (
             <img
-                src={src}
+                src={getCfTransformUrl(wpUrl(src), { width: 80, height: 80, format: 'webp' })}
                 alt={name}
                 className="w-10 h-10 rounded-full object-cover"
                 referrerPolicy="no-referrer"
@@ -130,7 +131,7 @@ function ReviewCard({ review }: { review: GoogleReview }) {
                                 className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 hover:border-[#f7941e] transition-colors focus:outline-none focus:ring-2 focus:ring-[#f7941e] focus:ring-offset-2"
                             >
                                 <img
-                                    src={img}
+                                    src={getCfTransformUrl(wpUrl(img), { width: 400, height: 400, format: 'webp' })}
                                     alt={`Review photo ${idx + 1}`}
                                     className="w-full h-full object-cover"
                                     loading="lazy"

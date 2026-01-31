@@ -1,0 +1,189 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import TourCardOptimized from "../../../components/TourCardOptimized.astro";
+import {
+    getTourDestinations,
+    getTours,
+    getSiteNavData,
+} from "../../../lib/wordpress/api";
+import type { WPTourDestination } from "../../../lib/wordpress/types";
+import { type Locale } from "../../../i18n/config";
+
+export async function getStaticPaths() {
+    // Fetch destinations for BOTH languages
+    const [enDestinations, zhDestinations] = await Promise.all([
+        getTourDestinations("en"),
+        getTourDestinations("zh"),
+    ]);
+
+    const paths: Array<{
+        params: { lang: string | undefined; slug: string };
+        props: { destination: WPTourDestination; overrideTitle?: string };
+    }> = [];
+
+    // Alias mappings (Slug -> Target Destination Slug)
+    const aliases: Record<string, string> = {
+        rockies: "banff",
+        maritimes: "atlantic-canada",
+    };
+
+    // Helper to create paths
+    const createPath = (
+        lang: "en" | "zh" | undefined,
+        slug: string,
+        dest: WPTourDestination,
+        overrideTitle?: string,
+    ) => {
+        paths.push({
+            params: { lang: lang === "en" ? undefined : lang, slug },
+            props: { destination: dest, overrideTitle },
+        });
+    };
+
+    // 1. English destinations
+    enDestinations.forEach((dest) => {
+        createPath("en", dest.slug, dest);
+    });
+
+    // 2. Chinese destinations - map slug to English equivalent for URL consistency
+    zhDestinations.forEach((zhDest) => {
+        // Use English slug from translations if available, otherwise use zh slug
+        const enSlug =
+            zhDest.translations?.en || zhDest.slug.replace("-zh", "");
+        createPath("zh", enSlug, zhDest);
+    });
+
+    // 3. Aliases for both languages
+    Object.entries(aliases).forEach(([aliasSlug, targetSlug]) => {
+        const enTarget = enDestinations.find((d) => d.slug === targetSlug);
+        const zhTarget = zhDestinations.find(
+            (d) =>
+                d.translations?.en === targetSlug ||
+                d.slug === `${targetSlug}-zh`,
+        );
+
+        if (enTarget) {
+            createPath("en", aliasSlug, enTarget);
+        }
+        if (zhTarget) {
+            createPath("zh", aliasSlug, zhTarget);
+        }
+    });
+
+    return paths;
+}
+
+const { lang: langParam, slug } = Astro.params;
+const { destination, overrideTitle } = Astro.props;
+const lang: Locale = (langParam as Locale) || "en";
+const localePrefix = lang === "en" ? "" : `/${lang}`;
+
+// Fetch tours for this destination using the CORRECT destination ID for this language
+const tours = await getTours(
+    {
+        destinations: [destination.id],
+        per_page: 50,
+    },
+    lang,
+);
+
+// Image optimization is now handled within the TourCardOptimized component using CdnImage
+const optimizedTours = tours;
+
+// Get nav data for layout
+const navData = await getSiteNavData(lang);
+
+// Page Metadata
+const pageTitle =
+    overrideTitle || (lang === "zh" ? destination.name : destination.name);
+const description =
+    destination.description ||
+    (lang === "zh"
+        ? `探索${pageTitle}的最佳旅游行程`
+        : `Explore the best tours in ${pageTitle}`);
+
+// Translations
+const t = {
+    noTours:
+        lang === "zh" ? "暂无相关行程" : "No tours found for this destination",
+    availableTours: lang === "zh" ? "可选行程" : "Available Tours",
+    home: lang === "zh" ? "首页" : "Home",
+    destinations: lang === "zh" ? "目的地" : "Destinations",
+};
+---
+
+<Layout
+    title={`${pageTitle} | Qualitour`}
+    description={description}
+    lang={lang}
+>
+    <!-- Hero Section -->
+    <section class="relative py-24 bg-gray-900 overflow-hidden">
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-amber-500/20"
+        >
+        </div>
+        <div class="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-10">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center">
+                <!-- Breadcrumbs -->
+                <nav
+                    class="flex justify-center items-center gap-2 text-sm text-gray-400 mb-6"
+                >
+                    <a
+                        href={`${localePrefix}/`}
+                        class="hover:text-white transition-colors"
+                    >
+                        {t.home}
+                    </a>
+                    <span>/</span>
+                    <span class="text-orange-500">{t.destinations}</span>
+                    <span>/</span>
+                    <span class="text-white">{pageTitle}</span>
+                </nav>
+
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                    {pageTitle}
+                </h1>
+                <div
+                    class="w-24 h-1 bg-gradient-to-r from-orange-500 to-amber-500 mx-auto rounded-full"
+                >
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tours Grid -->
+    <section class="py-16 bg-gray-50 min-h-[50vh]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">
+                    {t.availableTours} ({optimizedTours.length})
+                </h2>
+            </div>
+
+            {
+                optimizedTours.length > 0 ? (
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {optimizedTours.map((tour) => (
+                            <TourCardOptimized
+                                tour={tour}
+                                lang={lang}
+                                style="grid"
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div class="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                        <span class="material-icons text-6xl text-gray-300 mb-4">
+                            travel_explore
+                        </span>
+                        <p class="text-xl text-gray-500">{t.noTours}</p>
+                    </div>
+                )
+            }
+        </div>
+    </section>
+</Layout>

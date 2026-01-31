@@ -49,7 +49,7 @@ const currentYear = new Date().getFullYear();
                 >
                     {
                         currentLocale === "zh"
-                            ? "您通往非凡加拿大探险的门户。与专业导游一起探索自然之美。"
+                            ? "您通往非凡加拿大探險的門戶。與專業導游一起探索自然之美。"
                             : "Your gateway to extraordinary Canadian adventures. Discover the beauty of nature with expert-guided tours."
                     }
                 </p>
@@ -118,7 +118,7 @@ const currentYear = new Date().getFullYear();
                             >
                                 {
                                     currentLocale === "zh"
-                                        ? "中国签证"
+                                        ? "中國簽證"
                                         : "China Visa"
                                 }
                             </a>
@@ -128,7 +128,7 @@ const currentYear = new Date().getFullYear();
                                 href={`${localePrefix}/faq`}
                                 class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
                             >
-                                {currentLocale === "zh" ? "常见问题" : "FAQ"}
+                                {currentLocale === "zh" ? "常見問題" : "FAQ"}
                             </a>
                         </li>
                     </ul>
@@ -156,7 +156,7 @@ const currentYear = new Date().getFullYear();
                             >
                                 {
                                     currentLocale === "zh"
-                                        ? "关于我们"
+                                        ? "關於我們"
                                         : "About Us"
                                 }
                             </a>
@@ -168,7 +168,7 @@ const currentYear = new Date().getFullYear();
                             >
                                 {
                                     currentLocale === "zh"
-                                        ? "客户评价"
+                                        ? "客戶評價"
                                         : "Reviews"
                                 }
                             </a>
@@ -180,7 +180,7 @@ const currentYear = new Date().getFullYear();
                             >
                                 {
                                     currentLocale === "zh"
-                                        ? "联系我们"
+                                        ? "聯繫我們"
                                         : "Contact Us"
                                 }
                             </a>
@@ -192,7 +192,7 @@ const currentYear = new Date().getFullYear();
                             >
                                 {
                                     currentLocale === "zh"
-                                        ? "隐私政策"
+                                        ? "隱私政策"
                                         : "Privacy Policy"
                                 }
                             </a>
@@ -212,7 +212,7 @@ const currentYear = new Date().getFullYear();
                                 >contact_mail</span
                             >
                         </span>
-                        {currentLocale === "zh" ? "联系方式" : "Contact"}
+                        {currentLocale === "zh" ? "聯繫方式" : "Contact"}
                     </h3>
                     <ul class="space-y-3">
                         <li>
@@ -273,7 +273,7 @@ const currentYear = new Date().getFullYear();
                                 >verified</span
                             >
                         </span>
-                        {currentLocale === "zh" ? "关注我们" : "Connect"}
+                        {currentLocale === "zh" ? "關注我們" : "Connect"}
                     </h3>
 
                     <!-- IATA Badge -->
@@ -298,7 +298,7 @@ const currentYear = new Date().getFullYear();
 
                     <!-- Social Links -->
                     <p class="text-gray-400 text-sm mb-3">
-                        {currentLocale === "zh" ? "关注我们" : "Follow us"}
+                        {currentLocale === "zh" ? "關注我們" : "Follow us"}
                     </p>
                     <div
                         class="flex items-center justify-center sm:justify-start gap-4"
@@ -399,7 +399,7 @@ const currentYear = new Date().getFullYear();
                             <p class="text-gray-400">
                                 {
                                     currentLocale === "zh"
-                                        ? "获取独家旅行优惠和行程更新，直接发送到您的邮箱"
+                                        ? "獲取獨家旅行優惠和行程更新，直接發送到您的郵箱"
                                         : "Get exclusive travel deals and tour updates delivered to your inbox"
                                 }
                             </p>
@@ -410,14 +410,14 @@ const currentYear = new Date().getFullYear();
                             <input
                                 type="email"
                                 placeholder={currentLocale === "zh"
-                                    ? "输入您的邮箱"
+                                    ? "輸入您的郵箱"
                                     : "Enter your email"}
                                 class="px-5 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all w-full sm:w-72"
                             />
                             <button
                                 class="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-orange-500/25"
                             >
-                                {currentLocale === "zh" ? "订阅" : "Subscribe"}
+                                {currentLocale === "zh" ? "訂閱" : "Subscribe"}
                             </button>
                         </div>
                     </div>
@@ -438,7 +438,7 @@ const currentYear = new Date().getFullYear();
                     <span class="hidden sm:inline">
                         {
                             currentLocale === "zh"
-                                ? "保留所有权利。"
+                                ? "保留所有權利。"
                                 : "All rights reserved."
                         } |</span
                     >
@@ -451,39 +451,39 @@ const currentYear = new Date().getFullYear();
                     <a
                         href={`${localePrefix}/privacy-policy`}
                         class="hover:text-orange-400 transition-colors"
-                        >{currentLocale === "zh" ? "隐私" : "Privacy"}</a
+                        >{currentLocale === "zh" ? "隱私" : "Privacy"}</a
                     >
                     <a
                         href={`${localePrefix}/terms`}
                         class="hover:text-orange-400 transition-colors"
-                        >{currentLocale === "zh" ? "条款" : "Terms"}</a
+                        >{currentLocale === "zh" ? "條款" : "Terms"}</a
                     >
                 </div>
             </div>
         </div>
     </div>
+
+    <script is:inline>
+        const yearSpan = document.getElementById("current-year");
+        if (yearSpan) {
+            yearSpan.textContent = new Date().getFullYear().toString();
+        }
+    </script>
+
+    <style>
+        /* Custom Animations */
+        @keyframes gradient-shift {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        footer {
+            background-size: 200% 200%;
+        }
+    </style>
 </footer>
-
-<script is:inline>
-    const yearSpan = document.getElementById("current-year");
-    if (yearSpan) {
-        yearSpan.textContent = new Date().getFullYear().toString();
-    }
-</script>
-
-<style>
-    /* Custom Animations */
-    @keyframes gradient-shift {
-        0%,
-        100% {
-            background-position: 0% 50%;
-        }
-        50% {
-            background-position: 100% 50%;
-        }
-    }
-
-    footer {
-        background-size: 200% 200%;
-    }
-</style>

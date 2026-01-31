@@ -1,4 +1,6 @@
 ---
+import CdnImage from "./CdnImage.astro";
+
 /**
  * PageHero - Reusable hero section component for static pages
  *
@@ -36,11 +38,16 @@ const {
 >
     <!-- Background Image -->
     <div class="absolute inset-0">
-        <img
+        <CdnImage
             src={image}
             alt={title}
+            width={1920}
+            height={1080}
             class="w-full h-full object-cover object-center"
             loading="eager"
+            decoding="async"
+            quality={80}
+            format="webp"
         />
     </div>
 

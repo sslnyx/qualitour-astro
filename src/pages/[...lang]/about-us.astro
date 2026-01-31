@@ -1,6 +1,7 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import PageHero from "../../components/PageHero.astro";
+import CdnImage from "../../components/CdnImage.astro";
 import { type Locale } from "../../i18n/config";
 
 // Generate paths for both locales
@@ -17,63 +18,63 @@ const localePrefix = currentLang === "en" ? "" : `/${currentLang}`;
 
 // Translations
 const t = {
-    title: currentLang === "zh" ? "关于我们" : "About Us",
+    title: currentLang === "zh" ? "關於我們" : "About Us",
     subtitle:
         currentLang === "zh"
-            ? "探索我们对真实旅行体验的热情"
+            ? "探索我們對真實旅行體驗的熱情"
             : "Crafting Unforgettable Canadian Journeys",
-    mission: currentLang === "zh" ? "我们的使命" : "Our Mission",
+    mission: currentLang === "zh" ? "我們的使命" : "Our Mission",
     missionText:
         currentLang === "zh"
-            ? "通过真实、精心策划和个性化的体验，将旅行者与加拿大的灵魂联系起来，创造终生难忘的回忆。"
+            ? "通過真實、精心策劃和個性化的體驗，將旅行者與加拿大的靈魂聯繫起來，創造終生難忘的回憶。"
             : "To connect travelers with the soul of Canada through authentic, handcrafted, and personalized experiences that create memories to last a lifetime.",
-    whyUs: currentLang === "zh" ? "为什么选择我们" : "Why Choose Qualitour",
-    whoWeAre: currentLang === "zh" ? "我们是谁" : "Who We Are",
+    whyUs: currentLang === "zh" ? "為什麼選擇我們" : "Why Choose Qualitour",
+    whoWeAre: currentLang === "zh" ? "我們是誰" : "Who We Are",
     whoWeAreText1:
         currentLang === "zh"
-            ? "Qualitour是一家总部位于温哥华的旅游运营商，致力于展示加拿大的精华。从洛矶山脉的崎岖山峰到温哥华充满活力的街道，我们策划激发灵感的体验。"
+            ? "Qualitour是一家總部位於溫哥華的旅遊運營商，致力於展示加拿大的精華。從洛磯山脈的崎嶇山峰到溫哥華充滿活力的街道，我們策劃激發靈感的體驗。"
             : "Qualitour is a Vancouver-based tour operator dedicated to showcasing the very best of Canada. From the rugged peaks of the Rockies to the vibrant streets of Vancouver, we curate experiences that inspire.",
     whoWeAreText2:
         currentLang === "zh"
-            ? "我们提供各种旅游服务，包括城市观光、邮轮前后游览、冒险徒步、野生动物生态游和滑雪假期。每一次旅程都是与自然、文化和彼此联系的机会。"
+            ? "我們提供各種旅遊服務，包括城市觀光、郵輪前後遊覽、冒險徒步、野生動物生態遊和滑雪假期。每一次旅程都是與自然、文化和彼此聯繫的機會。"
             : "We offer a wide range of tours including city sightseeing, pre/post cruise excursions, adventure hiking, wildlife eco-tours, and ski vacations. Every journey is an opportunity to connect with nature, culture, and each other.",
     moreThanTours:
-        currentLang === "zh" ? "不仅仅是旅游" : "More Than Just Tours",
+        currentLang === "zh" ? "不僅僅是旅遊" : "More Than Just Tours",
     moreThanToursText:
         currentLang === "zh"
-            ? "我们还专注于无缝私人接送服务。无论您需要便捷的机场接送、邮轮接驳，还是舒适地前往惠斯勒滑雪周末，我们的车队随时为您服务。"
+            ? "我們還專注於無縫私人接送服務。無論您需要便捷的機場接送、郵輪接駁，還是舒適地前往惠斯勒滑雪週末，我們的車隊隨時為您服務。"
             : "We also specialize in seamless private transfers. Whether you need a hassle-free airport pickup, a cruise ship connection, or a comfortable ride to Whistler for a ski weekend, our fleet is at your service.",
     ourServices:
-        currentLang === "zh" ? "我们的高级服务" : "Our Premium Services",
+        currentLang === "zh" ? "我們的高級服務" : "Our Premium Services",
     servicesDesc:
         currentLang === "zh"
-            ? "通过我们的专业旅游服务体验Qualitour的不同之处。"
+            ? "通過我們的專業旅遊服務體驗Qualitour的不同之處。"
             : "Experience the Qualitour difference with our range of specialized travel services.",
-    guidedTours: currentLang === "zh" ? "导游团" : "Guided Tours",
+    guidedTours: currentLang === "zh" ? "導遊團" : "Guided Tours",
     guidedToursDesc:
         currentLang === "zh"
-            ? "由专家带领穿越加拿大最具标志性的景观。"
+            ? "由專家帶領穿越加拿大最具標誌性的景觀。"
             : "Expertly led journeys through Canada's most iconic landscapes.",
-    miniGroups: currentLang === "zh" ? "小团体" : "Mini Groups",
+    miniGroups: currentLang === "zh" ? "小團體" : "Mini Groups",
     miniGroupsDesc:
         currentLang === "zh"
-            ? "为朋友和家人提供亲密、灵活的旅行体验。"
+            ? "為朋友和家人提供親密、靈活的旅行體驗。"
             : "Intimate, flexible travel experiences for friends and families.",
     privateTransfers: currentLang === "zh" ? "私人接送" : "Private Transfers",
     privateTransfersDesc:
         currentLang === "zh"
-            ? "适合任何场合的舒适、可靠的交通服务。"
+            ? "適合任何場合的舒適、可靠的交通服務。"
             : "Comfortable, reliable transportation for any occasion.",
     ctaTitle:
         currentLang === "zh"
-            ? "准备好开始您的冒险了吗？"
+            ? "準備好開始您的冒險了嗎？"
             : "Ready to Start Your Adventure?",
     ctaSubtitle:
         currentLang === "zh"
-            ? "让我们帮助您创建完美的行程。今天就联系我们或浏览我们精选的旅游项目。"
+            ? "讓我們幫助您創建完美的行程。今天就聯繫我們或瀏覽我們精選的旅遊項目。"
             : "Let us help you create the perfect itinerary. Contact us today or browse our curated selection of tours.",
-    contactUs: currentLang === "zh" ? "联系我们" : "Contact Us",
-    browseTours: currentLang === "zh" ? "浏览所有行程" : "Browse All Tours",
+    contactUs: currentLang === "zh" ? "聯絡我們" : "Contact Us",
+    browseTours: currentLang === "zh" ? "瀏覽所有行程" : "Browse All Tours",
 };
 
 const heroImage =
@@ -83,7 +84,7 @@ const heroImage =
 <Layout
     title={`${t.title} | Qualitour`}
     description={currentLang === "zh"
-        ? "了解Qualitour - 温哥华顶级旅游运营商，致力于提供真实、安全和个性化的加拿大旅行体验。"
+        ? "了解Qualitour - 溫哥華頂級旅遊運營商，致力於提供真實、安全和個性化的加拿大旅行體驗。"
         : "Discover Qualitour, Vancouver's premier tour operator dedicated to authentic, safe, and personalized Canadian travel experiences."}
     lang={currentLang}
     image={heroImage}
@@ -131,22 +132,22 @@ const heroImage =
                                 icon: "verified",
                                 title:
                                     currentLang === "zh"
-                                        ? "真实性"
+                                        ? "真實性"
                                         : "Authenticity",
                                 desc:
                                     currentLang === "zh"
-                                        ? "超越旅游陷阱的手工行程，揭示目的地的真实精神。"
+                                        ? "超越旅遊陷阱的手工行程，揭示目的地的真實精神。"
                                         : "Handcrafted itineraries that go beyond the tourist traps to reveal the true spirit of the destination.",
                             },
                             {
                                 icon: "settings_suggest",
                                 title:
                                     currentLang === "zh"
-                                        ? "个性化"
+                                        ? "個性化"
                                         : "Personalization",
                                 desc:
                                     currentLang === "zh"
-                                        ? "量身定制的体验，完美匹配您的节奏、兴趣和旅行风格。"
+                                        ? "量身定制的體驗，完美匹配您的節奏、興趣和旅行風格。"
                                         : "Tailor-made experiences designed to match your pace, interests, and travel style perfectly.",
                             },
                             {
@@ -157,16 +158,16 @@ const heroImage =
                                         : "Safety First",
                                 desc:
                                     currentLang === "zh"
-                                        ? "您的福祉是我们的首要任务，严格的安全标准和经验丰富的当地导游。"
+                                        ? "您的福祉是我們的首要任務，嚴格的安全標準和經驗豐富的當地導遊。"
                                         : "Your well-being is our top priority, with rigorous safety standards and experienced local guides.",
                             },
                             {
                                 icon: "favorite",
                                 title:
-                                    currentLang === "zh" ? "热情" : "Passion",
+                                    currentLang === "zh" ? "熱情" : "Passion",
                                 desc:
                                     currentLang === "zh"
-                                        ? "由旅行爱好者创立，倾注心血打造您的梦想假期。"
+                                        ? "由旅行愛好者創立，傾注心血打造您的夢想假期。"
                                         : "Founded by travel enthusiasts who pour their heart into creating your dream vacation.",
                             },
                         ].map((value) => (
@@ -204,9 +205,11 @@ const heroImage =
                         <div
                             class="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]"
                         >
-                            <img
+                            <CdnImage
                                 src="/mini-tour.jpg"
                                 alt="Small group tour experience"
+                                width={800}
+                                height={600}
                                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />
                         </div>
@@ -238,9 +241,11 @@ const heroImage =
                         <div
                             class="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]"
                         >
-                            <img
+                            <CdnImage
                                 src="/ski-shuttle.jpg"
                                 alt="Private transfer service"
+                                width={800}
+                                height={600}
                                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />
                         </div>
@@ -258,13 +263,13 @@ const heroImage =
                             {
                                 [
                                     currentLang === "zh"
-                                        ? "豪华车队提供最大舒适度"
+                                        ? "豪華車隊提供最大舒適度"
                                         : "Luxury fleet for maximum comfort",
                                     currentLang === "zh"
-                                        ? "专业、准时的司机"
+                                        ? "專業、準時的司機"
                                         : "Professional, punctual drivers",
                                     currentLang === "zh"
-                                        ? "全天候支持，让您安心"
+                                        ? "全天候支持，讓您安心"
                                         : "24/7 Support for peace of mind",
                                 ].map((item) => (
                                     <li class="flex items-center gap-3 text-gray-700 font-medium">
@@ -322,9 +327,11 @@ const heroImage =
                                 href={service.link}
                                 class="group relative h-96 rounded-2xl overflow-hidden block"
                             >
-                                <img
+                                <CdnImage
                                     src={service.image}
                                     alt={service.title}
+                                    width={600}
+                                    height={400}
                                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 />
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-8">

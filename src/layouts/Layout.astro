@@ -3,6 +3,8 @@ import "../styles/global.css";
 import { getCurrentLocale, type Locale } from "../i18n/config";
 import SiteNavAstro from "../components/SiteNavAstro.astro";
 import { getSiteNavData, type SiteNavData } from "../lib/wordpress/api";
+import { sanitizeUrls } from "../lib/wp-url";
+import { getPrivateTransfersWithPricing } from "../lib/zaui/zaui";
 import Footer from "../components/Footer.astro";
 import SeoHead from "../components/SeoHead.astro";
 
@@ -48,9 +50,20 @@ let navData: SiteNavData = {
   destinations: [],
   durations: [],
   types: [],
+  transfers: [],
 };
+
 try {
-  navData = await getSiteNavData(currentLocale);
+  const [siteNavData, transfers] = await Promise.all([
+    getSiteNavData(currentLocale),
+    getPrivateTransfersWithPricing(),
+  ]);
+
+  // Sanitize navigation data to remove local URLs
+  navData = sanitizeUrls({
+    ...siteNavData,
+    transfers,
+  });
 } catch (e) {
   console.error("Failed to fetch nav data:", e);
 }
@@ -96,7 +109,6 @@ try {
   :root {
     --font-inter: "Inter", system-ui, sans-serif;
   }
-
   body {
     font-family: var(--font-inter);
   }

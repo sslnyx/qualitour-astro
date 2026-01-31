@@ -7,6 +7,15 @@ import TransferRoutesGrid from "../../components/TransferRoutesGrid";
 import PremiumReviewsGrid from "../../components/PremiumReviewsGrid";
 import { getGoogleReviews } from "../../lib/wordpress/api";
 import { getPrivateTransfersWithPricing } from "../../lib/zaui/zaui";
+import CdnImage from "../../components/CdnImage.astro";
+
+// Local fleet images
+import siennaImg from "../../assets/images/fleet/sienna.png";
+import standardVanImg from "../../assets/images/fleet/standard-van.jpg";
+import deluxeVanImg from "../../assets/images/fleet/deluxe-van.jpg";
+import sprinterStandardImg from "../../assets/images/fleet/sprinter-standard.png";
+import sprinterDeluxeImg from "../../assets/images/fleet/sprinter-deluxe.png";
+import charterPackageImg from "../../assets/images/fleet/charter-package.jpg";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -106,71 +115,71 @@ const transferReviews = reviews
     .slice(0, 6);
 
 const t = {
-    heading: lang === "zh" ? "私人接送服务" : "Private Transfer Services",
+    heading: lang === "zh" ? "私人接送服務" : "Private Transfer Services",
     subheading:
         lang === "zh"
-            ? "舒适、安全、准时的专属用车服务"
+            ? "舒適、安全、準時的專屬用車服務"
             : "Premium door-to-door transportation across British Columbia",
-    heroTagline: lang === "zh" ? "专业接送" : "PROFESSIONAL TRANSFERS",
-    whyUs: lang === "zh" ? "为什么选择我们" : "Why Choose Qualitour",
-    ourFleet: lang === "zh" ? "车队与包车服务" : "Fleet & Charter Services",
+    heroTagline: lang === "zh" ? "專業接送" : "PROFESSIONAL TRANSFERS",
+    whyUs: lang === "zh" ? "為什麼選擇我們" : "Why Choose Qualitour",
+    ourFleet: lang === "zh" ? "車隊與包車服務" : "Fleet & Charter Services",
     fleetDesc:
         lang === "zh"
-            ? "专注于小团体私人接送"
+            ? "專注於小團體私人接送"
             : "Specialized vehicles for every occasion",
-    popularRoutes: lang === "zh" ? "热门路线" : "Popular Routes",
-    routesDesc: lang === "zh" ? "选择您的行程" : "Select your journey",
-    perVehicle: lang === "zh" ? "每车" : "per vehicle",
-    charterServices: lang === "zh" ? "包车服务" : "Charter Services",
+    popularRoutes: lang === "zh" ? "熱門路線" : "Popular Routes",
+    routesDesc: lang === "zh" ? "選擇您的行程" : "Select your journey",
+    perVehicle: lang === "zh" ? "每車" : "per vehicle",
+    charterServices: lang === "zh" ? "包車服務" : "Charter Services",
     charterDesc:
         lang === "zh"
-            ? "按小时计费的灵活包车方案"
+            ? "按小時計費的靈活包車方案"
             : "Flexible hourly rates for your custom itinerary",
-    needQuote: lang === "zh" ? "需要定制报价？" : "Need a Custom Quote?",
+    needQuote: lang === "zh" ? "需要定制報價？" : "Need a Custom Quote?",
     quoteDesc:
         lang === "zh"
-            ? "告诉我们您的行程，获取专属报价"
+            ? "告訴我們您的行程，獲取專屬報價"
             : "Share your travel plans and get a personalized quote",
-    ctaTitle: lang === "zh" ? "准备好出发了吗？" : "Ready to Travel in Style?",
+    ctaTitle: lang === "zh" ? "準備好出發了嗎？" : "Ready to Travel in Style?",
     ctaDesc:
         lang === "zh"
-            ? "让专业司机带您安全到达目的地"
+            ? "讓專業司機帶您安全到達目的地"
             : "Let our professional drivers take you where you need to go",
-    getInTouch: lang === "zh" ? "联系我们" : "Get in Touch",
-    customerReview: lang === "zh" ? "客户评价" : "What Our Customers Say",
-    faq: lang === "zh" ? "常见问题" : "Frequently Asked Questions",
+    getInTouch: lang === "zh" ? "聯絡我們" : "Get in Touch",
+    customerReview: lang === "zh" ? "客戶評價" : "What Our Customers Say",
+    faq: lang === "zh" ? "常見問題" : "Frequently Asked Questions",
 };
 
 const whyUsItems = [
     {
         icon: "verified",
-        title: lang === "zh" ? "专业司机" : "Professional Drivers",
+        title: lang === "zh" ? "專業司機" : "Professional Drivers",
         desc:
             lang === "zh"
-                ? "经验丰富、礼貌周到"
+                ? "經驗豐富、禮貌周到"
                 : "Experienced, courteous & knowledgeable",
     },
     {
         icon: "schedule",
-        title: lang === "zh" ? "准时可靠" : "Always On Time",
+        title: lang === "zh" ? "準時可靠" : "Always On Time",
         desc:
             lang === "zh"
-                ? "实时航班追踪"
+                ? "實時航班追蹤"
                 : "Real-time flight tracking included",
     },
     {
         icon: "star",
-        title: lang === "zh" ? "优质车辆" : "Premium Vehicles",
+        title: lang === "zh" ? "優質車輛" : "Premium Vehicles",
         desc:
             lang === "zh"
-                ? "舒适宽敞、定期维护"
+                ? "舒適寬敞、定期維護"
                 : "Modern fleet, regularly maintained",
     },
     {
         icon: "support_agent",
-        title: lang === "zh" ? "全程服务" : "24/7 Support",
+        title: lang === "zh" ? "全程服務" : "24/7 Support",
         desc:
-            lang === "zh" ? "随时为您解答" : "We're here whenever you need us",
+            lang === "zh" ? "隨時為您解答" : "We're here whenever you need us",
     },
 ];
 
@@ -178,35 +187,27 @@ const fleetItems =
     lang === "zh"
         ? [
               {
-                  imageUrl: wpUrl(
-                      "/wp-content/uploads/2020/12/2-Sienna-300x207.png",
-                  ),
-                  label: "迷你面包车",
+                  imageUrl: siennaImg,
+                  label: "迷你廂型車",
                   capacity: "4 位乘客",
-                  features: ["舒适座椅", "空调", "行李空间"],
+                  features: ["舒適座椅", "空調", "行李空間"],
               },
               {
-                  imageUrl: wpUrl(
-                      "/wp-content/uploads/2020/10/transfer-standard-van-1-300x200.jpg",
-                  ),
-                  label: "标准版面包车",
+                  imageUrl: standardVanImg,
+                  label: "標準版廂型車",
                   capacity: "11 位乘客",
-                  features: ["宽敞内部空间", "优质舒适度", "额外行李空间"],
+                  features: ["寬敞內部空間", "優質舒適度", "額外行李空間"],
               },
               {
-                  imageUrl: wpUrl(
-                      "/wp-content/uploads/2020/10/transfer-deluxe-van-1-300x200.jpg",
-                  ),
-                  label: "豪华版面包车",
+                  imageUrl: deluxeVanImg,
+                  label: "豪華版廂型車",
                   capacity: "14 位乘客",
-                  features: ["豪华座椅", "娱乐系统", "极致舒适"],
+                  features: ["豪華座椅", "娛樂系統", "極致舒適"],
               },
           ]
         : [
               {
-                  imageUrl: wpUrl(
-                      "/wp-content/uploads/2020/12/2-Sienna-300x207.png",
-                  ),
+                  imageUrl: siennaImg,
                   label: "Mini-van",
                   capacity: "4 passengers",
                   features: [
@@ -216,9 +217,7 @@ const fleetItems =
                   ],
               },
               {
-                  imageUrl: wpUrl(
-                      "/wp-content/uploads/2020/10/transfer-standard-van-1-300x200.jpg",
-                  ),
+                  imageUrl: standardVanImg,
                   label: "Standard Van",
                   capacity: "11 passengers",
                   features: [
@@ -228,9 +227,7 @@ const fleetItems =
                   ],
               },
               {
-                  imageUrl: wpUrl(
-                      "/wp-content/uploads/2020/10/transfer-deluxe-van-1-300x200.jpg",
-                  ),
+                  imageUrl: deluxeVanImg,
                   label: "Deluxe Van",
                   capacity: "14 passengers",
                   features: [
@@ -245,47 +242,43 @@ const charterRates =
     lang === "zh"
         ? [
               {
-                  imageUrl: wpUrl("/wp-content/uploads/2020/12/2-Van.png"),
-                  title: "奔驰斯普林特面包车 (标准版)",
+                  imageUrl: sprinterStandardImg,
+                  title: "賓士Sprinter廂型車 (標準版)",
                   priceNumber: "95",
-                  priceUnit: "/ 小时",
+                  priceUnit: "/ 小時",
                   bullets: [
-                      "最多 11 位带行李乘客",
-                      "最少 2.5 小时",
-                      "仅限大温哥华地区",
+                      "最多 11 位帶行李乘客",
+                      "最少 2.5 小時",
+                      "僅限大溫哥華地區",
                   ],
               },
               {
-                  imageUrl: wpUrl(
-                      "/wp-content/uploads/2020/12/3-Deluxe-Van.png",
-                  ),
-                  title: "奔驰斯普林特面包车 (豪华版)",
+                  imageUrl: sprinterDeluxeImg,
+                  title: "賓士Sprinter廂型車 (豪華版)",
                   priceNumber: "110",
-                  priceUnit: "/ 小时",
+                  priceUnit: "/ 小時",
                   bullets: [
-                      "最多 14 位带行李乘客",
-                      "最少 2.5 小时",
-                      "仅限大温哥华地区",
+                      "最多 14 位帶行李乘客",
+                      "最少 2.5 小時",
+                      "僅限大溫哥華地區",
                   ],
                   popular: true,
               },
               {
-                  imageUrl: wpUrl(
-                      "/wp-content/uploads/2024/10/Weixin-Image_20240924131059.jpg",
-                  ),
-                  title: "高端包车套餐",
+                  imageUrl: charterPackageImg,
+                  title: "高端包車套餐",
                   priceNumber: "110",
-                  priceUnit: "/ 小时",
+                  priceUnit: "/ 小時",
                   bullets: [
-                      "最多 14 位带行李乘客",
-                      "最少 2.5 小时",
-                      "仅限大温哥华地区",
+                      "最多 14 位帶行李乘客",
+                      "最少 2.5 小時",
+                      "僅限大溫哥華地區",
                   ],
               },
           ]
         : [
               {
-                  imageUrl: wpUrl("/wp-content/uploads/2020/12/2-Van.png"),
+                  imageUrl: sprinterStandardImg,
                   title: "Mercedes Sprinter Van (Standard)",
                   priceNumber: "95",
                   priceUnit: "/ Hr",
@@ -296,9 +289,7 @@ const charterRates =
                   ],
               },
               {
-                  imageUrl: wpUrl(
-                      "/wp-content/uploads/2020/12/3-Deluxe-Van.png",
-                  ),
+                  imageUrl: sprinterDeluxeImg,
                   title: "Mercedes Sprinter Van (Deluxe)",
                   priceNumber: "110",
                   priceUnit: "/ Hr",
@@ -310,9 +301,7 @@ const charterRates =
                   popular: true,
               },
               {
-                  imageUrl: wpUrl(
-                      "/wp-content/uploads/2024/10/Weixin-Image_20240924131059.jpg",
-                  ),
+                  imageUrl: charterPackageImg,
                   title: "Premium Charter Package",
                   priceNumber: "110",
                   priceUnit: "/ Hr",
@@ -330,48 +319,48 @@ const faqItems = [
     {
         q:
             lang === "zh"
-                ? "价格包含哪些内容？"
+                ? "價格包含哪些內容？"
                 : "What is included in the price?",
         a:
             lang === "zh"
-                ? "一切！没有额外惊喜或隐藏费用。价格包含燃油附加费和5%的GST。"
+                ? "一切！沒有額外驚喜或隱藏費用。價格包含燃油附加費和5%的GST。"
                 : "Everything! There will be no added surprises or hidden costs. The price includes fuel surcharge and 5% GST.",
     },
     {
         q:
             lang === "zh"
-                ? "如何在机场找到你们？"
+                ? "如何在機場找到你們？"
                 : "How do I find you at the airport?",
         a:
             lang === "zh"
-                ? "通关后请走到主要出口。我们的司机将举着写有您名字的牌子等候。"
+                ? "通關後請走到主要出口。我們的司機將舉著寫有您名字的牌子等候。"
                 : "Once you clear customs and immigration, walk to the main exit door. Our driver will hold a signboard with your name to wait for you.",
     },
     {
         q:
             lang === "zh"
-                ? "如果航班延误怎么办？"
+                ? "如果航班延誤怎麼辦？"
                 : "What if our flight is delayed?",
         a:
             lang === "zh"
-                ? "我们会监控进港航班。最长等待时间为75分钟，超时将收取额外费用。"
+                ? "我們會監控進港航班。最長等待時間為75分鐘，超時將收取額外費用。"
                 : "We will monitor the arrival flights. The maximum waiting time is 75 minutes and will have additional cost after 75 minutes waiting time.",
     },
     {
         q:
             lang === "zh"
-                ? "提供儿童座椅吗？"
+                ? "提供兒童座椅嗎？"
                 : "Do you have car seats available?",
         a:
             lang === "zh"
-                ? "是的，我们提供儿童座椅。请在预订时备注儿童年龄。"
+                ? "是的，我們提供兒童座椅。請在預訂時備註兒童年齡。"
                 : "Yes, we have child's car seats available. However when you make your booking don't forget to indicate the age of the child in the comments.",
     },
     {
-        q: lang === "zh" ? "如何取消预订？" : "Cancellation Policy",
+        q: lang === "zh" ? "如何取消預訂？" : "Cancellation Policy",
         a:
             lang === "zh"
-                ? "服务前72小时可免费取消（扣除5%手续费）。72小时内取消不退款。"
+                ? "服務前72小時可免費取消（扣除5%手續費）。72小時內取消不退款。"
                 : "Cancellations can be made anytime until 72 hours prior to the service, but refunds are subject to an administration fee of 5% of the total amount.",
     },
 ];
@@ -387,7 +376,7 @@ function extractPriceNumber(caption: string): string | null {
         ? "私人接送 | Qualitour"
         : "Private Transfers | Qualitour"}
     description={lang === "zh"
-        ? "大温哥华地区及低陆平原的私人接送服务：机场接送、邮轮接送和滑雪胜地接送。"
+        ? "大溫哥華地區及低陸平原的私人接送服務：機場接送、郵輪接送和滑雪勝地接送。"
         : "Private transfer services across Greater Vancouver and the Lower Mainland: airport transfers, cruise ship transfers, and ski resort transfers."}
     lang={lang}
     image="/ski-shuttle.jpg"
@@ -479,11 +468,11 @@ function extractPriceNumber(caption: string): string | null {
                         >
                             {rate.popular && (
                                 <div class="absolute top-4 right-4 px-3 py-1 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] text-white text-xs font-bold rounded-full">
-                                    {lang === "zh" ? "热门" : "POPULAR"}
+                                    {lang === "zh" ? "熱門" : "POPULAR"}
                                 </div>
                             )}
                             <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 p-6 flex items-center justify-center">
-                                <img
+                                <CdnImage
                                     src={rate.imageUrl}
                                     alt={rate.title}
                                     class="max-w-full max-h-full object-contain"
@@ -533,7 +522,7 @@ function extractPriceNumber(caption: string): string | null {
                     fleetItems.map((item) => (
                         <div class="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                             <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 p-6 flex items-center justify-center">
-                                <img
+                                <CdnImage
                                     src={item.imageUrl}
                                     alt={item.label}
                                     class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500"
@@ -592,7 +581,7 @@ function extractPriceNumber(caption: string): string | null {
                         </span>
                         <p>
                             {lang === "zh"
-                                ? "无法加载路线信息"
+                                ? "無法載入路線資訊"
                                 : "Unable to load routes"}
                         </p>
                     </div>

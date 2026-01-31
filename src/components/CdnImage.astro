@@ -1,0 +1,60 @@
+---
+/**
+ * CdnImage.astro
+ * Replacement for Astro's <Image /> component that uses Cloudflare Transformations.
+ *
+ * Instead of optimizing images at build time, it generates a Cloudflare Transformation URL
+ * and serves it via standard <img> tag.
+ */
+import type { ImageMetadata } from "astro";
+import { getCfTransformUrl, wpUrl } from "../lib/wp-url";
+
+interface Props {
+    src: string | ImageMetadata;
+    alt: string;
+    width?: number;
+    height?: number;
+    format?: "auto" | "webp" | "avif" | "jpeg";
+    quality?: number;
+    loading?: "lazy" | "eager";
+    class?: string;
+    [key: string]: any;
+}
+
+const {
+    src,
+    alt,
+    width,
+    height,
+    format = "auto",
+    quality = 80,
+    loading = "lazy",
+    class: className,
+    ...rest
+} = Astro.props;
+
+// Handle both string URLs and local ImageMetadata
+const resolvedSrc = typeof src === "object" ? src.src : src;
+
+// Ensure URL is pointing to R2/WP correctly
+const baseUri = wpUrl(resolvedSrc);
+
+// Generate Cloudflare Transformation URL
+const optimizedUrl = getCfTransformUrl(baseUri, {
+    width: width || (typeof src === "object" ? src.width : undefined),
+    height: height || (typeof src === "object" ? src.height : undefined),
+    format,
+    quality,
+});
+---
+
+<img
+    src={optimizedUrl}
+    alt={alt}
+    width={width}
+    height={height}
+    loading={loading}
+    class={className}
+    decoding="async"
+    {...rest}
+/>

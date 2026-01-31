@@ -15,6 +15,8 @@ import type {
     WPTourType,
     WPApiParams,
 } from './types';
+import type { TransferRoute } from '../zaui/zaui';
+import { sanitizeUrls } from '../wp-url';
 
 // Default timeout for fetch requests (30 seconds for large datasets)
 const DEFAULT_FETCH_TIMEOUT_MS = 30000;
@@ -24,7 +26,7 @@ function getApiUrl(): string {
     const url = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
         import.meta.env.PUBLIC_WORDPRESS_API_URL ||
         import.meta.env.WORDPRESS_API_URL ||
-        (import.meta.env.DEV ? 'http://qualitour.local/wp-json/qualitour/v1' : '');
+        'https://qualitour.isquarestudio.com/wp-json/qualitour/v1';
     return url.endsWith('/') ? url.slice(0, -1) : url;
 }
 
@@ -104,6 +106,9 @@ export async function getTours(
     if (params.orderby) url.searchParams.set('orderby', params.orderby);
     if (params.order) url.searchParams.set('order', params.order);
     if (params.search) url.searchParams.set('search', params.search);
+    if (params.categories) url.searchParams.set('tour_category', params.categories.join(','));
+    if (params.tags) url.searchParams.set('tour_tag', params.tags.join(','));
+    if (params.destinations) url.searchParams.set('tour-destination', params.destinations.join(','));
     if (lang && lang !== 'en') url.searchParams.set('lang', lang);
     else url.searchParams.set('lang', 'en'); // Always send lang for same-slug support
 
@@ -112,7 +117,9 @@ export async function getTours(
     const response = await fetchWithTimeout(url.toString());
     const tours = await response.json();
 
-    return Array.isArray(tours) ? tours : [];
+    // Sanitize all URLs in tour data to replace local domains with production
+    const sanitizedTours = Array.isArray(tours) ? sanitizeUrls(tours) : [];
+    return sanitizedTours;
 }
 
 export async function getTourBySlug(slug: string, lang?: string): Promise<WPTour | null> {
@@ -129,7 +136,8 @@ export async function getTourBySlug(slug: string, lang?: string): Promise<WPTour
     const tour = await response.json();
 
     // The /tours/slug/{slug} endpoint returns a single tour object, not an array
-    return tour && tour.id ? tour : null;
+    // Sanitize URLs to replace local domains with production
+    return tour && tour.id ? sanitizeUrls(tour) : null;
 }
 
 export async function getAllTourSlugs(lang?: string): Promise<string[]> {
@@ -255,6 +263,7 @@ export interface SiteNavData {
     destinations: WPTourDestination[];
     durations: WPTourDuration[];
     types: WPTourType[];
+    transfers: TransferRoute[];
 }
 
 export async function getSiteNavData(lang?: string): Promise<SiteNavData> {
@@ -274,6 +283,7 @@ export async function getSiteNavData(lang?: string): Promise<SiteNavData> {
             destinations: Array.isArray(data.destinations) ? data.destinations.map(mapToDestination) : [],
             durations: Array.isArray(data.durations) ? data.durations.map(mapToDuration) : [],
             types: Array.isArray(data.types) ? data.types.map(mapToType) : [],
+            transfers: [],
         };
     } catch (error) {
         console.error('[Astro SSG] Error fetching site nav data:', error);
@@ -284,7 +294,7 @@ export async function getSiteNavData(lang?: string): Promise<SiteNavData> {
             getTourDurations(lang),
             getTourTypes(lang),
         ]);
-        return { activities, destinations, durations, types };
+        return { activities, destinations, durations, types, transfers: [] };
     }
 }
 

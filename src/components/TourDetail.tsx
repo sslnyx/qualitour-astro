@@ -8,7 +8,7 @@
 
 import { useState, useMemo } from 'react';
 import type { WPTour } from '../lib/wordpress/types';
-import { wpUrl, processHtmlContent } from '../lib/wp-url';
+import { wpUrl, processHtmlContent, getCfTransformUrl } from '../lib/wp-url';
 import PhotoLightbox from './PhotoLightbox';
 
 interface TourDetailProps {
@@ -161,7 +161,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 blocks.push({
                     type: 'image',
                     content: {
-                        url: wpUrl(item.value.url),
+                        url: getCfTransformUrl(wpUrl(item.value.url), { width: 1200, format: 'webp' }),
                         alt: item.value.alt || '',
                     },
                     order: blocks.length,
@@ -232,7 +232,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 const full = (featuredImg as any).full;
                 featuredUrl = typeof full === 'string' ? full : full?.url;
             }
-            if (featuredUrl) photoList.push(wpUrl(featuredUrl));
+            if (featuredUrl) photoList.push(getCfTransformUrl(wpUrl(featuredUrl), { width: 1920, height: 1080, format: 'webp' }));
         }
 
         // Look for gallery in Goodlayers sections
@@ -240,12 +240,12 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
             section.items?.forEach((item: any) => {
                 if (item.type === 'gallery' && item.value?.gallery) {
                     item.value.gallery.forEach((img: any) => {
-                        if (img.url) photoList.push(wpUrl(img.url));
-                        else if (typeof img === 'string') photoList.push(wpUrl(img));
+                        if (img.url) photoList.push(getCfTransformUrl(wpUrl(img.url), { width: 1600, height: 1200, format: 'webp' }));
+                        else if (typeof img === 'string') photoList.push(getCfTransformUrl(wpUrl(img), { width: 1600, height: 1200, format: 'webp' }));
                     });
                 }
                 if (item.type === 'image' && item.value?.url) {
-                    photoList.push(wpUrl(item.value.url));
+                    photoList.push(getCfTransformUrl(wpUrl(item.value.url), { width: 1600, height: 1200, format: 'webp' }));
                 }
             });
         });
@@ -256,9 +256,9 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
             if (Array.isArray(gallery)) {
                 gallery.forEach((img: any) => {
                     if (typeof img === 'string') {
-                        photoList.push(wpUrl(img));
+                        photoList.push(getCfTransformUrl(wpUrl(img), { width: 1600, height: 1200, format: 'webp' }));
                     } else if (img.url) {
-                        photoList.push(wpUrl(img.url));
+                        photoList.push(getCfTransformUrl(wpUrl(img.url), { width: 1600, height: 1200, format: 'webp' }));
                     }
                 });
             }
@@ -270,9 +270,9 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
             if (Array.isArray(gallery)) {
                 gallery.forEach((img: any) => {
                     if (typeof img === 'string') {
-                        photoList.push(wpUrl(img));
+                        photoList.push(getCfTransformUrl(wpUrl(img), { width: 1600, height: 1200, format: 'webp' }));
                     } else if (img.url) {
-                        photoList.push(wpUrl(img.url));
+                        photoList.push(getCfTransformUrl(wpUrl(img.url), { width: 1600, height: 1200, format: 'webp' }));
                     }
                 });
             }

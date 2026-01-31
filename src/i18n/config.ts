@@ -7,12 +7,12 @@ export type Locale = (typeof i18n)['locales'][number];
 
 export const localeNames: Record<Locale, string> = {
     en: 'English',
-    zh: '中文',
+    zh: '繁體中文',
 };
 
 export const localeLabels: Record<Locale, string> = {
     en: 'EN',
-    zh: '中文',
+    zh: '繁',
 };
 
 // Helper to get the path prefix for a locale

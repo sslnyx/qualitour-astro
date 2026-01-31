@@ -42,6 +42,8 @@ export interface WPTour {
     excerpt: { rendered: string };
     featured_media: number;
     featured_image_url?: string | WPTourFeaturedImage;
+    /** Pre-optimized image URL from Astro's getImage() - used for React components */
+    optimizedImageUrl?: string | null;
     tour_category?: number[];
     tour_tag?: number[];
     tour_meta?: {
@@ -59,9 +61,12 @@ export interface WPTour {
         'tour-price-text'?: string;
         'tour-price-discount-text'?: string;
         'tourmaster-tour-discount'?: string;
+        'tourmaster-tour-currency'?: string;
         guide_language?: 'en' | 'zh' | 'both';
         show_on_en_site?: boolean;
         show_on_zh_site?: boolean;
+        featured?: string | boolean;
+        is_featured?: string | boolean;
     };
     tour_terms?: {
         categories?: { id: number; slug: string; name: string }[];
@@ -157,6 +162,7 @@ export interface WPApiParams {
     slug?: string;
     categories?: number[];
     tags?: number[];
+    destinations?: number[];
     _fields?: string;
     _embed?: boolean;
     orderby?: string;
@@ -181,6 +187,7 @@ export interface GoogleReview {
     reviewer_reviews?: number;
     reviewer_photos?: number;
     source?: 'google' | 'tripadvisor'; // Review source platform
+    related_tours?: number | number[]; // Tour IDs associated with this review
 }
 
 export interface PlaceDetails {

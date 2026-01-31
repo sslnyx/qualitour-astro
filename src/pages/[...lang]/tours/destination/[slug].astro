@@ -53,11 +53,16 @@ const relevantDestIds = [
   ...getDescendantIds(destination.id, navData.destinations)
 ];
 
+import { optimizeTourImages } from '../../../../lib/wordpress/image';
+
 // Filter tours that belong to this destination or any of its children
-const filteredTours = allTours.filter(tour => {
+const rawFilteredTours = allTours.filter(tour => {
   const tourDests = tour.tour_terms?.destinations || [];
   return tourDests.some(d => relevantDestIds.includes(d.id));
 });
+
+// Pre-optimize filtered tours
+const filteredTours = await optimizeTourImages(rawFilteredTours, { concurrency: 20 });
 ---
 
 <Layout 

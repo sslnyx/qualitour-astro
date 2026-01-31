@@ -18,42 +18,42 @@ const localePrefix = currentLang === "en" ? "" : `/${currentLang}`;
 
 // Translation helpers
 const t = {
-    title: currentLang === "zh" ? "联系我们" : "Get in Touch",
+    title: currentLang === "zh" ? "聯絡我們" : "Get in Touch",
     subtitle:
         currentLang === "zh"
-            ? "我们要在这里为您提供帮助"
+            ? "我們要在這裡為您提供幫助"
             : "We'd love to hear from you. Here is how you can reach us.",
-    formTitle: currentLang === "zh" ? "给我们发信息" : "Send us a Message",
+    formTitle: currentLang === "zh" ? "給我們發信息" : "Send us a Message",
     formDesc:
         currentLang === "zh"
-            ? "有疑问吗？请填写下面的表格。"
+            ? "有疑問嗎？請填寫下面的表格。"
             : "Have a question about a tour or need a custom itinerary? Fill out the form below.",
-    phone: currentLang === "zh" ? "电话" : "Phone",
+    phone: currentLang === "zh" ? "電話" : "Phone",
     phoneHours:
         currentLang === "zh"
-            ? "周一至周五 9am-6pm PST"
+            ? "週一至週五 9am-6pm PST"
             : "Mon-Fri from 9am to 6pm PST",
-    emailLabel: currentLang === "zh" ? "电子邮件" : "Email",
+    emailLabel: currentLang === "zh" ? "電子郵件" : "Email",
     emailDesc:
         currentLang === "zh"
-            ? "我们会在24小时内回复"
+            ? "我們會在24小時內回覆"
             : "Our team will respond within 24 hours",
-    office: currentLang === "zh" ? "办公室" : "Office",
+    office: currentLang === "zh" ? "辦公室" : "Office",
     officeDesc:
         currentLang === "zh"
-            ? "欢迎来我们的办公室"
+            ? "歡迎來我們的辦公室"
             : "Come say hello at our office headquarters",
     quickQuestion:
-        currentLang === "zh" ? "有快速问题？" : "Have a quick question?",
+        currentLang === "zh" ? "有快速問題？" : "Have a quick question?",
     quickQuestionDesc:
         currentLang === "zh"
-            ? "您可能在常见问题中找到答案。"
+            ? "您可能在常見問題中找到答案。"
             : "You might find the answer you're looking for in our Frequently Asked Questions.",
-    visitFaq: currentLang === "zh" ? "访问FAQ页面" : "Visit FAQ Page",
-    privacyPolicy: currentLang === "zh" ? "隐私政策" : "Privacy Policy",
+    visitFaq: currentLang === "zh" ? "訪問FAQ頁面" : "Visit FAQ Page",
+    privacyPolicy: currentLang === "zh" ? "隱私政策" : "Privacy Policy",
     privacyAgree:
         currentLang === "zh"
-            ? "提交此表格即表示您同意我们的"
+            ? "提交此表格即表示您同意我們的"
             : "By submitting this form, you agree to our",
 };
 ---
@@ -61,7 +61,7 @@ const t = {
 <Layout
     title={`${t.title} | Qualitour`}
     description={currentLang === "zh"
-        ? "联系温哥华Qualitour。有关旅游、接送或签证服务的咨询，请致电、发邮件或访问我们的办公室。"
+        ? "聯絡溫哥華Qualitour。有關旅遊、接送或簽證服務的咨詢，請致電、發郵件或訪問我們的辦公室。"
         : "Contact Qualitour in Vancouver. Call us, email, or visit our office for inquiries about tours, transfers, or visa services."}
     lang={currentLang}
     image="/contact-hero.png"
@@ -74,7 +74,7 @@ const t = {
         align="left"
         badge={{
             icon: "contact_support",
-            text: currentLang === "zh" ? "联系我们" : "Contact Us",
+            text: currentLang === "zh" ? "聯絡我們" : "Contact Us",
         }}
     />
 
@@ -230,7 +230,7 @@ const t = {
                                 >
                                 {
                                     currentLang === "zh"
-                                        ? "安全 SSL 连接"
+                                        ? "安全 SSL 連接"
                                         : "Secure SSL Connection"
                                 }
                             </span>

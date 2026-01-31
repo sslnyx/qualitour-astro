@@ -53,11 +53,16 @@ const relevantActivityIds = [
   ...getDescendantIds(activity.id, navData.activities)
 ];
 
+import { optimizeTourImages } from '../../../../lib/wordpress/image';
+
 // Filter tours that belong to this activity or any of its children
-const filteredTours = allTours.filter(tour => {
+const rawFilteredTours = allTours.filter(tour => {
   const tourActivities = tour.tour_terms?.activities || [];
   return tourActivities.some(a => relevantActivityIds.includes(a.id));
 });
+
+// Pre-optimize filtered tours
+const filteredTours = await optimizeTourImages(rawFilteredTours, { concurrency: 20 });
 ---
 
 <Layout 

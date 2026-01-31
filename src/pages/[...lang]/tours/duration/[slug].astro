@@ -36,11 +36,16 @@ const [allTours, navData] = await Promise.all([
   getSiteNavData(lang),
 ]);
 
+import { optimizeTourImages } from '../../../../lib/wordpress/image';
+
 // Filter tours that belong to this duration
-const filteredTours = allTours.filter(tour => {
+const rawFilteredTours = allTours.filter(tour => {
   const tourDurations = tour.tour_terms?.durations || [];
   return tourDurations.some(d => d.slug === slug);
 });
+
+// Pre-optimize filtered tours
+const filteredTours = await optimizeTourImages(rawFilteredTours, { concurrency: 20 });
 ---
 
 <Layout 

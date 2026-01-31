@@ -1,14 +1,17 @@
 ---
 import Layout from "../../../layouts/Layout.astro";
+import { getImage } from "astro:assets";
 import {
   getTours,
   getSiteNavData,
   getTourDurations,
   getTourTypes,
 } from "../../../lib/wordpress/api";
+import type { WPTour, WPTourFeaturedImage } from "../../../lib/wordpress/types";
 import { type Locale } from "../../../i18n/config";
 import { ToursGrid } from "../../../components/ToursGrid";
 import { TourFilterSidebarClient } from "../../../components/TourFilterSidebarClient";
+import { wpUrl } from "../../../lib/wp-url";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -22,19 +25,23 @@ const { lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || "en";
 const localePrefix = lang === "en" ? "" : `/${lang}`;
 
+import { optimizeTourImages } from "../../../lib/wordpress/image";
+
 // Fetch all tours and filter data at build time
-// Client-side filtering will handle URL params
-const [tours, navData] = await Promise.all([
+const [rawTours, navData] = await Promise.all([
   getTours({ per_page: 1000 }, lang),
   getSiteNavData(lang),
 ]);
 const { durations, types } = navData;
+
+// Pre-optimize tour images at build time with concurrency limit
+const tours = await optimizeTourImages(rawTours, { concurrency: 20 });
 ---
 
 <Layout
   title={lang === "zh" ? "所有行程 | Qualitour" : "All Tours | Qualitour"}
   description={lang === "zh"
-    ? "探索我们精心策划的高端旅游行程。从文化冒险到自然奇观，寻找您的完美旅程。"
+    ? "探索我們精心策劃的高端旅遊行程。從文化冒險到自然奇觀，尋找您的完美旅程。"
     : "Explore our curated collection of premium tours. From cultural adventures to scenic wonders, find your perfect journey."}
   lang={lang}
 >
@@ -47,7 +54,7 @@ const { durations, types } = navData;
             <a
               href={`${localePrefix}/`}
               class="text-gray-400 hover:text-white transition-colors"
-              >{lang === "zh" ? "首页" : "Home"}</a
+              >{lang === "zh" ? "首頁" : "Home"}</a
             >
             <span class="mx-2 text-gray-600">/</span>
             <span class="text-orange-400"
@@ -55,12 +62,12 @@ const { durations, types } = navData;
             >
           </nav>
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            {lang === "zh" ? "探索我们的行程" : "Explore Our Tours"}
+            {lang === "zh" ? "探索我們的行程" : "Explore Our Tours"}
           </h1>
           <p class="text-xl text-gray-300 max-w-2xl mx-auto">
             {
               lang === "zh"
-                ? "在我们最精彩的目的地中发现难忘的旅程"
+                ? "在我們最精彩的目的地中發現難忘的旅程"
                 : "Discover unforgettable journeys through our most remarkable destinations"
             }
           </p>
@@ -101,7 +108,7 @@ const { durations, types } = navData;
           <span
             class="text-orange-500 font-medium text-sm uppercase tracking-wider"
           >
-            {lang === "zh" ? "浏览行程" : "Browse Tours"}
+            {lang === "zh" ? "瀏覽行程" : "Browse Tours"}
           </span>
           <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mt-2">
             {lang === "zh" ? "按目的地探索" : "Explore by Destination"}
@@ -124,7 +131,7 @@ const { durations, types } = navData;
                   {dest.name}
                 </h3>
                 <p class="text-sm text-gray-500 mt-1">
-                  {dest.count} {lang === "zh" ? "个行程" : "tours"}
+                  {dest.count} {lang === "zh" ? "個行程" : "tours"}
                 </p>
               </a>
             ))
@@ -148,7 +155,7 @@ const { durations, types } = navData;
         <p class="text-xl opacity-90 mb-8">
           {
             lang === "zh"
-              ? "让我们为您量身定制专属行程"
+              ? "讓我們為您量身定制專屬行程"
               : "Let us create a custom tour tailored to your preferences"
           }
         </p>
@@ -157,7 +164,7 @@ const { durations, types } = navData;
           class="inline-flex items-center gap-2 px-8 py-4 bg-white text-orange-500 font-bold rounded-full hover:shadow-xl hover:scale-105 transition-all"
         >
           <span class="material-icons">mail</span>
-          {lang === "zh" ? "联系我们" : "Contact Us"}
+          {lang === "zh" ? "聯絡我們" : "Contact Us"}
         </a>
       </div>
     </section>

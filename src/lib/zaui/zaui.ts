@@ -168,10 +168,24 @@ export async function getActivityPrice(activityId: string | number): Promise<str
     return details?.basePrice || null;
 }
 
+// In-memory cache for transfer routes (prevents rate limiting during dev)
+let transferRoutesCache: TransferRoute[] | null = null;
+let transferRoutesCacheTime: number = 0;
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 /**
  * Get all private transfers with pricing, grouped by route
+ * Cached for 5 minutes to prevent ZAPI rate limiting during development
  */
 export async function getPrivateTransfersWithPricing(): Promise<TransferRoute[]> {
+    // Return cached data if still valid
+    const now = Date.now();
+    if (transferRoutesCache && (now - transferRoutesCacheTime) < CACHE_TTL_MS) {
+        console.log('[Zaui] Using cached transfer routes');
+        return transferRoutesCache;
+    }
+
+    console.log('[Zaui] Fetching fresh transfer routes from ZAPI');
     const activities = await getPrivateTransferActivities();
 
     // Define route groups (pairs of directions with their activity IDs)
@@ -306,6 +320,10 @@ export async function getPrivateTransfersWithPricing(): Promise<TransferRoute[]>
             reverseActivityIds: reverseVehicles,
         };
     });
+
+    // Store in cache
+    transferRoutesCache = routes;
+    transferRoutesCacheTime = Date.now();
 
     return routes;
 }

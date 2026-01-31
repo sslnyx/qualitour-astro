@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import type { GoogleReview } from '../lib/wordpress/types';
 import PhotoLightbox from './PhotoLightbox';
+import { getCfTransformUrl, wpUrl } from '../lib/wp-url';
 
 interface ReviewsSliderProps {
     reviews: GoogleReview[];
@@ -99,7 +100,7 @@ export default function ReviewsSlider({ reviews, totalReviews, lang = 'en' }: Re
                                     <div className="flex items-center gap-4 mb-4">
                                         {review.profile_photo_url ? (
                                             <img
-                                                src={review.profile_photo_url}
+                                                src={getCfTransformUrl(wpUrl(review.profile_photo_url), { width: 100, height: 100, format: 'webp' })}
                                                 alt={review.author_name}
                                                 className="w-12 h-12 rounded-full object-cover"
                                                 referrerPolicy="no-referrer"
@@ -141,7 +142,7 @@ export default function ReviewsSlider({ reviews, totalReviews, lang = 'en' }: Re
                                                     className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-gray-200 hover:opacity-80 transition-opacity"
                                                 >
                                                     <img
-                                                        src={img}
+                                                        src={getCfTransformUrl(wpUrl(img), { width: 400, height: 400, format: 'webp' })}
                                                         alt={`Review photo ${imgIndex + 1}`}
                                                         className="w-full h-full object-cover"
                                                         loading="lazy"

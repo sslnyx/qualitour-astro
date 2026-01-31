@@ -16,7 +16,53 @@ interface TourInquiryFormProps {
     hidePhone?: boolean;
     compact?: boolean;
     onSuccess?: () => void;
+    lang?: string;
 }
+
+const translations = {
+    en: {
+        inquiringAbout: "Inquiring about:",
+        tourCode: "Tour Code:",
+        fullName: "Full Name*",
+        email: "Email*",
+        phone: "Phone Number*",
+        travelDate: "Travel Date*",
+        travelers: "Travelers*",
+        message: "Message (Optional)",
+        sendInquiry: "Send Inquiry",
+        sending: "Sending...",
+        errors: {
+            nameRequired: "Name is required",
+            emailRequired: "Email is required",
+            emailInvalid: "Please enter a valid email address",
+            phoneRequired: "Phone number is required",
+            dateRequired: "Travel date is required",
+            travelersRequired: "At least 1 traveler is required",
+            unexpected: "An unexpected error occurred. Please try again."
+        }
+    },
+    zh: {
+        inquiringAbout: "咨詢項目：",
+        tourCode: "行程代碼：",
+        fullName: "姓名*",
+        email: "電子郵箱*",
+        phone: "電話號碼*",
+        travelDate: "出發日期*",
+        travelers: "人數*",
+        message: "留言 (選填)",
+        sendInquiry: "發送咨詢",
+        sending: "發送中...",
+        errors: {
+            nameRequired: "請輸入姓名",
+            emailRequired: "請輸入電子郵箱",
+            emailInvalid: "請輸入有效的電子郵箱地址",
+            phoneRequired: "請輸入電話號碼",
+            dateRequired: "請選擇出發日期",
+            travelersRequired: "至少需要1名旅客",
+            unexpected: "發生意外錯誤，請重試。"
+        }
+    }
+};
 
 export default function TourInquiryForm({
     tourId,
@@ -26,7 +72,9 @@ export default function TourInquiryForm({
     hidePhone = false,
     compact = false,
     onSuccess,
+    lang = 'en',
 }: TourInquiryFormProps) {
+    const t = translations[lang as keyof typeof translations] || translations.en;
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -43,21 +91,21 @@ export default function TourInquiryForm({
         const newErrors: Record<string, string> = {};
 
         if (!formData.name.trim()) {
-            newErrors.name = 'Name is required';
+            newErrors.name = t.errors.nameRequired;
         }
         if (!formData.email.trim()) {
-            newErrors.email = 'Email is required';
+            newErrors.email = t.errors.emailRequired;
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            newErrors.email = 'Please enter a valid email address';
+            newErrors.email = t.errors.emailInvalid;
         }
         if (!hidePhone && !formData.phone.trim()) {
-            newErrors.phone = 'Phone number is required';
+            newErrors.phone = t.errors.phoneRequired;
         }
         if (!formData.travelDate) {
-            newErrors.travelDate = 'Travel date is required';
+            newErrors.travelDate = t.errors.dateRequired;
         }
         if (formData.numTravelers < 1) {
-            newErrors.numTravelers = 'At least 1 traveler is required';
+            newErrors.numTravelers = t.errors.travelersRequired;
         }
 
         setErrors(newErrors);
@@ -132,7 +180,7 @@ export default function TourInquiryForm({
         } catch (error) {
             setResult({
                 status: 'mail_failed',
-                message: 'An unexpected error occurred. Please try again.',
+                message: t.errors.unexpected,
             });
         } finally {
             setIsSubmitting(false);
@@ -152,10 +200,10 @@ export default function TourInquiryForm({
         <form onSubmit={handleSubmit} className={`flex flex-col ${compact ? 'gap-2.5' : 'gap-4'} ${className || ''}`}>
             {/* Tour info */}
             <div className={`bg-orange-50 rounded-lg ${compact ? 'p-2' : 'p-3'} border border-orange-100`}>
-                <span className="text-xs text-gray-600">Inquiring about:</span>
+                <span className="text-xs text-gray-600">{t.inquiringAbout}</span>
                 <div className={`font-semibold text-gray-900 ${compact ? 'text-xs' : 'text-sm'}`}>{tourTitle}</div>
                 {tourCode && (
-                    <span className="text-xs text-orange-600">Tour Code: {tourCode}</span>
+                    <span className="text-xs text-orange-600">{t.tourCode} {tourCode}</span>
                 )}
             </div>
 
@@ -181,7 +229,7 @@ export default function TourInquiryForm({
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Full Name*"
+                    placeholder={t.fullName}
                     className={`${inputClasses} ${errors.name ? inputErrorClasses : ''}`}
                     disabled={isSubmitting}
                 />
@@ -194,7 +242,7 @@ export default function TourInquiryForm({
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="Email*"
+                    placeholder={t.email}
                     className={`${inputClasses} ${errors.email ? inputErrorClasses : ''}`}
                     disabled={isSubmitting}
                 />
@@ -208,7 +256,7 @@ export default function TourInquiryForm({
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        placeholder="Phone Number*"
+                        placeholder={t.phone}
                         className={`${inputClasses} ${errors.phone ? inputErrorClasses : ''}`}
                         disabled={isSubmitting}
                     />
@@ -218,7 +266,7 @@ export default function TourInquiryForm({
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                    <label className={labelClasses}>Travel Date*</label>
+                    <label className={labelClasses}>{t.travelDate}</label>
                     <input
                         type="date"
                         name="travelDate"
@@ -232,7 +280,7 @@ export default function TourInquiryForm({
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <label className={labelClasses}>Travelers*</label>
+                    <label className={labelClasses}>{t.travelers}</label>
                     <input
                         type="number"
                         name="numTravelers"
@@ -252,7 +300,7 @@ export default function TourInquiryForm({
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
-                    placeholder="Message (Optional)"
+                    placeholder={t.message}
                     rows={3}
                     className={`${inputClasses} resize-none`}
                     disabled={isSubmitting}
@@ -267,12 +315,12 @@ export default function TourInquiryForm({
                 {isSubmitting ? (
                     <>
                         <span className="material-icons animate-spin text-lg">refresh</span>
-                        Sending...
+                        {t.sending}
                     </>
                 ) : (
                     <>
                         <span className="material-icons text-lg">send</span>
-                        Send Inquiry
+                        {t.sendInquiry}
                     </>
                 )}
             </button>

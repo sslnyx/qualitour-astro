@@ -17,27 +17,27 @@ const currentLang: Locale = (lang as Locale) || "en";
 const localePrefix = currentLang === "en" ? "" : `/${currentLang}`;
 
 const t = {
-    title: currentLang === "zh" ? "常见问题" : "Frequently Asked Questions",
+    title: currentLang === "zh" ? "常見問題" : "Frequently Asked Questions",
     subtitle:
         currentLang === "zh"
-            ? "关于Qualitour行程的常见问题解答。"
+            ? "關於Qualitour行程的常見問題解答。"
             : "Everything you need to know about your journey with Qualitour.",
-    badge: currentLang === "zh" ? "帮助中心" : "Help Center",
+    badge: currentLang === "zh" ? "幫助中心" : "Help Center",
     stillQuestions:
-        currentLang === "zh" ? "还有问题？" : "Still Have Questions?",
+        currentLang === "zh" ? "還有問題？" : "Still Have Questions?",
     stillQuestionsDesc:
         currentLang === "zh"
-            ? "我们友好的团队随时为您提供帮助！请与我们联系，我们会尽快回复您。"
+            ? "我們友好的團隊隨時為您提供幫助！請與我們聯繫，我們會盡快回覆您。"
             : "Our friendly team is here to help! Contact us and we'll get back to you as soon as possible.",
-    contactUs: currentLang === "zh" ? "联系我们" : "Contact Us",
-    call: currentLang === "zh" ? "致电" : "Call",
+    contactUs: currentLang === "zh" ? "聯絡我們" : "Contact Us",
+    call: currentLang === "zh" ? "致電" : "Call",
 };
 ---
 
 <Layout
     title={`${t.title} | Qualitour`}
     description={currentLang === "zh"
-        ? "查找有关Qualitour服务、预订政策和旅行要求的常见问题解答。"
+        ? "查找有關Qualitour服務、預訂政策和旅行要求的常見問題解答。"
         : "Find answers to frequently asked questions about Qualitour's services, booking policies, and travel requirements."}
     lang={currentLang}
     image="/faq-hero.png"

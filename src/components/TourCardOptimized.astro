@@ -7,7 +7,7 @@
  *
  * For client-side filtered grids (ToursGrid), use the React TourCard instead.
  */
-import { Image } from "astro:assets";
+import CdnImage from "./CdnImage.astro";
 import type { WPTour, WPTourFeaturedImage } from "../lib/wordpress/types";
 import { wpUrl } from "../lib/wp-url";
 
@@ -100,7 +100,7 @@ function getDurationText(tour: WPTour): string | null {
 }
 
 // Computed values
-const imageUrl = getImageUrl(tour);
+const imageUrl = tour.optimizedImageUrl || getImageUrl(tour);
 const localePrefix = lang === "en" ? "" : `/${lang}`;
 const cleanedTitle = cleanTitle(tour.title.rendered);
 const durationText = getDurationText(tour);
@@ -131,7 +131,7 @@ const imageHeight = isCompact
     >
         {
             imageUrl ? (
-                <Image
+                <CdnImage
                     src={imageUrl}
                     alt={cleanedTitle}
                     width={imageWidth}
@@ -170,7 +170,7 @@ const imageHeight = isCompact
             price && !hasDiscount && (
                 <div class="absolute bottom-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full shadow-md">
                     <span class="text-sm text-gray-500">
-                        {lang === "zh" ? "起价 " : "From "}
+                        {lang === "zh" ? "起價 " : "From "}
                     </span>
                     <span class="font-bold text-orange-500">${price}</span>
                 </div>

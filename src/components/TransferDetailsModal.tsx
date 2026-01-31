@@ -7,6 +7,7 @@
 
 import { useEffect } from 'react';
 import type { TransferVehicle } from '../lib/zaui/zaui';
+import { getCfTransformUrl, wpUrl } from '../lib/wp-url';
 
 interface TransferDetailsModalProps {
     isOpen: boolean;
@@ -106,7 +107,7 @@ export default function TransferDetailsModal({
                                 {details.imageUrl && (
                                     <div className="rounded-xl overflow-hidden">
                                         <img
-                                            src={details.imageUrl}
+                                            src={getCfTransformUrl(wpUrl(details.imageUrl), { width: 800, height: 400, format: 'webp' })}
                                             alt={details.activityName}
                                             className="w-full h-48 object-cover"
                                         />

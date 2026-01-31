@@ -10,7 +10,7 @@
  */
 
 import type { WPTour, WPTourFeaturedImage } from '../lib/wordpress/types';
-import { wpUrl } from '../lib/wp-url';
+import { wpUrl, getCfTransformUrl } from '../lib/wp-url';
 
 interface TourCardProps {
     tour: WPTour;
@@ -98,7 +98,9 @@ function getImageUrl(tour: WPTour): string | null {
 
     // Rewrite URL if necessary - ensure we have a valid string
     if (rawUrl && typeof rawUrl === 'string') {
-        return wpUrl(rawUrl);
+        const sanitized = wpUrl(rawUrl);
+        // Apply default transformations for grid cards to avoid over-sized assets
+        return getCfTransformUrl(sanitized, { width: 600, height: 450, format: 'webp', quality: 80 });
     }
     return null;
 }
@@ -131,13 +133,16 @@ export function TourCard({
     showExcerpt = false,
     excerptWords = 14,
 }: TourCardProps) {
-    const imageUrl = getImageUrl(tour);
+    // Use pre-optimized image URL if available (from Astro build-time processing)
+    // Falls back to extracting from featured_image_url for non-optimized contexts
+    const imageUrl = tour.optimizedImageUrl || getImageUrl(tour);
     const localePrefix = lang === 'en' ? '' : `/${lang}`;
     const cleanedTitle = cleanTitle(tour.title.rendered);
     const durationText = getDurationText(tour);
 
     // Pricing
     const price = tour.tour_meta?.['tour-price-text'] || tour.tour_meta?.price;
+    const currency = tour.tour_meta?.['tourmaster-tour-currency'];
     const discountPrice = tour.tour_meta?.['tour-price-discount-text'];
     const hasDiscount = tour.tour_meta?.['tourmaster-tour-discount'] === 'true' && discountPrice;
 
@@ -172,7 +177,7 @@ export function TourCard({
                 {hasDiscount && (
                     <div className="absolute top-4 right-4 z-10">
                         <div className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                            ${discountPrice}
+                            ${discountPrice} <span className="text-[10px] opacity-80 uppercase">{currency}</span>
                         </div>
                         <div className="bg-gray-800/80 text-white px-2 py-0.5 rounded text-xs line-through mt-1 text-right">
                             ${price}
@@ -185,6 +190,7 @@ export function TourCard({
                     <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full shadow-md">
                         <span className="text-sm text-gray-500">{lang === 'zh' ? '起价 ' : 'From '}</span>
                         <span className="font-bold text-orange-500">${price}</span>
+                        {currency && <span className="ml-1 text-[10px] text-gray-400 font-bold uppercase">{currency}</span>}
                     </div>
                 )}
 

@@ -73,6 +73,15 @@ function buildFilterUrl(updates: Record<string, string | null>): string {
 }
 
 const hasActiveFilters = activeDuration || activeType || activeDestination;
+
+const t = {
+    filters: lang === "zh" ? "篩選" : "Filters",
+    activeFilters: lang === "zh" ? "已選篩選" : "Active Filters",
+    clearAll: lang === "zh" ? "清除所有" : "Clear All",
+    tourLength: lang === "zh" ? "行程時長" : "Tour Length",
+    tourType: lang === "zh" ? "行程類型" : "Tour Type",
+    destinations: lang === "zh" ? "目的地" : "Destinations",
+};
 ---
 
 <aside
@@ -80,7 +89,7 @@ const hasActiveFilters = activeDuration || activeType || activeDestination;
 >
     <h2 class="font-bold text-lg text-gray-900 mb-6 flex items-center gap-2">
         <span class="material-icons text-[#f7941e]">filter_list</span>
-        Filters
+        {t.filters}
     </h2>
 
     <!-- Active Filters Summary -->
@@ -89,13 +98,13 @@ const hasActiveFilters = activeDuration || activeType || activeDestination;
             <div class="p-3 bg-[#f7941e]/5 rounded-xl border border-[#f7941e]/20 mb-6">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-medium text-gray-700">
-                        Active Filters
+                        {t.activeFilters}
                     </span>
                     <a
                         href={`${localePrefix}/tours`}
                         class="text-xs text-[#f7941e] hover:text-[#d67a1a] font-medium"
                     >
-                        Clear All
+                        {t.clearAll}
                     </a>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -156,7 +165,7 @@ const hasActiveFilters = activeDuration || activeType || activeDestination;
                         <span class="material-icons text-[#f7941e] text-lg">
                             schedule
                         </span>
-                        Tour Length
+                        {t.tourLength}
                     </span>
                     <span class="material-icons text-gray-500 transition-transform duration-200 toggle-icon">
                         expand_more
@@ -213,7 +222,7 @@ const hasActiveFilters = activeDuration || activeType || activeDestination;
                         <span class="material-icons text-[#f7941e] text-lg">
                             category
                         </span>
-                        Tour Type
+                        {t.tourType}
                     </span>
                     <span class="material-icons text-gray-500 transition-transform duration-200 toggle-icon">
                         expand_more
@@ -282,7 +291,7 @@ const hasActiveFilters = activeDuration || activeType || activeDestination;
                         <span class="material-icons text-[#f7941e] text-lg">
                             place
                         </span>
-                        Destinations
+                        {t.destinations}
                     </span>
                     <span class="material-icons text-gray-500 transition-transform duration-200 toggle-icon">
                         expand_more
