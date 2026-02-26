@@ -1,16 +1,20 @@
 {
-	"main": "dist/_worker.js/index.js",
-	"name": "qualitour-astro",
+  "main": "dist/_worker.js/index.js",
+  "name": "qualitour-astro",
   "compatibility_date": "2025-12-16",
   "compatibility_flags": [
     "nodejs_compat",
     "global_fetch_strictly_public"
   ],
-	"assets": {
-		"binding": "ASSETS",
-		"directory": "./dist"
-	},
-	"observability": {
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist"
+  },
+  "observability": {
     "enabled": true
+  },
+  "pages_build_output_dir": "./dist",
+  "build": {
+    "command": "npm run build"
   }
 }
