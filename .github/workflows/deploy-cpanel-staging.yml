@@ -4,9 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       trigger:
-        description: 'What triggered this deploy (e.g. zaui-webhook-update)'
+        description: 'What triggered this deploy (e.g. wp-tour-update-123)'
         required: false
         default: 'manual'
+      slug:
+        description: 'Post slug that changed (for selective cache invalidation)'
+        required: false
+        default: ''
+      post_type:
+        description: 'Post type that changed (post, page, tour)'
+        required: false
+        default: ''
   push:
     branches:
       - main
@@ -39,12 +47,75 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-api-cache-
 
-      - name: Clear WordPress cache (content change)
+      - name: Invalidate changed content cache
         if: contains(github.event.inputs.trigger || '', 'wp-')
         run: |
-          echo "Content change detected (trigger: ${{ github.event.inputs.trigger }}), clearing WordPress cache..."
-          rm -rf .astro/wordpress-cache
-          echo "WordPress cache cleared — will fetch fresh data."
+          SLUG="${{ github.event.inputs.slug }}"
+          echo "Content change detected (trigger: ${{ github.event.inputs.trigger }})"
+          
+          if [ -z "$SLUG" ] || [ ! -d ".astro/wordpress-cache" ]; then
+            echo "No slug provided or no cache dir — clearing all WordPress cache"
+            rm -rf .astro/wordpress-cache
+          else
+            echo "Selectively invalidating cache for slug: $SLUG"
+            # Compute MD5 hashes of the cache keys that need invalidation
+            # and delete only those files. Keeps taxonomy/sitenav/review caches.
+            node -e "
+              const crypto = require('crypto');
+              const fs = require('fs');
+              const path = require('path');
+              const dir = '.astro/wordpress-cache';
+              const slug = '${SLUG}';
+              
+              // Cache keys to invalidate:
+              // 1. Individual tour by slug (both languages)
+              // 2. Aggregated tour lists (both languages)
+              // 3. Tour list queries (all variations)
+              const keys = [
+                'tour-slug:en:' + slug,
+                'tour-slug:zh:' + slug,
+                'all-tours:en',
+                'all-tours:zh',
+              ];
+              
+              // Also invalidate any tours:* list query caches
+              if (fs.existsSync(dir)) {
+                // Since we can't reverse MD5 hashes, delete all tour list caches
+                // by scanning for keys starting with 'tours:'
+                const allFiles = fs.readdirSync(dir);
+                const keysToDelete = keys.map(k => crypto.createHash('md5').update(k).digest('hex') + '.json');
+                
+                let deleted = 0;
+                for (const hash of keysToDelete) {
+                  const fp = path.join(dir, hash);
+                  if (fs.existsSync(fp)) {
+                    fs.unlinkSync(fp);
+                    deleted++;
+                    console.log('Deleted: ' + hash);
+                  }
+                }
+                
+                // Also delete tours: list query caches (we need to brute-force check common patterns)
+                const listKeys = [
+                  'tours:en:{}',
+                  'tours:zh:{}',
+                  'tours:en:{\"per_page\":100,\"page\":1}',
+                  'tours:zh:{\"per_page\":100,\"page\":1}',
+                ];
+                for (const k of listKeys) {
+                  const hash = crypto.createHash('md5').update(k).digest('hex') + '.json';
+                  const fp = path.join(dir, hash);
+                  if (fs.existsSync(fp)) {
+                    fs.unlinkSync(fp);
+                    deleted++;
+                    console.log('Deleted list cache: ' + hash);
+                  }
+                }
+                
+                console.log('Invalidated ' + deleted + ' cache files, kept ' + (allFiles.length - deleted) + ' (taxonomy/nav/reviews)');
+              }
+            "
+          fi
 
       - name: Build Astro (cPanel staging)
         run: |
