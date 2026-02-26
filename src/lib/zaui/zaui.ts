@@ -69,7 +69,7 @@ const ZAUI_ACCOUNT_ID = parseInt(import.meta.env.ZAUI_ACCOUNT_ID || '1');
 const ZAUI_USER_ID = parseInt(import.meta.env.ZAUI_USER_ID || '7');
 
 /**
- * Make a ZAPI request
+ * Make a ZAPI request with automatic retries for throttling
  */
 async function zapiRequest<T>(methodName: string, params: Record<string, unknown> = {}): Promise<T> {
     const body = {
@@ -82,25 +82,51 @@ async function zapiRequest<T>(methodName: string, params: Record<string, unknown
         },
     };
 
-    const response = await fetch(ZAUI_API_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-    });
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    if (!response.ok) {
-        throw new Error(`ZAPI request failed: ${response.status}`);
+    while (attempts < maxAttempts) {
+        try {
+            const response = await fetch(ZAUI_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+            });
+
+            if (!response.ok) {
+                throw new Error(`ZAPI request failed: ${response.status}`);
+            }
+
+            const data = await response.json() as any;
+
+            if (data.response?.error !== '0') {
+                const message = data.response?.message || 'Unknown error';
+
+                // Check for throttle error
+                if (message.includes('throttle limit reached') && attempts < maxAttempts - 1) {
+                    attempts++;
+                    const waitTime = Math.pow(2, attempts) * 1000 + Math.random() * 1000;
+                    console.warn(`[Zaui API] Throttle reached. Retrying attempt ${attempts}/${maxAttempts} in ${Math.round(waitTime)}ms...`);
+                    await delay(waitTime);
+                    continue;
+                }
+
+                throw new Error(`ZAPI error: ${message}`);
+            }
+
+            return data.response.methodResponse as T;
+        } catch (e: any) {
+            if (attempts >= maxAttempts - 1) throw e;
+            attempts++;
+            const waitTime = Math.pow(2, attempts) * 1000 + Math.random() * 1000;
+            console.warn(`[Zaui API] Request failed: ${e.message}. Retrying attempt ${attempts}...`);
+            await delay(waitTime);
+        }
     }
 
-    const data = await response.json();
-
-    if (data.response?.error !== '0') {
-        throw new Error(`ZAPI error: ${data.response?.message || 'Unknown error'}`);
-    }
-
-    return data.response.methodResponse;
+    throw new Error('ZAPI request failed after max attempts');
 }
 
 /**
@@ -133,31 +159,66 @@ export async function getPrivateTransferActivities(): Promise<ZauiActivity[]> {
  * Get activity details including pricing
  */
 export async function getActivityDetails(activityId: string | number, date?: string): Promise<ZauiActivityDetails | null> {
-    try {
-        // Use tomorrow's date if not provided
-        const activityDate = date || getTomorrowDate();
+    const id = String(activityId);
+    const activityCacheFile = path.join(CACHE_DIR, `activity-${id}.json`);
 
-        const response = await zapiRequest<{ activity: ZauiActivityDetails }>('zapiGetActivityDetailsByActivityId', {
-            activityId: Number(activityId),
-            activityDate,
-        });
+    // 1. Check process cache
+    const cacheKey = `activity-${id}-${date || 'default'}`;
+    if (promiseCache.has(cacheKey)) {
+        return promiseCache.get(cacheKey);
+    }
 
-        const activity = response.activity;
-
-        // Extract base price from allowedPassengers
-        const allowedPassengers = (activity as any).allowedPassengers;
-        if (allowedPassengers?.passengerType) {
-            const passengerType = allowedPassengers.passengerType;
-            if (typeof passengerType === 'object' && passengerType.basePrice) {
-                activity.basePrice = passengerType.basePrice;
+    const promise = (async () => {
+        // 2. Check individual file cache
+        if (fs.existsSync(activityCacheFile)) {
+            try {
+                const stats = fs.statSync(activityCacheFile);
+                if (Date.now() - stats.mtimeMs < CACHE_TTL_MS) {
+                    return JSON.parse(fs.readFileSync(activityCacheFile, 'utf-8'));
+                }
+            } catch (e) {
+                console.warn(`[Zaui API] Failed to read activity cache for ${id}`, e);
             }
         }
 
-        return activity;
-    } catch (error) {
-        console.error(`Failed to get activity details for ID ${activityId}:`, error);
-        return null;
-    }
+        // 3. Fetch from API
+        try {
+            // Use tomorrow's date if not provided
+            const activityDate = date || getTomorrowDate();
+
+            const response = await zapiRequest<{ activity: ZauiActivityDetails }>('zapiGetActivityDetailsByActivityId', {
+                activityId: Number(id),
+                activityDate,
+            });
+
+            const activity = response.activity;
+
+            if (activity) {
+                // Extract base price from allowedPassengers
+                const allowedPassengers = (activity as any).allowedPassengers;
+                if (allowedPassengers?.passengerType) {
+                    const passengerType = allowedPassengers.passengerType;
+                    if (typeof passengerType === 'object' && passengerType.basePrice) {
+                        activity.basePrice = passengerType.basePrice;
+                    }
+                }
+
+                // Save to individual cache
+                if (!fs.existsSync(CACHE_DIR)) {
+                    fs.mkdirSync(CACHE_DIR, { recursive: true });
+                }
+                fs.writeFileSync(activityCacheFile, JSON.stringify(activity), 'utf-8');
+                return activity;
+            }
+            return null;
+        } catch (error) {
+            console.error(`[Zaui API] Failed to get activity details for ID ${id}:`, error);
+            return null;
+        }
+    })();
+
+    promiseCache.set(cacheKey, promise);
+    return promise;
 }
 
 /**
@@ -176,6 +237,9 @@ const CACHE_DIR = path.join(process.cwd(), '.astro', 'zaui-cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'transfer-routes.json');
 const LOCK_FILE = path.join(CACHE_DIR, 'transfer-routes.lock');
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Static promise cache for the current process
+const promiseCache = new Map<string, Promise<any>>();
 
 // Helper to wait
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -397,8 +461,8 @@ async function _fetchPrivateTransfersWithPricing(): Promise<TransferRoute[]> {
             });
         }
 
-        // Mandatory wait between requests to ZAPI
-        await delay(500);
+        // Mandatory wait between requests to ZAPI (2s for safety)
+        await delay(2000);
     }
 
     // Build transfer routes with full details

@@ -54,16 +54,7 @@ let navData: SiteNavData = {
 };
 
 try {
-  const [siteNavData, transfers] = await Promise.all([
-    getSiteNavData(currentLocale),
-    getPrivateTransfersWithPricing(),
-  ]);
-
-  // Sanitize navigation data to remove local URLs
-  navData = sanitizeUrls({
-    ...siteNavData,
-    transfers,
-  });
+  navData = sanitizeUrls(await getSiteNavData(currentLocale));
 } catch (e) {
   console.error("Failed to fetch nav data:", e);
 }

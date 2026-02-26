@@ -24,10 +24,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Cache Zaui API data
+        uses: actions/cache@v4
+        with:
+          path: .astro/zaui-cache
+          key: ${{ runner.os }}-zaui-cache-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-zaui-cache-
+
       - name: Build Astro
         run: npm run build
         env:
           PUBLIC_WORDPRESS_CUSTOM_API_URL: https://qualitour.ca/app/wp-json/qualitour/v1
+          ZAUI_API_TOKEN: ${{ secrets.ZAUI_API_TOKEN }}
+          ZAUI_API_URL: ${{ secrets.ZAUI_API_URL }}
+          ZAUI_ACCOUNT_ID: ${{ secrets.ZAUI_ACCOUNT_ID }}
+          ZAUI_USER_ID: ${{ secrets.ZAUI_USER_ID }}
 
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
