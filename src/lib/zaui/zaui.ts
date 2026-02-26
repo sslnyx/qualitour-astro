@@ -64,12 +64,25 @@ export interface TransferVehicle {
 
 // API Configuration
 // Support both Astro (import.meta.env) and standard Node scripts (process.env)
-const env = typeof import.meta.env !== 'undefined' ? import.meta.env : process.env;
+const getEnv = (key: string): string | undefined => {
+    // @ts-ignore
+    if (typeof import.meta.env !== 'undefined' && import.meta.env[key]) {
+        return import.meta.env[key];
+    }
+    return process.env[key];
+};
 
-const ZAUI_API_URL = env.ZAUI_API_URL || 'https://qualitour.zaui.net/zapi/';
-const ZAUI_TOKEN = env.ZAUI_API_TOKEN;
-const ZAUI_ACCOUNT_ID = parseInt(String(env.ZAUI_ACCOUNT_ID || '1'));
-const ZAUI_USER_ID = parseInt(String(env.ZAUI_USER_ID || '7'));
+const ZAUI_API_URL = getEnv('ZAUI_API_URL') || 'https://qualitour.zaui.net/zapi/';
+const ZAUI_TOKEN = getEnv('ZAUI_API_TOKEN');
+const ZAUI_ACCOUNT_ID = parseInt(String(getEnv('ZAUI_ACCOUNT_ID') || '1'));
+const ZAUI_USER_ID = parseInt(String(getEnv('ZAUI_USER_ID') || '7'));
+
+// Debugging for CI (masked)
+if (!ZAUI_TOKEN) {
+    console.warn('[Zaui API] WARNING: ZAUI_API_TOKEN is not set in any environment!');
+} else {
+    console.log(`[Zaui API] Token found: ${ZAUI_TOKEN.substring(0, 4)}...${ZAUI_TOKEN.substring(ZAUI_TOKEN.length - 4)}`);
+}
 
 /**
  * Make a ZAPI request with automatic retries for throttling
@@ -88,9 +101,6 @@ async function zapiRequest<T>(methodName: string, params: Record<string, unknown
     let attempts = 0;
     const maxAttempts = 3;
 
-    if (!ZAUI_TOKEN) {
-        console.warn('[Zaui API] WARNING: ZAUI_API_TOKEN is not set!');
-    }
 
     while (attempts < maxAttempts) {
         try {
