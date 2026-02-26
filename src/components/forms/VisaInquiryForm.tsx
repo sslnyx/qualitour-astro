@@ -9,11 +9,11 @@ import { useState } from 'react';
 import { submitVisaInquiryForm, type VisaInquiryFormData, type CF7Response } from '../../lib/contact-form';
 
 const VISA_TYPES = [
-    { value: 'Tourist Visa (L)', label: 'Tourist Visa (L)' },
-    { value: 'Business Visa (M)', label: 'Business Visa (M)' },
-    { value: 'Work Visa (Z)', label: 'Work Visa (Z)' },
-    { value: 'Student Visa (X)', label: 'Student Visa (X)' },
-    { value: 'Transit Visa (G)', label: 'Transit Visa (G)' },
+    { value: 'Tourist Visa', label: 'Tourist Visa' },
+    { value: 'Business Visa', label: 'Business Visa' },
+    { value: 'Work Visa', label: 'Work Visa' },
+    { value: 'Student Visa', label: 'Student Visa' },
+    { value: 'Transit Visa', label: 'Transit Visa' },
     { value: 'Other', label: 'Other' },
 ];
 
@@ -27,6 +27,7 @@ export default function VisaInquiryForm({ className, onSuccess }: VisaInquiryFor
         name: '',
         email: '',
         phone: '',
+        destination: '',
         nationality: '',
         visaType: VISA_TYPES[0].value,
         travelDate: '',
@@ -49,6 +50,9 @@ export default function VisaInquiryForm({ className, onSuccess }: VisaInquiryFor
         }
         if (!formData.phone.trim()) {
             newErrors.phone = 'Phone number is required';
+        }
+        if (!formData.destination.trim()) {
+            newErrors.destination = 'Destination country is required';
         }
         if (!formData.nationality.trim()) {
             newErrors.nationality = 'Nationality is required';
@@ -86,6 +90,7 @@ export default function VisaInquiryForm({ className, onSuccess }: VisaInquiryFor
                 name: formData.name,
                 email: formData.email,
                 phone: formData.phone,
+                destination: formData.destination,
                 nationality: formData.nationality,
                 visaType: formData.visaType,
                 travelDate: formData.travelDate,
@@ -100,6 +105,7 @@ export default function VisaInquiryForm({ className, onSuccess }: VisaInquiryFor
                     name: '',
                     email: '',
                     phone: '',
+                    destination: '',
                     nationality: '',
                     visaType: VISA_TYPES[0].value,
                     travelDate: '',
@@ -113,6 +119,7 @@ export default function VisaInquiryForm({ className, onSuccess }: VisaInquiryFor
                         'your-name': 'name',
                         'your-email': 'email',
                         'your-phone': 'phone',
+                        'destination': 'destination',
                         'nationality': 'nationality',
                         'visa-type': 'visaType',
                         'travel-date': 'travelDate',
@@ -143,8 +150,8 @@ export default function VisaInquiryForm({ className, onSuccess }: VisaInquiryFor
             {result && (
                 <div
                     className={`p-4 rounded-lg text-sm leading-relaxed ${result.status === 'mail_sent'
-                            ? 'bg-green-50 text-green-800 border border-green-200'
-                            : 'bg-red-50 text-red-800 border border-red-200'
+                        ? 'bg-green-50 text-green-800 border border-green-200'
+                        : 'bg-red-50 text-red-800 border border-red-200'
                         }`}
                 >
                     {result.message}
@@ -188,6 +195,19 @@ export default function VisaInquiryForm({ className, onSuccess }: VisaInquiryFor
                     disabled={isSubmitting}
                 />
                 {errors.phone && <span className={errorTextClasses}>{errors.phone}</span>}
+            </div>
+
+            <div className="flex flex-col gap-1">
+                <input
+                    type="text"
+                    name="destination"
+                    value={formData.destination}
+                    onChange={handleChange}
+                    placeholder="Destination Country*"
+                    className={`${inputClasses} ${errors.destination ? inputErrorClasses : ''}`}
+                    disabled={isSubmitting}
+                />
+                {errors.destination && <span className={errorTextClasses}>{errors.destination}</span>}
             </div>
 
             <div className="flex flex-col gap-1">

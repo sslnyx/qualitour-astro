@@ -134,6 +134,7 @@ export interface VisaInquiryFormData {
     name: string;
     email: string;
     phone: string;
+    destination: string;
     nationality: string;
     visaType: string;
     travelDate?: string;
@@ -178,13 +179,14 @@ export async function submitTourInquiryForm(data: TourInquiryFormData): Promise<
  * Submit a visa inquiry form
  */
 export async function submitVisaInquiryForm(data: VisaInquiryFormData): Promise<CF7Response> {
-    const subject = `China Visa Inquiry: ${data.visaType} - ${data.name}`;
+    const subject = `Visa Inquiry: ${data.destination} - ${data.name}`;
 
     return submitCF7Form(CF7_FORM_IDS.VISA_INQUIRY, {
         'your-subject': subject,
         'your-name': data.name,
         'your-email': data.email,
         'your-phone': data.phone,
+        'destination': data.destination,
         'nationality': data.nationality,
         'visa-type': data.visaType,
         'travel-date': data.travelDate || '',

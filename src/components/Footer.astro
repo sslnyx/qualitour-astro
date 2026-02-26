@@ -1,5 +1,7 @@
 ---
-import { getCurrentLocale, type Locale } from "../i18n/config";
+import { getCurrentLocale, getLocalePrefix, type Locale } from "../i18n/config";
+import { Image } from "astro:assets";
+import consumerProtectionLogo from "../assets/Consumer-Protection-BC-Logo-licensed-by-WEB.png";
 
 interface Props {
     lang?: Locale;
@@ -7,7 +9,7 @@ interface Props {
 
 const { lang } = Astro.props;
 const currentLocale = lang || getCurrentLocale(Astro.url);
-const localePrefix = currentLocale === "en" ? "" : `/${currentLocale}`;
+const localePrefix = getLocalePrefix(currentLocale);
 const currentYear = new Date().getFullYear();
 ---
 
@@ -39,13 +41,13 @@ const currentYear = new Date().getFullYear();
             <div class="text-center mb-10 sm:mb-14 lg:mb-16">
                 <a href={`${localePrefix}/`} class="inline-block group">
                     <img
-                        src="/qualitour_logo.png"
+                        src={`${import.meta.env.BASE_URL}/qualitour_logo.png`}
                         alt="Qualitour"
                         class="w-[150px] sm:w-[180px] lg:w-[200px] h-auto mx-auto transform transition-transform duration-300 group-hover:scale-105"
                     />
                 </a>
                 <p
-                    class="mt-3 sm:mt-4 text-gray-400 text-sm sm:text-base lg:text-lg max-w-xl mx-auto px-4 sm:px-0"
+                    class="mt-3 sm:mt-4 text-white text-sm sm:text-base lg:text-lg max-w-xl mx-auto px-4 sm:px-0 font-medium"
                 >
                     {
                         currentLocale === "zh"
@@ -94,7 +96,7 @@ const currentYear = new Date().getFullYear();
                         <li>
                             <a
                                 href={`${localePrefix}/tours`}
-                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                                class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base font-semibold"
                             >
                                 {currentLocale === "zh" ? "行程" : "Tours"}
                             </a>
@@ -102,7 +104,7 @@ const currentYear = new Date().getFullYear();
                         <li>
                             <a
                                 href={`${localePrefix}/private-transfers`}
-                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                                class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base font-semibold"
                             >
                                 {
                                     currentLocale === "zh"
@@ -114,19 +116,19 @@ const currentYear = new Date().getFullYear();
                         <li>
                             <a
                                 href={`${localePrefix}/visa`}
-                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                                class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base font-semibold"
                             >
                                 {
                                     currentLocale === "zh"
-                                        ? "中國簽證"
-                                        : "China Visa"
+                                        ? "簽證服務"
+                                        : "Visa Services"
                                 }
                             </a>
                         </li>
                         <li>
                             <a
                                 href={`${localePrefix}/faq`}
-                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                                class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base font-semibold"
                             >
                                 {currentLocale === "zh" ? "常見問題" : "FAQ"}
                             </a>
@@ -152,7 +154,7 @@ const currentYear = new Date().getFullYear();
                         <li>
                             <a
                                 href={`${localePrefix}/about-us`}
-                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                                class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base font-semibold"
                             >
                                 {
                                     currentLocale === "zh"
@@ -164,7 +166,7 @@ const currentYear = new Date().getFullYear();
                         <li>
                             <a
                                 href={`${localePrefix}/reviews`}
-                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                                class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base font-semibold"
                             >
                                 {
                                     currentLocale === "zh"
@@ -176,7 +178,7 @@ const currentYear = new Date().getFullYear();
                         <li>
                             <a
                                 href={`${localePrefix}/contact`}
-                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                                class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base font-semibold"
                             >
                                 {
                                     currentLocale === "zh"
@@ -188,7 +190,7 @@ const currentYear = new Date().getFullYear();
                         <li>
                             <a
                                 href={`${localePrefix}/privacy-policy`}
-                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base"
+                                class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base font-semibold"
                             >
                                 {
                                     currentLocale === "zh"
@@ -218,7 +220,7 @@ const currentYear = new Date().getFullYear();
                         <li>
                             <a
                                 href="tel:778-945-6000"
-                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base inline-flex items-center gap-2 justify-center sm:justify-start"
+                                class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base inline-flex items-center gap-2 justify-center sm:justify-start font-semibold"
                             >
                                 <span
                                     class="material-icons text-orange-400 text-lg hidden sm:inline"
@@ -230,7 +232,7 @@ const currentYear = new Date().getFullYear();
                         <li>
                             <a
                                 href="mailto:info@qualitour.ca"
-                                class="text-gray-400 hover:text-orange-400 transition-colors text-sm sm:text-base inline-flex items-center gap-2 justify-center sm:justify-start"
+                                class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base inline-flex items-center gap-2 justify-center sm:justify-start font-semibold"
                             >
                                 <span
                                     class="material-icons text-orange-400 text-lg hidden sm:inline"
@@ -246,7 +248,7 @@ const currentYear = new Date().getFullYear();
                                     >location_on</span
                                 >
                                 <span
-                                    class="text-gray-400 text-sm leading-relaxed text-left"
+                                    class="text-white text-sm leading-relaxed text-left font-medium"
                                 >
                                     5635 Cambie Street<br />
                                     Vancouver, BC V5Z 3A3<br />
@@ -288,7 +290,7 @@ const currentYear = new Date().getFullYear();
                                 class="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:border-orange-500/30 transition-all duration-300 hover:bg-white/15"
                             >
                                 <img
-                                    src="/iata.png"
+                                    src={`${import.meta.env.BASE_URL}/iata.png`}
                                     alt="IATA Accredited"
                                     class="w-[60px] h-auto opacity-90 group-hover:opacity-100 transition-opacity"
                                 />
@@ -296,8 +298,21 @@ const currentYear = new Date().getFullYear();
                         </a>
                     </div>
 
+                    <!-- Consumer Protection BC Logo -->
+                    <div class="flex justify-center sm:justify-start mb-4">
+                        <div
+                            class="bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/10 hover:border-orange-500/30 transition-all duration-300 hover:bg-white/15"
+                        >
+                            <Image
+                                src={consumerProtectionLogo}
+                                alt="Consumer Protection BC"
+                                class="w-[120px] h-auto opacity-90 hover:opacity-100 transition-opacity"
+                            />
+                        </div>
+                    </div>
+
                     <!-- Social Links -->
-                    <p class="text-gray-400 text-sm mb-3">
+                    <p class="text-white text-sm mb-3 font-medium">
                         {currentLocale === "zh" ? "關注我們" : "Follow us"}
                     </p>
                     <div
@@ -312,7 +327,7 @@ const currentYear = new Date().getFullYear();
                         >
                             <svg
                                 viewBox="0 0 24 24"
-                                class="w-5 h-5 fill-gray-400 group-hover:fill-white transition-colors"
+                                class="w-5 h-5 fill-white group-hover:fill-white transition-colors"
                                 xmlns="http://www.w3.org/2000/svg"
                             >
                                 <path
@@ -329,7 +344,7 @@ const currentYear = new Date().getFullYear();
                         >
                             <svg
                                 viewBox="0 0 24 24"
-                                class="w-5 h-5 fill-gray-400 group-hover:fill-white transition-colors"
+                                class="w-5 h-5 fill-white group-hover:fill-white transition-colors"
                                 xmlns="http://www.w3.org/2000/svg"
                             >
                                 <path
@@ -346,7 +361,7 @@ const currentYear = new Date().getFullYear();
                         >
                             <svg
                                 viewBox="0 0 24 24"
-                                class="w-5 h-5 fill-gray-400 group-hover:fill-white transition-colors"
+                                class="w-5 h-5 fill-white group-hover:fill-white transition-colors"
                                 xmlns="http://www.w3.org/2000/svg"
                             >
                                 <path
@@ -363,7 +378,7 @@ const currentYear = new Date().getFullYear();
                         >
                             <svg
                                 viewBox="0 0 24 24"
-                                class="w-6 h-6 fill-gray-400 group-hover:fill-white transition-colors"
+                                class="w-6 h-6 fill-white group-hover:fill-white transition-colors"
                                 xmlns="http://www.w3.org/2000/svg"
                             >
                                 <path
@@ -396,7 +411,7 @@ const currentYear = new Date().getFullYear();
                                         : "Stay Updated"
                                 }
                             </h3>
-                            <p class="text-gray-400">
+                            <p class="text-white font-medium">
                                 {
                                     currentLocale === "zh"
                                         ? "獲取獨家旅行優惠和行程更新，直接發送到您的郵箱"
@@ -430,7 +445,7 @@ const currentYear = new Date().getFullYear();
     <div class="relative z-10 border-t border-white/10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <div
-                class="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500"
+                class="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-200 font-medium"
             >
                 <p class="text-center md:text-left">
                     © <span id="current-year">{currentYear}</span> Qualitour Holiday

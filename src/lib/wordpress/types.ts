@@ -63,10 +63,17 @@ export interface WPTour {
         'tourmaster-tour-discount'?: string;
         'tourmaster-tour-currency'?: string;
         guide_language?: 'en' | 'zh' | 'both';
-        show_on_en_site?: boolean;
         show_on_zh_site?: boolean;
         featured?: string | boolean;
         is_featured?: string | boolean;
+        brochure?: {
+            ID: number;
+            id: number;
+            title: string;
+            filename: string;
+            url: string;
+            mime_type?: string;
+        } | string | false;
     };
     tour_terms?: {
         categories?: { id: number; slug: string; name: string }[];

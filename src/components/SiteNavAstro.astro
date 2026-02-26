@@ -6,6 +6,7 @@
  * Uses vanilla JavaScript for interactivity - no React runtime needed.
  */
 
+import { getLocalePrefix, type Locale } from "../i18n/config";
 import type {
     WPTourDestination,
     WPTourActivity,
@@ -40,7 +41,7 @@ const {
     tourTranslations,
 } = Astro.props;
 
-const localePrefix = lang === "en" ? "" : `/${lang}`;
+const localePrefix = getLocalePrefix(lang as Locale);
 const currentPath = Astro.url.pathname;
 
 // Destination name translations
@@ -153,7 +154,7 @@ const serviceLinks = [
                 : "Airport, cruise & ski transfers",
     },
     {
-        label: lang === "zh" ? "中國簽證" : "China Visa",
+        label: lang === "zh" ? "簽證服務" : "Visa Services",
         href: `${localePrefix}/visa`,
         icon: "badge",
         desc: lang === "zh" ? "簽證申請協助" : "Visa application assistance",
@@ -216,7 +217,7 @@ const navData = JSON.stringify({
             <!-- Logo -->
             <a href={`${localePrefix}/`} class="flex items-center group">
                 <img
-                    src="/logo.svg?v2"
+                    src={`${import.meta.env.BASE_URL}/logo.svg?v2`}
                     alt="Qualitour"
                     width="175"
                     height="48"
@@ -794,7 +795,11 @@ const navData = JSON.stringify({
         <div
             class="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white"
         >
-            <img src="/logo.svg?v2" alt="Qualitour" class="h-6 w-auto" />
+            <img
+                src={`${import.meta.env.BASE_URL}/logo.svg?v2`}
+                alt="Qualitour"
+                class="h-6 w-auto"
+            />
             <button
                 id="mobile-close-btn"
                 class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-xl transition-colors"
@@ -1096,7 +1101,12 @@ const navData = JSON.stringify({
 </div>
 
 <!-- Client-side JavaScript for interactivity -->
-<script define:vars={{ navData }}>
+<script
+    define:vars={{
+        navData,
+        baseUrl: (import.meta.env.BASE_URL || "").replace(/\/$/, ""),
+    }}
+>
     const data = JSON.parse(navData);
 
     // Scroll tracking
@@ -1337,34 +1347,45 @@ const navData = JSON.stringify({
     function handleLanguageSwitch() {
         const lang = data.lang;
         const targetLang = lang === "en" ? "zh" : "en";
-        const currentPath = window.location.pathname;
         const { destinations, activities, types, durations, tourTranslations } =
             data;
 
+        let pathWithoutBase = window.location.pathname;
+        if (baseUrl && pathWithoutBase.startsWith(baseUrl)) {
+            pathWithoutBase = pathWithoutBase.substring(baseUrl.length);
+        }
+        if (!pathWithoutBase.startsWith("/")) {
+            pathWithoutBase = "/" + pathWithoutBase;
+        }
+
         // Check if we're on a tour detail page
         const isTourPage =
-            currentPath.includes("/tours/") &&
-            !currentPath.includes("/tours/destination/") &&
-            !currentPath.includes("/tours/activity/") &&
-            !currentPath.includes("/tours/type/") &&
-            !currentPath.includes("/tours/duration/") &&
-            !currentPath.includes("/tours/featured") &&
-            currentPath !== "/tours" &&
-            currentPath !== "/zh/tours";
+            pathWithoutBase.includes("/tours/") &&
+            !pathWithoutBase.includes("/tours/destination/") &&
+            !pathWithoutBase.includes("/tours/activity/") &&
+            !pathWithoutBase.includes("/tours/type/") &&
+            !pathWithoutBase.includes("/tours/duration/") &&
+            !pathWithoutBase.includes("/tours/featured") &&
+            pathWithoutBase !== "/tours" &&
+            pathWithoutBase !== "/zh/tours" &&
+            pathWithoutBase !== "/tours/" &&
+            pathWithoutBase !== "/zh/tours/";
 
         if (isTourPage) {
             if (tourTranslations && tourTranslations[targetLang]) {
                 const translatedSlug = tourTranslations[targetLang].slug;
                 const newPath =
                     targetLang === "en"
-                        ? `/tours/${encodeURIComponent(translatedSlug)}`
-                        : `/zh/tours/${encodeURIComponent(translatedSlug)}`;
+                        ? `${baseUrl}/tours/${encodeURIComponent(translatedSlug)}`
+                        : `${baseUrl}/zh/tours/${encodeURIComponent(translatedSlug)}`;
                 window.location.href = newPath;
                 return;
             } else {
                 // If translation doesn't exist, go to the main tours page of the target language
                 window.location.href =
-                    targetLang === "en" ? "/tours" : "/zh/tours";
+                    targetLang === "en"
+                        ? `${baseUrl}/tours`
+                        : `${baseUrl}/zh/tours`;
                 return;
             }
         }
@@ -1372,7 +1393,7 @@ const navData = JSON.stringify({
         // Handle taxonomy pages
         const taxPathRegex =
             /\/tours\/(destination|activity|type|duration)\/([^\/\?#]+)/;
-        const taxMatch = currentPath.match(taxPathRegex);
+        const taxMatch = pathWithoutBase.match(taxPathRegex);
 
         if (taxMatch) {
             const taxType = taxMatch[1];
@@ -1395,8 +1416,8 @@ const navData = JSON.stringify({
                 const targetSlug = term.translations[targetLang];
                 const newPath =
                     targetLang === "en"
-                        ? `/tours/${taxType}/${targetSlug}`
-                        : `/zh/tours/${taxType}/${targetSlug}`;
+                        ? `${baseUrl}/tours/${taxType}/${targetSlug}`
+                        : `${baseUrl}/zh/tours/${taxType}/${targetSlug}`;
                 window.location.href = newPath;
                 return;
             }
@@ -1404,10 +1425,10 @@ const navData = JSON.stringify({
 
         // Fallback
         if (lang === "en") {
-            window.location.href = `/zh${currentPath}`;
+            window.location.href = `${baseUrl}/zh${pathWithoutBase}`;
         } else {
-            const path = currentPath.replace(/^\/zh/, "");
-            window.location.href = path || "/";
+            const path = pathWithoutBase.replace(/^\/zh/, "");
+            window.location.href = `${baseUrl}${path || "/"}`;
         }
     }
 

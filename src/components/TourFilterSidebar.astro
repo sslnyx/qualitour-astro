@@ -1,4 +1,5 @@
 ---
+import { getLocalePrefix, type Locale } from "../i18n/config";
 /**
  * TourFilterSidebar - Premium filter sidebar for tours page
  * Features: Tour Length (pills), Tour Type (checkboxes), Destinations (nested)
@@ -29,7 +30,7 @@ const {
     activeDestination,
 } = Astro.props;
 
-const localePrefix = lang === "en" ? "" : `/${lang}`;
+const localePrefix = getLocalePrefix(lang as Locale);
 
 // Build destination tree for hierarchical display
 function buildDestinationTree(destinations: WPTourDestination[]) {

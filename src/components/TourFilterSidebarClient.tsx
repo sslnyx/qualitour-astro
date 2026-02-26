@@ -1,3 +1,4 @@
+import { getLocalePrefix, type Locale } from "../i18n/config";
 /**
  * TourFilterSidebarClient - React version of filter sidebar
  * 
@@ -419,7 +420,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
     }, [mobileOpen]);
 
     const updateFilter = (key: keyof FilterState, value: string | null) => {
-        const localePrefix = lang === 'en' ? '' : `/${lang}`;
+        const localePrefix = getLocalePrefix(lang as Locale);
         const params = new URLSearchParams(window.location.search);
 
         if (value === null || value === '') {
@@ -445,7 +446,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
     };
 
     const clearAllFilters = () => {
-        const localePrefix = lang === 'en' ? '' : `/${lang}`;
+        const localePrefix = getLocalePrefix(lang as Locale);
         window.history.pushState({}, '', `${localePrefix}/tours`);
         setFilters({ destination: '', type: '', duration: '', q: '' });
         window.dispatchEvent(new Event('urlchange'));

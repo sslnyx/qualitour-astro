@@ -3,6 +3,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import type { WPTour } from "../lib/wordpress/types";
 import TourInquiryModal from "./TourInquiryModal";
 import { getCfTransformUrl, wpUrl } from "../lib/wp-url";
+import { getTourImageUrl } from "../lib/wordpress/image";
 
 interface FeaturedToursHeroProps {
     tours: WPTour[];
@@ -66,7 +67,7 @@ export default function FeaturedToursHero({
             <div className="overflow-hidden h-full absolute inset-0" ref={emblaRef}>
                 <div className="flex h-full">
                     {tours.map((tour, index) => {
-                        let imageUrl = tour.optimizedImageUrl || "";
+                        let imageUrl = tour.optimizedImageUrl || getTourImageUrl(tour) || "";
                         if (imageUrl) {
                             imageUrl = getCfTransformUrl(wpUrl(imageUrl), {
                                 width: 1920,

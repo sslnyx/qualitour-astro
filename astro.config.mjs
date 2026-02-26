@@ -59,19 +59,7 @@ export default defineConfig({
     // Build optimization
     build: {
       // Minify CSS
-      cssMinify: 'lightningcss',
-      // Custom asset naming
-      rollupOptions: {
-        output: {
-          // Rename CSS from 'about-us' to 'styles'
-          assetFileNames: (assetInfo) => {
-            if (assetInfo.name && assetInfo.name.endsWith('.css')) {
-              return '_astro/styles.[hash].css';
-            }
-            return '_astro/[name].[hash][extname]';
-          },
-        },
-      },
+      // cssMinify: 'lightningcss',
     },
   },
 

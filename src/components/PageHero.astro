@@ -1,5 +1,6 @@
 ---
 import CdnImage from "./CdnImage.astro";
+import { Image } from "astro:assets";
 
 /**
  * PageHero - Reusable hero section component for static pages
@@ -12,7 +13,7 @@ import CdnImage from "./CdnImage.astro";
  */
 
 interface Props {
-    image: string;
+    image: string | ImageMetadata;
     title: string;
     subtitle?: string;
     badge?: {
@@ -38,17 +39,33 @@ const {
 >
     <!-- Background Image -->
     <div class="absolute inset-0">
-        <CdnImage
-            src={image}
-            alt={title}
-            width={1920}
-            height={1080}
-            class="w-full h-full object-cover object-center"
-            loading="eager"
-            decoding="async"
-            quality={80}
-            format="webp"
-        />
+        {
+            typeof image === "string" ? (
+                <CdnImage
+                    src={image}
+                    alt={title}
+                    width={1920}
+                    height={1080}
+                    class="w-full h-full object-cover object-center"
+                    loading="eager"
+                    decoding="async"
+                    quality={80}
+                    format="webp"
+                />
+            ) : (
+                <Image
+                    src={image}
+                    alt={title}
+                    width={1920}
+                    height={1080}
+                    class="w-full h-full object-cover object-center"
+                    loading="eager"
+                    decoding="async"
+                    quality={80}
+                    format="webp"
+                />
+            )
+        }
     </div>
 
     <!-- Gradient Overlay -->

@@ -16,7 +16,7 @@ interface TourDetailProps {
     lang?: string;
 }
 
-type TabId = 'overview' | 'itinerary' | 'info' | 'photos' | 'faq';
+type TabId = 'overview' | 'itinerary' | 'info' | 'photos' | 'faq' | 'brochure';
 
 interface Tab {
     id: TabId;
@@ -30,6 +30,7 @@ const tabs: Tab[] = [
     { id: 'info', label: { en: 'Additional Info', zh: '附加資訊' }, icon: 'article' },
     { id: 'photos', label: { en: 'Photos', zh: '照片' }, icon: 'photo_library' },
     { id: 'faq', label: { en: 'FAQ', zh: '常见问题' }, icon: 'help_outline' },
+    { id: 'brochure', label: { en: 'Brochure', zh: '行程手冊' }, icon: 'picture_as_pdf' },
 ];
 
 // i18n translations
@@ -333,6 +334,11 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
         return blocks;
     }, [sections]);
 
+    // Check for Brochure
+    const brochure = tour.tour_meta?.brochure;
+    const brochureUrl = typeof brochure === 'object' && brochure ? brochure.url : (typeof brochure === 'string' ? brochure : null);
+    const brochureTitle = typeof brochure === 'object' && brochure ? (brochure.title || brochure.filename) : 'Tour Brochure';
+
     // Filter tabs based on available content
     const availableTabs = tabs.filter(tab => {
         if (tab.id === 'overview') return true;
@@ -340,6 +346,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
         if (tab.id === 'info') return infoItems.length > 0;
         if (tab.id === 'photos') return photos.length > 0;
         if (tab.id === 'faq') return faqItems.length > 0;
+        if (tab.id === 'brochure') return !!brochureUrl;
         return false;
     });
 
@@ -671,6 +678,60 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                 </div>
                             </details>
                         ))}
+                    </div>
+                )}
+
+                {/* Brochure Tab */}
+                {activeTab === 'brochure' && brochureUrl && (
+                    <div className="animate-fadeIn">
+                        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
+                            {/* Preview Section */}
+                            {(() => {
+                                const brochureObj = typeof brochure === 'object' ? brochure : null;
+                                const isPdf = brochureObj?.mime_type === 'application/pdf' || brochureUrl.toLowerCase().endsWith('.pdf');
+                                const isImage = brochureObj?.mime_type?.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(brochureUrl);
+
+                                if (isPdf) {
+                                    return (
+                                        <div className="w-full h-[600px] mb-8 border border-gray-200 rounded-lg overflow-hidden">
+                                            <iframe
+                                                src={`${brochureUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                                                className="w-full h-full"
+                                                title={brochureTitle}
+                                            />
+                                        </div>
+                                    );
+                                } else if (isImage) {
+                                    return (
+                                        <div className="mb-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                                            <img
+                                                src={brochureUrl}
+                                                alt={brochureTitle}
+                                                className="w-full h-auto max-h-[800px] object-contain mx-auto"
+                                            />
+                                        </div>
+                                    );
+                                }
+                                return (
+                                    <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <span className="material-icons text-4xl">picture_as_pdf</span>
+                                    </div>
+                                );
+                            })()}
+
+                            <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                                {lang === 'zh' ? '預覽或下載完整行程詳細資訊。' : 'Preview or download the full tour itinerary and details.'}
+                            </p>
+                            <a
+                                href={brochureUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-8 py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-colors shadow-lg hover:shadow-xl hover:-translate-y-1 transform duration-300"
+                            >
+                                <span className="material-icons">download</span>
+                                {lang === 'zh' ? '下載手冊' : 'Download Brochure'}
+                            </a>
+                        </div>
                     </div>
                 )}
             </div>

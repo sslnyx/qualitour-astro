@@ -1,3 +1,4 @@
+import { getLocalePrefix, type Locale } from "../i18n/config";
 /**
  * TourCard Component - Reusable across homepage and tour listings
  * 
@@ -10,7 +11,7 @@
  */
 
 import type { WPTour, WPTourFeaturedImage } from '../lib/wordpress/types';
-import { wpUrl, getCfTransformUrl } from '../lib/wp-url';
+import { wpUrl, getCfTransformUrl, extractTourImageUrl } from '../lib/wp-url';
 
 interface TourCardProps {
     tour: WPTour;
@@ -47,60 +48,14 @@ function getExcerptWords(html: string, wordCount: number): string {
 }
 
 /**
- * Safely extract a URL string from an image size value.
- * WordPress can return either a string URL or an object with url property.
- */
-function extractUrl(value: unknown): string | null {
-    if (typeof value === 'string' && value.trim()) {
-        return value;
-    }
-    if (typeof value === 'object' && value !== null && 'url' in value) {
-        const obj = value as { url?: string };
-        if (typeof obj.url === 'string' && obj.url.trim()) {
-            return obj.url;
-        }
-    }
-    return null;
-}
-
-/**
  * Get the best available image URL from tour data,
- * rewriting WordPress URLs if necessary.
- * 
- * IMPORTANT: We prefer medium/large sizes over full-size to avoid
- * loading 5+ MB images for a 400px wide card.
+ * applying Cloudflare transformations.
  */
 function getImageUrl(tour: WPTour): string | null {
-    const featuredImage = tour.featured_image_url;
-    let rawUrl: string | null = null;
-
-    // String URL - unfortunately we can't resize it
-    if (typeof featuredImage === 'string' && featuredImage.trim()) {
-        rawUrl = featuredImage;
-    }
-
-    // Object with size properties - prefer appropriately sized image
-    if (!rawUrl && typeof featuredImage === 'object' && featuredImage !== null) {
-        const img = featuredImage as WPTourFeaturedImage;
-
-        // Prefer medium_large (~768px) or large (~1024px) for tour cards
-        // These are perfect for 400-600px card widths with 2x display density
-        if (!rawUrl) rawUrl = extractUrl(img.medium_large);
-        if (!rawUrl) rawUrl = extractUrl(img.large);
-        if (!rawUrl) rawUrl = extractUrl(img.medium);
-
-        // Only use full size as last resort
-        if (!rawUrl) rawUrl = extractUrl(img.full);
-
-        // Thumbnail as final fallback
-        if (!rawUrl) rawUrl = extractUrl(img.thumbnail);
-    }
-
-    // Rewrite URL if necessary - ensure we have a valid string
-    if (rawUrl && typeof rawUrl === 'string') {
-        const sanitized = wpUrl(rawUrl);
+    const url = extractTourImageUrl(tour.featured_image_url);
+    if (url) {
         // Apply default transformations for grid cards to avoid over-sized assets
-        return getCfTransformUrl(sanitized, { width: 600, height: 450, format: 'webp', quality: 80 });
+        return getCfTransformUrl(url, { width: 600, height: 450, format: 'webp', quality: 80 });
     }
     return null;
 }
@@ -136,7 +91,7 @@ export function TourCard({
     // Use pre-optimized image URL if available (from Astro build-time processing)
     // Falls back to extracting from featured_image_url for non-optimized contexts
     const imageUrl = tour.optimizedImageUrl || getImageUrl(tour);
-    const localePrefix = lang === 'en' ? '' : `/${lang}`;
+    const localePrefix = getLocalePrefix(lang as Locale);
     const cleanedTitle = cleanTitle(tour.title.rendered);
     const durationText = getDurationText(tour);
 

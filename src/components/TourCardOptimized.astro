@@ -9,7 +9,8 @@
  */
 import CdnImage from "./CdnImage.astro";
 import type { WPTour, WPTourFeaturedImage } from "../lib/wordpress/types";
-import { wpUrl } from "../lib/wp-url";
+import { wpUrl, extractTourImageUrl } from "../lib/wp-url";
+import { getLocalePrefix, type Locale } from "../i18n/config";
 
 interface Props {
     tour: WPTour;
@@ -44,44 +45,8 @@ function getExcerptWords(html: string, wordCount: number): string {
     return words.join(" ") + (words.length >= wordCount ? "..." : "");
 }
 
-function extractUrl(value: unknown): string | null {
-    if (typeof value === "string" && value.trim()) {
-        return value;
-    }
-    if (typeof value === "object" && value !== null && "url" in value) {
-        const obj = value as { url?: string };
-        if (typeof obj.url === "string" && obj.url.trim()) {
-            return obj.url;
-        }
-    }
-    return null;
-}
-
 function getImageUrl(tour: WPTour): string | null {
-    const featuredImage = tour.featured_image_url;
-    let rawUrl: string | null = null;
-
-    if (typeof featuredImage === "string" && featuredImage.trim()) {
-        rawUrl = featuredImage;
-    }
-
-    if (
-        !rawUrl &&
-        typeof featuredImage === "object" &&
-        featuredImage !== null
-    ) {
-        const img = featuredImage as WPTourFeaturedImage;
-        if (!rawUrl) rawUrl = extractUrl(img.medium_large);
-        if (!rawUrl) rawUrl = extractUrl(img.large);
-        if (!rawUrl) rawUrl = extractUrl(img.medium);
-        if (!rawUrl) rawUrl = extractUrl(img.full);
-        if (!rawUrl) rawUrl = extractUrl(img.thumbnail);
-    }
-
-    if (rawUrl && typeof rawUrl === "string") {
-        return wpUrl(rawUrl);
-    }
-    return null;
+    return extractTourImageUrl(tour.featured_image_url);
 }
 
 function getDurationText(tour: WPTour): string | null {
@@ -101,7 +66,7 @@ function getDurationText(tour: WPTour): string | null {
 
 // Computed values
 const imageUrl = tour.optimizedImageUrl || getImageUrl(tour);
-const localePrefix = lang === "en" ? "" : `/${lang}`;
+const localePrefix = getLocalePrefix(lang as Locale);
 const cleanedTitle = cleanTitle(tour.title.rendered);
 const durationText = getDurationText(tour);
 

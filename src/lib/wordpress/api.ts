@@ -21,6 +21,25 @@ import { sanitizeUrls } from '../wp-url';
 // Default timeout for fetch requests (30 seconds for large datasets)
 const DEFAULT_FETCH_TIMEOUT_MS = 30000;
 
+// =====================
+// BUILD-TIME DEDUPLICATION CACHE
+// =====================
+// Stores Promises so concurrent calls to the same endpoint coalesce into
+// a single in-flight request. Only lives for the duration of `astro build`.
+const buildCache = new Map<string, Promise<any>>();
+
+function cached<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    const existing = buildCache.get(key);
+    if (existing) {
+        console.log(`[Build Cache] HIT: ${key}`);
+        return existing as Promise<T>;
+    }
+    console.log(`[Build Cache] MISS: ${key}`);
+    const promise = fn();
+    buildCache.set(key, promise);
+    return promise;
+}
+
 // Get WordPress API URL from environment (qualitour/v1 custom API)
 function getApiUrl(): string {
     const url = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
@@ -91,53 +110,101 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
 // TOUR FUNCTIONS
 // =====================
 
-export async function getTours(
+export function getTours(
     params: WPApiParams = {},
     lang?: string
 ): Promise<WPTour[]> {
-    const customApiUrl = getCustomApiUrl();
-    const url = new URL(`${customApiUrl}/tours`);
+    const cacheKey = `tours:${lang || 'en'}:${JSON.stringify(params)}`;
+    return cached(cacheKey, async () => {
+        const customApiUrl = getApiUrl();
+        const url = new URL(`${customApiUrl}/tours`);
 
-    // Default params for tour list
-    url.searchParams.set('_fields', 'id,slug,title,excerpt,featured_media,tour_category,tour_tag,featured_image_url,tour_meta,tour_terms');
-    url.searchParams.set('per_page', String(params.per_page || 100));
-    url.searchParams.set('page', String(params.page || 1));
+        // Default params for tour list
+        url.searchParams.set('_fields', 'id,slug,title,excerpt,featured_media,tour_category,tour_tag,featured_image_url,tour_meta,tour_terms');
+        url.searchParams.set('per_page', String(params.per_page || 100));
+        url.searchParams.set('page', String(params.page || 1));
 
-    if (params.orderby) url.searchParams.set('orderby', params.orderby);
-    if (params.order) url.searchParams.set('order', params.order);
-    if (params.search) url.searchParams.set('search', params.search);
-    if (params.categories) url.searchParams.set('tour_category', params.categories.join(','));
-    if (params.tags) url.searchParams.set('tour_tag', params.tags.join(','));
-    if (params.destinations) url.searchParams.set('tour-destination', params.destinations.join(','));
-    if (lang && lang !== 'en') url.searchParams.set('lang', lang);
-    else url.searchParams.set('lang', 'en'); // Always send lang for same-slug support
+        if (params.orderby) url.searchParams.set('orderby', params.orderby);
+        if (params.order) url.searchParams.set('order', params.order);
+        if (params.search) url.searchParams.set('search', params.search);
+        if (params.categories) url.searchParams.set('tour_category', params.categories.join(','));
+        if (params.tags) url.searchParams.set('tour_tag', params.tags.join(','));
+        if (params.destinations) url.searchParams.set('tour-destination', params.destinations.join(','));
+        if (lang && lang !== 'en') url.searchParams.set('lang', lang);
+        else url.searchParams.set('lang', 'en'); // Always send lang for same-slug support
 
-    console.log(`[Astro SSG] Fetching tours from: ${url.toString()}`);
+        console.log(`[Astro SSG] Fetching tours from: ${url.toString()}`);
 
-    const response = await fetchWithTimeout(url.toString());
-    const tours = await response.json();
+        const response = await fetchWithTimeout(url.toString());
+        const tours = await response.json();
 
-    // Sanitize all URLs in tour data to replace local domains with production
-    const sanitizedTours = Array.isArray(tours) ? sanitizeUrls(tours) : [];
-    return sanitizedTours;
+        // Sanitize all URLs in tour data to replace local domains with production
+        const sanitizedTours = Array.isArray(tours) ? sanitizeUrls(tours) : [];
+        return sanitizedTours;
+    });
 }
 
-export async function getTourBySlug(slug: string, lang?: string): Promise<WPTour | null> {
-    const customApiUrl = getCustomApiUrl();
-    // Use dedicated slug endpoint which returns full tour data including goodlayers_data
-    const url = new URL(`${customApiUrl}/tours/slug/${encodeURIComponent(slug)}`);
+/**
+ * Fetch all tours with automatic pagination (production API has per_page limit)
+ */
+export async function getAllTours(lang?: string): Promise<WPTour[]> {
+    const cacheKey = `all-tours:${lang || 'en'}`;
+    return cached(cacheKey, async () => {
+        const customApiUrl = getApiUrl();
+        const allTours: WPTour[] = [];
+        let page = 1;
+        let hasMore = true;
 
-    // Always send lang parameter to ensure correct tour when slugs match across languages
-    url.searchParams.set('lang', lang || 'en');
+        while (hasMore) {
+            const url = new URL(`${customApiUrl}/tours`);
+            url.searchParams.set('_fields', 'id,slug,title,excerpt,featured_media,tour_category,tour_tag,featured_image_url,tour_meta,tour_terms');
+            url.searchParams.set('per_page', '100');
+            url.searchParams.set('page', String(page));
+            if (lang && lang !== 'en') url.searchParams.set('lang', lang);
+            else url.searchParams.set('lang', 'en');
 
-    console.log(`[Astro SSG] Fetching tour by slug: ${url.toString()}`);
+            console.log(`[Astro SSG] Fetching all tours page ${page}...`);
 
-    const response = await fetchWithTimeout(url.toString());
-    const tour = await response.json();
+            try {
+                const response = await fetchWithTimeout(url.toString());
+                const tours = await response.json();
 
-    // The /tours/slug/{slug} endpoint returns a single tour object, not an array
-    // Sanitize URLs to replace local domains with production
-    return tour && tour.id ? sanitizeUrls(tour) : null;
+                if (Array.isArray(tours) && tours.length > 0) {
+                    allTours.push(...sanitizeUrls(tours));
+                    page++;
+                } else {
+                    hasMore = false;
+                }
+            } catch (e) {
+                console.error(`[Astro SSG] Error fetching page ${page}:`, e);
+                hasMore = false;
+            }
+        }
+
+        console.log(`[Astro SSG] Fetched ${allTours.length} total tours`);
+        return allTours;
+    });
+}
+
+export function getTourBySlug(slug: string, lang?: string): Promise<WPTour | null> {
+    const cacheKey = `tour-slug:${lang || 'en'}:${slug}`;
+    return cached(cacheKey, async () => {
+        const customApiUrl = getCustomApiUrl();
+        // Use dedicated slug endpoint which returns full tour data including goodlayers_data
+        const url = new URL(`${customApiUrl}/tours/slug/${encodeURIComponent(slug)}`);
+
+        // Always send lang parameter to ensure correct tour when slugs match across languages
+        url.searchParams.set('lang', lang || 'en');
+
+        console.log(`[Astro SSG] Fetching tour by slug: ${url.toString()}`);
+
+        const response = await fetchWithTimeout(url.toString());
+        const tour = await response.json();
+
+        // The /tours/slug/{slug} endpoint returns a single tour object, not an array
+        // Sanitize URLs to replace local domains with production
+        return tour && tour.id ? sanitizeUrls(tour) : null;
+    });
 }
 
 export async function getAllTourSlugs(lang?: string): Promise<string[]> {
@@ -158,19 +225,22 @@ type V1TermMinimal = {
     translations?: Record<string, string>;
 };
 
-async function fetchTerms(taxonomy: string, lang?: string): Promise<V1TermMinimal[]> {
-    const customApiUrl = getCustomApiUrl();
-    const url = new URL(`${customApiUrl}/terms/${taxonomy}`);
+function fetchTerms(taxonomy: string, lang?: string): Promise<V1TermMinimal[]> {
+    const cacheKey = `terms:${lang || 'en'}:${taxonomy}`;
+    return cached(cacheKey, async () => {
+        const customApiUrl = getCustomApiUrl();
+        const url = new URL(`${customApiUrl}/terms/${taxonomy}`);
 
-    url.searchParams.set('per_page', '200');
-    if (lang && lang !== 'en') url.searchParams.set('lang', lang);
+        url.searchParams.set('per_page', '200');
+        if (lang && lang !== 'en') url.searchParams.set('lang', lang);
 
-    console.log(`[Astro SSG] Fetching terms for ${taxonomy} (${lang || 'en'}): ${url.toString()}`);
+        console.log(`[Astro SSG] Fetching terms for ${taxonomy} (${lang || 'en'}): ${url.toString()}`);
 
-    const response = await fetchWithTimeout(url.toString());
-    const terms = await response.json();
+        const response = await fetchWithTimeout(url.toString());
+        const terms = await response.json();
 
-    return Array.isArray(terms) ? terms : [];
+        return Array.isArray(terms) ? terms : [];
+    });
 }
 
 export async function getTourCategories(lang?: string): Promise<WPTourCategory[]> {
@@ -266,36 +336,39 @@ export interface SiteNavData {
     transfers: TransferRoute[];
 }
 
-export async function getSiteNavData(lang?: string): Promise<SiteNavData> {
-    const customApiUrl = getCustomApiUrl();
-    const url = new URL(`${customApiUrl}/sitenav`);
+export function getSiteNavData(lang?: string): Promise<SiteNavData> {
+    const cacheKey = `sitenav:${lang || 'en'}`;
+    return cached(cacheKey, async () => {
+        const customApiUrl = getCustomApiUrl();
+        const url = new URL(`${customApiUrl}/sitenav`);
 
-    if (lang && lang !== 'en') url.searchParams.set('lang', lang);
+        if (lang && lang !== 'en') url.searchParams.set('lang', lang);
 
-    console.log(`[Astro SSG] Fetching site nav data: ${url.toString()}`);
+        console.log(`[Astro SSG] Fetching site nav data: ${url.toString()}`);
 
-    try {
-        const response = await fetchWithTimeout(url.toString());
-        const data = await response.json();
+        try {
+            const response = await fetchWithTimeout(url.toString());
+            const data = await response.json();
 
-        return {
-            activities: Array.isArray(data.activities) ? data.activities.map(mapToActivity) : [],
-            destinations: Array.isArray(data.destinations) ? data.destinations.map(mapToDestination) : [],
-            durations: Array.isArray(data.durations) ? data.durations.map(mapToDuration) : [],
-            types: Array.isArray(data.types) ? data.types.map(mapToType) : [],
-            transfers: [],
-        };
-    } catch (error) {
-        console.error('[Astro SSG] Error fetching site nav data:', error);
-        // Fallback to individual fetches
-        const [activities, destinations, durations, types] = await Promise.all([
-            getTourActivities(lang),
-            getTourDestinations(lang),
-            getTourDurations(lang),
-            getTourTypes(lang),
-        ]);
-        return { activities, destinations, durations, types, transfers: [] };
-    }
+            return {
+                activities: Array.isArray(data.activities) ? data.activities.map(mapToActivity) : [],
+                destinations: Array.isArray(data.destinations) ? data.destinations.map(mapToDestination) : [],
+                durations: Array.isArray(data.durations) ? data.durations.map(mapToDuration) : [],
+                types: Array.isArray(data.types) ? data.types.map(mapToType) : [],
+                transfers: [],
+            };
+        } catch (error) {
+            console.error('[Astro SSG] Error fetching site nav data:', error);
+            // Fallback to individual fetches
+            const [activities, destinations, durations, types] = await Promise.all([
+                getTourActivities(lang),
+                getTourDestinations(lang),
+                getTourDurations(lang),
+                getTourTypes(lang),
+            ]);
+            return { activities, destinations, durations, types, transfers: [] };
+        }
+    });
 }
 
 // Helper mappers
@@ -362,48 +435,54 @@ import type { GoogleReview, PlaceDetails } from './types';
 /**
  * Get all Google reviews from WordPress custom API
  */
-export async function getGoogleReviews(): Promise<GoogleReview[]> {
-    const customApiUrl = getCustomApiUrl();
-    const url = new URL(`${customApiUrl}/google-reviews`);
+export function getGoogleReviews(): Promise<GoogleReview[]> {
+    return cached('google-reviews', async () => {
+        const customApiUrl = getCustomApiUrl();
+        const url = new URL(`${customApiUrl}/google-reviews`);
 
-    console.log(`[Astro SSG] Fetching Google reviews: ${url.toString()}`);
+        console.log(`[Astro SSG] Fetching Google reviews: ${url.toString()}`);
 
-    try {
-        const response = await fetchWithTimeout(url.toString());
-        const reviews = await response.json();
+        try {
+            const response = await fetchWithTimeout(url.toString());
+            const reviews = await response.json();
 
-        if (!Array.isArray(reviews)) {
-            console.warn('[Astro SSG] Unexpected reviews response format');
+            if (!Array.isArray(reviews)) {
+                console.warn('[Astro SSG] Unexpected reviews response format');
+                return [];
+            }
+
+            console.log(`[Astro SSG] Retrieved ${reviews.length} reviews from Google`);
+            return reviews;
+        } catch (error) {
+            console.error('[Astro SSG] Error fetching reviews:', error);
             return [];
         }
-
-        console.log(`[Astro SSG] Retrieved ${reviews.length} reviews`);
-        return reviews;
-    } catch (error) {
-        console.error('[Astro SSG] Error fetching reviews:', error);
-        return [];
-    }
+    });
 }
 
 /**
  * Get business reviews with aggregated details
  */
 export async function getBusinessReviews(): Promise<PlaceDetails | null> {
-    const reviews = await getGoogleReviews();
+    const allReviews = await getGoogleReviews();
 
-    if (!reviews || reviews.length === 0) {
+    if (!allReviews || allReviews.length === 0) {
         console.warn('[Astro SSG] No reviews available');
         return null;
     }
 
-    const averageRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+    // Calculate "real" average rating based on ALL reviews (before filtering)
+    const realAverageRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+
+    // Filter out reviews with rating <= 2 for display
+    const displayReviews = allReviews.filter(r => r.rating > 2);
 
     return {
         name: 'Qualitour - Vancouver Branch',
         formatted_address: 'Vancouver, BC, Canada',
-        rating: averageRating,
-        user_ratings_total: reviews.length,
-        reviews,
+        rating: realAverageRating,
+        user_ratings_total: allReviews.length,
+        reviews: displayReviews,
     };
 }
 

@@ -14,20 +14,17 @@ export function getWpBaseUrl(): string {
     if (apiUrl) {
         try {
             const parsed = new URL(apiUrl);
-            // In PROD (build), we don't return local domains to prevent leakage.
-            // We silent the warning if an R2 Assets URL is available to handle images.
-            if (import.meta.env.PROD && parsed.hostname.endsWith('.local')) {
-                // Silently fallback to production domain for non-image API calls
-            } else {
-                return parsed.origin;
-            }
+            // We return the origin even if it's .local during build
+            // so that Astro's getImage() can fetch and bundle images.
+            // Domain leakage to production is prevented by sanitization in lib/wp-url.ts
+            return parsed.origin;
         } catch {
             // fallback
         }
     }
 
-    // Production fallback
-    return 'https://qualitour.isquarestudio.com';
+    // Production fallback - Real WordPress Domain
+    return 'https://qualitour.ca';
 }
 
 /**
@@ -61,6 +58,12 @@ export function getCfTransformUrl(url: string, options: { width?: number; height
         return url;
     }
 
+    // Prevent double optimization: if URL already contains /cdn-cgi/image/, return it as is
+    // matching strict path structure to avoid false positives in filenames
+    if (url.includes('/cdn-cgi/image/')) {
+        return url;
+    }
+
     const { width, height, format = 'auto', quality = 80 } = options;
     const params = [];
     if (width) params.push(`width=${width}`);
@@ -85,88 +88,69 @@ function isYouTubeThumbnail(path: string): boolean {
 
 /**
  * Convert a WordPress URL to the correct base URL for the current environment.
- * Primarily handles local development URLs (qualitour.local) and ensures 
- * they point to the configured WordPress instance during builds.
- * @param url The WordPress URL to convert
+ * WordPress is at qualitour.ca/app so /app/wp-content path is needed.
  */
 export function wpUrl(url: string): string {
     if (!url) return url;
 
-    // Environment detection
-    const env = (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}) as Record<string, any>;
-    const isDev = !!env.DEV;
-    const isBuild = !isDev;
+    const baseUrl = 'https://qualitour.ca/app';
 
-    let processedUrl = url;
-
-    // During BUILD, we MUST replace unreachable local domains with reachable sources.
-    if (isBuild) {
-        const localDomainPattern = new RegExp('https?://qualitour' + '(-zh)?' + '\\\.local', 'g');
-        const assetsBase = getAssetsBaseUrl();
-        const wpBase = getWpBaseUrl();
-
-        // Direct mapping to R2 for uploads if available
-        if (assetsBase && processedUrl.includes('/wp-content/uploads/')) {
-            processedUrl = url.replace(localDomainPattern, assetsBase);
-            // Also handle case where it was already production WP domain
-            processedUrl = processedUrl.replace(wpBase, assetsBase);
-        } else {
-            // Standard fallback to production WP for other paths
-            processedUrl = url.replace(localDomainPattern, wpBase);
-        }
-    }
-
-    // Remove known domains to make paths relative
-    const domains = [
-        // 'http://qualitour.local', // Handled by direct replacement above
-        'https://qualitour.local',
-        'https://qualitour.isquarestudio.com',
-        'https://qualitour-fe.sslnyx.workers.dev'
-    ];
-
-    for (const domain of domains) {
-        if (processedUrl.startsWith(domain)) {
-            processedUrl = processedUrl.substring(domain.length);
-            break; // Assume only one domain prefix
-        }
-    }
-
-    // Handle relative paths (after domain removal)
-    if (processedUrl.startsWith('/')) {
-        if (isYouTubeThumbnail(processedUrl)) {
-            return `https://img.youtube.com${processedUrl}`;
-        }
-        // Don't prefix internal Astro assets or other common non-WordPress paths
-        if (processedUrl.startsWith('/_astro/') || processedUrl.startsWith('/public/')) {
-            return processedUrl;
-        }
-        return `${getWpBaseUrl()}${processedUrl}`;
-    }
-
-    // Handle absolute URLs (if still absolute after domain removal, or if it was never a known domain)
-    try {
-        const parsed = new URL(processedUrl);
-
-        // 1. YouTube specialized handling
-        if (isYouTubeThumbnail(parsed.pathname)) {
-            return `https://img.youtube.com${parsed.pathname}`;
-        }
-
-        // 2. Local URL rewriting (Crucial for build-time optimization)
-        // If the URL is absolute but points to a local domain, we MUST rewrite it 
-        // to our target WordPress base URL so Astro can download/optimize it.
-        const localDomains = ['qualitour.local', 'qualitour-zh.local', 'localhost'];
-        if (localDomains.some(domain => parsed.hostname.includes(domain))) {
-            const targetBase = getWpBaseUrl();
-            return `${targetBase}${parsed.pathname}${parsed.search}${parsed.hash}`;
-        }
-
-        // Return original URL if it's already an external/correct absolute URL
-        return url;
-    } catch {
-        // Not a valid URL, return as-is
+    if (url.includes(baseUrl)) {
         return url;
     }
+
+    let processedUrl = url
+        .replace(/https?:\/\/qualitour\.local/g, baseUrl)
+        .replace(/https?:\/\/qualitour-zh\.local/g, baseUrl)
+        .replace(/https?:\/\/qualitour\.isquarestudio\.com/g, baseUrl)
+        .replace(/https?:\/\/qualitour\.ca(?!\/app)/g, 'https://qualitour.ca/app');
+
+    return processedUrl;
+}
+
+/**
+ * Safely extract a URL string from an image size value.
+ * WordPress can return either a string URL or an object with url property.
+ */
+function extractSizeUrl(value: unknown): string | null {
+    if (typeof value === 'string' && value.trim()) {
+        return value;
+    }
+    if (typeof value === 'object' && value !== null && 'url' in value) {
+        const obj = value as { url?: string };
+        if (typeof obj.url === 'string' && obj.url.trim()) {
+            return obj.url;
+        }
+    }
+    return null;
+}
+
+/**
+ * Get the best available image URL from tour featured_image_url data.
+ * Centralized logic to handle various formats and prefer reliable sizes.
+ */
+export function extractTourImageUrl(featuredImage: any): string | null {
+    if (!featuredImage) return null;
+
+    let rawUrl: string | null = null;
+
+    // 1. Handle string URL
+    if (typeof featuredImage === 'string' && featuredImage.trim()) {
+        rawUrl = featuredImage;
+    }
+
+    // 2. Handle object with size properties (WPTourFeaturedImage)
+    else if (typeof featuredImage === 'object' && featuredImage !== null) {
+        // Preference order: full -> medium_large -> large -> medium -> thumbnail
+        // Use full first since intermediate sizes may not exist on production
+        rawUrl = extractSizeUrl(featuredImage.full) ||
+            extractSizeUrl(featuredImage.medium_large) ||
+            extractSizeUrl(featuredImage.large) ||
+            extractSizeUrl(featuredImage.medium) ||
+            extractSizeUrl(featuredImage.thumbnail);
+    }
+
+    return rawUrl ? wpUrl(rawUrl) : null;
 }
 
 /**
@@ -238,7 +222,15 @@ export function sanitizeUrls<T>(obj: T): T {
         // Construct regex dynamically to prevent literal from being bundled
         const devDomain = new RegExp('https?://qualitour' + '(-zh)?' + '\\\.local', 'g');
         const prodDomain = 'https://qualitour.isquarestudio.com';
-        const processed = obj.replace(devDomain, prodDomain);
+        let processed = obj.replace(devDomain, prodDomain);
+
+        // Ensure R2 rewrite happens here too for robustness
+        const assetsBase = getAssetsBaseUrl();
+        if (assetsBase && processed.includes('/wp-content/uploads/')) {
+            const prodUploads = new RegExp('https?://qualitour\.isquarestudio\.com/wp-content/uploads/', 'g');
+            processed = processed.replace(prodUploads, `${assetsBase}/wp-content/uploads/`);
+        }
+
         return wpUrl(processed) as unknown as T;
     }
 

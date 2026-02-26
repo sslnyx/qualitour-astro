@@ -225,9 +225,6 @@ export default function SimpleReviewsGrid({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <p className="text-sm text-gray-400 mt-2">
-                        Showing {visibleReviews.length} of {reviews.length} reviews
-                    </p>
                 </div>
             )}
         </div>

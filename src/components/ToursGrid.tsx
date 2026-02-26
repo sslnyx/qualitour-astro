@@ -1,3 +1,4 @@
+import { getLocalePrefix, type Locale } from "../i18n/config";
 /**
  * ToursGrid - Client-side filterable tours grid with pagination
  * 
@@ -207,7 +208,7 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
     };
 
     const hasActiveFilters = filters.destination || filters.type || filters.duration || filters.q;
-    const localePrefix = lang === 'en' ? '' : `/${lang}`;
+    const localePrefix = getLocalePrefix(lang as Locale);
 
     const t = {
         showing: lang === 'zh' ? '显示' : 'Showing',

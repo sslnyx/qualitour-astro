@@ -15,10 +15,12 @@ export const localeLabels: Record<Locale, string> = {
     zh: '繁',
 };
 
-// Helper to get the path prefix for a locale
-// English (default) has no prefix, others get /locale prefix
+// Helper to get the path prefix for a locale, including deployment base path.
+// For Cloudflare (root): '' or '/zh'
+// For cPanel staging:   '/staging' or '/staging/zh'
 export function getLocalePrefix(locale: Locale): string {
-    return locale === i18n.defaultLocale ? '' : `/${locale}`;
+    const base = (import.meta.env.BASE_URL || '').replace(/\/$/, '');
+    return locale === i18n.defaultLocale ? base : `${base}/${locale}`;
 }
 
 // Helper to extract locale from pathname

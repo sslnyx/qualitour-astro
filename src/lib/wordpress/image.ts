@@ -86,10 +86,10 @@ export function getTourImageUrl(tour: WPTour): string | null {
     if (!rawUrl && typeof featuredImage === "object" && featuredImage !== null) {
         const img = featuredImage as WPTourFeaturedImage;
         rawUrl =
+            extractUrl(img.full) ||
             extractUrl(img.medium_large) ||
             extractUrl(img.large) ||
             extractUrl(img.medium) ||
-            extractUrl(img.full) ||
             extractUrl(img.thumbnail);
     }
 
