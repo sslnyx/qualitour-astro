@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && npm run check-files",
+    "build": "npx tsx scripts/prefetch-zaui.js && astro build && npm run check-files",
     "check-files": "echo 'Total files in dist:' && find dist -type f | wc -l",
     "preview": "astro preview",
     "astro": "astro",
