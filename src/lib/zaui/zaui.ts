@@ -376,28 +376,29 @@ async function _fetchPrivateTransfersWithPricing(): Promise<TransferRoute[]> {
     const imageMap = new Map<string, string>();
     const detailsMap = new Map<string, { activityName: string; description: string; imageUrl: string }>();
 
-    // Fetch details in parallel (batch of 5 at a time to avoid rate limiting)
+    // Fetch details sequentially with a delay to avoid rate limiting
     const activityArray = Array.from(allActivityIds);
-    for (let i = 0; i < activityArray.length; i += 5) {
-        const batch = activityArray.slice(i, i + 5);
-        const results = await Promise.all(batch.map(id => getActivityDetails(id)));
-        results.forEach((details, idx) => {
-            if (details) {
-                const id = batch[idx];
-                if (details.basePrice) {
-                    priceMap.set(id, details.basePrice);
-                }
-                if (details.imageUrl && typeof details.imageUrl === 'string') {
-                    imageMap.set(id, details.imageUrl);
-                }
-                // Store full details for modal
-                detailsMap.set(id, {
-                    activityName: details.activityName || '',
-                    description: details.description || details.shortDescription || '',
-                    imageUrl: typeof details.imageUrl === 'string' ? details.imageUrl : '',
-                });
+    for (const id of activityArray) {
+        console.log(`[Zaui Build Cache] Fetching details for activity: ${id}`);
+        const details = await getActivityDetails(id);
+
+        if (details) {
+            if (details.basePrice) {
+                priceMap.set(id, details.basePrice);
             }
-        });
+            if (details.imageUrl && typeof details.imageUrl === 'string') {
+                imageMap.set(id, details.imageUrl);
+            }
+            // Store full details for modal
+            detailsMap.set(id, {
+                activityName: details.activityName || '',
+                description: details.description || details.shortDescription || '',
+                imageUrl: typeof details.imageUrl === 'string' ? details.imageUrl : '',
+            });
+        }
+
+        // Mandatory wait between requests to ZAPI
+        await delay(500);
     }
 
     // Build transfer routes with full details
