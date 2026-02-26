@@ -191,7 +191,7 @@ export async function getPrivateTransfersWithPricing(): Promise<TransferRoute[]>
         fs.mkdirSync(CACHE_DIR, { recursive: true });
     }
 
-    // Check if cache is valid
+    // Quick check if cache is valid
     if (fs.existsSync(CACHE_FILE)) {
         const stats = fs.statSync(CACHE_FILE);
         if (Date.now() - stats.mtimeMs < CACHE_TTL_MS) {
@@ -205,63 +205,92 @@ export async function getPrivateTransfersWithPricing(): Promise<TransferRoute[]>
         }
     }
 
-    // Wait if another process is currently fetching (lockfile exists)
+    const workerId = Math.random().toString(36).substring(2, 11);
     let retries = 0;
-    while (fs.existsSync(LOCK_FILE) && retries < 120) { // Wait up to 60 seconds (120 * 500ms)
-        // Check if lockfile is stale (> 2 mins old in case a process crashed)
-        const lockStats = fs.statSync(LOCK_FILE);
-        if (Date.now() - lockStats.mtimeMs > 2 * 60 * 1000) {
-            console.log('[Zaui Build Cache] Lockfile is stale. Breaking lock.');
-            try { fs.unlinkSync(LOCK_FILE); } catch (e) { /* ignore */ }
-            break;
+    const maxRetries = 240; // 2 minutes (240 * 500ms)
+    let hasLock = false;
+
+    while (retries < maxRetries) {
+        // 1. Try to atomically acquire the lock
+        try {
+            // 'wx' flag fails if file exists
+            const fd = fs.openSync(LOCK_FILE, 'wx');
+            fs.writeSync(fd, `${Date.now()}-${workerId}`);
+            fs.closeSync(fd);
+            hasLock = true;
+            break; // We got the lock!
+        } catch (e: any) {
+            if (e.code !== 'EEXIST') {
+                console.warn('[Zaui Build Cache] Unexpected error trying to acquire lock:', e);
+            }
+            // Lock already exists, wait and retry
+        }
+
+        // 2. Lock is held by someone else, check if it's stale
+        if (fs.existsSync(LOCK_FILE)) {
+            const lockStats = fs.statSync(LOCK_FILE);
+            if (Date.now() - lockStats.mtimeMs > 2 * 60 * 1000) {
+                console.log(`[Zaui Build Cache] Lockfile is stale. Worker ${workerId} breaking lock.`);
+                try { fs.unlinkSync(LOCK_FILE); } catch (e) { /* ignore */ }
+                continue; // Immediately try to acquire lock again
+            }
         }
 
         if (retries === 0) {
-            console.log('[Zaui Build Cache] Waiting for another process to finish fetching...');
+            console.log(`[Zaui Build Cache] Worker ${workerId} waiting for another process to finish fetching...`);
         }
+
         await delay(500);
         retries++;
 
-        // After waiting, if cache appeared, use it
-        if (!fs.existsSync(LOCK_FILE) && fs.existsSync(CACHE_FILE)) {
+        // 3. Check if the other process finished and created the cache
+        if (fs.existsSync(CACHE_FILE)) {
             const stats = fs.statSync(CACHE_FILE);
             if (Date.now() - stats.mtimeMs < CACHE_TTL_MS) {
                 try {
                     const data = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-                    console.log('[Zaui Build Cache] HIT: transfer routes (fs) after waiting');
+                    console.log(`[Zaui Build Cache] HIT: Worker ${workerId} used cache after waiting`);
                     return data;
                 } catch (e) {
-                    console.warn('[Zaui Build Cache] Failed to read cache after wait, fetching fresh...', e);
+                    // Cache is malformed, we'll loop around and try to acquire lock again if needed
+                    console.warn(`[Zaui Build Cache] Worker ${workerId} failed to read cache after wait`, e);
                 }
             }
         }
     }
 
-    console.log('[Zaui Build Cache] MISS: Fetching fresh transfer routes from ZAPI');
-
-    // Acquire lock
-    try {
-        fs.writeFileSync(LOCK_FILE, Date.now().toString());
-    } catch (e) {
-        console.warn('[Zaui Build Cache] Failed to write lockfile', e);
+    if (!hasLock) {
+        console.warn(`[Zaui Build Cache] Worker ${workerId} timed out waiting for lock. Fetching fresh anyway.`);
     }
+
+    console.log(`[Zaui Build Cache] MISS: Worker ${workerId} fetching fresh transfer routes from ZAPI`);
 
     try {
         const routes = await _fetchPrivateTransfersWithPricing();
 
         // Save to cache
         fs.writeFileSync(CACHE_FILE, JSON.stringify(routes), 'utf-8');
-        console.log('[Zaui Build Cache] Saved transfer routes to fs cache');
+        console.log(`[Zaui Build Cache] Worker ${workerId} saved transfer routes to fs cache`);
 
         return routes;
+    } catch (e) {
+        console.error(`[Zaui Build Cache] Worker ${workerId} failed to fetch from ZAPI:`, e);
+        throw e;
     } finally {
         // Release lock
-        try {
-            if (fs.existsSync(LOCK_FILE)) {
-                fs.unlinkSync(LOCK_FILE);
+        if (hasLock) {
+            try {
+                if (fs.existsSync(LOCK_FILE)) {
+                    // Only delete it if we still own it
+                    const lockData = fs.readFileSync(LOCK_FILE, 'utf-8');
+                    if (lockData.includes(workerId)) {
+                        fs.unlinkSync(LOCK_FILE);
+                        console.log(`[Zaui Build Cache] Worker ${workerId} released lock`);
+                    }
+                }
+            } catch (e) {
+                console.warn(`[Zaui Build Cache] Worker ${workerId} failed to remove lockfile`, e);
             }
-        } catch (e) {
-            console.warn('[Zaui Build Cache] Failed to remove lockfile', e);
         }
     }
 }
