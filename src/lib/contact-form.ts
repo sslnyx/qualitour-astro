@@ -59,7 +59,10 @@ function getWordPressOrigin(): string {
 }
 
 /**
- * Submit a form to Contact Form 7 REST API directly
+ * Submit a form via the Qualitour proxy endpoint.
+ * 
+ * Posts JSON to /qualitour/v1/contact which internally submits to CF7
+ * server-side, bypassing server-level anti-spam (CleanTalk).
  * 
  * @param formId - The CF7 form ID
  * @param formData - Form field data as key-value pairs
@@ -70,31 +73,22 @@ export async function submitCF7Form(
     formData: Record<string, string>
 ): Promise<CF7Response> {
     const wpOrigin = getWordPressOrigin();
-    const endpoint = `${wpOrigin}/wp-json/contact-form-7/v1/contact-forms/${formId}/feedback`;
-
-    // CF7 expects FormData, not JSON
-    const body = new FormData();
-
-    // Required CF7 internal fields
-    body.append('_wpcf7', formId);
-    body.append('_wpcf7_version', '6.0');
-    body.append('_wpcf7_locale', 'en_US');
-    body.append('_wpcf7_unit_tag', `wpcf7-f${formId}-o1`);
-    body.append('_wpcf7_container_post', '0');
-
-    // Add user form data
-    for (const [key, value] of Object.entries(formData)) {
-        body.append(key, value);
-    }
+    const endpoint = `${wpOrigin}/wp-json/qualitour/v1/contact`;
 
     try {
         const response = await fetch(endpoint, {
             method: 'POST',
-            body,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                form_id: formId,
+                form_data: formData,
+            }),
         });
 
         if (!response.ok) {
-            console.error(`CF7 API Error: ${response.status} ${response.statusText}`);
+            console.error(`CF7 Proxy Error: ${response.status} ${response.statusText}`);
             return {
                 status: 'mail_failed',
                 message: 'Failed to submit form. Please try again later.',
