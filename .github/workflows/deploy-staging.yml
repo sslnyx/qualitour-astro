@@ -62,7 +62,7 @@ jobs:
             set net:reconnect-interval-base 5
             open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST
             cd public_html/staging
-            mirror -R --verbose --parallel=4 --only-newer --no-perms --delete \
+            mirror -R --verbose --parallel=4 --ignore-time --no-perms --delete \
               --exclude-glob .DS_Store \
               --exclude-glob .git/ \
               dist/ .
