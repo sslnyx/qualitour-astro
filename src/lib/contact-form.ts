@@ -27,7 +27,7 @@ export interface CF7Response {
 }
 
 /**
- * Get WordPress origin URL
+ * Get WordPress base URL (origin + path prefix, without /wp-json/...)
  * In Astro, we submit directly to WordPress since we're a static site
  */
 function getWordPressOrigin(): string {
@@ -36,6 +36,11 @@ function getWordPressOrigin(): string {
         import.meta.env.WORDPRESS_API_URL;
 
     if (apiUrl) {
+        // Extract everything before /wp-json (e.g. https://qualitour.ca/app)
+        const wpJsonIndex = apiUrl.indexOf('/wp-json');
+        if (wpJsonIndex !== -1) {
+            return apiUrl.substring(0, wpJsonIndex);
+        }
         try {
             const parsed = new URL(apiUrl);
             return parsed.origin;
@@ -50,7 +55,7 @@ function getWordPressOrigin(): string {
     }
 
     // Final production fallback
-    return 'https://qualitour.ca';
+    return 'https://qualitour.ca/app';
 }
 
 /**
