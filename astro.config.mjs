@@ -32,8 +32,8 @@ export default defineConfig({
     ],
   },
 
-  // Use SSG (static) output for Cloudflare Pages - no runtime CPU concerns!
-  output: 'static',
+  // Use Server-Side Rendering (SSR) for instant content updates from WordPress
+  output: 'server',
 
   // i18n configuration - matches your Next.js setup
   i18n: {
