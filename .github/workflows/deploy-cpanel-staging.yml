@@ -163,8 +163,18 @@ jobs:
             set net:reconnect-interval-base 5
             open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST
             cd public_html/staging
+
+            # Phase 1: Upload _astro/ assets (hashed filenames — only new files transfer)
             mirror -R --verbose --parallel=4 --ignore-time --no-perms --delete \
               --exclude-glob .DS_Store \
+              --include-glob _astro/ \
+              dist/ .
+
+            # Phase 2: Force re-upload everything else (HTML, .htaccess, etc.)
+            # HTML content changes every build (JS hash references) even if file size is the same
+            mirror -R --verbose --parallel=4 --no-perms --delete --transfer-all \
+              --exclude-glob .DS_Store \
               --exclude-glob .git/ \
+              --exclude-glob _astro/ \
               dist/ .
           "
