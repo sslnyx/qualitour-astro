@@ -63,10 +63,13 @@ export interface TransferVehicle {
 }
 
 // API Configuration
-const ZAUI_API_URL = import.meta.env.ZAUI_API_URL || 'https://qualitour.zaui.net/zapi/';
-const ZAUI_TOKEN = import.meta.env.ZAUI_API_TOKEN;
-const ZAUI_ACCOUNT_ID = parseInt(import.meta.env.ZAUI_ACCOUNT_ID || '1');
-const ZAUI_USER_ID = parseInt(import.meta.env.ZAUI_USER_ID || '7');
+// Support both Astro (import.meta.env) and standard Node scripts (process.env)
+const env = typeof import.meta.env !== 'undefined' ? import.meta.env : process.env;
+
+const ZAUI_API_URL = env.ZAUI_API_URL || 'https://qualitour.zaui.net/zapi/';
+const ZAUI_TOKEN = env.ZAUI_API_TOKEN;
+const ZAUI_ACCOUNT_ID = parseInt(String(env.ZAUI_ACCOUNT_ID || '1'));
+const ZAUI_USER_ID = parseInt(String(env.ZAUI_USER_ID || '7'));
 
 /**
  * Make a ZAPI request with automatic retries for throttling
