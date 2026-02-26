@@ -142,7 +142,7 @@ export default function TourInquiryForm({
                 tourTitle,
                 name: formData.name,
                 email: formData.email,
-                phone: formData.phone,
+                phone: hidePhone ? 'Not provided' : formData.phone,
                 travelDate: formData.travelDate,
                 numTravelers: formData.numTravelers,
                 message: formData.message,
