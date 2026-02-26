@@ -29,12 +29,25 @@ const DEFAULT_FETCH_TIMEOUT_MS = 30000;
 // =====================
 // PERSISTENT FILE-SYSTEM CACHE
 // =====================
-const WP_CACHE_DIR = path.join(process.cwd(), '.astro', 'wordpress-cache');
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+let WP_CACHE_DIR = '';
+let hasFsAccess = false;
 
-// Ensure cache directory exists
-if (!fs.existsSync(WP_CACHE_DIR)) {
-    fs.mkdirSync(WP_CACHE_DIR, { recursive: true });
+try {
+    // Cloudflare Workers polyfills path and process, but throws on actual FS modifications.
+    // The reliable way to detect CF Workers is via navigator.userAgent
+    // @ts-ignore
+    const isCF = typeof navigator !== 'undefined' && navigator.userAgent === 'Cloudflare-Workers';
+
+    if (!isCF) {
+        WP_CACHE_DIR = path.join(process.cwd(), '.astro', 'wordpress-cache');
+        if (!fs.existsSync(WP_CACHE_DIR)) {
+            fs.mkdirSync(WP_CACHE_DIR, { recursive: true });
+        }
+        hasFsAccess = true;
+    }
+} catch (e) {
+    // No FS access
 }
 
 // In-memory Promise cache for same-process deduplication
@@ -46,8 +59,13 @@ let fsMisses = 0;
 let memHits = 0;
 
 function getCacheFilePath(key: string): string {
-    const hash = crypto.createHash('md5').update(key).digest('hex');
-    return path.join(WP_CACHE_DIR, `${hash}.json`);
+    if (!hasFsAccess) return '';
+    try {
+        const hash = crypto.createHash('md5').update(key).digest('hex');
+        return path.join(WP_CACHE_DIR, `${hash}.json`);
+    } catch (e) {
+        return '';
+    }
 }
 
 function cached<T>(key: string, fn: () => Promise<T>): Promise<T> {
@@ -61,12 +79,14 @@ function cached<T>(key: string, fn: () => Promise<T>): Promise<T> {
     const promise = (async (): Promise<T> => {
         // 2. Check file-system cache
         const cacheFile = getCacheFilePath(key);
-        if (fs.existsSync(cacheFile)) {
+        if (hasFsAccess && cacheFile) {
             try {
-                const stats = fs.statSync(cacheFile);
-                if (Date.now() - stats.mtimeMs < CACHE_TTL_MS) {
-                    fsHits++;
-                    return JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+                if (fs.existsSync(cacheFile)) {
+                    const stats = fs.statSync(cacheFile);
+                    if (Date.now() - stats.mtimeMs < CACHE_TTL_MS) {
+                        fsHits++;
+                        return JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+                    }
                 }
             } catch (e) {
                 // Corrupted cache file, will re-fetch
@@ -78,10 +98,12 @@ function cached<T>(key: string, fn: () => Promise<T>): Promise<T> {
         const result = await fn();
 
         // 4. Write to FS cache
-        try {
-            fs.writeFileSync(cacheFile, JSON.stringify(result), 'utf-8');
-        } catch (e) {
-            console.warn(`[WP Cache] Failed to write cache for: ${key}`);
+        if (hasFsAccess && cacheFile) {
+            try {
+                fs.writeFileSync(cacheFile, JSON.stringify(result), 'utf-8');
+            } catch (e) {
+                console.warn(`[WP Cache] Failed to write cache for: ${key}`);
+            }
         }
 
         return result;
