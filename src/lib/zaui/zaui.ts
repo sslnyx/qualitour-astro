@@ -168,24 +168,105 @@ export async function getActivityPrice(activityId: string | number): Promise<str
     return details?.basePrice || null;
 }
 
-// In-memory cache for transfer routes (prevents rate limiting during dev)
-let transferRoutesCache: TransferRoute[] | null = null;
-let transferRoutesCacheTime: number = 0;
+import fs from 'fs';
+import path from 'path';
+
+// File-system cache for transfer routes (prevents rate limiting across Astro worker processes)
+const CACHE_DIR = path.join(process.cwd(), '.astro', 'zaui-cache');
+const CACHE_FILE = path.join(CACHE_DIR, 'transfer-routes.json');
+const LOCK_FILE = path.join(CACHE_DIR, 'transfer-routes.lock');
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Helper to wait
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Get all private transfers with pricing, grouped by route
- * Cached for 5 minutes to prevent ZAPI rate limiting during development
+ * Cached for 24 hours to prevent ZAPI rate limiting during build.
+ * Uses file system caching with a lockfile to support concurrent Astro worker processes.
  */
 export async function getPrivateTransfersWithPricing(): Promise<TransferRoute[]> {
-    // Return cached data if still valid
-    const now = Date.now();
-    if (transferRoutesCache && (now - transferRoutesCacheTime) < CACHE_TTL_MS) {
-        console.log('[Zaui] Using cached transfer routes');
-        return transferRoutesCache;
+    // Ensure cache directory exists
+    if (!fs.existsSync(CACHE_DIR)) {
+        fs.mkdirSync(CACHE_DIR, { recursive: true });
     }
 
-    console.log('[Zaui] Fetching fresh transfer routes from ZAPI');
+    // Check if cache is valid
+    if (fs.existsSync(CACHE_FILE)) {
+        const stats = fs.statSync(CACHE_FILE);
+        if (Date.now() - stats.mtimeMs < CACHE_TTL_MS) {
+            try {
+                const data = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
+                console.log('[Zaui Build Cache] HIT: transfer routes (fs)');
+                return data;
+            } catch (e) {
+                console.warn('[Zaui Build Cache] Failed to read cache, fetching fresh...', e);
+            }
+        }
+    }
+
+    // Wait if another process is currently fetching (lockfile exists)
+    let retries = 0;
+    while (fs.existsSync(LOCK_FILE) && retries < 120) { // Wait up to 60 seconds (120 * 500ms)
+        // Check if lockfile is stale (> 2 mins old in case a process crashed)
+        const lockStats = fs.statSync(LOCK_FILE);
+        if (Date.now() - lockStats.mtimeMs > 2 * 60 * 1000) {
+            console.log('[Zaui Build Cache] Lockfile is stale. Breaking lock.');
+            try { fs.unlinkSync(LOCK_FILE); } catch (e) { /* ignore */ }
+            break;
+        }
+
+        if (retries === 0) {
+            console.log('[Zaui Build Cache] Waiting for another process to finish fetching...');
+        }
+        await delay(500);
+        retries++;
+
+        // After waiting, if cache appeared, use it
+        if (!fs.existsSync(LOCK_FILE) && fs.existsSync(CACHE_FILE)) {
+            const stats = fs.statSync(CACHE_FILE);
+            if (Date.now() - stats.mtimeMs < CACHE_TTL_MS) {
+                try {
+                    const data = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
+                    console.log('[Zaui Build Cache] HIT: transfer routes (fs) after waiting');
+                    return data;
+                } catch (e) {
+                    console.warn('[Zaui Build Cache] Failed to read cache after wait, fetching fresh...', e);
+                }
+            }
+        }
+    }
+
+    console.log('[Zaui Build Cache] MISS: Fetching fresh transfer routes from ZAPI');
+
+    // Acquire lock
+    try {
+        fs.writeFileSync(LOCK_FILE, Date.now().toString());
+    } catch (e) {
+        console.warn('[Zaui Build Cache] Failed to write lockfile', e);
+    }
+
+    try {
+        const routes = await _fetchPrivateTransfersWithPricing();
+
+        // Save to cache
+        fs.writeFileSync(CACHE_FILE, JSON.stringify(routes), 'utf-8');
+        console.log('[Zaui Build Cache] Saved transfer routes to fs cache');
+
+        return routes;
+    } finally {
+        // Release lock
+        try {
+            if (fs.existsSync(LOCK_FILE)) {
+                fs.unlinkSync(LOCK_FILE);
+            }
+        } catch (e) {
+            console.warn('[Zaui Build Cache] Failed to remove lockfile', e);
+        }
+    }
+}
+
+async function _fetchPrivateTransfersWithPricing(): Promise<TransferRoute[]> {
     const activities = await getPrivateTransferActivities();
 
     // Define route groups (pairs of directions with their activity IDs)
@@ -320,10 +401,6 @@ export async function getPrivateTransfersWithPricing(): Promise<TransferRoute[]>
             reverseActivityIds: reverseVehicles,
         };
     });
-
-    // Store in cache
-    transferRoutesCache = routes;
-    transferRoutesCacheTime = Date.now();
 
     return routes;
 }
