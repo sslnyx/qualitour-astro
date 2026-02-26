@@ -1,7 +1,11 @@
 ---
+import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
 import PageHero from "../../components/PageHero.astro";
-import CdnImage from "../../components/CdnImage.astro";
+import { Image } from "astro:assets";
+import skiShuttleImg from "../../assets/images/ski-shuttle.jpg";
+import miniTourImg from "../../assets/images/mini-tour.jpg";
+import guideTourImg from "../../assets/images/guide-tour.jpg";
 import { type Locale } from "../../i18n/config";
 
 // Generate paths for both locales
@@ -14,7 +18,7 @@ export function getStaticPaths() {
 
 const { lang } = Astro.params;
 const currentLang: Locale = (lang as Locale) || "en";
-const localePrefix = currentLang === "en" ? "" : `/${currentLang}`;
+const localePrefix = getLocalePrefix(currentLang);
 
 // Translations
 const t = {
@@ -205,8 +209,8 @@ const heroImage =
                         <div
                             class="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]"
                         >
-                            <CdnImage
-                                src="/mini-tour.jpg"
+                            <Image
+                                src={miniTourImg}
                                 alt="Small group tour experience"
                                 width={800}
                                 height={600}
@@ -241,8 +245,8 @@ const heroImage =
                         <div
                             class="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]"
                         >
-                            <CdnImage
-                                src="/ski-shuttle.jpg"
+                            <Image
+                                src={skiShuttleImg}
                                 alt="Private transfer service"
                                 width={800}
                                 height={600}
@@ -302,21 +306,21 @@ const heroImage =
                     {
                         [
                             {
-                                image: "/guide-tour.jpg",
+                                image: guideTourImg,
                                 icon: "tour",
                                 title: t.guidedTours,
                                 desc: t.guidedToursDesc,
                                 link: `${localePrefix}/tours`,
                             },
                             {
-                                image: "/mini-tour.jpg",
+                                image: miniTourImg,
                                 icon: "groups",
                                 title: t.miniGroups,
                                 desc: t.miniGroupsDesc,
                                 link: `${localePrefix}/tours`,
                             },
                             {
-                                image: "/ski-shuttle.jpg",
+                                image: skiShuttleImg,
                                 icon: "directions_car",
                                 title: t.privateTransfers,
                                 desc: t.privateTransfersDesc,
@@ -327,7 +331,7 @@ const heroImage =
                                 href={service.link}
                                 class="group relative h-96 rounded-2xl overflow-hidden block"
                             >
-                                <CdnImage
+                                <Image
                                     src={service.image}
                                     alt={service.title}
                                     width={600}

@@ -1,4 +1,5 @@
 ---
+import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
 import PageHero from "../../components/PageHero.astro";
 import { type Locale } from "../../i18n/config";
@@ -8,6 +9,8 @@ import PremiumReviewsGrid from "../../components/PremiumReviewsGrid";
 import { getGoogleReviews } from "../../lib/wordpress/api";
 import { getPrivateTransfersWithPricing } from "../../lib/zaui/zaui";
 import CdnImage from "../../components/CdnImage.astro";
+import { Image } from "astro:assets";
+import skiShuttleImg from "../../assets/images/ski-shuttle.jpg";
 
 // Local fleet images
 import siennaImg from "../../assets/images/fleet/sienna.png";
@@ -27,7 +30,7 @@ export function getStaticPaths() {
 
 const { lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || "en";
-const localePrefix = lang === "en" ? "" : `/${lang}`;
+const localePrefix = getLocalePrefix(lang as Locale);
 
 // Fetch reviews
 let reviews: any[] = [];
@@ -379,11 +382,11 @@ function extractPriceNumber(caption: string): string | null {
         ? "大溫哥華地區及低陸平原的私人接送服務：機場接送、郵輪接送和滑雪勝地接送。"
         : "Private transfer services across Greater Vancouver and the Lower Mainland: airport transfers, cruise ship transfers, and ski resort transfers."}
     lang={lang}
-    image="/ski-shuttle.jpg"
+    image={skiShuttleImg.src}
 >
     <!-- Hero Section -->
     <PageHero
-        image="/ski-shuttle.jpg"
+        image={skiShuttleImg}
         title={t.heading}
         subtitle={t.subheading}
         badge={{ icon: "airport_shuttle", text: t.heroTagline }}
@@ -472,7 +475,7 @@ function extractPriceNumber(caption: string): string | null {
                                 </div>
                             )}
                             <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 p-6 flex items-center justify-center">
-                                <CdnImage
+                                <Image
                                     src={rate.imageUrl}
                                     alt={rate.title}
                                     class="max-w-full max-h-full object-contain"
@@ -522,7 +525,7 @@ function extractPriceNumber(caption: string): string | null {
                     fleetItems.map((item) => (
                         <div class="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                             <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 p-6 flex items-center justify-center">
-                                <CdnImage
+                                <Image
                                     src={item.imageUrl}
                                     alt={item.label}
                                     class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500"

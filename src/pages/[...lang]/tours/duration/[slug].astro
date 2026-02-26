@@ -1,23 +1,42 @@
 ---
+import { getLocalePrefix, type Locale } from "../../../../i18n/config";
 import Layout from '../../../../layouts/Layout.astro';
-import { getTours, getTourDurations, getSiteNavData } from '../../../../lib/wordpress/api';
+import { getAllTours, getTourDurations, getSiteNavData } from '../../../../lib/wordpress/api';
 import { type Locale } from '../../../../i18n/config';
 import TourCardOptimized from '../../../../components/TourCardOptimized.astro';
 
 // Generate static paths for all durations in all locales
 export async function getStaticPaths() {
-  const locales = ['en', 'zh'] as const;
+  const [enDurations, zhDurations] = await Promise.all([
+    getTourDurations('en'),
+    getTourDurations('zh')
+  ]);
   
   const paths = [];
-  for (const locale of locales) {
-    const durations = await getTourDurations(locale);
-    for (const duration of durations) {
+  
+  // Build paths for EN
+  for (const duration of enDurations) {
+    paths.push({
+      params: { lang: undefined, slug: duration.slug },
+      props: { duration: duration }
+    });
+  }
+  
+  // Build paths for ZH
+  for (const duration of zhDurations) {
+    paths.push({
+      params: { lang: 'zh', slug: duration.slug },
+      props: { duration: duration }
+    });
+  }
+  
+  // Add fallback paths in ZH for EN durations without translations
+  const zhSlugs = new Set(zhDurations.map(d => d.slug));
+  for (const duration of enDurations) {
+    if (!zhSlugs.has(duration.slug)) {
       paths.push({
-        params: { 
-          lang: locale === 'en' ? undefined : locale,
-          slug: duration.slug 
-        },
-        props: { duration }
+        params: { lang: 'zh', slug: duration.slug },
+        props: { duration: duration }
       });
     }
   }
@@ -28,11 +47,11 @@ export async function getStaticPaths() {
 const { slug, lang: langParam } = Astro.params;
 const { duration } = Astro.props;
 const lang: Locale = (langParam as Locale) || 'en';
-const localePrefix = lang === 'en' ? '' : `/${lang}`;
+const localePrefix = getLocalePrefix(lang as Locale);
 
 // Fetch all tours and filter by duration
 const [allTours, navData] = await Promise.all([
-  getTours({ per_page: 1000 }, lang),
+  getAllTours(lang),
   getSiteNavData(lang),
 ]);
 

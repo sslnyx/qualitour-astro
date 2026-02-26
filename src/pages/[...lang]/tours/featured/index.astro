@@ -1,4 +1,5 @@
 ---
+import { getLocalePrefix, type Locale } from "../../../../i18n/config";
 import Layout from '../../../../layouts/Layout.astro';
 import { getTours, getSiteNavData } from '../../../../lib/wordpress/api';
 import { type Locale } from '../../../../i18n/config';
@@ -14,7 +15,7 @@ export function getStaticPaths() {
 
 const { lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || 'en';
-const localePrefix = lang === 'en' ? '' : `/${lang}`;
+const localePrefix = getLocalePrefix(lang as Locale);
 
 import { optimizeTourImages } from '../../../../lib/wordpress/image';
 

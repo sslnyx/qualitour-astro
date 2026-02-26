@@ -1,6 +1,7 @@
 ---
+import { getLocalePrefix, type Locale } from "../../../i18n/config";
 import Layout from '../../../layouts/Layout.astro';
-import { getTours, getTourBySlug, getGoogleReviews } from '../../../lib/wordpress/api';
+import { getAllTours, getTourBySlug, getGoogleReviews } from '../../../lib/wordpress/api';
 import { deepOptimizeTourData } from '../../../lib/wordpress/image';
 import type { WPTour } from '../../../lib/wordpress/types';
 import { type Locale } from '../../../i18n/config';
@@ -17,7 +18,7 @@ export async function getStaticPaths() {
   
   // Fetch tours for each locale separately to get locale-specific slugs
   for (const locale of locales) {
-    const tours = await getTours({ per_page: 300 }, locale);
+    const tours = await getAllTours(locale);
     
     for (const tour of tours) {
       // Decode the slug so it matches the browser's decoded URL format
@@ -38,7 +39,7 @@ export async function getStaticPaths() {
 // Get the tour data
 const { slug, lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || 'en';
-const localePrefix = lang === 'en' ? '' : `/${lang}`;
+const localePrefix = getLocalePrefix(lang as Locale);
 
 // Fetch tour data
 const tourData = await getTourBySlug(slug as string, lang);
@@ -157,7 +158,7 @@ const tourTranslations = tour?.translations && typeof tour.translations === 'obj
   ) : processedTour ? (
     <div class="tour-detail-page bg-white">
       <!-- Header Spacing -->
-      <div class="h-16 md:h-20"></div>
+      {/* <div class="h-16 md:h-20"></div> */}
 
       <div class="min-h-screen bg-gray-50">
         <!-- Hero Section -->

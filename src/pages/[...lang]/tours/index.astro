@@ -1,8 +1,9 @@
 ---
+import { getLocalePrefix, type Locale } from "../../../i18n/config";
 import Layout from "../../../layouts/Layout.astro";
 import { getImage } from "astro:assets";
 import {
-  getTours,
+  getAllTours,
   getSiteNavData,
   getTourDurations,
   getTourTypes,
@@ -23,13 +24,13 @@ export function getStaticPaths() {
 
 const { lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || "en";
-const localePrefix = lang === "en" ? "" : `/${lang}`;
+const localePrefix = getLocalePrefix(lang as Locale);
 
 import { optimizeTourImages } from "../../../lib/wordpress/image";
 
 // Fetch all tours and filter data at build time
 const [rawTours, navData] = await Promise.all([
-  getTours({ per_page: 1000 }, lang),
+  getAllTours(lang),
   getSiteNavData(lang),
 ]);
 const { durations, types } = navData;

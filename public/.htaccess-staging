@@ -1,0 +1,19 @@
+DirectorySlash Off
+RewriteEngine On
+
+# 1. Force trailing slash on the root if missing
+RewriteCond %{REQUEST_URI} ^/staging$
+RewriteRule ^ %{REQUEST_URI}/ [R=301,L]
+
+# 2. Remove trailing slash from all other requests
+RewriteCond %{REQUEST_URI} !^/staging/$
+RewriteCond %{REQUEST_URI} (.+)/$
+RewriteRule ^ %1 [R=301,L]
+
+# 3. Serve .html without extension
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.*)$ $1.html [L]
+
+# Custom 404
+ErrorDocument 404 /staging/404.html

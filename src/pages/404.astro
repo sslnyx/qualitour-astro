@@ -1,0 +1,63 @@
+---
+import { getLocalePrefix, type Locale } from "../i18n/config";
+import Layout from "../layouts/Layout.astro";
+import { getCurrentLocale } from "../i18n/config";
+
+// Get current locale from URL
+const currentLocale = getCurrentLocale(Astro.url);
+const localePrefix = getLocalePrefix(currentLocale);
+
+const t = {
+    title: currentLocale === "zh" ? "頁面未找到" : "Page Not Found",
+    description:
+        currentLocale === "zh"
+            ? "很抱歉，您要查找的頁面不存在或已被移動。"
+            : "Sorry, the page you are looking for does not exist or has been moved.",
+    backHome: currentLocale === "zh" ? "返回首頁" : "Back to Home",
+    errorCode: "404",
+};
+---
+
+<Layout
+    title={`404 - ${t.title} | Qualitour`}
+    description={t.description}
+    lang={currentLocale}
+    noindex={true}
+>
+    <div
+        class="min-h-[600px] flex items-center justify-center bg-gray-50 px-4 pt-24 pb-12"
+    >
+        <div class="text-center max-w-2xl mx-auto">
+            <!-- <div class="mb-8 relative inline-block">
+                <span class="material-icons text-9xl text-gray-200 select-none">
+                    explore_off
+                </span>
+                <div
+                    class="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white font-bold text-xl px-4 py-1 rounded-full shadow-lg"
+                >
+                    {t.errorCode}
+                </div>
+            </div> -->
+
+            <h1 class="text-3xl md:text-5xl font-bold text-gray-900 mb-6">
+                {t.title}
+            </h1>
+
+            <p class="text-xl text-gray-600 mb-10 leading-relaxed">
+                {t.description}
+            </p>
+
+            <a
+                href={`${localePrefix}/`}
+                class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-full hover:shadow-xl hover:shadow-orange-200/50 hover:scale-105 transition-all duration-300 group"
+            >
+                <span
+                    class="material-icons group-hover:-translate-x-1 transition-transform"
+                >
+                    arrow_back
+                </span>
+                {t.backHome}
+            </a>
+        </div>
+    </div>
+</Layout>

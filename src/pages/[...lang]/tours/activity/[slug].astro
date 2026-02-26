@@ -1,23 +1,42 @@
 ---
+import { getLocalePrefix, type Locale } from "../../../../i18n/config";
 import Layout from '../../../../layouts/Layout.astro';
-import { getTours, getTourActivities, getSiteNavData } from '../../../../lib/wordpress/api';
+import { getAllTours, getTourActivities, getSiteNavData } from '../../../../lib/wordpress/api';
 import { type Locale } from '../../../../i18n/config';
 import TourCardOptimized from '../../../../components/TourCardOptimized.astro';
 import { decodeHtml } from '../../../../lib/utils';
 
 // Generate static paths for all activities in all locales
 export async function getStaticPaths() {
-  const locales = ['en', 'zh'] as const;
+  const [enActivities, zhActivities] = await Promise.all([
+    getTourActivities('en'),
+    getTourActivities('zh')
+  ]);
   
   const paths = [];
-  for (const locale of locales) {
-    const activities = await getTourActivities(locale);
-    for (const activity of activities) {
+  
+  // Build paths for EN
+  for (const activity of enActivities) {
+    paths.push({
+      params: { lang: undefined, slug: activity.slug },
+      props: { activity }
+    });
+  }
+  
+  // Build paths for ZH
+  for (const activity of zhActivities) {
+    paths.push({
+      params: { lang: 'zh', slug: activity.slug },
+      props: { activity }
+    });
+  }
+  
+  // Add fallback paths in ZH for EN activities without translations
+  const zhSlugs = new Set(zhActivities.map(a => a.slug));
+  for (const activity of enActivities) {
+    if (!zhSlugs.has(activity.slug)) {
       paths.push({
-        params: { 
-          lang: locale === 'en' ? undefined : locale,
-          slug: activity.slug 
-        },
+        params: { lang: 'zh', slug: activity.slug },
         props: { activity }
       });
     }
@@ -29,11 +48,11 @@ export async function getStaticPaths() {
 const { slug, lang: langParam } = Astro.params;
 const { activity } = Astro.props;
 const lang: Locale = (langParam as Locale) || 'en';
-const localePrefix = lang === 'en' ? '' : `/${lang}`;
+const localePrefix = getLocalePrefix(lang as Locale);
 
 // Fetch all tours and available activities
 const [allTours, navData] = await Promise.all([
-  getTours({ per_page: 1000 }, lang),
+  getAllTours(lang),
   getSiteNavData(lang),
 ]);
 

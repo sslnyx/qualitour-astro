@@ -1,7 +1,9 @@
 ---
+import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
 import PageHero from "../../components/PageHero.astro";
 import { type Locale } from "../../i18n/config";
+import privacyHeroImg from "../../assets/images/privacy-hero.png";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -13,7 +15,7 @@ export function getStaticPaths() {
 
 const { lang } = Astro.params;
 const currentLang: Locale = (lang as Locale) || "en";
-const localePrefix = currentLang === "en" ? "" : `/${currentLang}`;
+const localePrefix = getLocalePrefix(currentLang);
 
 // Translations
 const t = {
@@ -315,7 +317,7 @@ const rightsItems =
 >
     <!-- Hero Section -->
     <PageHero
-        image="/privacy-hero.png"
+        image={privacyHeroImg}
         title={t.heroTitle}
         subtitle={t.heroSubtitle}
         badge={{ icon: "lock", text: t.heroBadge }}

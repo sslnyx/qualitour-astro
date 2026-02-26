@@ -1,4 +1,5 @@
 ---
+import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
 import PageHero from "../../components/PageHero.astro";
 import { type Locale } from "../../i18n/config";
@@ -18,7 +19,7 @@ export function getStaticPaths() {
 
 const { lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || "en";
-const localePrefix = lang === "en" ? "" : `/${lang}`;
+const localePrefix = getLocalePrefix(lang as Locale);
 
 // Visa hero background
 const VISA_HERO_BG = await optimizeImageUrl(
@@ -61,11 +62,11 @@ const displayReviews =
         ? visaReviews
         : reviews.filter((r) => r.rating >= 5).slice(0, 6);
 
-const title = lang === "zh" ? "中国签证服务" : "China Visa Services";
+const title = lang === "zh" ? "签证服务" : "Global Visa Services";
 const subtitle =
     lang === "zh"
-        ? "省时省心，我们协助您完成申请流程"
-        : "Save time with guided, hassle-free support";
+        ? "专业协助，让您的国际旅行申请更简单"
+        : "Professional support for your international travel visa applications";
 
 const valueProps =
     lang === "zh"
@@ -109,17 +110,17 @@ const steps =
         ? [
               {
                   title: "咨询与签证类型确认",
-                  body: "根据出行目的与行程，确认合适的签证类型与时间安排。",
+                  body: "根据出行目的与行程，确认适合您的签证类型与时间安排。",
               },
               {
                   title: "材料清单与表格指导",
-                  body: "提供材料清单并协助填写表格，确保信息一致。",
+                  body: "提供清晰的材料清单并协助填写表格，确保信息准确一致。",
               },
               {
                   title: "递交与进度跟进",
-                  body: "协助递交申请并跟进进度，及时提醒补充材料。",
+                  body: "协助递交申请或提供递交指引，并跟进进度，及时提醒补充材料。",
               },
-              { title: "取证与交付", body: "完成后通知取证/寄送安排。" },
+              { title: "取证与交付", body: "完成后通知取证或协助寄送安排。" },
           ]
         : [
               {
@@ -158,11 +159,11 @@ const requirements =
 
 <Layout
     title={lang === "zh"
-        ? "中国签证服务 | Qualitour"
-        : "China Visa Services | Qualitour"}
+        ? "签证服务 | Qualitour"
+        : "Global Visa Services | Qualitour"}
     description={lang === "zh"
-        ? "无忧中国签证支持：材料清单、申请指导及提交申请支持。"
-        : "Hassle-free China visa support: document checklist, application guidance, and submission support."}
+        ? "专业签证支持：各类国际旅行签证咨询、材料清单及申请指导。"
+        : "Professional visa support: consultation, document checklists, and application guidance for international travel."}
     lang={lang}
     image={VISA_HERO_BG}
 >
@@ -334,6 +335,188 @@ const requirements =
         </div>
     </section>
 
+    <!-- China Visa Specialist Section -->
+    <section class="relative py-20 md:py-28 overflow-hidden">
+        <!-- Premium dark gradient background -->
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+        >
+        </div>
+
+        <!-- Animated background orbs -->
+        <div
+            class="absolute top-0 left-1/4 w-96 h-96 bg-[#f7941e]/20 rounded-full blur-3xl animate-pulse"
+        >
+        </div>
+        <div
+            class="absolute bottom-0 right-1/4 w-80 h-80 bg-[#ff6b35]/15 rounded-full blur-3xl animate-pulse"
+            style="animation-delay: 1s;"
+        >
+        </div>
+
+        <!-- Grid pattern overlay -->
+        <div
+            class="absolute inset-0 opacity-5"
+            style="background-image: url('/patterns/grid.svg'); background-size: 40px 40px;"
+        >
+        </div>
+
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div
+                class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center"
+            >
+                <!-- Content Side -->
+                <div class="order-2 lg:order-1">
+                    <!-- Badge -->
+                    <div
+                        class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-5 py-2.5 mb-8 border border-white/20"
+                    >
+                        <span class="material-icons text-[#f7941e] text-lg"
+                            >verified</span
+                        >
+                        <span
+                            class="text-white/90 font-semibold text-sm tracking-wide uppercase"
+                        >
+                            {
+                                lang === "zh"
+                                    ? "中国签证专家"
+                                    : "China Visa Specialist"
+                            }
+                        </span>
+                    </div>
+
+                    <!-- Heading -->
+                    <h2
+                        class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
+                    >
+                        {lang === "zh" ? "需要办理" : "Heading to"}
+                        <span
+                            class="text-transparent bg-clip-text bg-gradient-to-r from-[#f7941e] to-[#ff6b35]"
+                        >
+                            {lang === "zh" ? "中国签证？" : " China?"}
+                        </span>
+                    </h2>
+
+                    <!-- Description -->
+                    <p
+                        class="text-lg md:text-xl text-white/70 mb-10 leading-relaxed max-w-xl"
+                    >
+                        {
+                            lang === "zh"
+                                ? "对于所有中国签证申请，我们建议咨询我们的专业合作伙伴。他们拥有超过20年的经验，提供全方位的认证、翻译和申请支持。"
+                                : "For all China visa applications, we recommend consulting our specialized partner. With over 20 years of experience, they provide comprehensive authentication, translation, and application support."
+                        }
+                    </p>
+
+                    <!-- CTA Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a
+                            href="https://www.mychinavisa.ca/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="group inline-flex items-center justify-center gap-3 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg shadow-[#f7941e]/25 hover:shadow-xl hover:shadow-[#f7941e]/40 transition-all duration-300 hover:scale-[1.02]"
+                        >
+                            {
+                                lang === "zh"
+                                    ? "访问 MyChinaVisa.ca"
+                                    : "Visit MyChinaVisa.ca"
+                            }
+                            <span
+                                class="material-icons transition-transform group-hover:translate-x-1"
+                                >arrow_forward</span
+                            >
+                        </a>
+
+                        <!-- Trust badge -->
+                        <div
+                            class="flex items-center gap-3 px-5 py-3 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10"
+                        >
+                            <span class="material-icons text-emerald-400"
+                                >verified_user</span
+                            >
+                            <span class="text-white/80 font-medium">
+                                {
+                                    lang === "zh"
+                                        ? "官方合作伙伴"
+                                        : "Trusted Partner"
+                                }
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Stats row -->
+                    <div
+                        class="flex flex-wrap gap-8 mt-12 pt-8 border-t border-white/10"
+                    >
+                        <div>
+                            <div class="text-3xl font-bold text-white">20+</div>
+                            <div class="text-sm text-white/50">
+                                {lang === "zh" ? "年经验" : "Years Experience"}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-white">
+                                10K+
+                            </div>
+                            <div class="text-sm text-white/50">
+                                {lang === "zh" ? "成功申请" : "Applications"}
+                            </div>
+                        </div>
+                        <div>
+                            <div
+                                class="flex items-center gap-1 text-3xl font-bold text-white"
+                            >
+                                5.0
+                                <span
+                                    class="material-icons text-[#f7941e] text-2xl"
+                                    >star</span
+                                >
+                            </div>
+                            <div class="text-sm text-white/50">
+                                {lang === "zh" ? "客户评价" : "Rating"}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Side -->
+                <div class="order-1 lg:order-2 relative">
+                    <!-- Glassmorphism card wrapper -->
+                    <div class="relative group">
+                        <!-- Glow effect behind card -->
+                        <div
+                            class="absolute -inset-4 bg-gradient-to-r from-[#f7941e]/30 to-[#ff6b35]/30 rounded-3xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"
+                        >
+                        </div>
+
+                        <!-- Card -->
+                        <div
+                            class="relative bg-white/10 backdrop-blur-md rounded-3xl p-4 border border-white/20 shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]"
+                        >
+                            <img
+                                src={`${import.meta.env.BASE_URL}/china-visa-passport.jpg`}
+                                alt="China Visa Specialist - MyChinaVisa.ca"
+                                class="w-full h-auto rounded-2xl"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Floating decorative elements -->
+                    <div
+                        class="absolute -top-4 -right-4 w-20 h-20 bg-[#f7941e]/20 rounded-full blur-xl animate-bounce"
+                        style="animation-duration: 3s;"
+                    >
+                    </div>
+                    <div
+                        class="absolute -bottom-6 -left-6 w-16 h-16 bg-[#ff6b35]/20 rounded-full blur-xl animate-bounce"
+                        style="animation-duration: 4s; animation-delay: 0.5s;"
+                    >
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Visa Inquiry Form Section -->
     <section
         class="py-16 md:py-24 bg-gradient-to-br from-gray-50 via-white to-gray-50"
@@ -352,19 +535,23 @@ const requirements =
                         <span
                             class="text-[#f7941e] font-semibold text-sm tracking-wide uppercase"
                         >
-                            {lang === "zh" ? "联系我们" : "Contact Us"}
+                            {lang === "zh" ? "在线咨询" : "Start Your Inquiry"}
                         </span>
                     </div>
                     <h2
                         class="text-3xl md:text-4xl font-bold text-gray-900 mb-3"
                     >
-                        {lang === "zh" ? "立即咨询" : "Start Your Inquiry"}
+                        {
+                            lang === "zh"
+                                ? "提交您的需求"
+                                : "Tell Us Your Destination"
+                        }
                     </h2>
                     <p class="text-gray-500 leading-relaxed">
                         {
                             lang === "zh"
-                                ? "填写以下表格，我们将在1个工作日内与您联系。"
-                                : "Fill out the form below and we'll get back to you within 1 business day."
+                                ? "填写以下表格，我们的签证顾问将在1个工作日内与您联系。"
+                                : "Fill out the form below and our visa consultants will get back to you within 1 business day."
                         }
                     </p>
                 </div>
@@ -448,14 +635,18 @@ const requirements =
                 </div>
 
                 <h2 class="text-3xl md:text-5xl font-bold text-white mb-6">
-                    {lang === "zh" ? "准备前往中国？" : "China bound?"}
+                    {
+                        lang === "zh"
+                            ? "规划下一次精彩旅程？"
+                            : "Ready for your next journey?"
+                    }
                 </h2>
 
                 <p class="text-xl text-white/90 mb-10 leading-relaxed">
                     {
                         lang === "zh"
-                            ? "告诉我们您的出行计划，我们会协助您理清材料并推进申请。"
-                            : "Tell us your travel plan and we'll help you move the application forward with clarity and care."
+                            ? "告诉我们您的目的地，我们会协助您理清签证材料，让申请无忧。"
+                            : "Tell us your destination and we'll help you organize the visa requirements for a worry-free application."
                     }
                 </p>
 

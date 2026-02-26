@@ -1,8 +1,10 @@
 ---
+import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
 import PageHero from "../../components/PageHero.astro";
 import { type Locale } from "../../i18n/config";
 import { FAQCategories, FAQQuickLinks } from "../../components/FAQAccordion";
+import faqHeroImg from "../../assets/images/faq-hero.png";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -14,7 +16,7 @@ export function getStaticPaths() {
 
 const { lang } = Astro.params;
 const currentLang: Locale = (lang as Locale) || "en";
-const localePrefix = currentLang === "en" ? "" : `/${currentLang}`;
+const localePrefix = getLocalePrefix(currentLang);
 
 const t = {
     title: currentLang === "zh" ? "常見問題" : "Frequently Asked Questions",
@@ -44,7 +46,7 @@ const t = {
 >
     <!-- Hero Section -->
     <PageHero
-        image="/faq-hero.png"
+        image={faqHeroImg}
         title={t.title}
         subtitle={t.subtitle}
         badge={{ icon: "help_outline", text: t.badge }}

@@ -1,0 +1,43 @@
+name: Deploy to Staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: yarn.lock
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build Astro
+        run: yarn build
+        env:
+          PUBLIC_WORDPRESS_CUSTOM_API_URL: https://qualitour.ca/app/wp-json/qualitour/v1
+
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Upload files via FTP
+        run: |
+          lftp -c "
+            set ftp:ssl-allow no
+            set ftp:passive-mode true
+            open -u \${{ secrets.FTP_USERNAME }},\${{ secrets.FTP_PASSWORD }} \${{ secrets.FTP_HOST }}
+            cd public_html/staging
+            mirror -R --verbose dist/ .
+          "

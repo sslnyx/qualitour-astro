@@ -1,23 +1,43 @@
 ---
+import { getLocalePrefix, type Locale } from "../../../../i18n/config";
 import Layout from '../../../../layouts/Layout.astro';
-import { getTours, getTourDestinations, getSiteNavData } from '../../../../lib/wordpress/api';
+import { getAllTours, getTourDestinations, getSiteNavData } from '../../../../lib/wordpress/api';
 import { type Locale } from '../../../../i18n/config';
 import TourCardOptimized from '../../../../components/TourCardOptimized.astro';
 import { decodeHtml } from '../../../../lib/utils';
 
 // Generate static paths for all destinations in all locales
 export async function getStaticPaths() {
-  const locales = ['en', 'zh'] as const;
+  const [enDestinations, zhDestinations] = await Promise.all([
+    getTourDestinations('en'),
+    getTourDestinations('zh')
+  ]);
   
   const paths = [];
-  for (const locale of locales) {
-    const destinations = await getTourDestinations(locale);
-    for (const dest of destinations) {
+  
+  // Build paths for EN
+  for (const dest of enDestinations) {
+    paths.push({
+      params: { lang: undefined, slug: dest.slug },
+      props: { destination: dest }
+    });
+  }
+  
+  // Build paths for ZH
+  for (const dest of zhDestinations) {
+    paths.push({
+      params: { lang: 'zh', slug: dest.slug },
+      props: { destination: dest }
+    });
+  }
+  
+  // Add fallback paths in ZH for EN destinations without translations
+  // This prevents 404s when switching languages on an untranslated destination
+  const zhSlugs = new Set(zhDestinations.map(d => d.slug));
+  for (const dest of enDestinations) {
+    if (!zhSlugs.has(dest.slug)) {
       paths.push({
-        params: { 
-          lang: locale === 'en' ? undefined : locale,
-          slug: dest.slug 
-        },
+        params: { lang: 'zh', slug: dest.slug },
         props: { destination: dest }
       });
     }
@@ -29,11 +49,11 @@ export async function getStaticPaths() {
 const { slug, lang: langParam } = Astro.params;
 const { destination } = Astro.props;
 const lang: Locale = (langParam as Locale) || 'en';
-const localePrefix = lang === 'en' ? '' : `/${lang}`;
+const localePrefix = getLocalePrefix(lang as Locale);
 
 // Fetch all tours and available destinations
 const [allTours, navData] = await Promise.all([
-  getTours({ per_page: 1000 }, lang),
+  getAllTours(lang),
   getSiteNavData(lang),
 ]);
 

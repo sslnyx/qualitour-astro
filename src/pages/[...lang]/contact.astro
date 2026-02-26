@@ -1,8 +1,10 @@
 ---
+import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
 import PageHero from "../../components/PageHero.astro";
 import { type Locale } from "../../i18n/config";
 import { ContactForm } from "../../components/forms";
+import contactHeroImg from "../../assets/images/contact-hero.png";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -14,7 +16,7 @@ export function getStaticPaths() {
 
 const { lang } = Astro.params;
 const currentLang: Locale = (lang as Locale) || "en";
-const localePrefix = currentLang === "en" ? "" : `/${currentLang}`;
+const localePrefix = getLocalePrefix(currentLang);
 
 // Translation helpers
 const t = {
@@ -68,7 +70,7 @@ const t = {
 >
     <!-- Hero Section -->
     <PageHero
-        image="/contact-hero.png"
+        image={contactHeroImg}
         title={t.title}
         subtitle={t.subtitle}
         align="left"
