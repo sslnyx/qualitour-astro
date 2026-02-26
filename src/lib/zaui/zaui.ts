@@ -85,6 +85,10 @@ async function zapiRequest<T>(methodName: string, params: Record<string, unknown
     let attempts = 0;
     const maxAttempts = 3;
 
+    if (!ZAUI_TOKEN) {
+        console.warn('[Zaui API] WARNING: ZAUI_API_TOKEN is not set!');
+    }
+
     while (attempts < maxAttempts) {
         try {
             const response = await fetch(ZAUI_API_URL, {
@@ -107,7 +111,8 @@ async function zapiRequest<T>(methodName: string, params: Record<string, unknown
                 // Check for throttle error
                 if (message.includes('throttle limit reached') && attempts < maxAttempts - 1) {
                     attempts++;
-                    const waitTime = Math.pow(2, attempts) * 1000 + Math.random() * 1000;
+                    // Increased backoff: 10s, 30s
+                    const waitTime = attempts === 1 ? 10000 : 30000;
                     console.warn(`[Zaui API] Throttle reached. Retrying attempt ${attempts}/${maxAttempts} in ${Math.round(waitTime)}ms...`);
                     await delay(waitTime);
                     continue;
@@ -120,8 +125,8 @@ async function zapiRequest<T>(methodName: string, params: Record<string, unknown
         } catch (e: any) {
             if (attempts >= maxAttempts - 1) throw e;
             attempts++;
-            const waitTime = Math.pow(2, attempts) * 1000 + Math.random() * 1000;
-            console.warn(`[Zaui API] Request failed: ${e.message}. Retrying attempt ${attempts}...`);
+            const waitTime = attempts === 1 ? 5000 : 15000;
+            console.warn(`[Zaui API] Request failed: ${e.message}. Retrying attempt ${attempts}/${maxAttempts} in ${Math.round(waitTime)}ms...`);
             await delay(waitTime);
         }
     }

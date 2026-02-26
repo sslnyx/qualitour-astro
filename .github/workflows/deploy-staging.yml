@@ -33,7 +33,9 @@ jobs:
             ${{ runner.os }}-zaui-cache-
 
       - name: Build Astro
-        run: npm run build
+        run: |
+          npx -y tsx scripts/prefetch-zaui.js
+          npm run build
         env:
           PUBLIC_WORDPRESS_CUSTOM_API_URL: https://qualitour.ca/app/wp-json/qualitour/v1
           ZAUI_API_TOKEN: ${{ secrets.ZAUI_API_TOKEN }}
