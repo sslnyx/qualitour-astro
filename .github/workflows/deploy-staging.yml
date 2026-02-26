@@ -34,10 +34,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-api-cache-
 
-      - name: Build Astro
+      - name: Build Astro (cPanel staging)
         run: |
+          # Use cPanel config (adds base: '/staging', output: 'static')
+          cp astro.config.mjs astro.config.mjs.bak
+          cp astro.config.cpanel.mjs astro.config.mjs
+
+          # Exclude server-only files (require Cloudflare SSR adapter)
+          if [ -f "src/pages/api/webhook/zaui.ts" ]; then
+            mv src/pages/api/webhook/zaui.ts src/pages/api/webhook/zaui.ts.cpanel-exclude
+          fi
+
           npx -y tsx scripts/prefetch-zaui.js
           npm run build
+
+          # Restore original config
+          mv astro.config.mjs.bak astro.config.mjs
+          if [ -f "src/pages/api/webhook/zaui.ts.cpanel-exclude" ]; then
+            mv src/pages/api/webhook/zaui.ts.cpanel-exclude src/pages/api/webhook/zaui.ts
+          fi
+
+          # Add .htaccess for clean URLs on Apache
+          cp public/.htaccess-staging dist/.htaccess
         env:
           PUBLIC_WORDPRESS_CUSTOM_API_URL: https://qualitour.ca/app/wp-json/qualitour/v1
           ZAUI_API_TOKEN: ${{ secrets.ZAUI_API_TOKEN }}
