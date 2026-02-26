@@ -2,7 +2,7 @@
  * Zaui Webhook Endpoint
  * 
  * Handles Activity events (create, update, delete) from Zaui.
- * Triggers a Cloudflare Pages rebuild when activity data changes.
+ * Triggers a GitHub Actions workflow_dispatch to rebuild and deploy via cPanel FTP.
  * 
  * Single endpoint handles all activity event types.
  */
@@ -11,7 +11,10 @@ import type { APIRoute } from 'astro';
 
 export const prerender = false;
 
-const CF_DEPLOY_HOOK = import.meta.env.CF_DEPLOY_HOOK_URL;
+// GitHub Actions trigger config
+const GH_TOKEN = import.meta.env.GH_DEPLOY_WORKFLOW_TOKEN;
+const GH_REPO = import.meta.env.GH_REPO; // e.g. "owner/repo"
+const GH_WORKFLOW = 'deploy-cpanel-staging.yml';
 
 // Multiple webhook secrets (one per event type in Zaui)
 const WEBHOOK_SECRETS = [
@@ -67,17 +70,32 @@ export const POST: APIRoute = async ({ request }) => {
             }, 200);
         }
 
-        // Trigger Cloudflare Pages deploy
-        if (!CF_DEPLOY_HOOK) {
-            console.error('[Zaui Webhook] No deploy hook configured');
-            return jsonResponse({ error: 'No deploy hook configured' }, 500);
+        // Trigger GitHub Actions workflow_dispatch
+        if (!GH_TOKEN || !GH_REPO) {
+            console.error('[Zaui Webhook] GitHub config missing (GH_DEPLOY_WORKFLOW_TOKEN or GH_REPO)');
+            return jsonResponse({ error: 'Deploy trigger not configured' }, 500);
         }
 
-        const deployResponse = await fetch(CF_DEPLOY_HOOK, { method: 'POST' });
+        const deployResponse = await fetch(
+            `https://api.github.com/repos/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/dispatches`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${GH_TOKEN}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ref: 'main',
+                    inputs: { trigger: `zaui-webhook-${eventType}` },
+                }),
+            }
+        );
 
         if (!deployResponse.ok) {
-            console.error('[Zaui Webhook] Deploy hook failed:', deployResponse.status);
-            return jsonResponse({ error: 'Deploy hook failed' }, 502);
+            const errorText = await deployResponse.text();
+            console.error('[Zaui Webhook] GitHub dispatch failed:', deployResponse.status, errorText);
+            return jsonResponse({ error: 'Deploy trigger failed' }, 502);
         }
 
         lastDeployTime = now;
@@ -102,7 +120,7 @@ export const GET: APIRoute = async () => {
     return jsonResponse({
         status: 'ok',
         service: 'zaui-webhook',
-        hookConfigured: !!CF_DEPLOY_HOOK,
+        ghConfigured: !!(GH_TOKEN && GH_REPO),
         secretsConfigured: WEBHOOK_SECRETS.length,
     }, 200);
 };

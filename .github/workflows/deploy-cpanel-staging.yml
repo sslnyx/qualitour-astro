@@ -1,0 +1,92 @@
+name: Deploy to cPanel Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      trigger:
+        description: 'What triggered this deploy (e.g. zaui-webhook-update)'
+        required: false
+        default: 'manual'
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache API data
+        uses: actions/cache@v4
+        with:
+          path: |
+            .astro/zaui-cache
+            .astro/wordpress-cache
+          key: ${{ runner.os }}-api-cache-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-api-cache-
+
+      - name: Build Astro (cPanel staging)
+        run: |
+          # Use cPanel config (adds base: '/staging', output: 'static')
+          cp astro.config.mjs astro.config.mjs.bak
+          cp astro.config.cpanel.mjs astro.config.mjs
+
+          # Exclude server-only files (require Cloudflare SSR adapter)
+          if [ -f "src/pages/api/webhook/zaui.ts" ]; then
+            mv src/pages/api/webhook/zaui.ts src/pages/api/webhook/zaui.ts.cpanel-exclude
+          fi
+
+          npx -y tsx scripts/prefetch-zaui.js
+          npm run build
+
+          # Restore original config
+          mv astro.config.mjs.bak astro.config.mjs
+          if [ -f "src/pages/api/webhook/zaui.ts.cpanel-exclude" ]; then
+            mv src/pages/api/webhook/zaui.ts.cpanel-exclude src/pages/api/webhook/zaui.ts
+          fi
+
+          # Add .htaccess for clean URLs on Apache
+          cp public/.htaccess-staging dist/.htaccess
+        env:
+          PUBLIC_WORDPRESS_CUSTOM_API_URL: https://qualitour.ca/app/wp-json/qualitour/v1
+          ZAUI_API_TOKEN: ${{ secrets.ZAUI_API_TOKEN }}
+          ZAUI_API_URL: ${{ secrets.ZAUI_API_URL }}
+          ZAUI_ACCOUNT_ID: ${{ secrets.ZAUI_ACCOUNT_ID }}
+          ZAUI_USER_ID: ${{ secrets.ZAUI_USER_ID }}
+
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Upload files via FTP
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          lftp -c "
+            set ftp:ssl-allow no
+            set ftp:passive-mode true
+            set net:timeout 30
+            set net:max-retries 3
+            set net:reconnect-interval-base 5
+            open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST
+            cd public_html/staging
+            mirror -R --verbose --parallel=4 --ignore-time --no-perms --delete \
+              --exclude-glob .DS_Store \
+              --exclude-glob .git/ \
+              dist/ .
+          "
