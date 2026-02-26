@@ -39,6 +39,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-api-cache-
 
+      - name: Clear WordPress cache (content change)
+        if: contains(github.event.inputs.trigger || '', 'wp-')
+        run: |
+          echo "Content change detected (trigger: ${{ github.event.inputs.trigger }}), clearing WordPress cache..."
+          rm -rf .astro/wordpress-cache
+          echo "WordPress cache cleared — will fetch fresh data."
+
       - name: Build Astro (cPanel staging)
         run: |
           # Use cPanel config (adds base: '/staging', output: 'static')
