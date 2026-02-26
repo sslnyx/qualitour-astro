@@ -24,13 +24,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Cache Zaui API data
+      - name: Cache API data
         uses: actions/cache@v4
         with:
-          path: .astro/zaui-cache
-          key: ${{ runner.os }}-zaui-cache-${{ github.run_id }}
+          path: |
+            .astro/zaui-cache
+            .astro/wordpress-cache
+          key: ${{ runner.os }}-api-cache-${{ github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-zaui-cache-
+            ${{ runner.os }}-api-cache-
 
       - name: Build Astro
         run: |

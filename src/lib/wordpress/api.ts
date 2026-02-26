@@ -1,8 +1,10 @@
 /**
  * WordPress API Client for Astro SSG
  * 
- * Simplified for static site generation - all data is fetched at build time,
- * so we don't need edge caching, request deduplication, or ISR logic.
+ * Uses a persistent file-system cache in .astro/wordpress-cache/ so that:
+ * 1. Multiple Astro worker processes share the same cached data
+ * 2. Data persists across CI builds via GitHub Actions cache
+ * 3. Only truly new/changed data triggers WordPress API calls
  */
 
 import type {
@@ -17,28 +19,84 @@ import type {
 } from './types';
 import type { TransferRoute } from '../zaui/zaui';
 import { sanitizeUrls } from '../wp-url';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import * as crypto from 'node:crypto';
 
 // Default timeout for fetch requests (30 seconds for large datasets)
 const DEFAULT_FETCH_TIMEOUT_MS = 30000;
 
 // =====================
-// BUILD-TIME DEDUPLICATION CACHE
+// PERSISTENT FILE-SYSTEM CACHE
 // =====================
-// Stores Promises so concurrent calls to the same endpoint coalesce into
-// a single in-flight request. Only lives for the duration of `astro build`.
-const buildCache = new Map<string, Promise<any>>();
+const WP_CACHE_DIR = path.join(process.cwd(), '.astro', 'wordpress-cache');
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Ensure cache directory exists
+if (!fs.existsSync(WP_CACHE_DIR)) {
+    fs.mkdirSync(WP_CACHE_DIR, { recursive: true });
+}
+
+// In-memory Promise cache for same-process deduplication
+const promiseCache = new Map<string, Promise<any>>();
+
+// Stats counters (logged once at end)
+let fsHits = 0;
+let fsMisses = 0;
+let memHits = 0;
+
+function getCacheFilePath(key: string): string {
+    const hash = crypto.createHash('md5').update(key).digest('hex');
+    return path.join(WP_CACHE_DIR, `${hash}.json`);
+}
 
 function cached<T>(key: string, fn: () => Promise<T>): Promise<T> {
-    const existing = buildCache.get(key);
+    // 1. Check in-memory promise cache (same worker deduplication)
+    const existing = promiseCache.get(key);
     if (existing) {
-        console.log(`[Build Cache] HIT: ${key}`);
+        memHits++;
         return existing as Promise<T>;
     }
-    console.log(`[Build Cache] MISS: ${key}`);
-    const promise = fn();
-    buildCache.set(key, promise);
+
+    const promise = (async (): Promise<T> => {
+        // 2. Check file-system cache
+        const cacheFile = getCacheFilePath(key);
+        if (fs.existsSync(cacheFile)) {
+            try {
+                const stats = fs.statSync(cacheFile);
+                if (Date.now() - stats.mtimeMs < CACHE_TTL_MS) {
+                    fsHits++;
+                    return JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+                }
+            } catch (e) {
+                // Corrupted cache file, will re-fetch
+            }
+        }
+
+        // 3. Cache miss — fetch from API
+        fsMisses++;
+        const result = await fn();
+
+        // 4. Write to FS cache
+        try {
+            fs.writeFileSync(cacheFile, JSON.stringify(result), 'utf-8');
+        } catch (e) {
+            console.warn(`[WP Cache] Failed to write cache for: ${key}`);
+        }
+
+        return result;
+    })();
+
+    promiseCache.set(key, promise);
     return promise;
 }
+
+// Log cache stats summary at process exit
+process.on('beforeExit', () => {
+    if (fsHits + fsMisses + memHits > 0) {
+        console.log(`[WP Cache] Summary: ${fsHits} FS-hits, ${fsMisses} API-fetches, ${memHits} in-memory dedup`);
+    }
+});
 
 // Get WordPress API URL from environment (qualitour/v1 custom API)
 function getApiUrl(): string {
@@ -133,8 +191,6 @@ export function getTours(
         if (lang && lang !== 'en') url.searchParams.set('lang', lang);
         else url.searchParams.set('lang', 'en'); // Always send lang for same-slug support
 
-        console.log(`[Astro SSG] Fetching tours from: ${url.toString()}`);
-
         const response = await fetchWithTimeout(url.toString());
         const tours = await response.json();
 
@@ -163,8 +219,6 @@ export async function getAllTours(lang?: string): Promise<WPTour[]> {
             if (lang && lang !== 'en') url.searchParams.set('lang', lang);
             else url.searchParams.set('lang', 'en');
 
-            console.log(`[Astro SSG] Fetching all tours page ${page}...`);
-
             try {
                 const response = await fetchWithTimeout(url.toString());
                 const tours = await response.json();
@@ -181,7 +235,6 @@ export async function getAllTours(lang?: string): Promise<WPTour[]> {
             }
         }
 
-        console.log(`[Astro SSG] Fetched ${allTours.length} total tours`);
         return allTours;
     });
 }
@@ -195,8 +248,6 @@ export function getTourBySlug(slug: string, lang?: string): Promise<WPTour | nul
 
         // Always send lang parameter to ensure correct tour when slugs match across languages
         url.searchParams.set('lang', lang || 'en');
-
-        console.log(`[Astro SSG] Fetching tour by slug: ${url.toString()}`);
 
         const response = await fetchWithTimeout(url.toString());
         const tour = await response.json();
@@ -233,8 +284,6 @@ function fetchTerms(taxonomy: string, lang?: string): Promise<V1TermMinimal[]> {
 
         url.searchParams.set('per_page', '200');
         if (lang && lang !== 'en') url.searchParams.set('lang', lang);
-
-        console.log(`[Astro SSG] Fetching terms for ${taxonomy} (${lang || 'en'}): ${url.toString()}`);
 
         const response = await fetchWithTimeout(url.toString());
         const terms = await response.json();
@@ -344,8 +393,6 @@ export function getSiteNavData(lang?: string): Promise<SiteNavData> {
 
         if (lang && lang !== 'en') url.searchParams.set('lang', lang);
 
-        console.log(`[Astro SSG] Fetching site nav data: ${url.toString()}`);
-
         try {
             const response = await fetchWithTimeout(url.toString());
             const data = await response.json();
@@ -440,18 +487,14 @@ export function getGoogleReviews(): Promise<GoogleReview[]> {
         const customApiUrl = getCustomApiUrl();
         const url = new URL(`${customApiUrl}/google-reviews`);
 
-        console.log(`[Astro SSG] Fetching Google reviews: ${url.toString()}`);
-
         try {
             const response = await fetchWithTimeout(url.toString());
             const reviews = await response.json();
 
             if (!Array.isArray(reviews)) {
-                console.warn('[Astro SSG] Unexpected reviews response format');
                 return [];
             }
 
-            console.log(`[Astro SSG] Retrieved ${reviews.length} reviews from Google`);
             return reviews;
         } catch (error) {
             console.error('[Astro SSG] Error fetching reviews:', error);
