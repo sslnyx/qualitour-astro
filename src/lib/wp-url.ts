@@ -103,7 +103,8 @@ export function wpUrl(url: string): string {
         .replace(/https?:\/\/qualitour\.local/g, baseUrl)
         .replace(/https?:\/\/qualitour-zh\.local/g, baseUrl)
         .replace(/https?:\/\/qualitour\.isquarestudio\.com/g, baseUrl)
-        .replace(/https?:\/\/qualitour\.ca(?!\/app)/g, 'https://qualitour.ca/app');
+        // Only prefix with /app if it's NOT a wp-content/uploads path
+        .replace(/https?:\/\/qualitour\.ca(?!\/app|\/wp-content)/g, 'https://qualitour.ca/app');
 
     return processedUrl;
 }
