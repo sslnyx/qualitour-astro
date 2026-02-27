@@ -97,6 +97,16 @@ const groupSize = minPeople && maxPeople ? `${minPeople} - ${maxPeople}` : maxPe
 const categories = processedTour?.tour_terms?.categories || [];
 const destinations = processedTour?.tour_terms?.destinations || [];
 
+// Fallback for tour code if missing from meta
+let tourCode = tourMeta?.tour_code || tourMeta?.['tour-code'];
+if (!tourCode && processedTour?.goodlayers_data) {
+  const gdString = JSON.stringify(processedTour.goodlayers_data);
+  const match = gdString.match(/團號[:：]\s*([^"\\\s]+)/) || gdString.match(/Tour Code[:：]\s*([^"\\\s]+)/);
+  if (match && match[1]) {
+    tourCode = match[1].trim();
+  }
+}
+
 // Fetch and filter reviews related to this tour
 let tourReviews: any[] = [];
 try {
@@ -274,7 +284,7 @@ const tourTranslations = tour?.translations && typeof tour.translations === 'obj
                   <TourSidebarForm
                     tourId={processedTour.id}
                     tourTitle={processedTour.title.rendered.replace(/<[^>]*>/g, '')}
-                    tourCodeDetail={tourMeta?.tour_code || tourMeta?.['tour-code']}
+                    tourCodeDetail={tourCode}
                     price={price}
                     currency={currency}
                     duration={duration}
