@@ -142,13 +142,23 @@ export default function TourInquiryForm({
                 tourTitle,
                 name: formData.name,
                 email: formData.email,
-                phone: hidePhone ? '0000000000' : formData.phone,
+                phone: hidePhone ? '6045888888' : formData.phone,
                 travelDate: formData.travelDate,
                 numTravelers: formData.numTravelers,
                 message: formData.message,
             };
 
             const response = await submitTourInquiryForm(data);
+
+            // Translate common CF7 English messages to Chinese if needed
+            if (lang === 'zh' && response.message) {
+                if (response.message.includes("One or more fields have an error")) {
+                    response.message = "內容輸入有誤，請檢查後重試。";
+                } else if (response.message.includes("Thank you for your message")) {
+                    response.message = "感謝您的咨詢，我們將儘快聯絡您。";
+                }
+            }
+
             setResult(response);
 
             if (response.status === 'mail_sent') {
