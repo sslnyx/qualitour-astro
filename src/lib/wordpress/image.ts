@@ -93,6 +93,17 @@ export function getTourImageUrl(tour: WPTour): string | null {
             extractUrl(img.thumbnail);
     }
 
+    // Fallback: If featured_image_url failed but we have _embedded featured media
+    if (!rawUrl && tour._embedded?.['wp:featuredmedia']?.[0]) {
+        const media = tour._embedded['wp:featuredmedia'][0];
+        // Try to get a large/medium_large size first, fallback to original source
+        rawUrl =
+            media.media_details?.sizes?.large?.source_url ||
+            media.media_details?.sizes?.medium_large?.source_url ||
+            media.media_details?.sizes?.full?.source_url ||
+            media.source_url;
+    }
+
     return rawUrl ? wpUrl(rawUrl) : null;
 }
 

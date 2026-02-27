@@ -66,6 +66,7 @@ export interface WPTour {
         'tourmaster-tour-currency'?: string;
         guide_language?: 'en' | 'zh' | 'both';
         show_on_zh_site?: boolean;
+        show_on_en_site?: boolean;
         featured?: string | boolean;
         is_featured?: string | boolean;
         brochure?: {
@@ -91,6 +92,15 @@ export interface WPTour {
         en?: { id: number; slug: string };
         zh?: { id: number; slug: string };
     } | Record<string, never>;
+    _embedded?: {
+        'wp:featuredmedia'?: Array<{
+            id: number;
+            source_url: string;
+            media_details?: {
+                sizes?: Record<string, { source_url: string }>;
+            };
+        }>;
+    };
 }
 
 export interface WPTourCategory {
