@@ -123,7 +123,7 @@ export interface TourInquiryFormData {
     tourTitle: string;
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
     travelDate: string;
     numTravelers: number;
     message?: string;
@@ -132,7 +132,7 @@ export interface TourInquiryFormData {
 export interface VisaInquiryFormData {
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
     destination: string;
     nationality: string;
     visaType: string;
@@ -160,18 +160,23 @@ export async function submitTourInquiryForm(data: TourInquiryFormData): Promise<
         ? `Tour Inquiry: ${data.tourCode} - ${data.tourTitle}`
         : `Tour Inquiry: ${data.tourTitle}`;
 
-    return submitCF7Form(CF7_FORM_IDS.TOUR_INQUIRY, {
+    const body: Record<string, string> = {
         'tour-id': data.tourId,
         'tour-code': data.tourCode || '',
         'tour-title': data.tourTitle,
         'your-subject': subject,
         'your-name': data.name,
         'your-email': data.email,
-        'your-phone': data.phone,
         'travel-date': data.travelDate,
         'num-travelers': String(data.numTravelers),
         'your-message': data.message || '',
-    });
+    };
+
+    if (data.phone) {
+        body['your-phone'] = data.phone;
+    }
+
+    return submitCF7Form(CF7_FORM_IDS.TOUR_INQUIRY, body);
 }
 
 /**
@@ -184,7 +189,7 @@ export async function submitVisaInquiryForm(data: VisaInquiryFormData): Promise<
         'your-subject': subject,
         'your-name': data.name,
         'your-email': data.email,
-        'your-phone': data.phone,
+        'your-phone': data.phone || '',
         'destination': data.destination,
         'nationality': data.nationality,
         'visa-type': data.visaType,

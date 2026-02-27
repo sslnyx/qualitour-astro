@@ -13,7 +13,6 @@ interface TourInquiryFormProps {
     tourCode?: string;
     tourTitle: string;
     className?: string;
-    hidePhone?: boolean;
     compact?: boolean;
     onSuccess?: () => void;
     lang?: string;
@@ -35,7 +34,6 @@ const translations = {
             nameRequired: "Name is required",
             emailRequired: "Email is required",
             emailInvalid: "Please enter a valid email address",
-            phoneRequired: "Phone number is required",
             dateRequired: "Travel date is required",
             travelersRequired: "At least 1 traveler is required",
             unexpected: "Message could not be sent. Please check your connection or try emailing us directly."
@@ -56,7 +54,6 @@ const translations = {
             nameRequired: "請輸入姓名",
             emailRequired: "請輸入電子郵箱",
             emailInvalid: "請輸入有效的電子郵箱地址",
-            phoneRequired: "請輸入電話號碼",
             dateRequired: "請選擇出發日期",
             travelersRequired: "至少需要1名旅客",
             unexpected: "無法發送訊息，請檢查網絡連線，或直接透過電子郵件與我們聯絡。"
@@ -69,7 +66,6 @@ export default function TourInquiryForm({
     tourCode,
     tourTitle,
     className,
-    hidePhone = false,
     compact = false,
     onSuccess,
     lang = 'en',
@@ -78,7 +74,6 @@ export default function TourInquiryForm({
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        phone: '',
         travelDate: '',
         numTravelers: 2,
         message: '',
@@ -97,9 +92,6 @@ export default function TourInquiryForm({
             newErrors.email = t.errors.emailRequired;
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.email = t.errors.emailInvalid;
-        }
-        if (!hidePhone && !formData.phone.trim()) {
-            newErrors.phone = t.errors.phoneRequired;
         }
         if (!formData.travelDate) {
             newErrors.travelDate = t.errors.dateRequired;
@@ -142,7 +134,6 @@ export default function TourInquiryForm({
                 tourTitle,
                 name: formData.name,
                 email: formData.email,
-                phone: hidePhone ? '6045888888' : formData.phone,
                 travelDate: formData.travelDate,
                 numTravelers: formData.numTravelers,
                 message: formData.message,
@@ -165,7 +156,6 @@ export default function TourInquiryForm({
                 setFormData({
                     name: '',
                     email: '',
-                    phone: '',
                     travelDate: '',
                     numTravelers: 2,
                     message: '',
@@ -267,21 +257,6 @@ export default function TourInquiryForm({
                 />
                 {errors.email && <span className={errorTextClasses}>{errors.email}</span>}
             </div>
-
-            {!hidePhone && (
-                <div className="flex flex-col gap-1">
-                    <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder={t.phone}
-                        className={`${inputClasses} ${errors.phone ? inputErrorClasses : ''}`}
-                        disabled={isSubmitting}
-                    />
-                    {errors.phone && <span className={errorTextClasses}>{errors.phone}</span>}
-                </div>
-            )}
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
