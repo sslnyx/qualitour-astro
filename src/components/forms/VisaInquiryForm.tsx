@@ -114,7 +114,16 @@ export default function VisaInquiryForm({ className, onSuccess }: VisaInquiryFor
                 onSuccess?.();
             } else if (response.status === 'validation_failed' && response.invalid_fields) {
                 const serverErrors: Record<string, string> = {};
-                for (const field of response.invalid_fields) {
+
+                // Safely handle both Array (new plugin version) and Object (old plugin version) formats
+                const fieldsForLoop = Array.isArray(response.invalid_fields)
+                    ? response.invalid_fields
+                    : Object.entries(response.invalid_fields).map(([key, value]) => ({
+                        field: key,
+                        message: typeof value === 'string' ? value : (value as any).reason || '',
+                    }));
+
+                for (const field of fieldsForLoop) {
                     const fieldMap: Record<string, string> = {
                         'your-name': 'name',
                         'your-email': 'email',

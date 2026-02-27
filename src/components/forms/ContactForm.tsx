@@ -81,7 +81,16 @@ export default function ContactForm({ className }: ContactFormProps) {
             } else if (response.status === 'validation_failed' && response.invalid_fields) {
                 // Map server-side validation errors
                 const serverErrors: Record<string, string> = {};
-                for (const field of response.invalid_fields) {
+
+                // Safely handle both Array (new plugin version) and Object (old plugin version) formats
+                const fieldsForLoop = Array.isArray(response.invalid_fields)
+                    ? response.invalid_fields
+                    : Object.entries(response.invalid_fields).map(([key, value]) => ({
+                        field: key,
+                        message: typeof value === 'string' ? value : (value as any).reason || '',
+                    }));
+
+                for (const field of fieldsForLoop) {
                     const fieldName = field.field.replace('your-', '');
                     serverErrors[fieldName] = field.message;
                 }
@@ -106,8 +115,8 @@ export default function ContactForm({ className }: ContactFormProps) {
             {result && (
                 <div
                     className={`p-4 rounded-lg text-sm leading-relaxed ${result.status === 'mail_sent'
-                            ? 'bg-green-50 text-green-800 border border-green-200'
-                            : 'bg-red-50 text-red-800 border border-red-200'
+                        ? 'bg-green-50 text-green-800 border border-green-200'
+                        : 'bg-red-50 text-red-800 border border-red-200'
                         }`}
                 >
                     {result.message}
