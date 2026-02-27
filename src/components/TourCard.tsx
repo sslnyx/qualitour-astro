@@ -121,6 +121,7 @@ export function TourCard({
                         alt={cleanedTitle}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         loading="lazy"
+                        onError={(e) => { const t = e.currentTarget; t.onerror = null; t.src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=400&fit=crop&q=80'; }}
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-400 to-amber-300">

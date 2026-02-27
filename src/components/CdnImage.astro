@@ -56,5 +56,6 @@ const optimizedUrl = getCfTransformUrl(baseUri, {
     loading={loading}
     class={className}
     decoding="async"
+    onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=400&fit=crop&q=80';this.style.objectFit='cover';"
     {...rest}
 />

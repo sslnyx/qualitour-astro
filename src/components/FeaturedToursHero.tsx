@@ -92,6 +92,7 @@ export default function FeaturedToursHero({
                                         alt={cleanTitle(tour.title.rendered)}
                                         className="w-full h-full object-cover"
                                         loading={index === 0 ? "eager" : "lazy"}
+                                        onError={(e) => { const t = e.currentTarget; t.onerror = null; t.src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&q=80'; }}
                                     />
                                     {/* Hero Gradient Overlay */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-90" />
