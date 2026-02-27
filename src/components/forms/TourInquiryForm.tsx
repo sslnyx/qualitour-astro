@@ -38,7 +38,7 @@ const translations = {
             phoneRequired: "Phone number is required",
             dateRequired: "Travel date is required",
             travelersRequired: "At least 1 traveler is required",
-            unexpected: "An unexpected error occurred. Please try again."
+            unexpected: "Message could not be sent. Please check your connection or try emailing us directly."
         }
     },
     zh: {
@@ -59,7 +59,7 @@ const translations = {
             phoneRequired: "請輸入電話號碼",
             dateRequired: "請選擇出發日期",
             travelersRequired: "至少需要1名旅客",
-            unexpected: "發生意外錯誤，請重試。"
+            unexpected: "無法發送訊息，請檢查網絡連線，或直接透過電子郵件與我們聯絡。"
         }
     }
 };

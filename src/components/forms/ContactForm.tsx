@@ -99,7 +99,7 @@ export default function ContactForm({ className }: ContactFormProps) {
         } catch (error) {
             setResult({
                 status: 'mail_failed',
-                message: 'An unexpected error occurred. Please try again.',
+                message: 'Message could not be sent. Please check your connection or try emailing us directly.',
             });
         } finally {
             setIsSubmitting(false);
