@@ -41,7 +41,7 @@ const translations = {
     },
     zh: {
         inquiringAbout: "咨詢項目：",
-        tourCode: "行程代碼：",
+        tourCode: "團號：",
         fullName: "姓名*",
         email: "電子郵箱*",
         phone: "電話號碼*",
@@ -136,7 +136,7 @@ export default function TourInquiryForm({
                 email: formData.email,
                 travelDate: formData.travelDate,
                 numTravelers: formData.numTravelers,
-                message: formData.message,
+                message: tourCode ? `${t.tourCode} ${tourCode}\n${formData.message}` : formData.message,
             };
 
             const response = await submitTourInquiryForm(data);

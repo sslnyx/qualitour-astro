@@ -58,6 +58,7 @@ export interface WPTour {
         location?: string;
         country?: string;
         ribbon?: string;
+        'tour-code'?: string;
         'tour-price-text'?: string;
         'tour-price-discount-text'?: string;
         'tourmaster-tour-discount'?: string;

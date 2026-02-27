@@ -104,7 +104,6 @@ export default function TourSidebarForm({
                         tourId={tourId}
                         tourTitle={tourTitle}
                         tourCode={tourCodeDetail}
-                        hidePhone={true}
                         compact={true}
                         lang={lang}
                     />

@@ -4,7 +4,6 @@ import Layout from '../../../layouts/Layout.astro';
 import { getAllTours, getTourBySlug, getGoogleReviews } from '../../../lib/wordpress/api';
 import { deepOptimizeTourData } from '../../../lib/wordpress/image';
 import type { WPTour } from '../../../lib/wordpress/types';
-import { type Locale } from '../../../i18n/config';
 import { TourDetail } from '../../../components/TourDetail';
 import TourSidebarForm from '../../../components/TourSidebarForm';
 import TourReviewsSection from '../../../components/TourReviewsSection';
@@ -275,6 +274,7 @@ const tourTranslations = tour?.translations && typeof tour.translations === 'obj
                   <TourSidebarForm
                     tourId={processedTour.id}
                     tourTitle={processedTour.title.rendered.replace(/<[^>]*>/g, '')}
+                    tourCodeDetail={tourMeta?.['tour-code']}
                     price={price}
                     currency={currency}
                     duration={duration}
