@@ -108,7 +108,7 @@ export default function FeaturedToursHero({
                                         </span>
 
                                         {/* Title */}
-                                        <h2 className="text-xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
+                                        <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
                                             {cleanTitle(tour.title.rendered)}
                                         </h2>
 
