@@ -12,10 +12,11 @@ import TourInquiryModal from "./TourInquiryModal";
 
 interface MobileInquiryCTAProps {
     tour: WPTour;
+    tourCode?: string;
     lang: string;
 }
 
-export default function MobileInquiryCTA({ tour, lang }: MobileInquiryCTAProps) {
+export default function MobileInquiryCTA({ tour, tourCode, lang }: MobileInquiryCTAProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const price = tour.tour_meta?.["tour-price-text"] || tour.tour_meta?.price;
@@ -61,6 +62,7 @@ export default function MobileInquiryCTA({ tour, lang }: MobileInquiryCTAProps) 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 tour={tour}
+                tourCode={tourCode}
                 lang={lang}
             />
         </>

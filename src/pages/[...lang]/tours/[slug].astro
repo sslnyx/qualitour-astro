@@ -339,7 +339,7 @@ const tourTranslations = tour?.translations && typeof tour.translations === 'obj
         <div class="h-20 lg:hidden"></div>
 
         <!-- Mobile Fixed CTA Bar -->
-        <MobileInquiryCTA tour={processedTour} lang={lang} client:load />
+        <MobileInquiryCTA tour={processedTour} tourCode={tourCode} lang={lang} client:load />
       </div>
     </div>
   ) : (

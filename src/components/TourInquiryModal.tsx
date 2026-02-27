@@ -6,6 +6,7 @@ interface TourInquiryModalProps {
     isOpen: boolean;
     onClose: () => void;
     tour: WPTour | null;
+    tourCode?: string;
     lang: string;
 }
 
@@ -13,6 +14,7 @@ export default function TourInquiryModal({
     isOpen,
     onClose,
     tour,
+    tourCode: tourCodeProp,
     lang,
 }: TourInquiryModalProps) {
     const [isSuccess, setIsSuccess] = useState(false);
@@ -35,7 +37,7 @@ export default function TourInquiryModal({
     };
 
     const tourTitle = cleanTitle(tour.title.rendered);
-    const tourCode = tour.tour_meta?.tour_code || tour.tour_meta?.["tour-code"] || "";
+    const tourCode = tourCodeProp || tour.tour_meta?.tour_code || tour.tour_meta?.["tour-code"] || "";
 
     let price = tour.tour_meta?.["tour-price-text"];
     if (!price && tour.tour_meta?.price) {
