@@ -9,7 +9,6 @@ import Layout from '../../layouts/Layout.astro';
 import { getBusinessReviews } from '../../lib/wordpress/api';
 import SimpleReviewsGrid from '../../components/SimpleReviewsGrid';
 import type { GoogleReview } from '../../lib/wordpress/types';
-import { type Locale } from '../../i18n/config';
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -182,7 +181,7 @@ const t = {
                             Leave a Google Review
                         </a>
                         <a
-                            href="/contact"
+                            href={`${localePrefix}/contact`}
                             class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-10 py-4 rounded-full font-bold text-lg border border-white/30 hover:bg-white/30 transition-all"
                         >
                             <span class="material-icons">mail</span>

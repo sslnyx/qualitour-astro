@@ -53,7 +53,7 @@ export default function TourReviewsSection({ reviews, tourTitle, lang }: TourRev
                 {/* View All Link */}
                 <div className="text-center mt-10">
                     <a
-                        href={lang === 'zh' ? '/zh/reviews' : '/reviews'}
+                        href={`${import.meta.env.BASE_URL}${lang === 'zh' ? 'zh/' : ''}reviews`}
                         className="inline-flex items-center gap-2 px-6 py-3 bg-[#f7941e] hover:bg-[#e8850f] text-white font-medium rounded-full transition-colors"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
