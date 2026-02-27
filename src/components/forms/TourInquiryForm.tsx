@@ -14,6 +14,8 @@ interface TourInquiryFormProps {
     tourTitle: string;
     className?: string;
     compact?: boolean;
+    hideTourInfo?: boolean;
+    hideResult?: boolean;
     onSuccess?: () => void;
     lang?: string;
 }
@@ -67,6 +69,8 @@ export default function TourInquiryForm({
     tourTitle,
     className,
     compact = false,
+    hideTourInfo = false,
+    hideResult = false,
     onSuccess,
     lang = 'en',
 }: TourInquiryFormProps) {
@@ -208,15 +212,17 @@ export default function TourInquiryForm({
     return (
         <form onSubmit={handleSubmit} className={`flex flex-col ${compact ? 'gap-2.5' : 'gap-4'} ${className || ''}`}>
             {/* Tour info */}
-            <div className={`bg-orange-50 rounded-lg ${compact ? 'p-2' : 'p-3'} border border-orange-100`}>
-                <span className="text-xs text-gray-600">{t.inquiringAbout}</span>
-                <div className={`font-semibold text-gray-900 ${compact ? 'text-xs' : 'text-sm'}`}>{tourTitle}</div>
-                {tourCode && (
-                    <span className="text-xs text-orange-600">{t.tourCode} {tourCode}</span>
-                )}
-            </div>
+            {!hideTourInfo && (
+                <div className={`bg-orange-50 rounded-lg ${compact ? 'p-2' : 'p-3'} border border-orange-100`}>
+                    <span className="text-xs text-gray-600">{t.inquiringAbout}</span>
+                    <div className={`font-semibold text-gray-900 ${compact ? 'text-xs' : 'text-sm'}`}>{tourTitle}</div>
+                    {tourCode && (
+                        <span className="text-xs text-orange-600">{t.tourCode} {tourCode}</span>
+                    )}
+                </div>
+            )}
 
-            {result && (
+            {!hideResult && result && (
                 <div
                     className={`p-4 rounded-lg text-sm ${result.status === 'mail_sent'
                         ? 'bg-green-50 text-green-800 border border-green-200'
