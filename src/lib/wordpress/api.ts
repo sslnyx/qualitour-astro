@@ -551,3 +551,80 @@ export async function getBusinessReviews(): Promise<PlaceDetails | null> {
     };
 }
 
+// =====================
+// COMPANY INFO
+// =====================
+
+export interface CompanyInfo {
+    company_name: string;
+    phone: string;
+    phone_raw: string;
+    email: string;
+    bc_reg: string;
+    address: {
+        street: string;
+        city: string;
+        province: string;
+        postal: string;
+        country: string;
+    };
+    google_maps_url: string;
+    hours: string;
+    hours_zh: string;
+    social: {
+        facebook: string;
+        instagram: string;
+        youtube: string;
+        xiaohongshu: string;
+        whatsapp: string;
+        wechat: string;
+    };
+}
+
+const COMPANY_INFO_DEFAULTS: CompanyInfo = {
+    company_name: 'Qualitour Holiday Inc.',
+    phone: '(778) 945-6000',
+    phone_raw: '+17789456000',
+    email: 'info@qualitour.ca',
+    bc_reg: '62469',
+    address: {
+        street: '8283 Granville St',
+        city: 'Vancouver',
+        province: 'BC',
+        postal: 'V6P 4Z6',
+        country: 'Canada',
+    },
+    google_maps_url: '',
+    hours: 'Mon-Fri from 9am to 6pm PST',
+    hours_zh: '週一至週五 9am-6pm PST',
+    social: {
+        facebook: 'https://www.facebook.com/profile.php?id=61571902435431',
+        instagram: 'https://www.instagram.com/qualitour',
+        youtube: 'https://www.youtube.com/@qualitour',
+        xiaohongshu: 'https://www.xiaohongshu.com/user/profile/879334972',
+        whatsapp: '',
+        wechat: '',
+    },
+};
+
+export async function getCompanyInfo(): Promise<CompanyInfo> {
+    const apiUrl = getApiUrl();
+    try {
+        const response = await fetchWithTimeout(`${apiUrl}/company-info`);
+        if (!response.ok) {
+            console.warn(`[Company Info] API returned ${response.status}, using defaults`);
+            return COMPANY_INFO_DEFAULTS;
+        }
+        const data = await response.json();
+        // Merge with defaults so missing fields don't break the frontend
+        return {
+            ...COMPANY_INFO_DEFAULTS,
+            ...data,
+            address: { ...COMPANY_INFO_DEFAULTS.address, ...(data.address || {}) },
+            social: { ...COMPANY_INFO_DEFAULTS.social, ...(data.social || {}) },
+        };
+    } catch (e) {
+        console.warn('[Company Info] Fetch failed, using defaults:', e);
+        return COMPANY_INFO_DEFAULTS;
+    }
+}

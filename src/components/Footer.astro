@@ -3,6 +3,7 @@ import { getCurrentLocale, getLocalePrefix, type Locale } from "../i18n/config";
 import { Image } from "astro:assets";
 import consumerProtectionLogo from "../assets/Consumer-Protection-BC-Logo-licensed-by-WEB.png";
 import NewsletterForm from "./NewsletterForm";
+import { getCompanyInfo } from "../lib/wordpress/api";
 
 interface Props {
     lang?: Locale;
@@ -19,11 +20,12 @@ const wpApiUrl =
     import.meta.env.PUBLIC_WORDPRESS_API_URL ||
     import.meta.env.WORDPRESS_API_URL ||
     "https://qualitour.ca/app/wp-json/qualitour/v1";
-// Extract origin + path prefix (e.g. https://qualitour.ca/app)
 const wpJsonIndex = wpApiUrl.indexOf("/wp-json");
 const wpOrigin =
     wpJsonIndex !== -1 ? wpApiUrl.substring(0, wpJsonIndex) : wpApiUrl;
 const subscribeApiBase = `${wpOrigin}/wp-json/qualitour/v1`;
+
+const ci = await getCompanyInfo();
 ---
 
 <footer class="relative overflow-hidden">
@@ -232,26 +234,26 @@ const subscribeApiBase = `${wpOrigin}/wp-json/qualitour/v1`;
                     <ul class="space-y-3">
                         <li>
                             <a
-                                href="tel:778-945-6000"
+                                href={`tel:${ci.phone_raw}`}
                                 class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base inline-flex items-center gap-2 justify-center sm:justify-start font-semibold"
                             >
                                 <span
                                     class="material-icons text-orange-400 text-lg hidden sm:inline"
                                     >call</span
                                 >
-                                (778) 945-6000
+                                {ci.phone}
                             </a>
                         </li>
                         <li>
                             <a
-                                href="mailto:info@qualitour.ca"
+                                href={`mailto:${ci.email}`}
                                 class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base inline-flex items-center gap-2 justify-center sm:justify-start font-semibold"
                             >
                                 <span
                                     class="material-icons text-orange-400 text-lg hidden sm:inline"
                                     >mail</span
                                 >
-                                info@qualitour.ca
+                                {ci.email}
                             </a>
                         </li>
                         <li class="hidden sm:block">
@@ -263,12 +265,13 @@ const subscribeApiBase = `${wpOrigin}/wp-json/qualitour/v1`;
                                 <span
                                     class="text-white text-sm leading-relaxed text-left font-medium"
                                 >
-                                    5635 Cambie Street<br />
-                                    Vancouver, BC V5Z 3A3<br />
+                                    {ci.address.street}<br />
+                                    {ci.address.city}, {ci.address.province}
+                                    {ci.address.postal}<br />
                                     {
                                         currentLocale === "zh"
                                             ? "加拿大"
-                                            : "Canada"
+                                            : ci.address.country
                                     }
                                 </span>
                             </div>
@@ -332,7 +335,7 @@ const subscribeApiBase = `${wpOrigin}/wp-json/qualitour/v1`;
                         class="flex items-center justify-center sm:justify-start gap-4"
                     >
                         <a
-                            href="https://www.facebook.com/profile.php?id=61571902435431"
+                            href={ci.social.facebook}
                             target="_blank"
                             rel="noopener noreferrer"
                             class="w-12 h-12 bg-white/5 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10 hover:border-[#1877F2]/50 hover:bg-[#1877F2] hover:shadow-[0_0_20px_rgba(24,119,242,0.4)] transition-all duration-300 group hover:-translate-y-1"
@@ -349,7 +352,7 @@ const subscribeApiBase = `${wpOrigin}/wp-json/qualitour/v1`;
                             </svg>
                         </a>
                         <a
-                            href="https://www.instagram.com/qualitour"
+                            href={ci.social.instagram}
                             target="_blank"
                             rel="noopener noreferrer"
                             class="w-12 h-12 bg-white/5 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10 hover:border-orange-500/50 hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#e6683c] hover:to-[#bc1888] hover:shadow-[0_0_20px_rgba(230,104,60,0.4)] transition-all duration-300 group hover:-translate-y-1"
@@ -366,7 +369,7 @@ const subscribeApiBase = `${wpOrigin}/wp-json/qualitour/v1`;
                             </svg>
                         </a>
                         <a
-                            href="https://www.youtube.com/@qualitour"
+                            href={ci.social.youtube}
                             target="_blank"
                             rel="noopener noreferrer"
                             class="w-12 h-12 bg-white/5 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10 hover:border-[#FF0000]/50 hover:bg-[#FF0000] hover:shadow-[0_0_20px_rgba(255,0,0,0.4)] transition-all duration-300 group hover:-translate-y-1"
@@ -383,7 +386,7 @@ const subscribeApiBase = `${wpOrigin}/wp-json/qualitour/v1`;
                             </svg>
                         </a>
                         <a
-                            href="https://www.xiaohongshu.com/user/profile/879334972"
+                            href={ci.social.xiaohongshu}
                             target="_blank"
                             rel="noopener noreferrer"
                             class="w-12 h-12 bg-white/5 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10 hover:border-[#FF2442]/50 hover:bg-[#FF2442] hover:shadow-[0_0_20px_rgba(255,36,66,0.4)] transition-all duration-300 group hover:-translate-y-1"
@@ -454,8 +457,8 @@ const subscribeApiBase = `${wpOrigin}/wp-json/qualitour/v1`;
                 class="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-200 font-medium"
             >
                 <p class="text-center md:text-left">
-                    © <span id="current-year">{currentYear}</span> Qualitour Holiday
-                    Inc.
+                    © <span id="current-year">{currentYear}</span>
+                    {ci.company_name}
                     <span class="hidden sm:inline">
                         {
                             currentLocale === "zh"
@@ -464,7 +467,7 @@ const subscribeApiBase = `${wpOrigin}/wp-json/qualitour/v1`;
                         } |</span
                     >
                     <span class="block sm:inline mt-1 sm:mt-0"
-                        >B.C. Reg. #62469</span
+                        >B.C. Reg. #{ci.bc_reg}</span
                     >
                 </p>
 
