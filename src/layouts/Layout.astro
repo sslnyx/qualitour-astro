@@ -72,6 +72,27 @@ try {
       canonical={canonical}
       noindex={noindex}
     />
+    <script is:inline>
+      // Global broken image fallback (Capture phase to catch all img errors)
+      document.addEventListener(
+        "error",
+        function (e) {
+          if (e.target.tagName && e.target.tagName.toUpperCase() === "IMG") {
+            const fallbackUrl =
+              "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=400&fit=crop&q=80";
+            if (
+              e.target.src !== fallbackUrl &&
+              !e.target.dataset.fallbackTried
+            ) {
+              e.target.dataset.fallbackTried = "true";
+              e.target.src = fallbackUrl;
+              e.target.style.objectFit = "cover";
+            }
+          }
+        },
+        true,
+      );
+    </script>
   </head>
   <body
     class="min-h-screen flex flex-col bg-gray-900 text-gray-100 antialiased"
