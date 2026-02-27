@@ -4,7 +4,7 @@ import Layout from "../../layouts/Layout.astro";
 import PageHero from "../../components/PageHero.astro";
 import { ContactForm } from "../../components/forms";
 import contactHeroImg from "../../assets/images/contact-hero.png";
-import { getCompanyInfo } from "../../lib/wordpress/api";
+import { getCompanyInfo, formatPhone } from "../../lib/wordpress/api";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -113,10 +113,10 @@ const t = {
                                     }
                                 </p>
                                 <a
-                                    href={`tel:${ci.phone_raw}`}
+                                    href={`tel:${formatPhone(ci.phone).tel}`}
                                     class="text-xl font-semibold text-gray-800 hover:text-[#f7941e] transition-colors"
                                 >
-                                    {ci.phone}
+                                    {formatPhone(ci.phone).display}
                                 </a>
                             </div>
                         </div>

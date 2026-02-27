@@ -3,7 +3,7 @@ import { getCurrentLocale, getLocalePrefix, type Locale } from "../i18n/config";
 import { Image } from "astro:assets";
 import consumerProtectionLogo from "../assets/Consumer-Protection-BC-Logo-licensed-by-WEB.png";
 import NewsletterForm from "./NewsletterForm";
-import { getCompanyInfo } from "../lib/wordpress/api";
+import { getCompanyInfo, formatPhone } from "../lib/wordpress/api";
 
 interface Props {
     lang?: Locale;
@@ -234,14 +234,14 @@ const ci = await getCompanyInfo();
                     <ul class="space-y-3">
                         <li>
                             <a
-                                href={`tel:${ci.phone_raw}`}
+                                href={`tel:${formatPhone(ci.phone).tel}`}
                                 class="text-white hover:text-orange-400 transition-colors text-sm sm:text-base inline-flex items-center gap-2 justify-center sm:justify-start font-semibold"
                             >
                                 <span
                                     class="material-icons text-orange-400 text-lg hidden sm:inline"
                                     >call</span
                                 >
-                                {ci.phone}
+                                {formatPhone(ci.phone).display}
                             </a>
                         </li>
                         <li>

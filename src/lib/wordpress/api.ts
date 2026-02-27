@@ -558,7 +558,6 @@ export async function getBusinessReviews(): Promise<PlaceDetails | null> {
 export interface CompanyInfo {
     company_name: string;
     phone: string;
-    phone_raw: string;
     email: string;
     bc_reg: string;
     address: {
@@ -583,8 +582,7 @@ export interface CompanyInfo {
 
 const COMPANY_INFO_DEFAULTS: CompanyInfo = {
     company_name: 'Qualitour Holiday Inc.',
-    phone: '(778) 945-6000',
-    phone_raw: '+17789456000',
+    phone: '17789456000',
     email: 'info@qualitour.ca',
     bc_reg: '62469',
     address: {
@@ -627,4 +625,23 @@ export async function getCompanyInfo(): Promise<CompanyInfo> {
         console.warn('[Company Info] Fetch failed, using defaults:', e);
         return COMPANY_INFO_DEFAULTS;
     }
+}
+
+/**
+ * Format a digits-only phone number for display and tel: links.
+ * Input: '17789456000' -> Display: '(778) 945-6000', Tel: '+17789456000'
+ */
+export function formatPhone(digits: string): { display: string; tel: string } {
+    const clean = digits.replace(/\D/g, '');
+    const national = clean.startsWith('1') && clean.length === 11 ? clean.slice(1) : clean;
+    if (national.length === 10) {
+        const area = national.slice(0, 3);
+        const prefix = national.slice(3, 6);
+        const line = national.slice(6);
+        return {
+            display: `(${area}) ${prefix}-${line}`,
+            tel: `+1${national}`,
+        };
+    }
+    return { display: clean, tel: `+${clean}` };
 }
