@@ -7,6 +7,7 @@ import type { WPTour } from '../../../lib/wordpress/types';
 import { TourDetail } from '../../../components/TourDetail';
 import TourSidebarForm from '../../../components/TourSidebarForm';
 import TourReviewsSection from '../../../components/TourReviewsSection';
+import MobileInquiryCTA from '../../../components/MobileInquiryCTA';
 import { wpUrl, sanitizeUrls, getCfTransformUrl } from '../../../lib/wp-url';
 
 // Generate static paths for all tours in all locales
@@ -333,6 +334,12 @@ const tourTranslations = tour?.translations && typeof tour.translations === 'obj
             </div>
           </div>
         </section>
+
+        <!-- Mobile bottom padding so fixed CTA doesn't overlap content -->
+        <div class="h-20 lg:hidden"></div>
+
+        <!-- Mobile Fixed CTA Bar -->
+        <MobileInquiryCTA tour={processedTour} lang={lang} client:load />
       </div>
     </div>
   ) : (
