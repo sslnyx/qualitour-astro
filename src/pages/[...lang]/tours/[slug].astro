@@ -274,7 +274,7 @@ const tourTranslations = tour?.translations && typeof tour.translations === 'obj
                   <TourSidebarForm
                     tourId={processedTour.id}
                     tourTitle={processedTour.title.rendered.replace(/<[^>]*>/g, '')}
-                    tourCodeDetail={tourMeta?.['tour-code']}
+                    tourCodeDetail={tourMeta?.tour_code || tourMeta?.['tour-code']}
                     price={price}
                     currency={currency}
                     duration={duration}
