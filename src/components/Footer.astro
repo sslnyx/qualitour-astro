@@ -2,6 +2,7 @@
 import { getCurrentLocale, getLocalePrefix, type Locale } from "../i18n/config";
 import { Image } from "astro:assets";
 import consumerProtectionLogo from "../assets/Consumer-Protection-BC-Logo-licensed-by-WEB.png";
+import NewsletterForm from "./NewsletterForm";
 
 interface Props {
     lang?: Locale;
@@ -11,6 +12,18 @@ const { lang } = Astro.props;
 const currentLocale = lang || getCurrentLocale(Astro.url);
 const localePrefix = getLocalePrefix(currentLocale);
 const currentYear = new Date().getFullYear();
+
+// Compute the WP API base URL for client-side components
+const wpApiUrl =
+    import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
+    import.meta.env.PUBLIC_WORDPRESS_API_URL ||
+    import.meta.env.WORDPRESS_API_URL ||
+    "https://qualitour.ca/app/wp-json/qualitour/v1";
+// Extract origin + path prefix (e.g. https://qualitour.ca/app)
+const wpJsonIndex = wpApiUrl.indexOf("/wp-json");
+const wpOrigin =
+    wpJsonIndex !== -1 ? wpApiUrl.substring(0, wpJsonIndex) : wpApiUrl;
+const subscribeApiBase = `${wpOrigin}/wp-json/qualitour/v1`;
 ---
 
 <footer class="relative overflow-hidden">
@@ -422,18 +435,11 @@ const currentYear = new Date().getFullYear();
                         <div
                             class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto"
                         >
-                            <input
-                                type="email"
-                                placeholder={currentLocale === "zh"
-                                    ? "輸入您的郵箱"
-                                    : "Enter your email"}
-                                class="px-5 py-3 bg-gray-900/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all w-full sm:w-72"
+                            <NewsletterForm
+                                lang={currentLocale}
+                                apiBase={subscribeApiBase}
+                                client:visible
                             />
-                            <button
-                                class="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-orange-500/25"
-                            >
-                                {currentLocale === "zh" ? "訂閱" : "Subscribe"}
-                            </button>
                         </div>
                     </div>
                 </div>
