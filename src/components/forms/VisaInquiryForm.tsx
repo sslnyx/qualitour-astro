@@ -9,11 +9,11 @@ import { useState } from 'react';
 import { submitVisaInquiryForm, type VisaInquiryFormData, type CF7Response } from '../../lib/contact-form';
 
 const VISA_TYPES = [
-    { value: 'Tourist Visa', label: 'Tourist Visa' },
-    { value: 'Business Visa', label: 'Business Visa' },
-    { value: 'Work Visa', label: 'Work Visa' },
-    { value: 'Student Visa', label: 'Student Visa' },
-    { value: 'Transit Visa', label: 'Transit Visa' },
+    { value: 'Tourist Visa (L)', label: 'Tourist Visa (L)' },
+    { value: 'Business Visa (M)', label: 'Business Visa (M)' },
+    { value: 'Work Visa (Z)', label: 'Work Visa (Z)' },
+    { value: 'Student Visa (X)', label: 'Student Visa (X)' },
+    { value: 'Transit Visa (G)', label: 'Transit Visa (G)' },
     { value: 'Other', label: 'Other' },
 ];
 
