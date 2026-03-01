@@ -140,7 +140,7 @@ export default function TourInquiryForm({
                 email: formData.email,
                 travelDate: formData.travelDate,
                 numTravelers: formData.numTravelers,
-                message: tourCode ? `${t.tourCode} ${tourCode}\n${formData.message}` : formData.message,
+                message: formData.message,
             };
 
             const response = await submitTourInquiryForm(data);
