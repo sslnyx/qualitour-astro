@@ -257,6 +257,7 @@ export default function VisaInquiryForm({ className, onSuccess }: VisaInquiryFor
                     name="travelDate"
                     value={formData.travelDate}
                     onChange={handleChange}
+                    onClick={(e) => (e.target as any).showPicker?.()}
                     className={inputClasses}
                     disabled={isSubmitting}
                 />

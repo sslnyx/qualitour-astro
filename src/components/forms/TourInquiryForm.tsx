@@ -272,6 +272,7 @@ export default function TourInquiryForm({
                         name="travelDate"
                         value={formData.travelDate}
                         onChange={handleChange}
+                        onClick={(e) => (e.target as any).showPicker?.()}
                         min={today}
                         className={`${inputClasses} ${errors.travelDate ? inputErrorClasses : ''}`}
                         disabled={isSubmitting}
