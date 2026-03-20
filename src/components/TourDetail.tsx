@@ -241,7 +241,9 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
             section.items?.forEach((item: any) => {
                 if (item.type === 'gallery' && item.value?.gallery) {
                     item.value.gallery.forEach((img: any) => {
-                        if (img.url) photoList.push(getCfTransformUrl(wpUrl(img.url), { width: 1600, height: 1200, format: 'webp' }));
+                        // GoodLayers gallery uses 'thumbnail' property
+                        const imgUrl = img.thumbnail || img.url;
+                        if (imgUrl) photoList.push(getCfTransformUrl(wpUrl(imgUrl), { width: 1600, height: 1200, format: 'webp' }));
                         else if (typeof img === 'string') photoList.push(getCfTransformUrl(wpUrl(img), { width: 1600, height: 1200, format: 'webp' }));
                     });
                 }
@@ -442,6 +444,12 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                                 src={block.content.url}
                                                 alt={block.content.alt}
                                                 className="w-full h-auto block"
+                                                data-original-src={block.content.url}
+                                                onError={(e) => {
+                                                    console.error('Image failed to load:', block.content.url);
+                                                    // Prevent infinite fallback loop
+                                                    e.currentTarget.dataset.fallbackTried = 'true';
+                                                }}
                                             />
                                         </div>
                                     );

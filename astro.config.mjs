@@ -1,6 +1,5 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import cloudflare from '@astrojs/cloudflare';
@@ -9,25 +8,34 @@ import cloudflare from '@astrojs/cloudflare';
 export default defineConfig({
   // Image optimization for remote images
   image: {
+    // Service configuration
+    service: {
+      entrypoint: '/api/image',
+    },
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '**.googleusercontent.com', // For Google profile images
       },
       {
-        // Local WordPress development
         protocol: 'http',
         hostname: 'qualitour.local',
       },
       {
-        // Production WordPress (isquarestudio staging/subdomain)
         protocol: 'https',
         hostname: '**.isquarestudio.com',
       },
       {
-        // Real Production WordPress
         protocol: 'https',
         hostname: '**.qualitour.ca',
+      },
+      {
+        protocol: 'https',
+        hostname: 'qualitour.ca',
+      },
+      {
+        protocol: 'https',
+        hostname: 'qualitour-assets.isquarestudio.com',
       },
     ],
   },

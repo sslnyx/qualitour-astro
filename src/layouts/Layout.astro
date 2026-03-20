@@ -78,6 +78,11 @@ try {
         "error",
         function (e) {
           if (e.target.tagName && e.target.tagName.toUpperCase() === "IMG") {
+            // Skip images that have debugging enabled
+            if (e.target.dataset.originalSrc) {
+              console.warn("Image failed to load:", e.target.src);
+              return;
+            }
             const fallbackUrl =
               "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=400&fit=crop&q=80";
             if (
