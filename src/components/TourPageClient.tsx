@@ -52,9 +52,10 @@ export default function TourPageClient({ slug, lang, localePrefix }: TourPageCli
 
       try {
         const apiBase = getApiBase(lang);
+        const enApiBase = getApiBase("en");
         const [tourRes, reviewsRes] = await Promise.all([
           fetch(`${apiBase}/tours/slug/${encodeURIComponent(slug)}?lang=${lang}`),
-          fetch(`${apiBase}/google-reviews`).catch(() => null),
+          fetch(`${enApiBase}/google-reviews`).catch(() => null),
         ]);
 
         if (!tourRes.ok) {
