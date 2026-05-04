@@ -22,9 +22,15 @@ interface TourPageClientProps {
   localePrefix: string;
 }
 
-const API_BASE =
-  (typeof import.meta !== "undefined" && import.meta.env?.PUBLIC_WORDPRESS_CUSTOM_API_URL) ||
-  "https://qualitour.ca/wp-json/qualitour/v1";
+function getApiBase(lang: string): string {
+  const base =
+    (typeof import.meta !== "undefined" && import.meta.env?.PUBLIC_WORDPRESS_CUSTOM_API_URL) ||
+    "https://qualitour.ca/wp-json/qualitour/v1";
+  if (lang === "zh" && !base.includes("/zh/")) {
+    return base.replace("qualitour.ca/wp-json", "qualitour.ca/zh/wp-json");
+  }
+  return base;
+}
 
 const tLoading = {
   en: { loading: "Loading tour...", error: "Error Loading Tour", back: "Back to Tours" },
@@ -45,9 +51,10 @@ export default function TourPageClient({ slug, lang, localePrefix }: TourPageCli
       setError(null);
 
       try {
+        const apiBase = getApiBase(lang);
         const [tourRes, reviewsRes] = await Promise.all([
-          fetch(`${API_BASE}/tours/slug/${encodeURIComponent(slug)}?lang=${lang}`),
-          fetch(`${API_BASE}/google-reviews`).catch(() => null),
+          fetch(`${apiBase}/tours/slug/${encodeURIComponent(slug)}?lang=${lang}`),
+          fetch(`${apiBase}/google-reviews`).catch(() => null),
         ]);
 
         if (!tourRes.ok) {
