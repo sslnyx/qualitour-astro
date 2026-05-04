@@ -1,350 +1,38 @@
 ---
 import { getLocalePrefix, type Locale } from "../../../i18n/config";
 import Layout from '../../../layouts/Layout.astro';
-import { getAllTours, getTourBySlug, getGoogleReviews } from '../../../lib/wordpress/api';
-import { deepOptimizeTourData } from '../../../lib/wordpress/image';
-import type { WPTour } from '../../../lib/wordpress/types';
-import { TourDetail } from '../../../components/TourDetail';
-import TourSidebarForm from '../../../components/TourSidebarForm';
-import TourReviewsSection from '../../../components/TourReviewsSection';
-import MobileInquiryCTA from '../../../components/MobileInquiryCTA';
-import { wpUrl, sanitizeUrls, getCfTransformUrl } from '../../../lib/wp-url';
+import TourPageClient from '../../../components/TourPageClient';
+import { getAllTours } from '../../../lib/wordpress/api';
 
-// Generate static paths for all tours in all locales
+// Generate static paths for all tours (lightweight: only fetches slug list)
 export async function getStaticPaths() {
   const locales = ['en', 'zh'] as const;
-  
   const paths = [];
-  
-  // Fetch tours for each locale separately to get locale-specific slugs
+
   for (const locale of locales) {
     const tours = await getAllTours(locale);
-    
     for (const tour of tours) {
-      // Decode the slug so it matches the browser's decoded URL format
-      const decodedSlug = decodeURIComponent(tour.slug);
       paths.push({
-        params: { 
+        params: {
           lang: locale === 'en' ? undefined : locale,
-          slug: decodedSlug 
+          slug: decodeURIComponent(tour.slug),
         },
-        props: { tourSlug: tour.slug, tourLang: locale }
       });
     }
   }
-  
+
   return paths;
 }
 
-// Get the tour data
 const { slug, lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || 'en';
 const localePrefix = getLocalePrefix(lang as Locale);
-
-// Fetch tour data
-const tourData = await getTourBySlug(slug as string, lang);
-
-// Redirect if tour not found
-if (!tourData) {
-  return Astro.redirect(`${localePrefix}/tours`);
-}
-
-const tour = tourData;
-let error: string | null = null;
-
-// Extract meta info - handle featured_image_url properly (can be string or object)
-function getRawImageUrl(img: any): string | undefined {
-  if (!img) return undefined;
-  if (typeof img === 'string') return wpUrl(img);
-  if (typeof img === 'object') {
-    const url = img.full?.url || img.full || img.large || img.medium;
-    return url ? wpUrl(url) : undefined;
-  }
-  return undefined;
-}
-
-let optimizedHeroUrl: string | undefined;
-let processedTour: WPTour | null = null;
-
-if (tour) {
-  optimizedHeroUrl = getRawImageUrl(tour.featured_image_url);
-
-  if (optimizedHeroUrl) {
-    optimizedHeroUrl = getCfTransformUrl(optimizedHeroUrl, {
-      width: 1920,
-      height: 1080,
-      format: "webp",
-      quality: 80,
-    });
-  }
-
-  // Optimize the entire tour data structure including Goodlayers content
-  processedTour = await deepOptimizeTourData(tour);
-}
-
-// If processedTour is null here, it means tour was null, and we should have redirected or shown an error.
-// For type safety in the rest of the component, we can assume processedTour is WPTour if we reach here without error.
-// However, the JSX handles the `error` state, so we'll keep `processedTour` as potentially null for now.
-
-const tourMeta = processedTour?.tour_meta;
-const price = tourMeta?.['tour-price-text'] || tourMeta?.price;
-const currency = tourMeta?.['tourmaster-tour-currency'];
-const duration = tourMeta?.duration_text || tourMeta?.duration;
-const location = tourMeta?.location;
-const country = tourMeta?.country;
-const minPeople = processedTour?.tour_meta?.min_people;
-const maxPeople = processedTour?.tour_meta?.max_people;
-const groupSize = minPeople && maxPeople ? `${minPeople} - ${maxPeople}` : maxPeople || minPeople;
-const categories = processedTour?.tour_terms?.categories || [];
-const destinations = processedTour?.tour_terms?.destinations || [];
-
-// Fallback for tour code if missing from meta
-let tourCode = tourMeta?.tour_code || tourMeta?.['tour-code'];
-if (!tourCode && processedTour?.goodlayers_data) {
-  const gdString = JSON.stringify(processedTour.goodlayers_data);
-  const match = gdString.match(/團號[:：]\s*([^"\\\s]+)/) || gdString.match(/Tour Code[:：]\s*([^"\\\s]+)/);
-  if (match && match[1]) {
-    tourCode = match[1].trim();
-  }
-}
-
-// Fetch and filter reviews related to this tour
-let tourReviews: any[] = [];
-try {
-  const allReviews = await getGoogleReviews();
-  
-  if (processedTour && allReviews && Array.isArray(allReviews)) {
-    tourReviews = allReviews.filter(review => {
-      const rTours = review.related_tours;
-      if (!rTours) return false;
-      if (Array.isArray(rTours)) return rTours.includes(processedTour.id);
-      return rTours === processedTour.id;
-    });
-  }
-
-  // If no relevant reviews found, show some generic high-quality reviews
-  if (tourReviews.length < 3 && allReviews) {
-    const genericReviews = allReviews
-      .filter((r: any) => r.rating >= 5 && r.text && r.text.length > 100)
-      .slice(0, 6 - tourReviews.length);
-    tourReviews = [...tourReviews, ...genericReviews].slice(0, 6);
-  }
-} catch (e) {
-  console.error('Failed to fetch reviews for tour:', e);
-}
-
-// Prepare translations for language switcher
-const tourTranslations = tour?.translations && typeof tour.translations === 'object' && Object.keys(tour.translations).length > 0
-  ? tour.translations as { en?: { id: number; slug: string }; zh?: { id: number; slug: string }; }
-  : undefined;
 ---
 
-<Layout 
-  title={processedTour ? `${processedTour.title.rendered.replace(/<[^>]*>/g, '')} | Qualitour` : 'Tour Not Found'}
-  description={processedTour?.excerpt?.rendered?.replace(/<[^>]*>/g, '').substring(0, 160) || ''}
+<Layout
+  title="Tour | Qualitour"
+  description="Discover premium tours and travel experiences with Qualitour."
   lang={lang}
-  image={optimizedHeroUrl}
-  type="article"
-  canonical={`https://qualitour.isquarestudio.com${localePrefix}/tours/${slug}`}
 >
-  {error ? (
-    <!-- Error State -->
-    <div class="min-h-screen flex items-center justify-center p-4 bg-gray-50">
-      <div class="bg-white border border-red-200 rounded-2xl p-8 max-w-lg shadow-lg">
-        <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-          <span class="material-icons text-red-500 text-3xl">error_outline</span>
-        </div>
-        <h2 class="text-xl font-bold text-gray-900 text-center mb-2">{lang === 'zh' ? '載入行程錯誤' : 'Error Loading Tour'}</h2>
-        <p class="text-gray-500 text-center mb-6">{error}</p>
-        <a
-          href={`${localePrefix}/tours`}
-          class="flex items-center justify-center gap-2 w-full py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-colors"
-        >
-          <span class="material-icons">arrow_back</span>
-          {lang === 'zh' ? '返回行程' : 'Back to Tours'}
-        </a>
-      </div>
-    </div>
-  ) : processedTour ? (
-    <div class="tour-detail-page bg-white">
-      <!-- Header Spacing -->
-      {/* <div class="h-16 md:h-20"></div> */}
-
-      <div class="min-h-screen bg-gray-50">
-        <!-- Hero Section -->
-        <section class="relative min-h-[75vh] md:min-h-[85vh] overflow-hidden flex flex-col justify-end">
-          {optimizedHeroUrl && (
-            <>
-              <img
-                src={optimizedHeroUrl}
-                alt={processedTour.title.rendered.replace(/<[^>]*>/g, '')}
-                class="absolute inset-0 w-full h-full object-cover"
-                loading="eager"
-                decoding="async"
-              />
-              <!-- Darker gradient overlay for better text readability -->
-              <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-              <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent"></div>
-            </>
-          )}
-
-          <div class="relative container mx-auto px-4 pb-12 md:pb-24">
-            <div class="max-w-4xl">
-              <!-- Breadcrumbs -->
-              <nav class="flex items-center gap-2 text-white/70 text-sm mb-6 font-medium">
-                <a href={localePrefix || '/'} class="hover:text-white transition-colors">Home</a>
-                <span class="material-icons text-xs">chevron_right</span>
-                <a href={`${localePrefix}/tours`} class="hover:text-white transition-colors">Tours</a>
-                {destinations.length > 0 && (
-                  <>
-                    <span class="material-icons text-xs">chevron_right</span>
-                    <a href={`${localePrefix}/tours/destination/${destinations[0].slug}`} class="hover:text-white transition-colors">{destinations[0].name}</a>
-                  </>
-                )}
-              </nav>
-
-              <!-- Title - Smaller on mobile as requested, more spacing -->
-              <h1 
-                class="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-black text-white mb-6 max-w-4xl leading-[1.15] drop-shadow-2xl"
-                set:html={processedTour.title.rendered}
-              />
-
-              <!-- Location -->
-              {(location || country) && (
-                <div class="flex items-center gap-2 text-white/90 mb-8">
-                  <span class="material-icons text-orange-500">location_on</span>
-                  <span class="text-lg md:text-xl font-medium">{[location, country].filter(Boolean).join(', ')}</span>
-                </div>
-              )}
-
-              <!-- Quick Info Badges -->
-              <div class="flex flex-wrap gap-4">
-                {duration && (
-                  <div class="flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-                    <span class="material-icons text-orange-400">schedule</span>
-                    <span class="text-white font-bold">{duration}</span>
-                  </div>
-                )}
-                {groupSize && (
-                  <div class="flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-                    <span class="material-icons text-orange-400">groups</span>
-                    <span class="text-white font-bold">{groupSize} Guests</span>
-                  </div>
-                )}
-                {categories.length > 0 && (
-                  <div class="flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-                    <span class="material-icons text-orange-400">category</span>
-                    <span class="text-white font-bold">{categories[0].name}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Content Section -->
-        <section class="py-12 md:py-20">
-          <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
-              <!-- Main Content -->
-              <div class="lg:col-span-2 space-y-8">
-                <!-- Tour Details Card (React Island) -->
-                <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-                  <TourDetail tour={processedTour} lang={lang} client:load />
-                </div>
-
-                <!-- Trust Indicators -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <div class="p-6 bg-white rounded-2xl border border-gray-100 text-center group hover:shadow-lg transition-all">
-                    <div class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                      <span class="material-icons text-green-600">verified_user</span>
-                    </div>
-                    <h4 class="font-bold text-gray-900 mb-1">Safe Booking</h4>
-                    <p class="text-sm text-gray-500">Secure payment & instant confirmation</p>
-                  </div>
-                  <div class="p-6 bg-white rounded-2xl border border-gray-100 text-center group hover:shadow-lg transition-all">
-                    <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                      <span class="material-icons text-blue-600">support_agent</span>
-                    </div>
-                    <h4 class="font-bold text-gray-900 mb-1">24/7 Support</h4>
-                    <p class="text-sm text-gray-500">Expert assistance whenever you need</p>
-                  </div>
-                  <div class="p-6 bg-white rounded-2xl border border-gray-100 text-center group hover:shadow-lg transition-all">
-                    <div class="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                      <span class="material-icons text-orange-600">thumb_up</span>
-                    </div>
-                    <h4 class="font-bold text-gray-900 mb-1">Authentic Exp</h4>
-                    <p class="text-sm text-gray-500">Locally curated hidden gems</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Sidebar -->
-              <div class="lg:col-span-1">
-                <div class="sticky top-24">
-                  <TourSidebarForm
-                    tourId={processedTour.id}
-                    tourTitle={processedTour.title.rendered.replace(/<[^>]*>/g, '')}
-                    tourCodeDetail={tourCode}
-                    price={price}
-                    currency={currency}
-                    duration={duration}
-                    lang={lang}
-                    client:load
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Customer Reviews Section -->
-        {tourReviews.length > 0 && (
-          <TourReviewsSection 
-            reviews={tourReviews}
-            tourTitle={processedTour.title.rendered.replace(/<[^>]*>/g, '')}
-            lang={lang}
-            client:visible
-          />
-        )}
-
-        <!-- Contact CTA -->
-        <section class="py-20 bg-orange-500">
-          <div class="container mx-auto px-4 text-center">
-            <h2 class="text-3xl md:text-5xl font-black text-white mb-6">Still have questions?</h2>
-            <p class="text-white/80 text-lg mb-12 max-w-2xl mx-auto">
-              Our experts are here to help you plan the perfect journey. 
-              Contact us for custom itineraries and group inquiries.
-            </p>
-            <div class="flex flex-wrap justify-center gap-4">
-              <a
-                href={`${localePrefix}/contact?tour=${encodeURIComponent(processedTour.title.rendered.replace(/<[^>]*>/g, ''))}`}
-                class="inline-flex items-center gap-2 px-8 py-4 bg-white text-orange-500 font-bold rounded-full hover:shadow-xl hover:scale-105 transition-all"
-              >
-                <span class="material-icons">mail</span>
-                Contact Us
-              </a>
-              <a
-                href="mailto:info@qualitour.ca"
-                class="inline-flex items-center gap-2 px-8 py-4 bg-orange-600 text-white font-bold rounded-full hover:bg-orange-700 transition-all"
-              >
-                <span class="material-icons">email</span>
-                info@qualitour.ca
-              </a>
-            </div>
-          </div>
-        </section>
-
-        <!-- Mobile bottom padding so fixed CTA doesn't overlap content -->
-        <div class="h-20 lg:hidden"></div>
-
-        <!-- Mobile Fixed CTA Bar -->
-        <MobileInquiryCTA tour={processedTour} tourCode={tourCode} lang={lang} client:load />
-      </div>
-    </div>
-  ) : (
-    <div class="min-h-screen flex items-center justify-center">
-      <p class="text-gray-500">{lang === 'zh' ? '未找到行程' : 'Tour not found'}</p>
-    </div>
-  )}
+  <TourPageClient slug={slug as string} lang={lang} localePrefix={localePrefix} client:load />
 </Layout>

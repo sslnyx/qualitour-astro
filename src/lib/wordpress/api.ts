@@ -120,18 +120,22 @@ process.on('beforeExit', () => {
     }
 });
 
-// Get WordPress API URL from environment (qualitour/v1 custom API)
-function getApiUrl(): string {
-    const url = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
+function getApiUrl(lang?: string): string {
+    const baseUrl = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
         import.meta.env.PUBLIC_WORDPRESS_API_URL ||
         import.meta.env.WORDPRESS_API_URL ||
         'https://qualitour.isquarestudio.com/wp-json/qualitour/v1';
-    return url.endsWith('/') ? url.slice(0, -1) : url;
+
+    if (lang === 'zh' && !baseUrl.includes('/zh/')) {
+        const url = baseUrl.replace('qualitour.ca/wp-json', 'qualitour.ca/zh/wp-json');
+        return url.endsWith('/') ? url.slice(0, -1) : url;
+    }
+
+    return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 }
 
-// Alias for backwards compatibility
-function getCustomApiUrl(): string {
-    return getApiUrl();
+function getCustomApiUrl(lang?: string): string {
+    return getApiUrl(lang);
 }
 
 // Get auth headers for authenticated requests
@@ -196,10 +200,9 @@ export function getTours(
 ): Promise<WPTour[]> {
     const cacheKey = `tours:${lang || 'en'}:${JSON.stringify(params)}`;
     return cached(cacheKey, async () => {
-        const customApiUrl = getApiUrl();
+        const customApiUrl = getApiUrl(lang);
         const url = new URL(`${customApiUrl}/tours`);
 
-        // Default params for tour list
         url.searchParams.set('_fields', 'id,slug,title,excerpt,featured_media,tour_category,tour_tag,featured_image_url,tour_meta,tour_terms');
         url.searchParams.set('per_page', String(params.per_page || 100));
         url.searchParams.set('page', String(params.page || 1));
@@ -210,8 +213,6 @@ export function getTours(
         if (params.categories) url.searchParams.set('tour_category', params.categories.join(','));
         if (params.tags) url.searchParams.set('tour_tag', params.tags.join(','));
         if (params.destinations) url.searchParams.set('tour-destination', params.destinations.join(','));
-        if (lang && lang !== 'en') url.searchParams.set('lang', lang);
-        else url.searchParams.set('lang', 'en'); // Always send lang for same-slug support
 
         const response = await fetchWithTimeout(url.toString());
         const tours = await response.json();
@@ -228,7 +229,7 @@ export function getTours(
 export async function getAllTours(lang?: string): Promise<WPTour[]> {
     const cacheKey = `all-tours:${lang || 'en'}`;
     return cached(cacheKey, async () => {
-        const customApiUrl = getApiUrl();
+        const customApiUrl = getApiUrl(lang);
         const allTours: WPTour[] = [];
         let page = 1;
         let hasMore = true;
@@ -238,8 +239,6 @@ export async function getAllTours(lang?: string): Promise<WPTour[]> {
             url.searchParams.set('_fields', 'id,slug,title,excerpt,featured_media,tour_category,tour_tag,featured_image_url,tour_meta,tour_terms');
             url.searchParams.set('per_page', '100');
             url.searchParams.set('page', String(page));
-            if (lang && lang !== 'en') url.searchParams.set('lang', lang);
-            else url.searchParams.set('lang', 'en');
 
             try {
                 const response = await fetchWithTimeout(url.toString());
@@ -264,12 +263,8 @@ export async function getAllTours(lang?: string): Promise<WPTour[]> {
 export function getTourBySlug(slug: string, lang?: string): Promise<WPTour | null> {
     const cacheKey = `tour-slug:${lang || 'en'}:${slug}`;
     return cached(cacheKey, async () => {
-        const customApiUrl = getCustomApiUrl();
-        // Use dedicated slug endpoint which returns full tour data including goodlayers_data
+        const customApiUrl = getCustomApiUrl(lang);
         const url = new URL(`${customApiUrl}/tours/slug/${encodeURIComponent(slug)}`);
-
-        // Always send lang parameter to ensure correct tour when slugs match across languages
-        url.searchParams.set('lang', lang || 'en');
 
         const response = await fetchWithTimeout(url.toString());
         const tour = await response.json();
@@ -301,11 +296,10 @@ type V1TermMinimal = {
 function fetchTerms(taxonomy: string, lang?: string): Promise<V1TermMinimal[]> {
     const cacheKey = `terms:${lang || 'en'}:${taxonomy}`;
     return cached(cacheKey, async () => {
-        const customApiUrl = getCustomApiUrl();
+        const customApiUrl = getCustomApiUrl(lang);
         const url = new URL(`${customApiUrl}/terms/${taxonomy}`);
 
         url.searchParams.set('per_page', '200');
-        if (lang && lang !== 'en') url.searchParams.set('lang', lang);
 
         const response = await fetchWithTimeout(url.toString());
         const terms = await response.json();
@@ -410,10 +404,8 @@ export interface SiteNavData {
 export function getSiteNavData(lang?: string): Promise<SiteNavData> {
     const cacheKey = `sitenav:${lang || 'en'}`;
     return cached(cacheKey, async () => {
-        const customApiUrl = getCustomApiUrl();
+        const customApiUrl = getCustomApiUrl(lang);
         const url = new URL(`${customApiUrl}/sitenav`);
-
-        if (lang && lang !== 'en') url.searchParams.set('lang', lang);
 
         try {
             const response = await fetchWithTimeout(url.toString());

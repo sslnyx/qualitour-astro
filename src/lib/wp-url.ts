@@ -88,12 +88,12 @@ function isYouTubeThumbnail(path: string): boolean {
 
 /**
  * Convert a WordPress URL to the correct base URL for the current environment.
- * WordPress is at qualitour.ca/app so /app/wp-content path is needed.
+ * WordPress is at qualitour.ca (no /app subfolder).
  */
 export function wpUrl(url: string): string {
     if (!url) return url;
 
-    const baseUrl = 'https://qualitour.ca/app';
+    const baseUrl = 'https://qualitour.ca';
 
     if (url.includes(baseUrl)) {
         return url;
@@ -102,9 +102,7 @@ export function wpUrl(url: string): string {
     let processedUrl = url
         .replace(/https?:\/\/qualitour\.local/g, baseUrl)
         .replace(/https?:\/\/qualitour-zh\.local/g, baseUrl)
-        .replace(/https?:\/\/qualitour\.isquarestudio\.com/g, baseUrl)
-        // Only prefix with /app if it's NOT a wp-content/uploads path
-        .replace(/https?:\/\/qualitour\.ca(?!\/app|\/wp-content)/g, 'https://qualitour.ca/app');
+        .replace(/https?:\/\/qualitour\.isquarestudio\.com/g, baseUrl);
 
     return processedUrl;
 }

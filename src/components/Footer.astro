@@ -19,7 +19,7 @@ const wpApiUrl =
     import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
     import.meta.env.PUBLIC_WORDPRESS_API_URL ||
     import.meta.env.WORDPRESS_API_URL ||
-    "https://qualitour.ca/app/wp-json/qualitour/v1";
+    "https://qualitour.ca/wp-json/qualitour/v1";
 const wpJsonIndex = wpApiUrl.indexOf("/wp-json");
 const wpOrigin =
     wpJsonIndex !== -1 ? wpApiUrl.substring(0, wpJsonIndex) : wpApiUrl;

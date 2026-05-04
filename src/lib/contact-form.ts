@@ -36,7 +36,7 @@ function getWordPressOrigin(): string {
         import.meta.env.WORDPRESS_API_URL;
 
     if (apiUrl) {
-        // Extract everything before /wp-json (e.g. https://qualitour.ca/app)
+        // Extract everything before /wp-json (e.g. https://qualitour.ca)
         const wpJsonIndex = apiUrl.indexOf('/wp-json');
         if (wpJsonIndex !== -1) {
             return apiUrl.substring(0, wpJsonIndex);
@@ -55,7 +55,7 @@ function getWordPressOrigin(): string {
     }
 
     // Final production fallback
-    return 'https://qualitour.ca/app';
+    return 'https://qualitour.ca';
 }
 
 /**
