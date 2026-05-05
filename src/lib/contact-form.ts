@@ -1,18 +1,14 @@
 /**
  * Contact Form 7 REST API Integration for Astro
- * 
- * Submits form data to WordPress Contact Form 7 via REST API.
- * 
- * Form IDs:
- * - Contact Form: 1979
- * - Tour Inquiry Form: 39288
- * - China Visa Inquiry Form: 39289
+ *
+ * Form IDs are read from PUBLIC_CF7_* environment variables
+ * with hardcoded fallbacks for zero-config deployments.
  */
 
 export const CF7_FORM_IDS = {
-    CONTACT: '1979',
-    TOUR_INQUIRY: '39288',
-    VISA_INQUIRY: '39289',
+    CONTACT: import.meta.env.PUBLIC_CF7_CONTACT_FORM_ID || '1979',
+    TOUR_INQUIRY: import.meta.env.PUBLIC_CF7_TOUR_INQUIRY_FORM_ID || '98345',
+    VISA_INQUIRY: import.meta.env.PUBLIC_CF7_VISA_INQUIRY_FORM_ID || '98346',
 } as const;
 
 export type CF7FormId = typeof CF7_FORM_IDS[keyof typeof CF7_FORM_IDS];
