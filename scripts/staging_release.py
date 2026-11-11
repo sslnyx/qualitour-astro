@@ -287,9 +287,11 @@ def smoke(root):
         paths += [prefix + 'tours/' + urllib.parse.unquote(s) + '.html' for s in details['sample_slugs']]
     for path in paths:
         url_path = '' if path == 'index.html' else path.removesuffix('.html')
-        raw, _ = read_url(SITE + '/' + urllib.parse.quote(url_path))
+        raw, headers = read_url(SITE + '/' + urllib.parse.quote(url_path))
         if digest(raw) != manifest['files'][path]:
             raise ValueError('Public content hash mismatch: ' + path)
+        if 'no-cache' not in headers.get('Cache-Control', ''):
+            raise ValueError('Page must revalidate on navigation: ' + path)
     print(f'Public smoke verification passed: {len(paths)} URLs, exact content hashes')
 
 

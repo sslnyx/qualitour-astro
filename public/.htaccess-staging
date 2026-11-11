@@ -1,6 +1,14 @@
 DirectorySlash Off
 RewriteEngine On
 
+# Page URLs stay the same after a CMS rebuild. Revalidate them on navigation
+# instead of relying on a browser's heuristic freshness for old HTML.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|json)$">
+    Header set Cache-Control "no-cache, max-age=0, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
 # 1. Force trailing slash on the root if missing
 RewriteCond %{REQUEST_URI} ^/staging$
 RewriteRule ^ %{REQUEST_URI}/ [R=301,L]
