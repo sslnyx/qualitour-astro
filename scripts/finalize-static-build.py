@@ -31,6 +31,8 @@ def finalize(root, target):
     (root / 'seo-inventory.json').write_text(json.dumps({'target': target, 'pages': records}, ensure_ascii=False, indent=2))
     apache = Path('public/.htaccess-staging' if target == 'staging' else 'config/htaccess-production')
     (root / '.htaccess').write_bytes(apache.read_bytes())
+    (root / '_astro').mkdir(exist_ok=True)
+    (root / '_astro/.htaccess').write_text('<IfModule mod_headers.c>\n  Header set Cache-Control "public, max-age=31536000, immutable"\n</IfModule>\n')
     robots = 'User-agent: *\nAllow: /\nDisallow: /api/\n'
     sitemap = root / 'sitemap.xml'
     if target == 'production':

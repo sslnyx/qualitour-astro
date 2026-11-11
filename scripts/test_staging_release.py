@@ -11,6 +11,15 @@ spec.loader.exec_module(release)
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_production_manifest_refused_before_any_connection(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / release.MANIFEST).write_text(json.dumps({'schema': 1, 'target': 'production', 'files': {}}))
+            with patch.object(release, 'connect') as connection:
+                with self.assertRaisesRegex(ValueError, 'non-staging'):
+                    release.deploy(root, root / 'backup')
+                connection.assert_not_called()
+
     def test_equal_size_change_is_uploaded(self):
         self.assertEqual(release.changed_files({'a.html': 'abc'}, {'a.html': 'xyz'}), ['a.html'])
 

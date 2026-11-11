@@ -311,7 +311,24 @@ def smoke(root):
             raise ValueError('Staging indexing header is missing: ' + path)
         if 'no-cache' not in headers.get('Cache-Control', ''):
             raise ValueError('Page must revalidate on navigation: ' + path)
-    print(f'Public smoke verification passed: {len(paths)} URLs, exact content hashes')
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, request, fp, code, message, headers, newurl):
+            return None
+    opener = urllib.request.build_opener(NoRedirect)
+    for source, destination in [('index.html', ''), ('tours.html', 'tours'), ('zh.html', 'zh')]:
+        request_url = SITE + '/' + source + '?release-check=1'
+        try:
+            opener.open(request_url, timeout=30)
+            raise ValueError('Explicit .html URL did not redirect: ' + source)
+        except urllib.error.HTTPError as error:
+            target = urllib.parse.urljoin(request_url, error.headers.get('Location', ''))
+            if error.code != 301 or target != SITE + '/' + destination + '?release-check=1':
+                raise ValueError('Incorrect canonical redirect: ' + source) from error
+    asset = next(path for path in manifest['files'] if path.startswith('_astro/') and path.endswith('.js'))
+    _, headers = read_url(SITE + '/' + asset)
+    if 'immutable' not in headers.get('Cache-Control', ''):
+        raise ValueError('Hashed assets must be cached immutably')
+    print(f'Public smoke verification passed: {len(paths)} exact page hashes, noindex/cache headers, 3 canonical redirects, immutable assets')
 
 
 if __name__ == '__main__':

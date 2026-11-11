@@ -31,13 +31,18 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      DEPLOY_TARGET: staging
+      ASTRO_BUILD_TIMINGS: 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .node-version
           cache: npm
           cache-dependency-path: package-lock.json
+      - name: Pin npm version
+        run: npm install --global npm@11.17.0 --ignore-scripts --no-audit --no-fund
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
       - name: Restore image cache
@@ -49,6 +54,8 @@ jobs:
             ${{ runner.os }}-astro-images-v1-${{ hashFiles('package-lock.json') }}-
       - name: Test release safeguards
         run: npm run test:staging
+      - name: Check source types
+        run: npm run check
       - name: Build current WordPress content
         run: npm run build:cpanel
       - name: Verify catalogues, detail pages and shared transfers

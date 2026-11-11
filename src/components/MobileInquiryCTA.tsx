@@ -20,7 +20,7 @@ export default function MobileInquiryCTA({ tour, tourCode, lang }: MobileInquiry
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const price = tour.tour_meta?.["tour-price-text"] || tour.tour_meta?.price;
-    const currency = tour.tour_meta?.["tourmaster-tour-currency"] || "USD";
+    const currency = tour.tour_meta?.["tourmaster-tour-currency"] || "";
 
     const btnLabel = lang === "zh" ? "立即預訂" : "Book Now";
     const fromLabel = lang === "zh" ? "起" : "From";

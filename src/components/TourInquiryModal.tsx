@@ -43,7 +43,7 @@ export default function TourInquiryModal({
     if (!price && tour.tour_meta?.price) {
         price = tour.tour_meta.price;
     }
-    const currency = tour.tour_meta?.["tourmaster-tour-currency"] || "USD";
+    const currency = tour.tour_meta?.["tourmaster-tour-currency"] || "";
 
     const t = {
         title: lang === "zh" ? "發送咨詢" : "Send Inquiry",

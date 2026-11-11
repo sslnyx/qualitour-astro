@@ -1,4 +1,5 @@
 ---
+import { plainText } from "../lib/seo";
 import type { GoogleReview, WPTour } from "../lib/wordpress/types";
 import { getCfTransformUrl, wpUrl } from "../lib/wp-url";
 import MobileInquiryCTA from "./MobileInquiryCTA";
@@ -24,7 +25,7 @@ function getRawImageUrl(image: WPTour["featured_image_url"]): string | undefined
 }
 
 // The mobile inquiry modal only needs identity and pricing, not the full itinerary.
-const inquiryTour: WPTour = { id: tour.id, slug: tour.slug, title: tour.title, excerpt: tour.excerpt, featured_media: tour.featured_media, tour_meta: tour.tour_meta };
+const inquiryTour: WPTour = { id: tour.id, slug: tour.slug, title: { rendered: plainText(tour.title.rendered) }, excerpt: tour.excerpt, featured_media: tour.featured_media, tour_meta: tour.tour_meta };
 const meta = tour.tour_meta;
 const price = meta?.["tour-price-text"] || meta?.price;
 const currency = meta?.["tourmaster-tour-currency"];
@@ -50,7 +51,7 @@ const rawHeroUrl = getRawImageUrl(tour.featured_image_url);
 const heroUrl = rawHeroUrl
   ? getCfTransformUrl(rawHeroUrl, { width: 1920, height: 1080, format: "webp", quality: 80 })
   : undefined;
-const tourTitle = tour.title.rendered.replace(/<[^>]*>/g, "");
+const tourTitle = plainText(tour.title.rendered);
 
 const copy =
   lang === "zh"
@@ -271,6 +272,9 @@ const copy =
 </div>
 
 <noscript><style is:inline>
-  .tour-detail-tabs-content [data-tour-panel],
-  .tour-detail-tabs-content [data-itinerary-body] { display: block !important; }
+  /* Match Tailwind's base layer so its important [hidden] rule cannot override this fallback. */
+  @layer base {
+    .tour-detail-tabs-content [data-tour-panel],
+    .tour-detail-tabs-content [data-itinerary-body] { display: block !important; }
+  }
 </style></noscript>

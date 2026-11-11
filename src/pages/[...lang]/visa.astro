@@ -356,7 +356,7 @@ const requirements =
         <!-- Grid pattern overlay -->
         <div
             class="absolute inset-0 opacity-5"
-            style="background-image: url('/patterns/grid.svg'); background-size: 40px 40px;"
+            style={`background-image: url('${import.meta.env.BASE_URL.replace(/\/$/, '')}/patterns/grid.svg'); background-size: 40px 40px;`}
         >
         </div>
 

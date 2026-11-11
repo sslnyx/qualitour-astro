@@ -1,0 +1,29 @@
+{
+  "versions": {
+    "astro": "7.4.10",
+    "react_integration": "7.1.7",
+    "tailwind": "4.3.5",
+    "node": "24.19.0",
+    "npm": "11.17.0"
+  },
+  "pages": 358,
+  "tours": {
+    "en": 192,
+    "zh": 63
+  },
+  "url_and_metadata_parity_6_to_7": true,
+  "unique_tour_titles_and_descriptions": 255,
+  "automated_tests": 43,
+  "type_errors": 0,
+  "staging_noindex": true,
+  "production_build_only_sitemap_urls": 338,
+  "production_write_authorized": false,
+  "no_javascript_chrome_local": {
+    "h1_visible": true,
+    "itinerary_height": 2121,
+    "first_day_height": 205,
+    "scripts_restored": true
+  },
+  "review": "Native Claude architecture and independent code review; remediations verified",
+  "local_final_build_seconds": 42.162
+}

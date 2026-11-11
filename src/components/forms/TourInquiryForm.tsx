@@ -5,7 +5,7 @@
  * Submits to WordPress Contact Form 7.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { submitTourInquiryForm, type TourInquiryFormData, type CF7Response } from '../../lib/contact-form';
 
 interface TourInquiryFormProps {
@@ -208,7 +208,13 @@ export default function TourInquiryForm({
         }
     };
 
-    const today = new Date().toISOString().split('T')[0];
+    // Keep SSR and first hydration deterministic, then use the visitor's local day.
+    const [today, setToday] = useState<string>();
+    useEffect(() => {
+        const date = new Date();
+        date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+        setToday(date.toISOString().slice(0, 10));
+    }, []);
 
     const inputClasses = compact
         ? "w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"

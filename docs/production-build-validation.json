@@ -1,0 +1,8 @@
+{
+  "target": "production",
+  "local_build_only": true,
+  "pages": 358,
+  "indexable": 338,
+  "tour_pages": 255,
+  "staging_release_refused": true
+}
