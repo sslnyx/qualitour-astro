@@ -33,7 +33,7 @@ Existing FTP secrets are available only to the publication step. Destination is 
 
 `DEPLOY_TARGET=production npm run build` is **build-only future-root validation**. It generates root canonicals, an indexable sitemap and a separate Apache ruleset. It does not authorize or perform a production deployment. A production build cannot pass the staging release guard. The live WordPress `/tour/.../` URL inventory and redirects must be reviewed before any future root launch.
 
-The previous Cloudflare target is explicit: `build:cloudflare`, `deploy:cloudflare` and `deploy:cloudflare-staging`. These commands are not part of the cPanel release, and no Cloudflare deployment is implied by this modernization. Its webhook route is registered only by `astro.config.cloudflare.mjs` from `src/server/`.
+The previous Cloudflare target is explicit: `build:cloudflare`, `deploy:cloudflare` and `deploy:cloudflare-staging`. These commands are not part of the cPanel release. The repository also has an existing Cloudflare Pages Git integration, which can independently start a Pages build on a push; its project settings have not been changed in this release. The legacy webhook route is registered only by `astro.config.cloudflare.mjs` from `src/server/`. See the release report for the observed check and verification limits.
 
 Only `PUBLIC_*` environment variables may enter browser code. Default public API: `https://qualitour.ca/wp-json/qualitour/v1`; Chinese content comes from the separate `/zh/wp-json/qualitour/v1` endpoint. Keep credentials outside source and public output.
 

@@ -25,5 +25,59 @@
     "scripts_restored": true
   },
   "review": "Native Claude architecture and independent code review; remediations verified",
-  "local_final_build_seconds": 42.162
+  "local_final_build_seconds": 42.162,
+  "public_release": {
+    "commit": "940c8a80bf5a21485ee8f48b193823210e2e4551",
+    "pages": 358,
+    "elapsed_seconds": 5.69,
+    "failed": [],
+    "backup_verified": 361,
+    "new_paths": 243,
+    "retried_transient_dns": 2,
+    "run_url": "https://github.com/sslnyx/qualitour-astro/actions/runs/42984258410"
+  },
+  "production_readonly_after": {
+    "": {
+      "matches": true,
+      "status": 200,
+      "title": [
+        "Vancouver Small Group Tours, Transfers &amp; Activities | Qualitour"
+      ],
+      "canonical": [
+        "<link rel=\"canonical\" href=\"https://qualitour.ca/\" />"
+      ],
+      "sha256": null
+    },
+    "robots.txt": {
+      "matches": true,
+      "status": 200,
+      "title": [],
+      "canonical": [],
+      "sha256": "6ca5a35e6caf3d91e59648455cb14b31b7a13f6955c8f4fa8bbb6b4d0ce687b8"
+    },
+    "sitemap_index.xml": {
+      "matches": true,
+      "status": 200,
+      "title": [],
+      "canonical": [],
+      "sha256": "b591d982f948292f96c1ca95c7800b50e98f0d11c0b9953d32c018aeb30ad8b1"
+    },
+    "tour-sitemap.xml": {
+      "matches": true,
+      "status": 200,
+      "title": [],
+      "canonical": [],
+      "sha256": "e7be5d12e6b04a52b5c71cf30d855be290803004f7ba6fe9c08bf489bc1caaad"
+    }
+  },
+  "public_browser": {
+    "desktop": true,
+    "mobile_viewport_emulation": true,
+    "physical_device": false,
+    "javascript_disabled": true,
+    "submitted_forms": false,
+    "catalogue_filter": "yellowknife:4 tours",
+    "scripts_restored": true,
+    "viewport_reset": true
+  }
 }
