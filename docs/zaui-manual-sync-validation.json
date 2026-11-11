@@ -1,0 +1,134 @@
+{
+  "source_commit": "92576ade66e2c6108024d80f2adf4816e174de55",
+  "run_url": "https://github.com/sslnyx/qualitour-astro/actions/runs/43056598766",
+  "tests": {
+    "node": 36,
+    "python": 25,
+    "total": 61
+  },
+  "typecheck": {
+    "errors": 0,
+    "warnings": 0,
+    "hints": 48
+  },
+  "sync_seconds": 118.01,
+  "local_build_seconds": 41.771,
+  "github_job_seconds": 110,
+  "github_build_step_seconds": 66,
+  "publication_seconds": 7.25,
+  "uploaded": 6,
+  "unchanged_skipped": 620,
+  "snapshot_bytes": 42056,
+  "routes": 9,
+  "activities": 32,
+  "vehicle_entries": 34,
+  "price_date": "2026-11-12",
+  "currency": "CAD",
+  "timezone": "America/Vancouver",
+  "public": {
+    "data/private-transfers.json": {
+      "sha256": "14c2da575d9dee6899804d539a9ecb318bce5cff93b93e80822b269a71dd048c",
+      "noindex": true,
+      "content_type": "application/json",
+      "cache": "no-cache, max-age=0, must-revalidate"
+    },
+    "qualitour-release.json": {
+      "sha256": "f357f9a6f385f6f8697da51a73b3b7783f7238c519daae5cf7db7d961bdb1a48",
+      "noindex": true,
+      "content_type": "application/json",
+      "cache": "no-cache, max-age=0, must-revalidate"
+    },
+    "": {
+      "sha256": "dd9c963e720f68ff1fb35412b81f2d43ec4943dd4cc24bcd0aed7cea37903ed8",
+      "noindex": true,
+      "content_type": "text/html",
+      "cache": "no-cache, max-age=0, must-revalidate",
+      "routes": 3
+    },
+    "zh": {
+      "sha256": "a179b3ef8997fa97050efdcdac2ed4ab7ec02e8c0531bb4ba28be157bf911e6e",
+      "noindex": true,
+      "content_type": "text/html",
+      "cache": "no-cache, max-age=0, must-revalidate",
+      "routes": 3
+    },
+    "private-transfers": {
+      "sha256": "efd10683489b1db7d6c65d97032970bb03ab800a6ae6cd47c04d5aa6d96928af",
+      "noindex": true,
+      "content_type": "text/html",
+      "cache": "no-cache, max-age=0, must-revalidate",
+      "routes": 9
+    },
+    "zh/private-transfers": {
+      "sha256": "7884fd239b9698ec12ac7ff8ba4ade397f8d04e836ef6ee3127322bc70d73ba8",
+      "noindex": true,
+      "content_type": "text/html",
+      "cache": "no-cache, max-age=0, must-revalidate",
+      "routes": 9
+    }
+  },
+  "backup": {
+    "backup_originals_verified": 4,
+    "new_paths": 2,
+    "bad": []
+  },
+  "local_history_verified": [
+    ".astro/zaui-sync/history/2026-11-11T16-12-31-904Z-2b3182b05d6c.json"
+  ],
+  "production_readonly": {
+    "": {
+      "unchanged": true,
+      "status": 200,
+      "title": [
+        "Vancouver Small Group Tours, Transfers &amp; Activities | Qualitour"
+      ],
+      "canonical": [
+        "<link rel=\"canonical\" href=\"https://qualitour.ca/\" />"
+      ],
+      "sha256": null,
+      "x_robots_tag": null
+    },
+    "robots.txt": {
+      "unchanged": true,
+      "status": 200,
+      "title": [],
+      "canonical": [],
+      "sha256": "6ca5a35e6caf3d91e59648455cb14b31b7a13f6955c8f4fa8bbb6b4d0ce687b8",
+      "x_robots_tag": null
+    },
+    "sitemap_index.xml": {
+      "unchanged": true,
+      "status": 200,
+      "title": [],
+      "canonical": [],
+      "sha256": "b591d982f948292f96c1ca95c7800b50e98f0d11c0b9953d32c018aeb30ad8b1",
+      "x_robots_tag": "noindex"
+    },
+    "tour-sitemap.xml": {
+      "unchanged": true,
+      "status": 200,
+      "title": [],
+      "canonical": [],
+      "sha256": "e7be5d12e6b04a52b5c71cf30d855be290803004f7ba6fe9c08bf489bc1caaad",
+      "x_robots_tag": "noindex"
+    }
+  },
+  "browser": {
+    "desktop": "Chrome1280x900",
+    "mobile": "Chrome390x844 viewport emulation",
+    "physical_device": false,
+    "home_en_zh_cards": 3,
+    "private_en_zh_cards": 9,
+    "reverse_price_checked": true,
+    "description_image_loaded": true,
+    "booking_iframe_activity_id": "20",
+    "booking_submission": false,
+    "application_hydration_errors_observed": false,
+    "external_booking_console_messages": [
+      "Facebook Pixel ID not found",
+      "Cart stack attribute is not found"
+    ],
+    "viewport_restored": true
+  },
+  "restore_rehearsal": false
+}
