@@ -120,10 +120,19 @@ export default function TransferDetailsModal({
                                         <div className="text-sm text-gray-600 mb-1">{t.price}</div>
                                         <div className="flex items-baseline gap-2">
                                             <span className="text-4xl font-bold text-[#f7941e]">
-                                                {price}
+                                                {price === 'Contact for price'
+                                                    ? (lang === 'zh' ? '請聯絡詢價' : 'Contact for price')
+                                                    : new Intl.NumberFormat(lang === 'zh' ? 'zh-Hant' : 'en-CA', {
+                                                        style: 'currency', currency: activity.currency, currencyDisplay: 'code',
+                                                    }).format(Number(price))}
                                             </span>
                                             <span className="text-gray-500">{t.perVehicle}</span>
                                         </div>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            {lang === 'zh'
+                                                ? `參考價（${activity.priceDate}）；最新價格及供應情況請以預訂頁為準。`
+                                                : `Reference price (${activity.priceDate}). Confirm current rates and availability when booking.`}
+                                        </p>
                                     </div>
                                 )}
 

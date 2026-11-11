@@ -14,6 +14,7 @@ import urllib.request
 from html.parser import HTMLParser
 from seo_check import SeoDocument, validate_document, validate_alternates
 from pathlib import Path, PurePosixPath
+from datetime import date, datetime
 
 SITE = 'https://qualitour.ca/staging'
 MANIFEST = 'qualitour-release.json'
@@ -115,11 +116,38 @@ def validate_tour_paths(root, lang, tours):
             raise ValueError(f'Missing detail page: {lang}, tour {tour["id"]}')
 
 
+def validate_shared_transfers(snapshot, detail_routes, home_routes):
+    definitions = json.loads(Path(__file__).with_name('zaui-route-map.json').read_text())
+    routes = snapshot.get('routes', [])
+    expected_ids = {v['activityId'] for r in definitions for key in ['vehicles', 'reverseActivityIds'] for v in r[key]}
+    if snapshot.get('schemaVersion') != 1 or snapshot.get('source') != 'zaui' or len(routes) != len(definitions):
+        raise ValueError('Invalid transfer snapshot schema/routes')
+    if snapshot.get('activityCount') != len(expected_ids) or not re.fullmatch('[A-Z]{3}', snapshot.get('currency', '')):
+        raise ValueError('Invalid transfer snapshot count/currency')
+    try:
+        date.fromisoformat(snapshot['priceDate'])
+        datetime.fromisoformat(snapshot['fetchedAt'].replace('Z', '+00:00'))
+    except (ValueError, KeyError, TypeError):
+        raise ValueError('Invalid transfer snapshot dates')
+    for route, definition in zip(routes, definitions):
+        if any(route.get(key) != definition[key] for key in ['id', 'name', 'fromLocation', 'toLocation']):
+            raise ValueError('Transfer snapshot route mapping changed')
+        for key in ['vehicles', 'reverseActivityIds']:
+            vehicles = route.get(key, [])
+            if [{k: v.get(k) for k in ['seater', 'activityId']} for v in vehicles] != definition[key]:
+                raise ValueError('Transfer snapshot activity mapping changed')
+            if any(v.get('currency') != snapshot['currency'] or v.get('priceDate') != snapshot['priceDate'] for v in vehicles):
+                raise ValueError('Transfer snapshot price metadata inconsistent')
+    if detail_routes != routes or home_routes != routes[:3]:
+        raise ValueError('Shared transfer pages differ from published JSON snapshot')
+
+
 def verify(root):
     inventory = json.loads((root / 'seo-inventory.json').read_text())
     if inventory['target'] != 'staging':
         raise ValueError('Only staging output may be published by this workflow')
     summary = {}
+    transfer_snapshot = json.loads((root / 'data/private-transfers.json').read_text())
     for lang in ['en', 'zh']:
         relative = ('zh/' if lang == 'zh' else '') + 'tours.html'
         tours = island_props((root / relative).read_text(), 'ToursGrid')['tours']
@@ -138,8 +166,7 @@ def verify(root):
         routes = island_props((root / transfer).read_text(), 'TransferRoutesGrid')['routes']
         home = 'zh.html' if lang == 'zh' else 'index.html'
         home_routes = island_props((root / home).read_text(), 'TransferRoutesGrid')['routes']
-        if len(routes) < 9 or home_routes != routes[:3]:
-            raise ValueError('Shared transfer routes missing or inconsistent')
+        validate_shared_transfers(transfer_snapshot, routes, home_routes)
     files = {p.relative_to(root).as_posix(): digest(p.read_bytes()) for p in root.rglob('*')
              if p.is_file() and p.name != MANIFEST and p.name != '.DS_Store'}
     for html in root.rglob('*.html'):
@@ -149,7 +176,8 @@ def verify(root):
     for bundle in (root / '_astro').glob('*.js'):
         if any(private_key in bundle.read_text() for private_key in ['WORDPRESS_AUTH_PASS', 'ZAUI_API_TOKEN', 'GH_DEPLOY_WORKFLOW_TOKEN']):
             raise ValueError('Server-only environment key found in browser bundle: ' + bundle.name)
-    manifest = {'schema': 1, 'commit': os.environ.get('GITHUB_SHA', 'local'), 'files': files, 'tours': summary, 'target': 'staging'}
+    manifest = {'schema': 1, 'commit': os.environ.get('GITHUB_SHA', 'local'), 'files': files, 'tours': summary, 'target': 'staging',
+                'transfers': {key: transfer_snapshot[key] for key in ['fetchedAt', 'priceDate', 'currency', 'activityCount']}}
     (root / MANIFEST).write_text(json.dumps(manifest, ensure_ascii=False, sort_keys=True))
     print(json.dumps({'verified': True, 'tours': summary, 'files': len(files), 'bytes': sum(p.stat().st_size for p in root.rglob('*') if p.is_file())}))
 
@@ -298,7 +326,7 @@ def smoke(root):
     remote, _ = read_url(SITE + '/' + MANIFEST)
     if json.loads(remote) != manifest:
         raise ValueError('Public release manifest does not match this run')
-    paths = ['index.html', 'zh.html', 'tours.html', 'zh/tours.html', 'private-transfers.html', 'zh/private-transfers.html']
+    paths = ['index.html', 'zh.html', 'tours.html', 'zh/tours.html', 'private-transfers.html', 'zh/private-transfers.html', 'data/private-transfers.json']
     for lang, details in manifest['tours'].items():
         prefix = 'zh/' if lang == 'zh' else ''
         paths += [prefix + 'tours/' + urllib.parse.unquote(s) + '.html' for s in details['sample_slugs']]
@@ -311,6 +339,8 @@ def smoke(root):
             raise ValueError('Staging indexing header is missing: ' + path)
         if 'no-cache' not in headers.get('Cache-Control', ''):
             raise ValueError('Page must revalidate on navigation: ' + path)
+        if path.endswith('.json') and 'application/json' not in headers.get('Content-Type', ''):
+            raise ValueError('Transfer snapshot has an incorrect content type')
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, request, fp, code, message, headers, newurl):
             return None

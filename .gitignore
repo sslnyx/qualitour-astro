@@ -30,3 +30,7 @@ pnpm-debug.log*
 # Local Python checks and release recovery copies
 __pycache__/
 staging-backup/
+
+# Exclusive manual-sync lock and atomic temporary output
+src/data/zaui-transfer-routes.json.lock
+src/data/zaui-transfer-routes.json.*.tmp

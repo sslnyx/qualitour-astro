@@ -21,7 +21,25 @@ python3 scripts/staging_release.py verify
 npm run preview
 ```
 
-The build refreshes public WordPress data, snapshots complete tour content with at most four detail requests at a time, renders initial HTML, and validates metadata/alternate URLs. It retains only Astro's image cache between builds. No WordPress admin credential is required. Staging pages carry `noindex, follow`; their URLs and meta data still receive the full SEO validation.
+The build refreshes public WordPress data, snapshots complete tour content with at most four detail requests at a time, renders initial HTML, and validates metadata/alternate URLs. It retains only Astro's image cache between builds. No WordPress admin credential is required. Zaui transfer data comes from a committed manual snapshot, never a live build request or temporary cache. Staging pages carry `noindex, follow`; their URLs and meta data still receive the full SEO validation.
+
+## Manual Zaui transfer synchronization
+
+Use an existing local environment file containing `ZAUI_API_TOKEN`, `ZAUI_ACCOUNT_ID`, `ZAUI_USER_ID` and optionally `ZAUI_API_URL`. Credentials stay in that ignored file/process memory and are never sent to GitHub. From this worktree:
+
+```sh
+npm run sync:zaui -- --env-file '/Users/ning/Local Sites/qualitour/qualitour-astro/.env'
+# Optional explicit price date:
+npm run sync:zaui -- --env-file /path/to/existing.env --date 2026-11-12
+```
+
+Environment variables can supply the same settings without `--env-file`. Do not put token values in command arguments. The command reads the account's currency/timezone and32 configured products sequentially (2 seconds between product requests,60-second request timeout, up to3 transient-error attempts). Without `--date`, it requests tomorrow in the Zaui account's timezone. This is a reference price for that date, not an availability or final booking quote.
+
+Only a complete validated result replaces `src/data/zaui-transfer-routes.json`, using an atomic rename and an exclusive sync lock. Previous bytes are backed up under ignored `.astro/zaui-sync/history/`; raw authentication/API responses are not published. On failure the previous JSON remains intact. A leftover `src/data/zaui-transfer-routes.json.lock` after a killed process must be inspected and removed only after confirming no sync process is running.
+
+Review/commit the resulting JSON and code, then use the normal GitHub staging release. Both languages' homepages use its first3 routes; both private-transfers pages use all9. An identical static copy is published at `/staging/data/private-transfers.json`. Updating local JSON alone does not update published HTML: the build/publication step is still necessary. No schedule or webhook is enabled by this command, and an ordinary build requires no Zaui secret or API request.
+
+Product/vehicle mapping lives in `scripts/zaui-route-map.json`. A missing, unpublished or wrong-ID product stops synchronization instead of silently removing a route or accepting partial data. Review intentional catalogue removals before updating the map. Booking links/iframes remain on Zaui.
 
 ## Staging publication
 

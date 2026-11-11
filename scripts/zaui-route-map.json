@@ -1,0 +1,228 @@
+[
+  {
+    "id": "route-0",
+    "name": "YVR ↔ Whistler",
+    "fromLocation": "Vancouver Airport (YVR)",
+    "toLocation": "Whistler",
+    "vehicles": [
+      {
+        "seater": "11",
+        "activityId": "18"
+      },
+      {
+        "seater": "14",
+        "activityId": "54"
+      }
+    ],
+    "reverseActivityIds": [
+      {
+        "seater": "11",
+        "activityId": "20"
+      },
+      {
+        "seater": "14",
+        "activityId": "55"
+      }
+    ]
+  },
+  {
+    "id": "route-1",
+    "name": "Greater Vancouver ↔ Whistler",
+    "fromLocation": "Greater Vancouver",
+    "toLocation": "Whistler",
+    "vehicles": [
+      {
+        "seater": "11",
+        "activityId": "16"
+      },
+      {
+        "seater": "14",
+        "activityId": "53"
+      }
+    ],
+    "reverseActivityIds": [
+      {
+        "seater": "11",
+        "activityId": "20"
+      },
+      {
+        "seater": "14",
+        "activityId": "55"
+      }
+    ]
+  },
+  {
+    "id": "route-2",
+    "name": "YVR ↔ Greater Vancouver Zone 1",
+    "fromLocation": "Vancouver Airport (YVR)",
+    "toLocation": "Greater Vancouver (Zone 1)",
+    "vehicles": [
+      {
+        "seater": "11",
+        "activityId": "22"
+      },
+      {
+        "seater": "14",
+        "activityId": "45"
+      }
+    ],
+    "reverseActivityIds": [
+      {
+        "seater": "11",
+        "activityId": "28"
+      },
+      {
+        "seater": "14",
+        "activityId": "49"
+      }
+    ]
+  },
+  {
+    "id": "route-3",
+    "name": "YVR ↔ Greater Vancouver Zone 2",
+    "fromLocation": "Vancouver Airport (YVR)",
+    "toLocation": "Greater Vancouver (Zone 2)",
+    "vehicles": [
+      {
+        "seater": "11",
+        "activityId": "24"
+      },
+      {
+        "seater": "14",
+        "activityId": "47"
+      }
+    ],
+    "reverseActivityIds": [
+      {
+        "seater": "11",
+        "activityId": "30"
+      },
+      {
+        "seater": "14",
+        "activityId": "50"
+      }
+    ]
+  },
+  {
+    "id": "route-4",
+    "name": "YVR ↔ Greater Vancouver Zone 3",
+    "fromLocation": "Vancouver Airport (YVR)",
+    "toLocation": "Greater Vancouver (Zone 3)",
+    "vehicles": [
+      {
+        "seater": "11",
+        "activityId": "26"
+      },
+      {
+        "seater": "14",
+        "activityId": "48"
+      }
+    ],
+    "reverseActivityIds": [
+      {
+        "seater": "11",
+        "activityId": "32"
+      },
+      {
+        "seater": "14",
+        "activityId": "51"
+      }
+    ]
+  },
+  {
+    "id": "route-5",
+    "name": "Vancouver ↔ Sun Peaks",
+    "fromLocation": "Vancouver / YVR",
+    "toLocation": "Sun Peaks",
+    "vehicles": [
+      {
+        "seater": "11",
+        "activityId": "82"
+      }
+    ],
+    "reverseActivityIds": [
+      {
+        "seater": "11",
+        "activityId": "83"
+      }
+    ]
+  },
+  {
+    "id": "route-6",
+    "name": "Vancouver ↔ Seattle",
+    "fromLocation": "Vancouver",
+    "toLocation": "Seattle",
+    "vehicles": [
+      {
+        "seater": "11",
+        "activityId": "84"
+      },
+      {
+        "seater": "14",
+        "activityId": "97"
+      }
+    ],
+    "reverseActivityIds": [
+      {
+        "seater": "11",
+        "activityId": "85"
+      },
+      {
+        "seater": "14",
+        "activityId": "98"
+      }
+    ]
+  },
+  {
+    "id": "route-7",
+    "name": "YVR ↔ Canada Place Cruise",
+    "fromLocation": "Vancouver Airport (YVR)",
+    "toLocation": "Canada Place Cruise Terminal",
+    "vehicles": [
+      {
+        "seater": "11",
+        "activityId": "88"
+      },
+      {
+        "seater": "14",
+        "activityId": "96"
+      }
+    ],
+    "reverseActivityIds": [
+      {
+        "seater": "11",
+        "activityId": "89"
+      },
+      {
+        "seater": "14",
+        "activityId": "95"
+      }
+    ]
+  },
+  {
+    "id": "route-8",
+    "name": "YVR ↔ Abbotsford",
+    "fromLocation": "Vancouver Airport (YVR)",
+    "toLocation": "Abbotsford (YXX) Airport",
+    "vehicles": [
+      {
+        "seater": "11",
+        "activityId": "34"
+      },
+      {
+        "seater": "14",
+        "activityId": "56"
+      }
+    ],
+    "reverseActivityIds": [
+      {
+        "seater": "11",
+        "activityId": "36"
+      },
+      {
+        "seater": "14",
+        "activityId": "57"
+      }
+    ]
+  }
+]

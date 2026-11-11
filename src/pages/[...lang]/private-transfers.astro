@@ -39,14 +39,14 @@ try {
     console.error("Failed to fetch reviews:", e);
 }
 
-// Fetch transfer routes from Zaui API
+// Read the shared last-successful manual Zaui snapshot; no API request during builds.
 let transferRoutes: Awaited<ReturnType<typeof getPrivateTransfersWithPricing>> =
     [];
 try {
     transferRoutes = await getPrivateTransfersWithPricing();
-    console.log(`Fetched ${transferRoutes.length} transfer routes from Zaui`);
+    console.log(`Loaded ${transferRoutes.length} transfer routes from the shared snapshot`);
 } catch (e) {
-    console.error("Failed to fetch transfer routes from Zaui:", e);
+    throw new Error("The transfer snapshot is invalid; refusing an incomplete page", { cause: e });
 }
 
 // Filter transfer-related reviews with improved keywords

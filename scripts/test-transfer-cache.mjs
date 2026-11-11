@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -29,12 +29,10 @@ async function loadWithCache(value, name, worker = false) {
     }
 }
 
-test('an empty fresh cache falls back to the saved nine transfer routes without calling Zaui', async () => {
+test('committed snapshot supplies nine transfer routes without calling Zaui', async () => {
     const routes = await loadWithCache([], 'empty');
     assert.equal(routes.length, 9);
-    assert.equal(routes[0].startingPrice, '465');
-    assert.equal(routes[0].reverseStartingPrice, '435');
-    assert.equal(routes.find(r => r.toLocation === 'Seattle').reverseStartingPrice, '1050');
+    assert.equal(routes[0].vehicles[0].activityId, '18');
     assert.ok(routes.every(r => r.vehicles.length > 0));
 });
 
@@ -42,19 +40,28 @@ test('a malformed nonempty cache falls back rather than rendering invalid routes
     const routes = await loadWithCache([{}], 'invalid');
     assert.equal(routes.length, 9);
     assert.ok(routes.every(r => typeof r.fromLocation === 'string' && r.vehicles.length > 0));
-    const missingPrice = routes.find(r => r.toLocation.includes('Zone 1'));
-    assert.equal(missingPrice.startingPrice, undefined);
-    assert.ok(missingPrice.vehicles.every(v => v.price === 'Contact for price'));
 });
 
-test('a valid fresh API cache takes precedence over the historical fallback', async () => {
+test('an old filesystem cache cannot override the committed manual snapshot', async () => {
     const cached = [{ id: 'fresh', name: 'Current route', fromLocation: 'A', toLocation: 'B', imageUrl: '',
         vehicles: [{ seater: '11', activityId: '18', price: '500' }] }];
-    assert.deepEqual(await loadWithCache(cached, 'fresh'), cached);
+    const saved = JSON.parse(await readFile(new URL('../src/data/zaui-transfer-routes.json', import.meta.url), 'utf8'));
+    assert.deepEqual(await loadWithCache(cached, 'fresh'), saved.routes || saved);
 });
 
 test('the saved routes are also available without a filesystem in Workers', async () => {
     const routes = await loadWithCache([], 'worker', true);
     assert.equal(routes.length, 9);
     assert.equal(routes[0].vehicles[0].activityId, '18');
+});
+
+test('published snapshot exposes validated synchronization metadata and no raw API fields', async () => {
+    const module = await import('../src/lib/zaui/zaui.ts');
+    assert.equal(typeof module.getTransferSnapshot, 'function');
+    const snapshot = module.getTransferSnapshot();
+    assert.equal(snapshot.source, 'zaui');
+    assert.equal(snapshot.activityCount, 32);
+    assert.match(snapshot.currency, /^[A-Z]{3}$/);
+    assert.match(snapshot.priceDate, /^\d{4}-\d{2}-\d{2}$/);
+    assert.deepEqual(await module.getPrivateTransfersWithPricing(), snapshot.routes);
 });

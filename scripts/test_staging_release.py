@@ -11,6 +11,35 @@ spec.loader.exec_module(release)
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_transfer_pages_match_the_published_json_snapshot(self):
+        snapshot = self.transfer_fixture()
+        release.validate_shared_transfers(snapshot, snapshot['routes'], snapshot['routes'][:3])
+        with self.assertRaisesRegex(ValueError, 'snapshot'):
+            release.validate_shared_transfers(snapshot, snapshot['routes'], [])
+        changed = json.loads(json.dumps(snapshot['routes']))
+        changed[0]['vehicles'][0]['price'] = '99999.00'
+        with self.assertRaisesRegex(ValueError, 'snapshot'):
+            release.validate_shared_transfers(snapshot, changed, changed[:3])
+
+    def test_partial_or_undated_transfer_snapshot_stops_release(self):
+        for key, value in [('routes', []), ('activityCount', 31), ('priceDate', '2026-02-30'), ('currency', '$')]:
+            snapshot = self.transfer_fixture()
+            snapshot[key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                release.validate_shared_transfers(snapshot, snapshot['routes'], snapshot['routes'][:3])
+
+    def transfer_fixture(self):
+        definitions = json.loads(Path(__file__).with_name('zaui-route-map.json').read_text())
+        routes = []
+        for item in definitions:
+            route = dict(item, imageUrl='', currency='CAD', priceDate='2026-11-12')
+            for key in ['vehicles', 'reverseActivityIds']:
+                route[key] = [dict(vehicle, price='100.00', currency='CAD', priceDate='2026-11-12',
+                                   details={'activityName': 'Transfer', 'description': '', 'imageUrl': ''}) for vehicle in item[key]]
+            routes.append(route)
+        return {'schemaVersion': 1, 'source': 'zaui', 'fetchedAt': '2026-11-11T08:30:00Z', 'priceDate': '2026-11-12',
+                'timezone': 'America/Vancouver', 'currency': 'CAD', 'activityCount': 32, 'routes': routes}
+
     def test_production_manifest_refused_before_any_connection(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
