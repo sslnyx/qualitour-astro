@@ -5,13 +5,14 @@
   "scripts": {
     "dev": "astro dev",
     "build": "npx tsx scripts/prefetch-zaui.js && astro build && npm run check-files",
-    "build:cpanel": "mv src/pages/api src/pages/api.bak && astro build --config astro.config.cpanel.mjs; BUILD_EXIT=$?; mv src/pages/api.bak src/pages/api; exit $BUILD_EXIT",
+    "build:cpanel": "node scripts/build-cpanel.mjs",
     "check-files": "echo 'Total files in dist:' && find dist -type f | wc -l",
     "preview": "astro preview",
     "astro": "astro",
     "deploy": "npm run build && wrangler pages deploy dist",
     "deploy:staging": "npm run build && npx wrangler pages deploy dist --project-name=qualitour-astro --branch=staging",
-    "pages:dev": "wrangler pages dev dist"
+    "pages:dev": "wrangler pages dev dist",
+    "test:staging": "node --test scripts/test-transfer-cache.mjs && python3 -m unittest discover -s scripts -p \"test_staging_*.py\""
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",

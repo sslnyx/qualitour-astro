@@ -26,3 +26,7 @@ pnpm-debug.log*
 
 # Cloudflare Wrangler local state
 .wrangler/
+
+# Local Python checks and release recovery copies
+__pycache__/
+staging-backup/

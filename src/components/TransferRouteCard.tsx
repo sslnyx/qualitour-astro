@@ -35,10 +35,13 @@ export default function TransferRouteCard({
     const toLocation = isReversed ? route.fromLocation : route.toLocation;
 
     // Get the lowest price for display
-    const lowestPrice = vehicles?.reduce((min, v) => {
+    const lowestVehiclePrice = vehicles?.reduce((min, v) => {
         const price = parseFloat(v.price.replace(/[^0-9.]/g, ''));
-        return price < min ? price : min;
-    }, Infinity) || 0;
+        return Number.isFinite(price) && price > 0 && price < min ? price : min;
+    }, Infinity) ?? Infinity;
+    const referencePrice = isReversed ? route.reverseStartingPrice : route.startingPrice;
+    const usingReferencePrice = !Number.isFinite(lowestVehiclePrice) && !!referencePrice;
+    const lowestPrice = usingReferencePrice ? Number(referencePrice) : lowestVehiclePrice;
 
     const hasMultipleVehicles = vehicles && vehicles.length > 1;
     const hasReverseDirection = route.reverseActivityIds && route.reverseActivityIds.length > 0;
@@ -120,6 +123,13 @@ export default function TransferRouteCard({
                     ) : (
                         <div className="text-gray-500">{lang === 'zh' ? '请联系询价' : 'Contact for price'}</div>
                     )}
+                    {usingReferencePrice && (
+                        <p className="text-xs text-gray-500 mt-2">
+                            {lang === 'zh'
+                                ? '參考起價；最新價格及供應情況請以預訂頁為準。'
+                                : 'Reference starting price. Confirm current rates and availability when booking.'}
+                        </p>
+                    )}
                 </div>
 
                 {/* Details Button */}
@@ -142,7 +152,9 @@ export default function TransferRouteCard({
                             {vehicle.seater}{t.seater}
                             {hasMultipleVehicles && (
                                 <span className="block text-xs opacity-80">
-                                    {vehicle.price}
+                                    {vehicle.price === 'Contact for price'
+                                        ? (lang === 'zh' ? '查詢價格' : 'Check price')
+                                        : vehicle.price}
                                 </span>
                             )}
                         </button>

@@ -251,8 +251,8 @@ export async function getAllTours(lang?: string): Promise<WPTour[]> {
                     hasMore = false;
                 }
             } catch (e) {
-                console.error(`[Astro SSG] Error fetching page ${page}:`, e);
-                hasMore = false;
+                // Never publish a partial catalogue or cache an empty API failure.
+                throw new Error(`Failed to fetch ${lang || 'en'} tours page ${page}`, { cause: e });
             }
         }
 

@@ -5,6 +5,8 @@
  * Used at build time to populate transfer route cards.
  */
 
+import savedTransferRoutes from '../../data/zaui-transfer-routes.json' with { type: 'json' };
+
 // Types
 export interface ZauiActivity {
     activityId: string;
@@ -48,6 +50,9 @@ export interface TransferRoute {
     vehicles: TransferVehicle[];
     // For reverse direction
     reverseActivityIds?: TransferVehicle[];
+    // Historical route-level starting prices, not prices for individual vehicles.
+    startingPrice?: string;
+    reverseStartingPrice?: string;
 }
 
 export interface TransferVehicle {
@@ -277,6 +282,17 @@ try {
 // Static promise cache for the current process
 const promiseCache = new Map<string, Promise<any>>();
 
+function isUsableTransferRoutes(value: unknown): value is TransferRoute[] {
+    const validVehicles = (vehicles: unknown): boolean => Array.isArray(vehicles) && vehicles.length > 0 &&
+        vehicles.every(v => v && (v.seater === '11' || v.seater === '14') &&
+            typeof v.activityId === 'string' && v.activityId.length > 0 && typeof v.price === 'string');
+    return Array.isArray(value) && value.length > 0 && value.every(route => route &&
+        typeof route.id === 'string' && typeof route.name === 'string' &&
+        typeof route.fromLocation === 'string' && typeof route.toLocation === 'string' &&
+        validVehicles(route.vehicles) && (route.reverseActivityIds == null ||
+            (Array.isArray(route.reverseActivityIds) && (route.reverseActivityIds.length === 0 || validVehicles(route.reverseActivityIds)))));
+}
+
 // Helper to wait
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -299,34 +315,24 @@ export async function getPrivateTransfersWithPricing(): Promise<TransferRoute[]>
                 if (Date.now() - stats.mtimeMs < CACHE_TTL_MS) {
                     try {
                         const data = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-                        console.log('[Zaui Build Cache] HIT: transfer routes (fs)');
-                        return data;
+                        if (isUsableTransferRoutes(data)) {
+                            console.log('[Zaui Build Cache] HIT: transfer routes (fs)');
+                            return data;
+                        }
+                        console.warn('[Zaui Build Cache] Ignoring empty or invalid transfer routes cache');
                     } catch (e) {
                         console.warn('[Zaui Build Cache] Failed to read cache, fetching fresh...', e);
                     }
                 }
             }
 
-            const committedCache = path.join(process.cwd(), 'src', 'data', 'zaui-transfer-routes.json');
-            if (fs.existsSync(committedCache)) {
-                try {
-                    const data = JSON.parse(fs.readFileSync(committedCache, 'utf-8'));
-                    console.log('[Zaui Build Cache] HIT: transfer routes (committed fallback)');
-                    return data;
-                } catch (e) {
-                    console.warn('[Zaui Build Cache] Failed to read committed cache', e);
-                }
-            }
         } catch (e) { }
-    } else {
-        // Cloudflare Worker mode: try to import the pre-built JSON
-        try {
-            const cachePath = '../../../.astro/zaui-cache/transfer-routes.json';
-            const bundledData = await import(/* @vite-ignore */ cachePath);
-            return bundledData.default || bundledData;
-        } catch (e) {
-            console.warn('[Zaui Build Cache] Could not load bundled transfer routes, falling back to ZAPI', e);
-        }
+    }
+
+    // Bundle the saved data so it also works without a filesystem in Workers.
+    if (isUsableTransferRoutes(savedTransferRoutes)) {
+        console.log('[Zaui Build Cache] HIT: transfer routes (saved fallback)');
+        return savedTransferRoutes;
     }
 
     if (hasFsAccess) {
@@ -374,8 +380,10 @@ export async function getPrivateTransfersWithPricing(): Promise<TransferRoute[]>
                 if (Date.now() - stats.mtimeMs < CACHE_TTL_MS) {
                     try {
                         const data = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-                        console.log(`[Zaui Build Cache] HIT: Worker ${workerId} used cache after waiting`);
-                        return data;
+                        if (isUsableTransferRoutes(data)) {
+                            console.log(`[Zaui Build Cache] HIT: Worker ${workerId} used cache after waiting`);
+                            return data;
+                        }
                     } catch (e) {
                         // Cache is malformed, we'll loop around and try to acquire lock again if needed
                         console.warn(`[Zaui Build Cache] Worker ${workerId} failed to read cache after wait`, e);
@@ -392,6 +400,8 @@ export async function getPrivateTransfersWithPricing(): Promise<TransferRoute[]>
 
         try {
             const routes = await _fetchPrivateTransfersWithPricing();
+
+            if (!isUsableTransferRoutes(routes)) throw new Error('Zaui returned no usable transfer routes');
 
             // Save to cache
             fs.writeFileSync(CACHE_FILE, JSON.stringify(routes), 'utf-8');
@@ -441,7 +451,7 @@ async function _fetchPrivateTransfersWithPricing(): Promise<TransferRoute[]> {
             from: 'Greater Vancouver',
             to: 'Whistler',
             forward: { '11': '16', '14': '53' },
-            reverse: { '11': '16', '14': '53' }, // Same IDs, one-way only?
+            reverse: { '11': '20', '14': '55' },
         },
         {
             name: 'YVR ↔ Greater Vancouver Zone 1',
