@@ -4,20 +4,23 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "npx tsx scripts/prefetch-zaui.js && astro build && npm run check-files",
-    "build:cpanel": "node scripts/build-cpanel.mjs",
+    "build": "node scripts/build-cpanel.mjs",
+    "build:cpanel": "npm run build",
     "check-files": "echo 'Total files in dist:' && find dist -type f | wc -l",
     "preview": "astro preview",
     "astro": "astro",
-    "deploy": "npm run build && wrangler pages deploy dist",
-    "deploy:staging": "npm run build && npx wrangler pages deploy dist --project-name=qualitour-astro --branch=staging",
+    "deploy": "npm run build:cloudflare && wrangler pages deploy dist",
+    "deploy:staging": "npm run build:cloudflare && wrangler pages deploy dist --project-name=qualitour-astro --branch=staging",
     "pages:dev": "wrangler pages dev dist",
-    "test:staging": "node --test scripts/test-transfer-cache.mjs && python3 -m unittest discover -s scripts -p \"test_staging_*.py\""
+    "test:staging": "node --test scripts/test-transfer-cache.mjs scripts/test-seo.mjs scripts/test-seo-pages.mjs && python3 -m unittest discover -s scripts -p \"test_staging_*.py\"",
+    "build:cloudflare": "astro build --config astro.config.cloudflare.mjs",
+    "check": "astro check",
+    "test:seo": "node --test scripts/test-seo.mjs scripts/test-seo-pages.mjs"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.6",
-    "@astrojs/cloudflare": "^12.6.12",
-    "@astrojs/react": "^4.4.2",
+    "@astrojs/check": "0.9.12",
+    "@astrojs/cloudflare": "13.7.0",
+    "@astrojs/react": "5.0.7",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/kaushan-script": "^5.2.8",
     "@fontsource/material-icons": "^5.2.7",
@@ -25,7 +28,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "astro": "^5.16.5",
+    "astro": "6.4.8",
     "embla-carousel-react": "^8.6.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
@@ -34,6 +37,10 @@
   },
   "devDependencies": {
     "lightningcss": "^1.30.2",
-    "wrangler": "^4.54.0"
-  }
+    "wrangler": "4.125.0"
+  },
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "packageManager": "npm@11.17.0"
 }

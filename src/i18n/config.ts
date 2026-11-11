@@ -25,8 +25,9 @@ export function getLocalePrefix(locale: Locale): string {
 
 // Helper to extract locale from pathname
 export function getLocaleFromPathname(pathname: string): Locale {
-    // Check if path starts with /zh
-    if (pathname.startsWith('/zh/') || pathname === '/zh') {
+    const base = (import.meta.env.BASE_URL || '').replace(/\/$/, '');
+    const relative = base && (pathname === base || pathname.startsWith(base + '/')) ? pathname.slice(base.length) : pathname;
+    if (relative.startsWith('/zh/') || relative === '/zh' || relative === '/zh.html') {
         return 'zh';
     }
     // Default to English for root paths

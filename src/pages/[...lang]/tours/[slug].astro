@@ -1,38 +1,58 @@
 ---
-import { getLocalePrefix, type Locale } from "../../../i18n/config";
+import { getLocalePrefix, type Locale } from '../../../i18n/config';
 import Layout from '../../../layouts/Layout.astro';
-import TourPageClient from '../../../components/TourPageClient';
-import { getAllTours } from '../../../lib/wordpress/api';
+import TourPage from '../../../components/TourPage.astro';
+import { getGoogleReviews } from '../../../lib/wordpress/api';
+import { getTourBuildData } from '../../../lib/wordpress/tour-build-data';
+import { tourMetadata } from '../../../lib/seo';
+import { confirmedTourAlternates, tourStructuredData, type Alternate } from '../../../lib/seo-pages';
+import type { WPTour, GoogleReview } from '../../../lib/wordpress/types';
 
-// Generate static paths for all tours (lightweight: only fetches slug list)
+export const prerender = true;
+
 export async function getStaticPaths() {
-  const locales = ['en', 'zh'] as const;
-  const paths = [];
-
-  for (const locale of locales) {
-    const tours = await getAllTours(locale);
-    for (const tour of tours) {
-      paths.push({
-        params: {
-          lang: locale === 'en' ? undefined : locale,
-          slug: decodeURIComponent(tour.slug),
-        },
-      });
-    }
-  }
-
-  return paths;
+  const en = await getTourBuildData('en');
+  const zh = await getTourBuildData('zh');
+  const languages = { en, zh };
+  // Fetch once per build; keep optional reviews separate from essential tour content.
+  const reviews = await getGoogleReviews();
+  return (['en', 'zh'] as const).flatMap(lang => languages[lang].map(tour => {
+    const alternates = confirmedTourAlternates(tour, lang, languages, import.meta.env.SITE || 'https://qualitour.ca', import.meta.env.BASE_URL);
+    const reviewTourId = lang === 'en' ? tour.id : alternates.length ? tour.translations?.en?.id : undefined;
+    return ({
+    params: { lang: lang === 'en' ? undefined : lang, slug: decodeURIComponent(tour.slug) },
+    props: {
+      tour,
+      reviews: reviews.filter(review => {
+        const ids = review.related_tours;
+        return reviewTourId !== undefined && (Array.isArray(ids) ? ids.includes(reviewTourId) : ids === reviewTourId);
+      }).slice(0, 6),
+      alternates,
+      duplicateTitle: languages[lang].filter(other => other.title.rendered === tour.title.rendered).length > 1,
+    },
+  }); }));
 }
 
-const { slug, lang: langParam } = Astro.params;
-const lang: Locale = (langParam as Locale) || 'en';
-const localePrefix = getLocalePrefix(lang as Locale);
+interface Props { tour: WPTour; reviews: GoogleReview[]; alternates: Alternate[]; duplicateTitle: boolean }
+const { tour, reviews, alternates, duplicateTitle } = Astro.props;
+const lang: Locale = Astro.params.lang === 'zh' ? 'zh' : 'en';
+const localePrefix = getLocalePrefix(lang);
+const metadata = tourMetadata(tour);
+const price = tour.tour_meta?.['tour-price-text'] || tour.tour_meta?.price;
+const currency = tour.tour_meta?.['tourmaster-tour-currency'];
+if (duplicateTitle && price && currency) metadata.title = metadata.title.replace(' | Qualitour', ` (${price} ${currency}) | Qualitour`);
+const origin = Astro.site?.origin || 'https://qualitour.ca';
+const base = import.meta.env.BASE_URL;
+const safeTranslations: { en?: { id: number; slug: string }; zh?: { id: number; slug: string } } = {};
+if (alternates.length) {
+  safeTranslations[lang] = { id: tour.id, slug: decodeURIComponent(tour.slug) };
+  const other = lang === 'en' ? 'zh' : 'en';
+  const translation = tour.translations?.[other];
+  if (translation) safeTranslations[other] = { id: translation.id, slug: decodeURIComponent(translation.slug) };
+}
 ---
 
-<Layout
-  title="Tour | Qualitour"
-  description="Discover premium tours and travel experiences with Qualitour."
-  lang={lang}
->
-  <TourPageClient slug={slug as string} lang={lang} localePrefix={localePrefix} client:load />
+<Layout {...metadata} heroImage={metadata.image} lang={lang} tourTranslations={safeTranslations}
+  alternates={alternates} structuredData={tourStructuredData(tour, origin, base, lang)}>
+  <TourPage tour={tour} lang={lang} localePrefix={localePrefix} reviews={reviews} />
 </Layout>

@@ -123,8 +123,7 @@ process.on('beforeExit', () => {
 function getApiUrl(lang?: string): string {
     const baseUrl = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
         import.meta.env.PUBLIC_WORDPRESS_API_URL ||
-        import.meta.env.WORDPRESS_API_URL ||
-        'https://qualitour.isquarestudio.com/wp-json/qualitour/v1';
+        'https://qualitour.ca/wp-json/qualitour/v1';
 
     if (lang === 'zh' && !baseUrl.includes('/zh/')) {
         const url = baseUrl.replace('qualitour.ca/wp-json', 'qualitour.ca/zh/wp-json');
@@ -138,56 +137,27 @@ function getCustomApiUrl(lang?: string): string {
     return getApiUrl(lang);
 }
 
-// Get auth headers for authenticated requests
-function getAuthHeaders(): Record<string, string> {
-    const username = import.meta.env.WORDPRESS_AUTH_USER || '';
-    const password = import.meta.env.WORDPRESS_AUTH_PASS || '';
-
-    if (username && password) {
-        const credentials = btoa(`${username}:${password}`);
-        return { Authorization: `Basic ${credentials}` };
-    }
-
-    return {};
-}
-
-// Generic fetch with timeout and error handling
+// Build snapshots use only the public CMS API. Never attach admin credentials.
 async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_FETCH_TIMEOUT_MS);
-
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; Qualitour-Astro/1.0)',
-                ...getAuthHeaders(),
-                ...options.headers,
-            },
-        });
-
-        if (!response.ok) {
-            console.error(`[Astro API] Request failed for URL: ${url}`);
-            console.error(`[Astro API] Status: ${response.status} ${response.statusText}`);
-            try {
-                const body = await response.text();
-                // Check if it's an HTML 404 (wrong URL) or JSON error (API error)
-                if (body.trim().startsWith('<')) {
-                    console.error(`[Astro API] Received HTML response (likely wrong URL): ${body.substring(0, 200)}...`);
-                } else {
-                    console.error(`[Astro API] JSON Error Body: ${body.substring(0, 500)}`);
-                }
-            } catch (e) {
-                console.error(`[Astro API] Could not read response body`);
-            }
-            throw new Error(`WordPress API Error: ${response.status} ${response.statusText}`);
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), DEFAULT_FETCH_TIMEOUT_MS);
+        try {
+            const headers = new Headers(options.headers);
+            headers.set('User-Agent', 'Qualitour-Static-Build/2.0');
+            const response = await fetch(url, { ...options, signal: controller.signal, headers });
+            if (response.ok) return response;
+            const retryable = [429, 500, 502, 503, 504].includes(response.status);
+            await response.body?.cancel();
+            if (!retryable || attempt === 2) throw new Error(`WordPress API HTTP ${response.status}: ${new URL(url).pathname}`);
+        } catch (error) {
+            if (attempt === 2 || error instanceof Error && error.message.startsWith('WordPress API HTTP')) throw error;
+        } finally {
+            clearTimeout(timeout);
         }
-
-        return response;
-    } finally {
-        clearTimeout(timeoutId);
+        await new Promise(resolve => setTimeout(resolve, 400 * 2 ** attempt + Math.random() * 200));
     }
+    throw new Error('WordPress API retry limit reached');
 }
 
 // =====================
@@ -203,7 +173,7 @@ export function getTours(
         const customApiUrl = getApiUrl(lang);
         const url = new URL(`${customApiUrl}/tours`);
 
-        url.searchParams.set('_fields', 'id,slug,title,excerpt,featured_media,tour_category,tour_tag,featured_image_url,tour_meta,tour_terms');
+        url.searchParams.set('_fields', 'id,slug,status,title,excerpt,featured_media,tour_category,tour_tag,featured_image_url,tour_meta,tour_terms');
         url.searchParams.set('per_page', String(params.per_page || 100));
         url.searchParams.set('page', String(params.page || 1));
 
@@ -236,7 +206,7 @@ export async function getAllTours(lang?: string): Promise<WPTour[]> {
 
         while (hasMore) {
             const url = new URL(`${customApiUrl}/tours`);
-            url.searchParams.set('_fields', 'id,slug,title,excerpt,featured_media,tour_category,tour_tag,featured_image_url,tour_meta,tour_terms');
+            url.searchParams.set('_fields', 'id,slug,status,title,excerpt,featured_media,tour_category,tour_tag,featured_image_url,tour_meta,tour_terms');
             url.searchParams.set('per_page', '100');
             url.searchParams.set('page', String(page));
 

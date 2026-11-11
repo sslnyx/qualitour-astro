@@ -386,8 +386,8 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
             {/* Tab Content */}
             <div className="p-6 md:p-8 tour-detail-tabs-content">
                 {/* Overview Tab */}
-                {activeTab === 'overview' && (
-                    <div className="animate-fadeIn space-y-8">
+                {(
+                    <div hidden={activeTab !== 'overview'} data-tour-panel="overview" className="animate-fadeIn space-y-8">
                         {/* Main Content - only show if no text blocks in contentBlocks to avoid duplication */}
                         {overviewContent && !contentBlocks.some(b => b.type === 'text') && (
                             <div className="bg-orange-50 rounded-xl p-8 border border-orange-200">
@@ -563,14 +563,15 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 )}
 
                 {/* Itinerary Tab */}
-                {activeTab === 'itinerary' && itinerary.length > 0 && (
-                    <div className="animate-fadeIn space-y-4">
+                {itinerary.length > 0 && (
+                    <div hidden={activeTab !== 'itinerary'} data-tour-panel="itinerary" className="animate-fadeIn space-y-4">
                         {itinerary.map((day: any, index: number) => (
                             <div
                                 key={index}
                                 className="border border-gray-200 rounded-xl overflow-hidden"
                             >
                                 <button
+                                    aria-expanded={expandedDay === index}
                                     onClick={() => setExpandedDay(expandedDay === index ? null : index)}
                                     className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
                                 >
@@ -587,8 +588,8 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                     </span>
                                 </button>
 
-                                {expandedDay === index && (
-                                    <div className="p-4 border-t border-gray-200">
+                                {(
+                                    <div hidden={expandedDay !== index} data-itinerary-body className="p-4 border-t border-gray-200">
                                         <div
                                             className="prose prose-sm max-w-none text-gray-600"
                                             dangerouslySetInnerHTML={{ __html: processHtmlContent(day.content || day.caption || '') }}
@@ -601,8 +602,8 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 )}
 
                 {/* Additional Info Tab */}
-                {activeTab === 'info' && infoItems.length > 0 && (
-                    <div className="animate-fadeIn space-y-6">
+                {infoItems.length > 0 && (
+                    <div hidden={activeTab !== 'info'} data-tour-panel="info" className="animate-fadeIn space-y-6">
                         {infoItems.map((block, idx) => {
                             switch (block.type) {
                                 case 'title':
@@ -628,8 +629,8 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 )}
 
                 {/* Photos Tab */}
-                {activeTab === 'photos' && photos.length > 0 && (
-                    <div className="animate-fadeIn">
+                {photos.length > 0 && (
+                    <div hidden={activeTab !== 'photos'} data-tour-panel="photos" className="animate-fadeIn">
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {photos.map((photo, index) => (
                                 <div
@@ -665,8 +666,8 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 )}
 
                 {/* FAQ Tab */}
-                {activeTab === 'faq' && faqItems.length > 0 && (
-                    <div className="animate-fadeIn space-y-4">
+                {faqItems.length > 0 && (
+                    <div hidden={activeTab !== 'faq'} data-tour-panel="faq" className="animate-fadeIn space-y-4">
                         {faqItems.map((item: any, index: number) => (
                             <details
                                 key={index}
@@ -690,8 +691,8 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 )}
 
                 {/* Brochure Tab */}
-                {activeTab === 'brochure' && brochureUrl && (
-                    <div className="animate-fadeIn">
+                {brochureUrl && (
+                    <div hidden={activeTab !== 'brochure'} data-tour-panel="brochure" className="animate-fadeIn">
                         <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
                             {/* Preview Section */}
                             {(() => {
@@ -703,6 +704,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                     return (
                                         <div className="w-full h-[600px] mb-8 border border-gray-200 rounded-lg overflow-hidden">
                                             <iframe
+                                                loading="lazy"
                                                 src={`${brochureUrl}#toolbar=0&navpanes=0&scrollbar=0`}
                                                 className="w-full h-full"
                                                 title={brochureTitle}

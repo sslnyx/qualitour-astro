@@ -1,5 +1,7 @@
 ---
 import { wpUrl } from "../lib/wp-url";
+import { absolutePublicUrl, normalizePublicPath, serializeJsonLd } from '../lib/seo';
+import { pageAlternates, type Alternate } from '../lib/seo-pages';
 
 // All fonts loaded from CDN with async loading for better performance
 // - Inter: Google Fonts CDN
@@ -15,22 +17,36 @@ export interface Props {
     canonical?: string;
     noindex?: boolean;
     heroImage?: string; // LCP image to preload
+    lang?: 'en' | 'zh';
+    alternates?: Alternate[];
+    structuredData?: Record<string, unknown>[];
 }
 
 const {
     title = "Qualitour - Premium China Tours",
     description = "Experience unforgettable journeys through China with our expertly crafted tours.",
-    image = "/qualitour_logo.png", // Default image
+    image = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/qualitour_logo.png`,
     type = "website",
     canonical,
     noindex = false,
     heroImage,
+    lang = 'en',
+    alternates,
+    structuredData = [],
 } = Astro.props;
 
 const siteUrl =
-    Astro.site?.toString() || "https://qualitour-fe.sslnyx.workers.dev";
-const canonicalUrl =
-    canonical || new URL(Astro.url.pathname, siteUrl).toString();
+    Astro.site?.toString() || "https://qualitour.ca";
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+let canonicalUrl = absolutePublicUrl(siteUrl, canonical || Astro.url.pathname);
+if (base && normalizePublicPath(Astro.url.pathname) === base) canonicalUrl += '/';
+const indexable = import.meta.env.PUBLIC_SITE_INDEXABLE === 'true' && !noindex;
+const languageAlternates = alternates ?? pageAlternates(Astro.url.pathname, siteUrl, base || '/');
+const schemas = [
+    { '@context': 'https://schema.org', '@type': 'Organization', '@id': new URL('/#organization', siteUrl).href, name: 'Qualitour Holiday Inc.', url: new URL('/', siteUrl).href },
+    { '@context': 'https://schema.org', '@type': 'WebSite', '@id': new URL(`${base || ''}/#website`, siteUrl).href, url: new URL(`${base || ''}/`, siteUrl).href, name: 'Qualitour', inLanguage: lang, publisher: { '@id': new URL('/#organization', siteUrl).href } },
+    ...structuredData,
+];
 const imageUrl = image?.startsWith("http")
     ? image
     : new URL(image, siteUrl).toString();
@@ -51,8 +67,9 @@ const imageUrl = image?.startsWith("http")
 <meta name="description" content={description} />
 <link rel="canonical" href={canonicalUrl} />
 
-{noindex && <meta name="robots" content="noindex, nofollow" />}
-{!noindex && <meta name="robots" content="index, follow" />}
+<meta name="robots" content={indexable ? 'index, follow' : 'noindex, follow'} />
+{languageAlternates.map(alternate => <link rel="alternate" hreflang={alternate.lang} href={alternate.href} />)}
+{schemas.map(schema => <script type="application/ld+json" set:html={serializeJsonLd(schema)} />)}
 
 <!-- Preload LCP Hero Image (responsive: desktop vs mobile) -->
 {

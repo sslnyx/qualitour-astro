@@ -1,0 +1,30 @@
+{
+  "": {
+    "status": 200,
+    "title": [
+      "Vancouver Small Group Tours, Transfers &amp; Activities | Qualitour"
+    ],
+    "canonical": [
+      "<link rel=\"canonical\" href=\"https://qualitour.ca/\" />"
+    ],
+    "sha256": null
+  },
+  "robots.txt": {
+    "status": 200,
+    "title": [],
+    "canonical": [],
+    "sha256": "6ca5a35e6caf3d91e59648455cb14b31b7a13f6955c8f4fa8bbb6b4d0ce687b8"
+  },
+  "sitemap_index.xml": {
+    "status": 200,
+    "title": [],
+    "canonical": [],
+    "sha256": "b591d982f948292f96c1ca95c7800b50e98f0d11c0b9953d32c018aeb30ad8b1"
+  },
+  "tour-sitemap.xml": {
+    "status": 200,
+    "title": [],
+    "canonical": [],
+    "sha256": "e7be5d12e6b04a52b5c71cf30d855be290803004f7ba6fe9c08bf489bc1caaad"
+  }
+}

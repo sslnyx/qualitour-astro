@@ -2,88 +2,30 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
-import cloudflare from '@astrojs/cloudflare';
+import { deploymentConfig } from './src/lib/site-config.ts';
 
-// https://astro.build/config
+const site = deploymentConfig(process.env.DEPLOY_TARGET || 'staging');
+process.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||= site.wordpressApi;
+
 export default defineConfig({
-  // Image optimization for remote images
+  output: 'static',
+  site: site.origin,
+  base: site.base,
+  trailingSlash: 'never',
+  i18n: { defaultLocale: 'en', locales: ['en', 'zh'], routing: { prefixDefaultLocale: false } },
+  integrations: [react()],
   image: {
-    // Service configuration
-    service: {
-      entrypoint: '/api/image',
-    },
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**.googleusercontent.com', // For Google profile images
-      },
-      {
-        protocol: 'http',
-        hostname: 'qualitour.local',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.isquarestudio.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.qualitour.ca',
-      },
-      {
-        protocol: 'https',
-        hostname: 'qualitour.ca',
-      },
-      {
-        protocol: 'https',
-        hostname: 'qualitour-assets.isquarestudio.com',
-      },
+      { protocol: 'https', hostname: 'qualitour.ca' },
+      { protocol: 'https', hostname: '**.qualitour.ca' },
+      { protocol: 'https', hostname: '**.googleusercontent.com' },
+      { protocol: 'https', hostname: '**.isquarestudio.com' },
     ],
   },
-
-  // Use Server-Side Rendering (SSR) for instant content updates from WordPress
-  output: 'server',
-
-  // i18n configuration - matches your Next.js setup
-  i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'zh'],
-    routing: {
-      prefixDefaultLocale: false, // /tours instead of /en/tours
-    },
-  },
-
-  // React integration for your existing components
-  integrations: [
-    react({
-      include: ['**/react/*', '**/components/**/*.tsx'],
-    }),
-  ],
-
-  // Tailwind via Vite plugin
   vite: {
     plugins: [tailwindcss()],
-    // Environment variables
-    envPrefix: ['PUBLIC_', 'WORDPRESS_'],
-    // Build optimization
-    build: {
-      // Minify CSS
-      // cssMinify: 'lightningcss',
-    },
+    envPrefix: ['PUBLIC_'],
+    define: { 'import.meta.env.PUBLIC_SITE_INDEXABLE': JSON.stringify(String(site.indexable)) },
   },
-
-  // Cloudflare Pages adapter for static deployment
-  // Using 'passthrough' to COMPLETELY DISABLE build-time image optimization.
-  // This ensures lightning fast builds and lets Cloudflare Transformations handle resizing at the edge.
-  adapter: cloudflare({
-    imageService: 'passthrough',
-  }),
-
-  // Site configuration
-  site: 'https://qualitour.isquarestudio.com',
-
-  // Build configuration
-  build: {
-    // Inline small assets
-    inlineStylesheets: 'auto',
-  },
+  build: { format: 'file', inlineStylesheets: 'auto' },
 });

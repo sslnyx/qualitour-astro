@@ -12,6 +12,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from html.parser import HTMLParser
+from seo_check import SeoDocument, validate_document, validate_alternates
 from pathlib import Path, PurePosixPath
 
 SITE = 'https://qualitour.ca/staging'
@@ -115,12 +116,23 @@ def validate_tour_paths(root, lang, tours):
 
 
 def verify(root):
+    inventory = json.loads((root / 'seo-inventory.json').read_text())
+    if inventory['target'] != 'staging':
+        raise ValueError('Only staging output may be published by this workflow')
     summary = {}
     for lang in ['en', 'zh']:
         relative = ('zh/' if lang == 'zh' else '') + 'tours.html'
         tours = island_props((root / relative).read_text(), 'ToursGrid')['tours']
         validate_catalogue(tours, live_tours(lang))
         validate_tour_paths(root, lang, tours)
+        for tour in tours:
+            relative_tour = ('zh/' if lang == 'zh' else '') + 'tours/' + urllib.parse.unquote(tour['slug']) + '.html'
+            content = (root / relative_tour).read_text()
+            if len(content.encode()) > 2 * 1024 * 1024:
+                raise ValueError('Tour HTML exceeds 2MiB budget: ' + relative_tour)
+            document = SeoDocument()
+            document.feed(content)
+            validate_document(document, relative_tour, tour=True)
         summary[lang] = {'count': len(tours), 'sample_slugs': [t['slug'] for t in tours[:2]]}
         transfer = ('zh/' if lang == 'zh' else '') + 'private-transfers.html'
         routes = island_props((root / transfer).read_text(), 'TransferRoutesGrid')['routes']
@@ -134,7 +146,10 @@ def verify(root):
         for path in re.findall(r'(?:src|href|component-url|renderer-url)="(/staging/_astro/[^"?#]+)', html.read_text()):
             if urllib.parse.unquote(path.removeprefix('/staging/')) not in files:
                 raise ValueError(f'Missing asset in {html.name}: {path}')
-    manifest = {'schema': 1, 'commit': os.environ.get('GITHUB_SHA', 'local'), 'files': files, 'tours': summary}
+    for bundle in (root / '_astro').glob('*.js'):
+        if any(private_key in bundle.read_text() for private_key in ['WORDPRESS_AUTH_PASS', 'ZAUI_API_TOKEN', 'GH_DEPLOY_WORKFLOW_TOKEN']):
+            raise ValueError('Server-only environment key found in browser bundle: ' + bundle.name)
+    manifest = {'schema': 1, 'commit': os.environ.get('GITHUB_SHA', 'local'), 'files': files, 'tours': summary, 'target': 'staging'}
     (root / MANIFEST).write_text(json.dumps(manifest, ensure_ascii=False, sort_keys=True))
     print(json.dumps({'verified': True, 'tours': summary, 'files': len(files), 'bytes': sum(p.stat().st_size for p in root.rglob('*') if p.is_file())}))
 
@@ -212,6 +227,8 @@ def deploy(root, backup):
     started = time.monotonic()
     manifest = json.loads((root / MANIFEST).read_text())
     current = validate_manifest(manifest)
+    if manifest.get('target') != 'staging':
+        raise ValueError('Refusing to publish a non-staging build')
     # Ensure verification manifest still describes the exact files being uploaded.
     for path, sha in current.items():
         if digest((root / path).read_bytes()) != sha:
@@ -248,7 +265,7 @@ def deploy(root, backup):
         # unless the server actually accepted deletion.
         ftp.delete(path)
     try:
-        for paths in [[p for p in changed if p.startswith('_astro/')], [p for p in changed if not p.startswith('_astro/')]]:
+        for paths in [[p for p in changed if p.startswith('_astro/')], [p for p in changed if not p.startswith('_astro/') and p != '.htaccess'], [p for p in changed if p == '.htaccess']]:
             batches(paths, publish)
         batches(removed, remove)
         with connect() as ftp:
@@ -290,6 +307,8 @@ def smoke(root):
         raw, headers = read_url(SITE + '/' + urllib.parse.quote(url_path))
         if digest(raw) != manifest['files'][path]:
             raise ValueError('Public content hash mismatch: ' + path)
+        if 'noindex' not in headers.get('X-Robots-Tag', ''):
+            raise ValueError('Staging indexing header is missing: ' + path)
         if 'no-cache' not in headers.get('Cache-Control', ''):
             raise ValueError('Page must revalidate on navigation: ' + path)
     print(f'Public smoke verification passed: {len(paths)} URLs, exact content hashes')

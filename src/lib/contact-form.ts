@@ -28,8 +28,7 @@ export interface CF7Response {
  */
 function getWordPressOrigin(): string {
     const apiUrl = import.meta.env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
-        import.meta.env.PUBLIC_WORDPRESS_API_URL ||
-        import.meta.env.WORDPRESS_API_URL;
+        import.meta.env.PUBLIC_WORDPRESS_API_URL;
 
     if (apiUrl) {
         // Extract everything before /wp-json (e.g. https://qualitour.ca)

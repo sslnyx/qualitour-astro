@@ -56,7 +56,7 @@ class ReleaseTests(unittest.TestCase):
             root = Path(temp)
             (root / 'dist').mkdir()
             (root / 'dist/index.html').write_text('new')
-            manifest = {'schema': 1, 'commit': 'test', 'files': {'index.html': release.digest(b'new')}}
+            manifest = {'schema': 1, 'target': 'staging', 'commit': 'test', 'files': {'index.html': release.digest(b'new')}}
             (root / 'dist' / release.MANIFEST).write_text(json.dumps(manifest))
             old = json.dumps({'schema': 1, 'files': {'index.html': release.digest(b'old')}}).encode()
             with patch.object(release, 'connect') as connection, patch.object(release, 'retrieve', return_value=old), \
@@ -116,7 +116,7 @@ class ReleaseTests(unittest.TestCase):
             (dist / '_astro').mkdir(parents=True)
             (dist / 'index.html').write_bytes(b'new')
             (dist / '_astro/new.js').write_bytes(b'js')
-            manifest = {'schema': 1, 'commit': 'test', 'files': {
+            manifest = {'schema': 1, 'target': 'staging', 'commit': 'test', 'files': {
                 'index.html': release.digest(b'new'), '_astro/new.js': release.digest(b'js')}}
             (dist / release.MANIFEST).write_text(json.dumps(manifest))
             with patch.object(release, 'connect', return_value=ftp), patch.object(release, 'retrieve', side_effect=retrieve), \

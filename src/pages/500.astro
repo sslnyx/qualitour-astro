@@ -1,68 +1,12 @@
 ---
-interface Props {
-    error: unknown;
-}
-
-const { error } = Astro.props;
-let errorMessage = "Unknown error";
-let stackTrace = "";
-
-if (error instanceof Error) {
-    errorMessage = error.message;
-    stackTrace = error.stack || "";
-} else {
-    errorMessage = String(error);
-}
+import Layout from '../layouts/Layout.astro';
 ---
-
-<html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <title>Server Error</title>
-        <style>
-            body {
-                font-family: system-ui, sans-serif;
-                padding: 2rem;
-                background: #fdfbfb;
-                color: #333;
-            }
-            .error-box {
-                background: #fff;
-                border: 2px solid #ef4444;
-                border-radius: 8px;
-                padding: 1.5rem;
-                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            }
-            h1 {
-                color: #ef4444;
-                margin-top: 0;
-            }
-            pre {
-                background: #1f2937;
-                color: #f3f4f6;
-                padding: 1rem;
-                border-radius: 4px;
-                overflow-x: auto;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="error-box">
-            <h1>Server Error (500)</h1>
-            <p><strong>Message:</strong> {errorMessage}</p>
-
-            {
-                stackTrace && (
-                    <>
-                        <p>
-                            <strong>Stack Trace:</strong>
-                        </p>
-                        <pre>
-                            <code>{stackTrace}</code>
-                        </pre>
-                    </>
-                )
-            }
-        </div>
-    </body>
-</html>
+<Layout title="Server Error | Qualitour" description="Please try again or contact Qualitour for assistance." noindex={true}>
+  <section class="min-h-[60vh] flex items-center justify-center px-4 bg-gray-50 text-gray-900">
+    <div class="max-w-lg text-center">
+      <h1 class="text-3xl font-bold mb-4">Something went wrong</h1>
+      <p>Please try again later or contact us for assistance.</p>
+      <a class="inline-block mt-6 text-orange-600 underline" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/contact`}>Contact Qualitour</a>
+    </div>
+  </section>
+</Layout>

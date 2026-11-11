@@ -1,27 +1,27 @@
 DirectorySlash Off
 RewriteEngine On
 
-# Page URLs stay the same after a CMS rebuild. Revalidate them on navigation
-# instead of relying on a browser's heuristic freshness for old HTML.
+# This file is confined to public_html/staging; production has its own ruleset.
 <IfModule mod_headers.c>
+  Header always set X-Robots-Tag "noindex, follow"
   <FilesMatch "\.(html|json)$">
     Header set Cache-Control "no-cache, max-age=0, must-revalidate"
   </FilesMatch>
 </IfModule>
 
-# 1. Force trailing slash on the root if missing
-RewriteCond %{REQUEST_URI} ^/staging$
-RewriteRule ^ %{REQUEST_URI}/ [R=301,L]
+# Redirect only explicit browser requests, never our internal .html rewrite.
+RewriteCond %{THE_REQUEST} \s/+staging/index\.html(?:[?\s]) [NC]
+RewriteRule ^index\.html$ /staging/ [R=301,L]
+RewriteCond %{THE_REQUEST} \s/+staging/[^?\s]*\.html(?:[?\s]) [NC]
+RewriteRule ^(.+)\.html$ /staging/$1 [R=301,L]
 
-# 2. Remove trailing slash from all other requests
+RewriteCond %{REQUEST_URI} ^/staging$
+RewriteRule ^ /staging/ [R=301,L]
 RewriteCond %{REQUEST_URI} !^/staging/$
 RewriteCond %{REQUEST_URI} (.+)/$
 RewriteRule ^ %1 [R=301,L]
 
-# 3. Serve .html without extension
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME}.html -f
 RewriteRule ^(.*)$ $1.html [L]
-
-# Custom 404
 ErrorDocument 404 /staging/404.html

@@ -8,8 +8,7 @@ export function getWpBaseUrl(): string {
 
     // Use origin of the WordPress API URL
     const apiUrl = env.PUBLIC_WORDPRESS_CUSTOM_API_URL ||
-        env.PUBLIC_WORDPRESS_API_URL ||
-        env.WORDPRESS_API_URL;
+        env.PUBLIC_WORDPRESS_API_URL;
 
     if (apiUrl) {
         try {

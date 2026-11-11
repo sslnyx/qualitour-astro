@@ -1,0 +1,276 @@
+---
+import type { GoogleReview, WPTour } from "../lib/wordpress/types";
+import { getCfTransformUrl, wpUrl } from "../lib/wp-url";
+import MobileInquiryCTA from "./MobileInquiryCTA";
+import { TourDetail } from "./TourDetail";
+import TourReviewsSection from "./TourReviewsSection";
+import TourSidebarForm from "./TourSidebarForm";
+
+interface Props {
+  tour: WPTour;
+  lang: "en" | "zh";
+  localePrefix: string;
+  reviews: GoogleReview[];
+}
+
+const { tour, lang, localePrefix, reviews } = Astro.props;
+
+function getRawImageUrl(image: WPTour["featured_image_url"]): string | undefined {
+  if (!image) return undefined;
+  if (typeof image === "string") return wpUrl(image);
+
+  const url = image.full && typeof image.full === "object" ? image.full.url : image.full;
+  return url ? wpUrl(url) : image.large ? wpUrl(image.large) : image.medium ? wpUrl(image.medium) : undefined;
+}
+
+// The mobile inquiry modal only needs identity and pricing, not the full itinerary.
+const inquiryTour: WPTour = { id: tour.id, slug: tour.slug, title: tour.title, excerpt: tour.excerpt, featured_media: tour.featured_media, tour_meta: tour.tour_meta };
+const meta = tour.tour_meta;
+const price = meta?.["tour-price-text"] || meta?.price;
+const currency = meta?.["tourmaster-tour-currency"];
+const duration = meta?.duration_text || meta?.duration;
+const location = meta?.location;
+const country = meta?.country;
+const minPeople = meta?.min_people;
+const maxPeople = meta?.max_people;
+const groupSize = minPeople && maxPeople ? `${minPeople} - ${maxPeople}` : maxPeople || minPeople;
+const categories = tour.tour_terms?.categories || [];
+const destinations = tour.tour_terms?.destinations || [];
+
+let tourCode = meta?.tour_code || meta?.["tour-code"];
+if (!tourCode && tour.goodlayers_data) {
+  const goodlayersData = JSON.stringify(tour.goodlayers_data);
+  const match =
+    goodlayersData.match(/團號[:：]\s*([^"\\\s]+)/) ||
+    goodlayersData.match(/Tour Code[:：]\s*([^"\\\s]+)/);
+  if (match?.[1]) tourCode = match[1].trim();
+}
+
+const rawHeroUrl = getRawImageUrl(tour.featured_image_url);
+const heroUrl = rawHeroUrl
+  ? getCfTransformUrl(rawHeroUrl, { width: 1920, height: 1080, format: "webp", quality: 80 })
+  : undefined;
+const tourTitle = tour.title.rendered.replace(/<[^>]*>/g, "");
+
+const copy =
+  lang === "zh"
+    ? {
+        home: "首頁",
+        tours: "行程",
+        guests: "位旅客",
+        safeBooking: "安全預訂",
+        safeBookingDetail: "安全付款與即時確認",
+        support: "24/7 支援",
+        supportDetail: "需要時隨時提供專業協助",
+        authenticExperiences: "在地體驗",
+        authenticExperiencesDetail: "精選在地私房景點",
+        questions: "還有疑問嗎？",
+        questionsDetail: "我們的專家將協助您規劃理想旅程。歡迎聯絡我們查詢客製行程與團體旅遊。",
+        contactUs: "聯絡我們",
+      }
+    : {
+        home: "Home",
+        tours: "Tours",
+        guests: "Guests",
+        safeBooking: "Safe Booking",
+        safeBookingDetail: "Secure payment & instant confirmation",
+        support: "24/7 Support",
+        supportDetail: "Expert assistance whenever you need",
+        authenticExperiences: "Authentic Exp",
+        authenticExperiencesDetail: "Locally curated hidden gems",
+        questions: "Still have questions?",
+        questionsDetail:
+          "Our experts are here to help you plan the perfect journey. Contact us for custom itineraries and group inquiries.",
+        contactUs: "Contact Us",
+      };
+---
+
+<div class="tour-detail-page bg-white">
+  <div class="min-h-screen bg-gray-50">
+    <section class="relative min-h-[75vh] md:min-h-[85vh] overflow-hidden flex flex-col justify-end">
+      {
+        heroUrl && (
+          <>
+            <img
+              src={heroUrl}
+              alt={tourTitle}
+              class="absolute inset-0 w-full h-full object-cover"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+            <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
+          </>
+        )
+      }
+
+      <div class="relative container mx-auto px-4 pb-12 md:pb-24">
+        <div class="max-w-4xl">
+          <nav class="flex items-center gap-2 text-white/70 text-sm mb-6 font-medium">
+            <a href={localePrefix || "/"} class="hover:text-white transition-colors">{copy.home}</a>
+            <span class="material-icons text-xs">chevron_right</span>
+            <a href={`${localePrefix}/tours`} class="hover:text-white transition-colors">
+              {copy.tours}
+            </a>
+            {
+              destinations.length > 0 && (
+                <>
+                  <span class="material-icons text-xs">chevron_right</span>
+                  <a
+                    href={`${localePrefix}/tours/destination/${destinations[0].slug}`}
+                    class="hover:text-white transition-colors"
+                  >
+                    {destinations[0].name}
+                  </a>
+                </>
+              )
+            }
+          </nav>
+
+          <h1
+            class="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-black text-white mb-6 max-w-4xl leading-[1.15] drop-shadow-2xl"
+            set:html={tour.title.rendered}
+          />
+
+          {
+            (location || country) && (
+              <div class="flex items-center gap-2 text-white/90 mb-8">
+                <span class="material-icons text-orange-500">location_on</span>
+                <span class="text-lg md:text-xl font-medium">
+                  {[location, country].filter(Boolean).join(", ")}
+                </span>
+              </div>
+            )
+          }
+
+          <div class="flex flex-wrap gap-4">
+            {
+              duration && (
+                <div class="flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+                  <span class="material-icons text-orange-400">schedule</span>
+                  <span class="text-white font-bold">{duration}</span>
+                </div>
+              )
+            }
+            {
+              groupSize && (
+                <div class="flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+                  <span class="material-icons text-orange-400">groups</span>
+                  <span class="text-white font-bold">{groupSize} {copy.guests}</span>
+                </div>
+              )
+            }
+            {
+              categories.length > 0 && (
+                <div class="flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+                  <span class="material-icons text-orange-400">category</span>
+                  <span class="text-white font-bold">{categories[0].name}</span>
+                </div>
+              )
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-12 md:py-20">
+      <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div class="lg:col-span-2 space-y-8">
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+              <TourDetail tour={tour} lang={lang} client:load />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div class="p-6 bg-white rounded-2xl border border-gray-100 text-center group hover:shadow-lg transition-all">
+                <div class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <span class="material-icons text-green-600">verified_user</span>
+                </div>
+                <h4 class="font-bold text-gray-900 mb-1">{copy.safeBooking}</h4>
+                <p class="text-sm text-gray-500">{copy.safeBookingDetail}</p>
+              </div>
+              <div class="p-6 bg-white rounded-2xl border border-gray-100 text-center group hover:shadow-lg transition-all">
+                <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <span class="material-icons text-blue-600">support_agent</span>
+                </div>
+                <h4 class="font-bold text-gray-900 mb-1">{copy.support}</h4>
+                <p class="text-sm text-gray-500">{copy.supportDetail}</p>
+              </div>
+              <div class="p-6 bg-white rounded-2xl border border-gray-100 text-center group hover:shadow-lg transition-all">
+                <div class="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <span class="material-icons text-orange-600">thumb_up</span>
+                </div>
+                <h4 class="font-bold text-gray-900 mb-1">{copy.authenticExperiences}</h4>
+                <p class="text-sm text-gray-500">{copy.authenticExperiencesDetail}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-1">
+            <div class="sticky top-24">
+              <TourSidebarForm
+                tourId={tour.id}
+                tourTitle={tourTitle}
+                tourCodeDetail={tourCode}
+                price={price}
+                currency={currency}
+                duration={duration}
+                lang={lang}
+                client:visible
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {
+      reviews.length > 0 && (
+        <TourReviewsSection
+          reviews={reviews}
+          tourTitle={tourTitle}
+          lang={lang}
+          client:visible
+        />
+      )
+    }
+
+    <section class="py-20 bg-orange-500">
+      <div class="container mx-auto px-4 text-center">
+        <h2 class="text-3xl md:text-5xl font-black text-white mb-6">{copy.questions}</h2>
+        <p class="text-white/80 text-lg mb-12 max-w-2xl mx-auto">{copy.questionsDetail}</p>
+        <div class="flex flex-wrap justify-center gap-4">
+          <a
+            href={`${localePrefix}/contact?tour=${encodeURIComponent(tourTitle)}`}
+            class="inline-flex items-center gap-2 px-8 py-4 bg-white text-orange-500 font-bold rounded-full hover:shadow-xl hover:scale-105 transition-all"
+          >
+            <span class="material-icons">mail</span>
+            {copy.contactUs}
+          </a>
+          <a
+            href="mailto:info@qualitour.ca"
+            class="inline-flex items-center gap-2 px-8 py-4 bg-orange-600 text-white font-bold rounded-full hover:bg-orange-700 transition-all"
+          >
+            <span class="material-icons">email</span>
+            info@qualitour.ca
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <div class="h-20 lg:hidden"></div>
+
+    <MobileInquiryCTA
+      tour={inquiryTour}
+      tourCode={tourCode}
+      lang={lang}
+      client:media="(max-width: 1023px)"
+    />
+  </div>
+</div>
+
+<noscript><style is:inline>
+  .tour-detail-tabs-content [data-tour-panel],
+  .tour-detail-tabs-content [data-itinerary-body] { display: block !important; }
+</style></noscript>

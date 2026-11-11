@@ -7,6 +7,7 @@ import { sanitizeUrls } from "../lib/wp-url";
 import { getPrivateTransfersWithPricing } from "../lib/zaui/zaui";
 import Footer from "../components/Footer.astro";
 import SeoHead from "../components/SeoHead.astro";
+import type { Alternate } from '../lib/seo-pages';
 
 interface TourTranslation {
   id: number;
@@ -22,6 +23,8 @@ interface Props {
   lang?: Locale;
   canonical?: string;
   noindex?: boolean;
+  alternates?: Alternate[];
+  structuredData?: Record<string, unknown>[];
   tourTranslations?: {
     en?: TourTranslation;
     zh?: TourTranslation;
@@ -37,12 +40,14 @@ const {
   lang,
   canonical,
   noindex,
+  alternates,
+  structuredData,
   tourTranslations,
 } = Astro.props;
 
 // Get current locale from URL or use provided lang
 const currentLocale = lang || getCurrentLocale(Astro.url);
-const htmlLang = currentLocale === "zh" ? "zh-CN" : "en";
+const htmlLang = currentLocale === "zh" ? "zh" : "en-CA";
 
 // Fetch navigation data at build time
 let navData: SiteNavData = {
@@ -71,6 +76,9 @@ try {
       type={type}
       canonical={canonical}
       noindex={noindex}
+      lang={currentLocale}
+      alternates={alternates}
+      structuredData={structuredData}
     />
     <script is:inline>
       // Global broken image fallback (Capture phase to catch all img errors)
