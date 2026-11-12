@@ -3,6 +3,7 @@ import handler, { PluginBridge } from '@emdash-cms/cloudflare/worker';
 import { routeNativeBooking } from '../../src/server/native-booking/index.mjs';
 import { durableExecutionContext, fetchFreeRuntime } from './lib/cms/free-runtime.mjs';
 
+import {nativeSiteRoute} from './lib/cms/native-site-policy.mjs';
 import { isNativeProofPath, validateProofTags, forwardNativeProof, privateProofResponse } from './lib/cms/native-cache-policy.mjs';
 
 export { PluginBridge };
@@ -43,12 +44,14 @@ export class QualitourCmsRuntime extends DurableObject<RuntimeEnv> {
 export class NativeProofCache extends WorkerEntrypoint<RuntimeEnv> {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
-    if (!isNativeProofPath(url.pathname) || url.search || !['GET', 'HEAD'].includes(request.method)) {
+    const visitor=nativeSiteRoute(url.pathname);
+    if ((!visitor && !isNativeProofPath(url.pathname)) || (!visitor && url.search) || !['GET', 'HEAD'].includes(request.method)) {
       return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store', 'Cloudflare-CDN-Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
     }
     const response = await fetchFreeRuntime(handler, request, this.env, this.ctx);
     const headers = new Headers(response.headers);
-    headers.set('X-Robots-Tag', 'noindex, nofollow');
+    if(!visitor)headers.set('X-Robots-Tag', 'noindex, nofollow');
+    headers.set('X-Qualitour-Rendered', crypto.randomUUID());
     headers.set('X-Native-Proof-Rendered', crypto.randomUUID());
     if (privateProofResponse(request, response)) {
       headers.set('Cache-Control', 'private, no-store');
@@ -67,7 +70,7 @@ export default {
   ...handler,
   async fetch(request: Request, env: RuntimeEnv, context: ExecutionContext) {
     const pathname = new URL(request.url).pathname;
-    if (pathname.startsWith('/native-proof/')) {
+    if (pathname.startsWith('/native-proof/') || nativeSiteRoute(pathname)) {
       const proof = (context.exports as { NativeProofCache: { fetch(request: Request): Promise<Response> } }).NativeProofCache;
       return forwardNativeProof(proof, request);
     }

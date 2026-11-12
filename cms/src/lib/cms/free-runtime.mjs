@@ -1,6 +1,7 @@
+import {nativeSiteRoute} from './native-site-policy.mjs';
 /** Keep static-site/build handling in Astro's normal adapter path. */
 function usesCmsRuntime(pathname) {
-  return pathname === '/_emdash' || pathname.startsWith('/_emdash/') ||
+  return Boolean(nativeSiteRoute(pathname)) || pathname === '/_emdash' || pathname.startsWith('/_emdash/') ||
     /^(?:\/zh)?\/cms-proof\/tours(?:\/|$)/.test(pathname) ||
     pathname.startsWith('/native-proof/') || pathname === '/_image';
 }

@@ -25,15 +25,15 @@ test('Durable context attaches deferred work to the owning object and never fake
  assert.throws(()=>context.passThroughOnException(),/Durable/);
 });
 
-test('Only CMS and tour proof routes use the Durable runtime; build endpoints and static site keep the adapter path',async()=>{
+test('CMS and visitor HTML use Durable execution; build endpoints and hashed assets keep the adapter path',async()=>{
  const seen=[];const handler={fetch(r){seen.push('worker');return new Response();}};
  const env={EMDASH_CMS_EXECUTION:'durable',CMS_RUNTIME:{idFromName(){return 'id';},get(){return {fetch(){seen.push('durable');return new Response();}};}}};
  for(const path of ['/_emdash/admin','/_emdash/api/auth/me','/cms-proof/tours','/zh/cms-proof/tours/proof','/__astro_prerender','/','/zh/','/_astro/app.js'])await fetchFreeRuntime(handler,new Request('https://example.test'+path),env,{});
- assert.deepEqual(seen,['durable','durable','durable','durable','worker','worker','worker','worker']);
+ assert.deepEqual(seen,['durable','durable','durable','durable','worker','durable','durable','worker']);
 });
 
-test('native proof and official image endpoint retain Durable execution without moving visitor or booking routes',async()=>{
+test('native proof, visitor pages and image endpoint use Durable execution without moving booking APIs',async()=>{
  const seen=[];const handler={fetch(){seen.push('worker');return new Response();}};const env={EMDASH_CMS_EXECUTION:'durable',CMS_RUNTIME:{idFromName(){return 'id';},get(){return {fetch(){seen.push('durable');return new Response();}};}}};
  for(const path of ['/native-proof/zh','/native-proof/zh/tours/id','/_image','/zh/tours/id','/api/transfer/catalog','/book'])await fetchFreeRuntime(handler,new Request('https://example.test'+path),env,{});
- assert.deepEqual(seen,['durable','durable','durable','worker','worker','worker']);
+ assert.deepEqual(seen,['durable','durable','durable','durable','worker','worker']);
 });

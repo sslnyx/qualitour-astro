@@ -46,7 +46,7 @@ const currency = tour.tour_meta?.['tourmaster-tour-currency'];
 if (duplicateTitle && price && currency) metadata.title = metadata.title.replace(' | Qualitour', ` (${price} ${currency}) | Qualitour`);
 const origin = Astro.site?.origin || 'https://qualitour.ca';
 const base = import.meta.env.BASE_URL;
-const safeTranslations: { en?: { id: number; slug: string }; zh?: { id: number; slug: string } } = {};
+const safeTranslations: { en?: { id: number | string; slug: string }; zh?: { id: number | string; slug: string } } = {};
 if (alternates.length) {
   safeTranslations[lang] = { id: tour.id, slug: decodeURIComponent(tour.slug) };
   const other = lang === 'en' ? 'zh' : 'en';

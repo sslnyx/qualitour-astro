@@ -1,7 +1,7 @@
 import {readFile} from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
 import assert from 'node:assert/strict';
-import {assertWorkerBindings,WORKER_ID,ACCOUNT_ID,assertWorkerCiTarget,verifyWorkerReleaseMarker,loadWorkerCmsModules} from './lib/worker-release.mjs';
+import {assertWorkerBindings,WORKER_ID,ACCOUNT_ID,assertWorkerCiTarget,verifyWorkerReleaseMarker,loadWorkerCmsModules,waitForPublishedRelease} from './lib/worker-release.mjs';
 assertWorkerCiTarget(process.env);
 const git=spawnSync('git',['rev-parse','HEAD'],{encoding:'utf8'});const sourceCommit=process.env.WORKER_RELEASE_COMMIT||process.env.WORKERS_CI_COMMIT_SHA||(git.status===0?git.stdout.trim():null);assert.ok(sourceCommit,'Deployment source revision missing');await verifyWorkerReleaseMarker('.astro/worker-release',sourceCommit);
 const path='.astro/worker-release/cms/server/wrangler.json';const config=JSON.parse(await readFile(path,'utf8'));assertWorkerBindings(config);
@@ -15,4 +15,4 @@ const reader=createCmsReader({origin:expected.origin});const locales={};for(cons
 const executable=process.env.CI?'./node_modules/.bin/wrangler':'/Users/ning/bin/cf-wrangler';const result=spawnSync(executable,['deploy','--config',path],{stdio:'inherit',env:{...process.env,CLOUDFLARE_ACCOUNT_ID:ACCOUNT_ID}});if(result.error)throw result.error;if(result.status!==0)throw Error('Combined Worker deployment failed');
 
 const after=await fetch(`https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/workers/${WORKER_ID}`,{headers:{Authorization:'Bearer '+token}});assert.equal(after.status,200);const actual=(await after.json()).result;assert.equal(actual.id,WORKER_ID);assert.equal(actual.name,'qualitour');
-const live=await fetch('https://qualitour.qualitour.workers.dev/qualitour-release.json',{cache:'no-store'});assert.equal(live.status,200,'Published release cannot be read back');assert.equal((await live.json()).commit,sourceCommit,'Public release does not match deployment source');
+await waitForPublishedRelease(sourceCommit);

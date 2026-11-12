@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {nativeSiteWorkerPatterns} from '../../cms/src/lib/cms/native-site-policy.mjs';
 export const WORKER_ID='2e3006ccf9f04193b0b795a6ae7c49f8';
 export const ACCOUNT_ID='ca4d347f96116e87e8f5dbd6c62f0b30';
 export function assertWorkerBindings(config){
@@ -12,6 +13,7 @@ export function assertWorkerBindings(config){
  assert.equal(config.images.binding,'IMAGES');
  assert.equal(config.cache.enabled,false,'Only the named proof entrypoint may use Workers Cache');
  assert.ok(config.assets.run_worker_first.includes('/native-proof/*'));
+ for(const pattern of nativeSiteWorkerPatterns)assert.ok(config.assets.run_worker_first.includes(pattern),'Missing native visitor route '+pattern);
  assert.ok(config.compatibility_flags.includes('enable_ctx_exports'));
 
  for(const route of ['/_emdash','/_emdash/*','/api/transfer','/api/transfer/*','/book/*','/zh/book/*'])assert.ok(config.assets.run_worker_first.includes(route),'Required Worker route missing: '+route);
@@ -39,4 +41,17 @@ export async function loadWorkerCmsModules(origin){
  const adapter=await import('../../src/lib/cms/legacy-adapter.mjs');
  assert.equal(reader.CMS_ORIGIN,origin,'CMS adapter initialized with a different origin');
  return {...reader,...adapter};
+}
+
+/** Confirm eventual edge activation; this retries reads only, never deployment. */
+export async function waitForPublishedRelease(sourceCommit,{fetchImpl=fetch,wait=ms=>new Promise(r=>setTimeout(r,ms)),attempts=10}={}){
+ for(let i=0;i<attempts;i++){
+  try{
+   const response=await fetchImpl('https://qualitour.qualitour.workers.dev/qualitour-release.json?release='+encodeURIComponent(sourceCommit),{cache:'no-store',signal:AbortSignal.timeout(15000)});
+   if(response.status===200){const live=await response.json();if(live.commit===sourceCommit)return live;}
+   else await response.body?.cancel();
+  }catch{}
+  if(i+1<attempts)await wait(1500);
+ }
+ throw Error('Public release does not match deployment source after bounded readback');
 }

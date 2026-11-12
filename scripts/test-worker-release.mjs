@@ -23,6 +23,12 @@ test('Sandbox booking adds only its dedicated database and routes before CMS dis
  assert.ok(source.indexOf('await routeNativeBooking(request, env, context)')<source.lastIndexOf('return fetchFreeRuntime'));
 });
 
-test('native experiment cannot turn on cache for existing visitor, CMS or booking entrypoints',()=>{
+test('public HTML cache cannot turn on the default CMS or booking entrypoint',()=>{
  for(const mutate of [c=>c.cache.enabled=true,c=>c.exports.default.cache.enabled=true,c=>c.exports.NativeProofCache.cache.enabled=false,c=>c.images.binding='wrong']){const c=structuredClone(config);mutate(c);assert.throws(()=>assertWorkerBindings(c));}
+});
+test('public release confirmation tolerates deployment propagation without deploying twice',async()=>{
+ const {waitForPublishedRelease}=await import('./lib/worker-release.mjs');let reads=0;const waits=[];
+ const result=await waitForPublishedRelease('new-source',{fetchImpl:async()=>new Response(JSON.stringify({commit:++reads===1?'old-source':'new-source'})),wait:async ms=>waits.push(ms)});
+ assert.equal(result.commit,'new-source');assert.equal(reads,2);assert.equal(waits.length,1);
+ await assert.rejects(waitForPublishedRelease('new-source',{fetchImpl:async()=>new Response(JSON.stringify({commit:'old-source'})),wait:async()=>{},attempts:2}),/does not match/);
 });
