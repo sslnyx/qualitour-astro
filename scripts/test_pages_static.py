@@ -15,7 +15,11 @@ from urllib.parse import quote, unquote
 SCRIPT_DIR = Path(__file__).resolve().parent
 FINALIZER_PATH = SCRIPT_DIR / "finalize-pages-static.py"
 BUILD_PATH = SCRIPT_DIR / "build-pages-static.mjs"
+WORKER_BUILD_PATH = SCRIPT_DIR / "build-worker-static.mjs"
 ORIGIN = "https://staging.qualitour-astro.pages.dev"
+WORKER_ORIGIN = "https://qualitour.qualitour.workers.dev"
+OLD_CMS_ORIGIN = "https://qualitour-cms-free-test.qualitour.workers.dev"
+NEW_CMS_ORIGIN = "https://qualitour.qualitour.workers.dev"
 
 
 def load_finalizer():
@@ -277,8 +281,92 @@ class PagesStaticFinalizerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "noindex"):
                 self.run_finalize(fixture)
 
+    def test_worker_root_target_uses_explicit_origins_target_and_noindex(self):
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = BuildFixture(temp).create()
+            snapshot = json.loads(fixture.snapshot_path.read_text())
+            snapshot["origin"] = NEW_CMS_ORIGIN
+            fixture.snapshot_path.write_text(json.dumps(snapshot))
+            for page in fixture.dist.rglob("*.html"):
+                page.write_text(page.read_text().replace(ORIGIN, WORKER_ORIGIN))
+
+            module = load_finalizer()
+            result = module.finalize(
+                fixture.dist,
+                fixture.snapshot_path,
+                fixture.compatibility_path,
+                origin=WORKER_ORIGIN,
+                cms_origin=NEW_CMS_ORIGIN,
+                target="worker-static",
+                indexable=False,
+            )
+
+            self.assertTrue(result["verified"])
+            inventory = json.loads((fixture.dist / "seo-inventory.json").read_text())
+            self.assertEqual(inventory["origin"], WORKER_ORIGIN)
+            self.assertEqual(inventory["target"], "worker-static")
+            self.assertTrue(all(page["indexable"] is False for page in inventory["pages"]))
+            manifest = json.loads((fixture.dist / "qualitour-release.json").read_text())
+            self.assertEqual(manifest["public_snapshot"]["origin"], NEW_CMS_ORIGIN)
+            self.assertNotIn("staging", (fixture.dist / "_headers").read_text().lower())
+
+    def test_indexability_is_allowed_only_for_branded_origin_and_must_match_html(self):
+        module = load_finalizer()
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = BuildFixture(temp).create()
+            with self.assertRaisesRegex(ValueError, "workers.dev.*index"):
+                module.finalize(
+                    fixture.dist,
+                    fixture.snapshot_path,
+                    fixture.compatibility_path,
+                    origin=WORKER_ORIGIN,
+                    cms_origin=OLD_CMS_ORIGIN,
+                    target="worker-static",
+                    indexable=True,
+                )
+
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = BuildFixture(temp).create()
+            for page in fixture.dist.rglob("*.html"):
+                page.write_text(
+                    page.read_text()
+                    .replace(ORIGIN, "https://qualitour.ca")
+                    .replace('<meta name="robots" content="noindex, follow">', "")
+                )
+            module.finalize(
+                fixture.dist,
+                fixture.snapshot_path,
+                fixture.compatibility_path,
+                origin="https://qualitour.ca",
+                cms_origin=OLD_CMS_ORIGIN,
+                target="worker-static",
+                indexable=True,
+            )
+            inventory = json.loads((fixture.dist / "seo-inventory.json").read_text())
+            self.assertTrue(all(page["indexable"] is True for page in inventory["pages"]))
+            self.assertNotIn("X-Robots-Tag", (fixture.dist / "_headers").read_text())
+
+    def test_finalizer_rejects_unapproved_cms_origin_argument(self):
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = BuildFixture(temp).create()
+            with self.assertRaisesRegex(ValueError, "CMS origin"):
+                load_finalizer().finalize(
+                    fixture.dist,
+                    fixture.snapshot_path,
+                    fixture.compatibility_path,
+                    cms_origin="https://metadata.google.internal",
+                )
+
 
 class InlineImageReleaseTests(unittest.TestCase):
+    def test_unoptimized_cms_browser_images_are_rejected_without_rejecting_brochures(self):
+        module = load_finalizer()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            with self.assertRaisesRegex(ValueError, "Unoptimized CMS"):
+                module.validate_assets(root, "tour.html", '<img src="https://qualitour.qualitour.workers.dev/_emdash/api/media/file/a/large.jpg">')
+            module.validate_assets(root, "tour.html", '<a href="https://qualitour.qualitour.workers.dev/_emdash/api/media/file/a/brochure.pdf">Download</a>')
+
     def test_wordpress_browser_images_are_rejected_but_download_links_are_retained(self):
         module = load_finalizer()
         with tempfile.TemporaryDirectory() as temp:
@@ -347,6 +435,97 @@ class PagesStaticBuildRunnerTests(unittest.TestCase):
             build = json.loads((root / "build-probe.json").read_text())
             self.assertEqual(build["out"], ".astro/cloudflare-release/dist")
             self.assertFalse((root / "finalize-probe.txt").exists())
+
+
+class WorkerStaticBuildRunnerTests(unittest.TestCase):
+    def make_project(self, root):
+        root = Path(root)
+        (root / "scripts").mkdir()
+        (root / "node_modules/astro").mkdir(parents=True)
+        shutil.copy2(WORKER_BUILD_PATH, root / "scripts/build-worker-static.mjs")
+        (root / "node_modules/astro/package.json").write_text(json.dumps({"bin": {"astro": "cli.mjs"}}))
+        (root / "node_modules/astro/cli.mjs").write_text(
+            "import {writeFileSync} from 'node:fs';"
+            "writeFileSync(process.env.BUILD_PROBE,JSON.stringify({argv:process.argv.slice(2),target:process.env.DEPLOY_TARGET,out:process.env.WORKER_STATIC_OUT_DIR,origin:process.env.QUALITOUR_WORKER_ORIGIN,cms:process.env.QUALITOUR_CMS_ORIGIN,indexable:process.env.QUALITOUR_WORKER_INDEXABLE}));"
+            "if(process.env.ASTRO_FAKE_FAIL==='true')process.exit(7);"
+        )
+        fake_bin = root / "fake-bin"
+        fake_bin.mkdir()
+        python = fake_bin / "python3"
+        python.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$FINALIZE_PROBE"\n')
+        python.chmod(0o755)
+        return root
+
+    def run_build(self, root, **extra_env):
+        env = {
+            **os.environ,
+            "PATH": str(root / "fake-bin") + os.pathsep + os.environ["PATH"],
+            "BUILD_PROBE": str(root / "build-probe.json"),
+            "FINALIZE_PROBE": str(root / "finalize-probe.txt"),
+            **extra_env,
+        }
+        return subprocess.run(
+            [os.environ.get("NODE", "node"), "scripts/build-worker-static.mjs"],
+            cwd=root,
+            env=env,
+            text=True,
+            capture_output=True,
+        )
+
+    def test_worker_build_defaults_to_new_root_new_cms_separate_output_and_explicit_finalizer(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.make_project(temp)
+            result = self.run_build(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            build = json.loads((root / "build-probe.json").read_text())
+            self.assertEqual(build, {
+                "argv": ["build", "--config", "astro.config.worker-static.mjs"],
+                "target": "production",
+                "out": ".astro/worker-release/frontend",
+                "origin": WORKER_ORIGIN,
+                "cms": WORKER_ORIGIN,
+                "indexable": "false",
+            })
+            self.assertEqual((root / "finalize-probe.txt").read_text().splitlines(), [
+                "scripts/finalize-pages-static.py",
+                "--dist", ".astro/worker-release/frontend",
+                "--origin", WORKER_ORIGIN,
+                "--cms-origin", WORKER_ORIGIN,
+                "--target", "worker-static",
+                "--indexable", "false",
+            ])
+
+    def test_worker_build_allows_renamed_cms_and_explicit_branded_indexability(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.make_project(temp)
+            result = self.run_build(
+                root,
+                QUALITOUR_WORKER_ORIGIN="https://qualitour.ca",
+                QUALITOUR_CMS_ORIGIN=NEW_CMS_ORIGIN,
+                QUALITOUR_WORKER_INDEXABLE="true",
+                WORKER_STATIC_OUT_DIR=".astro/custom/frontend",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            build = json.loads((root / "build-probe.json").read_text())
+            self.assertEqual(build["origin"], "https://qualitour.ca")
+            self.assertEqual(build["cms"], NEW_CMS_ORIGIN)
+            self.assertEqual(build["indexable"], "true")
+            self.assertEqual(build["out"], ".astro/custom/frontend")
+
+    def test_worker_build_rejects_unknown_origins_indexed_workers_dev_and_root_dist(self):
+        cases = [
+            {"QUALITOUR_CMS_ORIGIN": "https://example.test"},
+            {"QUALITOUR_WORKER_ORIGIN": "https://example.test"},
+            {"QUALITOUR_WORKER_INDEXABLE": "true"},
+            {"WORKER_STATIC_OUT_DIR": "dist"},
+            {"WORKER_STATIC_OUT_DIR": "dist/frontend"},
+        ]
+        for env in cases:
+            with self.subTest(env=env), tempfile.TemporaryDirectory() as temp:
+                root = self.make_project(temp)
+                result = self.run_build(root, **env)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse((root / "build-probe.json").exists())
 
 
 if __name__ == "__main__":

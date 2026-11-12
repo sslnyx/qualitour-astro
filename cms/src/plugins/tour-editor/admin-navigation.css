@@ -1,0 +1,13 @@
+/* EmDash 1.4 supports hiddenNavItems for built-in areas, but not individual
+   taxonomies or Byline Schema. Scope these presentation-only exclusions to
+   sidebar rows; taxonomy APIs, stored terms and direct admin routes stay intact.
+   Match both bare and localized taxonomy URLs without hiding similar slugs. */
+[data-sidebar="sidebar"] [data-sidebar="menu-item"]:has(> a:is(
+  [href="/_emdash/admin/taxonomies/category"],
+  [href^="/_emdash/admin/taxonomies/category?"],
+  [href="/_emdash/admin/taxonomies/tag"],
+  [href^="/_emdash/admin/taxonomies/tag?"],
+  [href="/_emdash/admin/byline-schema"]
+)) {
+  display: none;
+}

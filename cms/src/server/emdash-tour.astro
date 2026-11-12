@@ -1,0 +1,34 @@
+---
+import { getEmDashEntry } from 'emdash';
+import { toLegacyTour } from '../lib/cms/emdash-tour';
+import Layout from '../layouts/Layout.astro';
+import TourPage from '../components/TourPage.astro';
+import { tourMetadata } from '../lib/seo';
+import '../styles/global.css';
+import { previewDayRefs, previewRevision } from '../lib/cms/preview-focus';
+
+export const prerender = false;
+const lang = Astro.params.lang === 'zh' ? 'zh' : 'en';
+if (Astro.params.lang && Astro.params.lang !== 'zh') return new Response('Not found', { status: 404 });
+const { entry, isPreview, error } = await getEmDashEntry('tours', Astro.params.id!, { locale: lang });
+if (error) return new Response('CMS unavailable', { status: 503 });
+// EmDash resolves global IDs before locale filters; enforce the public route's language.
+if (!entry || entry.data.locale !== lang) return new Response('Tour not found', { status: 404, headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
+const tour = toLegacyTour(entry);
+// Start without public caching so draft isolation and publish freshness are observable.
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+const prefix = lang === 'zh' ? '/zh' : '';
+const revision = previewRevision(entry.data);
+const previewContext = isPreview && revision ? {
+  entryId: String(entry.data.id), locale: lang as 'en' | 'zh', revision,
+  days: previewDayRefs(entry.data),
+} : undefined;
+const embeddedPreview = isPreview && Astro.url.searchParams.get('workspace') === '1';
+const metadata = tourMetadata(tour);
+---
+<Layout {...metadata} lang={lang} heroImage={metadata.image} noindex={true} formsDisabled={true}>
+  {embeddedPreview && <style is:inline>#emdash-toolbar { display: none !important; }</style>}
+  {isPreview && <aside role="alert" class="bg-amber-100 text-amber-950 p-3 text-center font-semibold">草稿預覽 · 尚未發佈 / Draft preview · Unpublished changes</aside>}
+  <TourPage tour={tour} lang={lang} localePrefix={prefix} reviews={[]} previewContext={previewContext} inquiryDisabled={true} />
+</Layout>

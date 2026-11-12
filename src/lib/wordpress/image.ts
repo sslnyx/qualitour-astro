@@ -1,6 +1,7 @@
 import { collectInlineImageSources } from '../inline-images.mjs';
 import { getImage, inferRemoteSize } from "astro:assets";
-import { createImageDelivery, collectTourPhotoSources, mapWithConcurrency } from '../image-delivery.mjs';
+import { createImageDelivery, collectTourPhotoSources, mapWithConcurrency, inferImageDimensions } from '../image-delivery.mjs';
+import { CMS_ORIGIN, normalizeCmsMediaUrl } from '../cms/read-client.mjs';
 import type { WPTour } from "./types";
 import { getTourImageUrl } from "./image-source";
 export { getTourImageUrl } from "./image-source";
@@ -38,7 +39,7 @@ const imageDelivery = createImageDelivery({
     transform: (src: string, options: any) => getCfTransformUrl(src, options),
     infer: async (src: string) => {
         await acquireInferSizeSlot();
-        try { return await inferRemoteSize(src); }
+        try { return await inferImageDimensions(() => inferRemoteSize(src)); }
         finally { releaseInferSizeSlot(); }
     },
     optimize: (options: any) => getImage(options),
@@ -50,7 +51,7 @@ export function getImageSafe(options: any): Promise<any> {
 
 /** Same responsive WebP candidates are used by the visible hero and its preload. */
 export function optimizeResponsiveImage(src: string) {
-    return imageDelivery.responsive(wpUrl(src));
+    return imageDelivery.responsive(wpUrl(normalizeCmsMediaUrl(src)));
 }
 
 /** Display-only copy: preserve CMS originals and brochure/download URLs. */
@@ -59,7 +60,7 @@ export async function optimizeTourPresentation(tour: WPTour): Promise<WPTour> {
     const optimizedHero = source ? await optimizeResponsiveImage(source) : undefined;
     const optimizedPhotos: NonNullable<WPTour['optimizedPhotos']> = {};
     for (const raw of collectTourPhotoSources(tour)) {
-        const url = wpUrl(raw);
+        const url = wpUrl(normalizeCmsMediaUrl(raw));
         const [thumbnail, full] = await Promise.all([
             getImageSafe({ src: url, width: 600, height: 450, format: 'webp', quality: 80 }),
             imageDelivery.responsive(url, { widths: [1600], width: 1600 }),
@@ -68,10 +69,10 @@ export async function optimizeTourPresentation(tour: WPTour): Promise<WPTour> {
     }
     const optimizedInlineImages: NonNullable<WPTour['optimizedInlineImages']> = {};
     for (const raw of collectInlineImageSources(tour)) {
-        const url = wpUrl(raw);
+        const url = wpUrl(normalizeCmsMediaUrl(raw));
         // Supplier-hosted maps retain their supported external URLs; bundle owned media only.
         if (!/^https:\/\/(?:[^/]+\.)?qualitour\.ca\//.test(url)
-            && !url.startsWith('https://qualitour-cms-free-test.qualitour.workers.dev/')) continue;
+            && !url.startsWith(`${CMS_ORIGIN}/`)) continue;
         optimizedInlineImages[url] = await imageDelivery.responsive(url, { widths: [480, 960, 1200], width: 1200 });
     }
     return { ...tour, optimizedHero, optimizedPhotos, optimizedInlineImages };
@@ -119,7 +120,7 @@ export async function optimizeTourImages(
                     results[batchIndex + index].optimizedImageUrl = optimized.src;
                 } catch (e) {
                     console.warn(`[Image Optimization] Failed for tour ${tour.id}:`, e);
-                    results[batchIndex + index].optimizedImageUrl = imageUrl;
+                    throw new Error(`Tour ${tour.id} display image conversion failed`, { cause: e });
                 }
             })
         );
@@ -159,7 +160,7 @@ export async function deepOptimizeTourData(tour: WPTour): Promise<WPTour> {
                     // Skip if already an Astro optimized URL
                     if (originalSrc.startsWith("/_astro/")) continue;
 
-                    const url = wpUrl(originalSrc);
+                    const url = wpUrl(normalizeCmsMediaUrl(originalSrc));
                     try {
                         const opt = await getImageSafe({ src: url, width: 1200, format: "webp", inferSize: true });
                         replacements.push([originalSrc, opt.src]);
@@ -182,7 +183,7 @@ export async function deepOptimizeTourData(tour: WPTour): Promise<WPTour> {
                 // Skip if already an Astro optimized URL
                 if (obj.startsWith("/_astro/")) return obj;
 
-                const url = wpUrl(obj);
+                const url = wpUrl(normalizeCmsMediaUrl(obj));
                 try {
                     const opt = await getImageSafe({ src: url, width: 1200, format: "webp", inferSize: true });
                     return opt.src;
@@ -233,7 +234,7 @@ export async function optimizeImageUrl(url: string, width: number = 1920): Promi
     // Skip if already an Astro optimized URL
     if (url.startsWith("/_astro/")) return url;
 
-    const sanitizedUrl = wpUrl(url);
+    const sanitizedUrl = wpUrl(normalizeCmsMediaUrl(url));
 
     try {
         const optimized = await getImageSafe({ src: sanitizedUrl, width, format: "webp", inferSize: true });

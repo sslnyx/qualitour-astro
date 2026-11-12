@@ -1,4 +1,4 @@
-"""Verify and inventory a root-hosted Cloudflare Pages staging build."""
+"""Verify and inventory an immutable root-hosted static frontend build."""
 import argparse
 import hashlib
 import json
@@ -18,6 +18,16 @@ from staging_release import island_props
 ORIGIN = "https://staging.qualitour-astro.pages.dev"
 CMS_ORIGIN = "https://qualitour-cms-free-test.qualitour.workers.dev"
 TARGET = "cloudflare-staging"
+APPROVED_PUBLIC_ORIGINS = {
+    ORIGIN,
+    "https://qualitour.qualitour.workers.dev",
+    "https://qualitour.ca",
+}
+APPROVED_CMS_ORIGINS = {
+    CMS_ORIGIN,
+    "https://qualitour.qualitour.workers.dev",
+    "https://qualitour.ca",
+}
 MANIFEST = "qualitour-release.json"
 SNAPSHOT = Path(".astro/cms-content/public-catalogue.json")
 COMPATIBILITY = Path("src/data/cms-legacy-compat.json")
@@ -36,9 +46,18 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def canonical_for_file(relative):
+def validate_origin(value, label, approved):
+    if value not in approved:
+        raise ValueError(f"{label} is not an approved HTTPS origin: {value}")
+    parsed = urlsplit(value)
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password or parsed.path or parsed.query or parsed.fragment:
+        raise ValueError(f"{label} must be a canonical HTTPS origin")
+    return value
+
+
+def canonical_for_file(relative, origin=ORIGIN):
     path = "/" if relative == "index.html" else "/" + relative.removesuffix(".html")
-    return ORIGIN + quote(unquote(path), safe="/")
+    return origin + quote(unquote(path), safe="/")
 
 
 def safe_slug(value):
@@ -66,12 +85,12 @@ def compatibility_digest(value):
     return digest(encoded.encode())
 
 
-def read_catalogue(path, compatibility_path=COMPATIBILITY):
+def read_catalogue(path, compatibility_path=COMPATIBILITY, cms_origin=CMS_ORIGIN):
     raw = path.read_bytes()
     value = json.loads(raw)
     if value.get("schema") != 2:
         raise ValueError("CMS public catalogue must use schema 2")
-    if value.get("origin") != CMS_ORIGIN:
+    if value.get("origin") != cms_origin:
         raise ValueError("CMS public catalogue origin is not the approved CMS origin")
     generated_at = value.get("generatedAt")
     try:
@@ -160,6 +179,8 @@ def validate_assets(root, relative, html_text):
         if reference.startswith("//"):
             raise ValueError(f"Protocol-relative browser asset in {relative}: {reference}")
         parsed = urlsplit(reference)
+        if "/_emdash/api/media/file/" in unquote(parsed.path):
+            raise ValueError(f"Unoptimized CMS browser image in {relative}: {reference}")
         if "/wp-content/" in unquote(parsed.path):
             raise ValueError(f"Unoptimized WordPress browser image in {relative}: {reference}")
         if parsed.scheme or parsed.netloc or not parsed.path.startswith("/"):
@@ -264,7 +285,7 @@ def changjiang_compatibility(root, source_tours):
     return {"path": "/" + relative.removesuffix(".html"), "itineraryDays": 16}
 
 
-def append_noindex_header(root):
+def configure_indexability_header(root, indexable):
     path = root / "_headers"
     current = path.read_text() if path.exists() else ""
     block = "/*\n  X-Robots-Tag: noindex, follow\n"
@@ -272,16 +293,27 @@ def append_noindex_header(root):
         r"(?ms)^/\*\s*$.*?^\s+X-Robots-Tag:\s*[^\n]*\bnoindex\b",
         current,
     )
-    if not wildcard_noindex:
-        path.write_text(current.rstrip() + "\n\n# Cloudflare Pages staging must never be indexed.\n" + block)
+    if indexable and wildcard_noindex:
+        raise ValueError("Indexable target contains a wildcard noindex response header")
+    if not indexable and not wildcard_noindex:
+        path.write_text(current.rstrip() + "\n\n# This public target must not be indexed.\n" + block)
 
 
-def finalize(root, snapshot_path=SNAPSHOT, compatibility_path=COMPATIBILITY):
+def finalize(root, snapshot_path=SNAPSHOT, compatibility_path=COMPATIBILITY, *,
+             origin=ORIGIN, cms_origin=CMS_ORIGIN, target=TARGET, indexable=False):
     root = Path(root)
     snapshot_path = Path(snapshot_path)
+    origin = validate_origin(origin, "Public origin", APPROVED_PUBLIC_ORIGINS)
+    cms_origin = validate_origin(cms_origin, "CMS origin", APPROVED_CMS_ORIGINS)
+    if not isinstance(target, str) or not re.fullmatch(r"[a-z][a-z0-9-]{1,63}", target):
+        raise ValueError("Static target name is invalid")
+    if not isinstance(indexable, bool):
+        raise ValueError("indexable must be a boolean")
+    if indexable and origin.endswith(".workers.dev"):
+        raise ValueError("workers.dev frontend cannot be indexable")
     if not root.is_dir():
         raise ValueError(f"Static output directory does not exist: {root}")
-    snapshot, snapshot_bytes, source_tours = read_catalogue(snapshot_path, compatibility_path)
+    snapshot, snapshot_bytes, source_tours = read_catalogue(snapshot_path, compatibility_path, cms_origin)
     counts, homepage_ids, detail_paths = validate_catalogue_pages(root, source_tours)
     validate_transfers(root)
 
@@ -294,15 +326,18 @@ def finalize(root, snapshot_path=SNAPSHOT, compatibility_path=COMPATIBILITY):
         html_text = page.read_text()
         document = SeoDocument()
         document.feed(html_text)
-        expected = canonical_for_file(relative)
+        expected = canonical_for_file(relative, origin)
         if document.canonical != expected:
             raise ValueError(f"Incorrect root canonical for {relative}: {document.canonical}")
         if document.meta.get("og:url") != expected or document.meta.get("twitter:url") != expected:
             raise ValueError(f"Sharing URL differs from canonical: {relative}")
         if not document.title or not document.meta.get("description"):
             raise ValueError(f"Missing title/description: {relative}")
-        if "noindex" not in document.robots.lower():
-            raise ValueError(f"Staging page lacks noindex: {relative}")
+        has_noindex = "noindex" in document.robots.lower()
+        if indexable and has_noindex:
+            raise ValueError(f"Indexable page contains noindex: {relative}")
+        if not indexable and not has_noindex:
+            raise ValueError(f"Non-indexable page lacks noindex: {relative}")
         validate_schema(document, relative)
         validate_assets(root, relative, html_text)
         if relative in detail_paths:
@@ -318,7 +353,7 @@ def finalize(root, snapshot_path=SNAPSHOT, compatibility_path=COMPATIBILITY):
                 "description": document.meta["description"],
                 "alternates": document.alternates,
                 "schema": document.schemas,
-                "indexable": False,
+                "indexable": indexable,
             }
         )
     if not records:
@@ -335,8 +370,8 @@ def finalize(root, snapshot_path=SNAPSHOT, compatibility_path=COMPATIBILITY):
             raise ValueError("Server-only secret marker found in browser bundle: " + bundle.relative_to(root).as_posix())
 
     (root / ".htaccess-staging").unlink(missing_ok=True)
-    append_noindex_header(root)
-    inventory = {"schema": 1, "target": TARGET, "origin": ORIGIN, "pages": records}
+    configure_indexability_header(root, indexable)
+    inventory = {"schema": 1, "target": target, "origin": origin, "pages": records}
     (root / "seo-inventory.json").write_text(json.dumps(inventory, ensure_ascii=False, indent=2) + "\n")
 
     compatibility = changjiang_compatibility(root, source_tours)
@@ -347,10 +382,10 @@ def finalize(root, snapshot_path=SNAPSHOT, compatibility_path=COMPATIBILITY):
     }
     manifest = {
         "schema": 1,
-        "commit": os.environ.get("CF_PAGES_COMMIT_SHA") or os.environ.get("GITHUB_SHA") or "local",
+        "commit": os.environ.get("WORKER_RELEASE_COMMIT") or os.environ.get("WORKERS_CI_COMMIT_SHA") or os.environ.get("CF_PAGES_COMMIT_SHA") or os.environ.get("GITHUB_SHA") or "local",
         "content_source": "emdash",
-        "target": TARGET,
-        "origin": ORIGIN,
+        "target": target,
+        "origin": origin,
         "counts": {"pages": len(records), "tours": counts, "files": len(files)},
         "homepage_ids": homepage_ids,
         "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
@@ -371,7 +406,24 @@ def finalize(root, snapshot_path=SNAPSHOT, compatibility_path=COMPATIBILITY):
 
 
 if __name__ == "__main__":
+    def boolean(value):
+        if value == "true":
+            return True
+        if value == "false":
+            return False
+        raise argparse.ArgumentTypeError("must be true or false")
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--dist", type=Path, required=True)
+    parser.add_argument("--origin", default=ORIGIN)
+    parser.add_argument("--cms-origin", default=CMS_ORIGIN)
+    parser.add_argument("--target", default=TARGET)
+    parser.add_argument("--indexable", type=boolean, default=False)
     arguments = parser.parse_args()
-    finalize(arguments.dist)
+    finalize(
+        arguments.dist,
+        origin=arguments.origin,
+        cms_origin=arguments.cms_origin,
+        target=arguments.target,
+        indexable=arguments.indexable,
+    )

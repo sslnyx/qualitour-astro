@@ -49,3 +49,9 @@ test('responsive failure clears source candidates and applies a fallback only on
  const {applyImageFallback}=await import('../src/lib/image-delivery.mjs');const attributes=new Map([['srcset','broken.webp 960w'],['sizes','100vw']]);const img={dataset:{},src:'broken.webp',removeAttribute:key=>attributes.delete(key)};
  applyImageFallback(img,'fallback.jpg');assert.equal(img.src,'fallback.jpg');assert.equal(attributes.has('srcset'),false);assert.equal(attributes.has('sizes'),false);applyImageFallback(img,'second.jpg');assert.equal(img.src,'fallback.jpg');
 });
+test('transient source dimension failure retries within a bound and never substitutes raw media',async()=>{
+ const {inferImageDimensions}=await import('../src/lib/image-delivery.mjs');let calls=0;const waits=[];
+ const r=await inferImageDimensions(async()=>{if(++calls===1)throw Error('temporary origin failure');return {width:800,height:600};},{wait:async ms=>waits.push(ms)});
+ assert.deepEqual(r,{width:800,height:600});assert.equal(calls,2);assert.equal(waits.length,1);
+ let failures=0;await assert.rejects(inferImageDimensions(async()=>{failures++;throw Error('unavailable');},{wait:async()=>{}}),/unavailable/);assert.equal(failures,3);
+});

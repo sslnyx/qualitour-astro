@@ -1,0 +1,38 @@
+---
+import { getEmDashCollection } from 'emdash';
+import { cmsTourHref } from '../lib/cms/emdash-tour';
+import '../styles/global.css';
+
+export const prerender = false;
+const lang = Astro.params.lang === 'zh' ? 'zh' : 'en';
+if (Astro.params.lang && Astro.params.lang !== 'zh') return new Response('Not found', { status: 404 });
+const rawPage = Number(Astro.url.searchParams.get('page') || '1');
+const page = Number.isSafeInteger(rawPage) && rawPage > 0 && rawPage <= 1000 ? rawPage : 1;
+const { entries, error, hasMore } = await getEmDashCollection('tours', { locale: lang, status: 'published', limit: 20, offset: (page - 1) * 20 });
+if (error) return new Response('CMS unavailable', { status: 503 });
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+const prefix = lang === 'zh' ? '/zh' : '';
+---
+<!doctype html>
+<html lang={lang === 'zh' ? 'zh-Hant' : 'en'}>
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /><meta name="robots" content="noindex, nofollow" /><title>行程 | Qualitour</title></head>
+  <body class="bg-gray-50 text-gray-900">
+    <main class="max-w-5xl mx-auto p-6 md:py-14">
+      <a href="/_emdash/admin" class="text-orange-700">管理行程</a>
+      <h1 class="text-4xl font-bold my-8">{lang === 'zh' ? '精選行程' : 'Our tours'}</h1>
+      <nav class="mb-8 flex gap-6"><a href="/cms-proof/tours">English</a><a href="/zh/cms-proof/tours">繁體中文</a></nav>
+      <ul class="grid md:grid-cols-2 gap-6">
+        {entries.map(entry => <li class="bg-white border rounded-2xl p-6">
+          <a href={cmsTourHref(entry, lang)} class="text-2xl font-semibold">{entry.data.title}</a>
+          <p class="my-3 text-gray-600">{entry.data.summary}</p><p>{entry.data.price} {entry.data.currency}</p>
+        </li>)}
+      </ul>
+      <nav aria-label="行程分頁" class="mt-8 flex items-center justify-between gap-4">
+        {page > 1 ? <a rel="prev" class="text-orange-700" href={`${prefix}/cms-proof/tours?page=${page - 1}`}>← {lang === 'zh' ? '上一頁' : 'Previous'}</a> : <span />}
+        <span>{lang === 'zh' ? '第' : 'Page'} {page} {lang === 'zh' ? '頁' : ''}</span>
+        {hasMore ? <a rel="next" class="text-orange-700" href={`${prefix}/cms-proof/tours?page=${page + 1}`}>{lang === 'zh' ? '下一頁' : 'Next'} →</a> : <span />}
+      </nav>
+    </main>
+  </body>
+</html>

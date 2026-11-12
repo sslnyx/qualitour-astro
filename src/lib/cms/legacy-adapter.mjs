@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { CMS_ORIGIN } from './read-client.mjs';
+import { CMS_ORIGIN, normalizeCmsMediaUrl } from './read-client.mjs';
 
 const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object'
   ? Object.fromEntries(Object.keys(value).filter(key => key !== '_key').sort().map(key => [key, canonical(value[key])])) : value;
@@ -15,7 +15,20 @@ export function mediaUrl(value) {
   const key = value?.meta?.storageKey;
   if (typeof key === 'string' && /^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(key) && !key.split('/').includes('..')) return `${CMS_ORIGIN}/_emdash/api/media/file/${key}`;
   const url = typeof value === 'string' ? value : value?.url;
-  return typeof url === 'string' && /^(https?:\/\/|\/_emdash\/api\/media\/file\/)/.test(url) ? safeUrl(url) : undefined;
+  return typeof url === 'string' && /^(https?:\/\/|\/_emdash\/api\/media\/file\/)/.test(url)
+    ? normalizeCmsMediaUrl(safeUrl(url)) : undefined;
+}
+
+/** Pure derived-copy normalization; the frozen compatibility source is never mutated. */
+export function normalizeCmsMediaReferences(value, origin = CMS_ORIGIN) {
+  if (typeof value === 'string') return normalizeCmsMediaUrl(value, origin);
+  if (Array.isArray(value)) return value.map(item => normalizeCmsMediaReferences(item, origin));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(
+      ([key, item]) => [key, normalizeCmsMediaReferences(item, origin)],
+    ));
+  }
+  return value;
 }
 
 /** Explicit Portable Text renderer: no arbitrary HTML, styles, embeds or attributes. */
@@ -73,7 +86,7 @@ export function buildCatalogue(entries, compat, locale) {
     for (const field of ['overview','itinerary','itinerary_continued','additional_info','faq','gallery']) {
       if (!Object.hasOwn(data,field) || data[field] !== null && !Array.isArray(data[field])) throw new Error(`Missing or invalid CMS field ${field} for ${key}`);
     }
-    const tour = structuredClone(original.tour), baseline = original.baseline;
+    const tour = normalizeCmsMediaReferences(original.tour), baseline = original.baseline;
     const published = typeof entry.publishedAt === 'string' ? Date.parse(entry.publishedAt) : NaN;
     if (!Number.isFinite(published)) throw new Error(`Missing or invalid CMS publication date for ${key}`);
     tour.date = new Date(published).toISOString();

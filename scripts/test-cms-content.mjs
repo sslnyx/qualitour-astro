@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildCatalogue, contentHash, renderRichText, mediaUrl, sortToursByPublishedAt } from '../src/lib/cms/legacy-adapter.mjs';
-import { createCmsReader, CMS_ORIGIN } from '../src/lib/cms/read-client.mjs';
+import { buildCatalogue, contentHash, renderRichText, mediaUrl, normalizeCmsMediaReferences, sortToursByPublishedAt } from '../src/lib/cms/legacy-adapter.mjs';
+import { createCmsReader, CMS_ORIGIN, normalizeCmsMediaUrl, resolveCmsOrigin } from '../src/lib/cms/read-client.mjs';
 
 const block = text => [{ _type: 'block', children: [{ _type: 'span', text }] }];
 function fixture() {
@@ -67,6 +67,17 @@ test('reader refuses redirects, partial lists, duplicate pages and concurrent ca
 test('authentication errors never include credentials or response bodies', async () => {
   await assert.rejects(createCmsReader({token:'TEST-SECRET',fetchImpl:async()=>new Response('TEST-SECRET',{status:401})}).listPublished('en'),error=>!error.message.includes('TEST-SECRET')&&/401/.test(error.message));
 });
+test('CI requires EMDASH_TOKEN even when CLI fallback is explicitly requested', async () => {
+  const previous = process.env.CI;
+  process.env.CI = '1';
+  try {
+    const reader = createCmsReader({ allowCli: true, credentialPath: '/unused/cli-auth.json' });
+    await assert.rejects(reader.listPublished('en'), /requires the private EMDASH_TOKEN/);
+  } finally {
+    if (previous === undefined) delete process.env.CI;
+    else process.env.CI = previous;
+  }
+});
 test('absent fields and unresolved media stop publication; explicit empty arrays clear sections',()=>{
   const f=fixture();delete f.data.overview;
   assert.throws(()=>buildCatalogue([f.entry],f.compat,'en'),/field overview/);
@@ -85,4 +96,44 @@ test('homepage latest selection uses CMS publication dates before limiting, inde
   assert.deepEqual(tours.map(t=>t.id),[900,2,1]);
   const f=fixture();assert.equal(buildCatalogue([f.entry],f.compat,'en').tours[0].date,'2026-11-12T00:00:00.000Z');
   delete f.entry.publishedAt;assert.throws(()=>buildCatalogue([f.entry],f.compat,'en'),/publication date/);
+});
+
+test('CMS origin accepts only the approved old, renamed, and branded origins', () => {
+  for (const origin of [
+    'https://qualitour-cms-free-test.qualitour.workers.dev',
+    'https://qualitour.qualitour.workers.dev',
+    'https://qualitour.ca',
+  ]) assert.equal(resolveCmsOrigin(origin), origin);
+  for (const origin of [
+    'http://qualitour.qualitour.workers.dev',
+    'https://qualitour.qualitour.workers.dev.evil.test',
+    'https://qualitour.qualitour.workers.dev/path',
+    'https://user@qualitour.qualitour.workers.dev',
+    'https://example.test',
+  ]) assert.throws(() => resolveCmsOrigin(origin), /QUALITOUR_CMS_ORIGIN/);
+});
+
+test('stale CMS media hosts normalize in a derived presentation without mutating source content', () => {
+  const old = 'https://qualitour-cms-free-test.qualitour.workers.dev';
+  const current = 'https://qualitour.qualitour.workers.dev';
+  const source = {
+    featured_image_url: `${old}/_emdash/api/media/file/hero.jpg`,
+    tour_meta: { brochure: { url: `${old}/_emdash/api/media/file/brochure.pdf?download=1` } },
+    goodlayers_data: {
+      tour_gallery: [{ url: `${old}/_emdash/api/media/file/gallery.jpg#large` }],
+      sections: [{ value: { content: `<img src="${old}/_emdash/api/media/file/inline.jpg"><a href="${old}/ordinary-page">Keep</a>` } }],
+    },
+    external: 'https://supplier.example/photo.jpg',
+  };
+  const before = structuredClone(source);
+  const presentation = normalizeCmsMediaReferences(source, current);
+
+  assert.deepEqual(source, before);
+  assert.equal(presentation.featured_image_url, `${current}/_emdash/api/media/file/hero.jpg`);
+  assert.equal(presentation.tour_meta.brochure.url, `${current}/_emdash/api/media/file/brochure.pdf?download=1`);
+  assert.equal(presentation.goodlayers_data.tour_gallery[0].url, `${current}/_emdash/api/media/file/gallery.jpg#large`);
+  assert.match(presentation.goodlayers_data.sections[0].value.content, new RegExp(`${current}/_emdash/api/media/file/inline\\.jpg`));
+  assert.match(presentation.goodlayers_data.sections[0].value.content, new RegExp(`${old}/ordinary-page`));
+  assert.equal(presentation.external, source.external);
+  assert.equal(normalizeCmsMediaUrl(`${old}/_emdash/api/media/file/photo.jpg`, current), `${current}/_emdash/api/media/file/photo.jpg`);
 });

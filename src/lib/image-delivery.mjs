@@ -1,3 +1,11 @@
+/** Retry transient source metadata reads without ever serving an unoptimized fallback. */
+export async function inferImageDimensions(infer, { wait = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try { return await infer(); }
+    catch (error) { if (attempt === 2) throw error; await wait(200 * (attempt + 1)); }
+  }
+}
+
 export async function mapWithConcurrency(input, work, concurrency = 4) {
   if (!Number.isInteger(concurrency) || concurrency < 1) throw new RangeError('Invalid image concurrency');
   const result = new Array(input.length);

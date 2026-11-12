@@ -22,7 +22,12 @@
     "deploy:cloudflare": "npm run build:cloudflare && wrangler pages deploy dist",
     "deploy:cloudflare-staging": "npm run build:cloudflare && wrangler pages deploy dist --project-name=qualitour-astro --branch=staging",
     "build:pages-static": "node scripts/build-pages-static.mjs",
-    "test:pages-static": "python3 -m unittest scripts/test_pages_static.py"
+    "test:pages-static": "python3 -m unittest scripts/test_pages_static.py",
+    "build:worker-static": "node scripts/build-worker-static.mjs",
+    "build:worker-cms": "astro build --config astro.config.worker-cms.mjs",
+    "build:worker": "node scripts/build-worker.mjs",
+    "test:worker": "node --test scripts/test-worker-assets.mjs && python3 -m unittest scripts/test_pages_static.py",
+    "deploy:worker": "node scripts/deploy-worker.mjs"
   },
   "dependencies": {
     "@astrojs/check": "0.9.12",
@@ -36,12 +41,18 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "tailwindcss": "4.3.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@emdash-cms/cloudflare": "1.4.0",
+    "@portabletext/to-html": "6.0.0",
+    "emdash": "1.4.0"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
     "lightningcss": "^1.30.2",
-    "wrangler": "4.125.0"
+    "wrangler": "4.125.0",
+    "@emdash-cms/gutenberg-to-portable-text": "1.4.0",
+    "image-size": "2.0.2",
+    "ws": "8.22.0"
   },
   "engines": {
     "node": ">=22.23.4"
