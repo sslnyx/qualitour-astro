@@ -1358,6 +1358,16 @@ const navData = JSON.stringify({
             pathWithoutBase = "/" + pathWithoutBase;
         }
 
+        // Native booking links keep the product, guest booking ID and return language.
+        if (/^\/(?:zh\/)?book(?:\/|$)/.test(pathWithoutBase)) {
+            const destination = new URL(window.location.href);
+            const bookingPath = pathWithoutBase.replace(/^\/zh(?=\/book)/, "");
+            destination.pathname = `${baseUrl}${targetLang === "zh" ? "/zh" : ""}${bookingPath}`;
+            destination.searchParams.set("lang", targetLang);
+            window.location.href = destination.href;
+            return;
+        }
+
         // Check if we're on a tour detail page
         const isTourPage =
             pathWithoutBase.includes("/tours/") &&

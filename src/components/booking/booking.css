@@ -574,3 +574,603 @@
     max-width: none;
   }
 }
+
+/* Native booking follows the website's neutral cards and orange actions. */
+.qb-customer {
+  --qt-charcoal: #111827;
+  --qt-text: #1f2937;
+  --qt-border: #e5e7eb;
+  --qt-bg: #f9fafb;
+  --qt-radius: 16px;
+  min-height: 0;
+  font-family: inherit;
+  line-height: 1.6;
+}
+.qb-customer *,
+.qb-native-dialog * {
+  box-sizing: border-box;
+}
+.qb-public-main {
+  max-width: 1200px;
+  padding: 32px 24px 48px;
+}
+.qb-sandbox {
+  background: #fff7ed;
+  border-color: #ffedd5;
+  color: #9a3412;
+  padding: 9px 20px;
+  font-size: 12px;
+}
+.qb-hero {
+  max-width: none;
+  margin-bottom: 26px;
+}
+.qb-back-link {
+  display: inline-block;
+  color: #9a4b0b;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 18px;
+  text-decoration: none;
+}
+.qb-hero h1 {
+  font-size: clamp(28px, 3vw, 38px);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  margin-bottom: 10px;
+}
+.qb-hero p {
+  margin: 0;
+  font-size: 15px;
+}
+.qb-progress {
+  margin: 24px 0 0;
+  gap: 10px;
+}
+.qb-progress span {
+  font-size: 13px;
+  padding: 8px 15px;
+  font-weight: 600;
+}
+.qb-progress .is-current {
+  color: #9a3412;
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+.qb-public-grid {
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+}
+.qb-customer .qt-card {
+  padding: 28px;
+  box-shadow: 0 2px 8px rgb(17 24 39 / 3%);
+}
+.qb-customer h2 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+}
+.qb-customer h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+.qb-customer .qt-field {
+  font-size: 13px;
+  gap: 8px;
+}
+.qb-customer input,
+.qb-customer select,
+.qb-customer textarea {
+  border-radius: 10px;
+  min-height: 46px;
+  font-size: 16px;
+  color: #1f2937;
+}
+.qb-customer :is(input, select, textarea, button, a, summary):focus-visible,
+.qb-native-dialog :is(button, a):focus-visible {
+  outline: 3px solid #fb923c;
+  outline-offset: 3px;
+}
+.qb-customer button {
+  font-family: inherit;
+}
+.qb-customer button:not(:disabled) {
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.qb-customer .qt-btn {
+  border-radius: 999px;
+  padding: 11px 20px;
+  font-size: 14px;
+}
+.qb-customer .qt-btn--primary {
+  background: linear-gradient(100deg, #ff6b35, #f59e0b);
+  border: 0;
+  color: white;
+  width: 100%;
+  font-weight: 700;
+}
+.qb-customer .qt-btn--primary:not(:disabled):hover {
+  box-shadow: 0 4px 16px rgb(247 148 30 / 25%);
+}
+.qb-customer .qt-btn:disabled {
+  opacity: 0.45;
+}
+.qb-fields {
+  gap: 20px;
+}
+.qb-date-time {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 24px;
+  border-block: 1px solid #f1f5f9;
+  padding-block: 24px;
+}
+.qb-date-panel,
+.qb-time-panel {
+  min-width: 0;
+}
+.qb-calendar {
+  width: 100%;
+}
+.qb-calendar__head,
+.qb-calendar-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.qb-calendar button {
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  color: #374151;
+  min-height: 44px;
+  border-radius: 10px;
+  font: inherit;
+}
+.qb-calendar button:disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+.qb-calendar select {
+  min-width: 0;
+  font-size: 14px;
+  padding: 8px;
+  text-align: center;
+  font-weight: 650;
+}
+.qb-calendar__grid,
+.qb-calendar-grid,
+.qb-calendar__weekdays,
+.qb-calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+.qb-calendar__weekdays,
+.qb-calendar-weekdays {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+.qb-calendar [aria-pressed="true"],
+.qb-calendar [aria-selected="true"] {
+  background: #f7941e;
+  color: #fff;
+  font-weight: 750;
+  box-shadow: 0 3px 8px rgb(247 148 30 / 20%);
+}
+.qb-calendar
+  button:not(:disabled):not([aria-pressed="true"]):not(
+    [aria-selected="true"]
+  ):hover {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.qb-time-panel > .qb-note {
+  font-size: 11px;
+  margin: -6px 0 12px;
+}
+.qb-time-empty {
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+  color: #6b7280;
+  padding: 28px 16px;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 16px;
+}
+.qb-time-periods {
+  display: flex;
+  border-radius: 10px;
+  background: #f3f4f6;
+  padding: 3px;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+.qb-time-periods button {
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  flex: 1;
+  font-size: 12px;
+  min-height: 40px;
+  cursor: pointer;
+  color: #6b7280;
+}
+.qb-time-periods button[aria-pressed="true"] {
+  background: white;
+  color: #9a3412;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 6%);
+  font-weight: 700;
+}
+.qb-time-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.qb-time-slots button {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 9px;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.qb-time-slots button:hover {
+  border-color: #f7941e;
+}
+.qb-time-slots button[aria-pressed="true"] {
+  color: #9a3412;
+  background: #fff7ed;
+  border: 2px solid #f7941e;
+}
+.qb-time-selected {
+  color: #9a3412;
+  font-size: 12px;
+  margin: 12px 0 0;
+  font-weight: 650;
+}
+.qb-passenger-field {
+  display: grid !important;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+.qb-passenger-field > .qb-note {
+  grid-column: 1/-1;
+  margin-top: -6px;
+}
+.qb-passenger-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.qb-passenger-control button {
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  background: white;
+  cursor: pointer;
+  font-size: 22px;
+}
+.qb-passenger-control button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.qb-passenger-control input {
+  width: 54px;
+  padding: 6px;
+  text-align: center;
+  appearance: textfield;
+  border: 0;
+  font-weight: 700;
+}
+.qb-passenger-control input::-webkit-inner-spin-button {
+  appearance: none;
+}
+.qb-public-grid > .qb-summary {
+  position: sticky;
+  top: 96px;
+  padding: 24px;
+  gap: 10px;
+}
+.qb-summary h2 {
+  margin-bottom: 6px;
+}
+.qb-summary > p {
+  margin: 0;
+}
+.qb-summary dl div {
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding-block: 12px;
+}
+.qb-summary dd {
+  font-size: 13px;
+  max-width: 100%;
+}
+.qb-summary-help {
+  font-size: 12px;
+  color: #6b7280;
+  padding-top: 10px;
+}
+.qb-summary-help a {
+  color: #c2410c;
+  font-weight: 650;
+  display: block;
+  margin-top: 4px;
+}
+.qb-trip-review {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.qb-trip-review h2 {
+  font-size: 16px;
+  margin: 4px 0 8px;
+}
+.qb-trip-review p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+.qb-trip-review button {
+  flex-shrink: 0;
+}
+.qb-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  color: #c2410c;
+}
+.qb-recovery-disclosure {
+  margin: 28px 0 0;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 20px;
+}
+.qb-recovery-disclosure > summary {
+  width: fit-content;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 13px;
+  padding: 10px 0;
+}
+.qb-recovery-disclosure .qt-card {
+  margin-top: 12px;
+}
+.qb-native-dialog {
+  width: min(1120px, calc(100vw - 40px));
+  border-radius: 24px;
+}
+.qb-native-dialog__head {
+  color: #111827;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 28px;
+  align-items: center;
+}
+.qb-native-dialog__eyebrow {
+  color: #c2410c;
+  opacity: 1;
+  font-size: 11px;
+}
+.qb-native-dialog__head h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.qb-native-dialog__close {
+  background: #f3f4f6;
+  color: #4b5563;
+  border: 0;
+}
+.qb-native-dialog__body {
+  padding: 20px;
+  background: #f9fafb;
+}
+.qb-compact .qb-public-main {
+  padding: 0;
+}
+.qb-compact .qb-hero {
+  padding-top: 0;
+  margin-bottom: 20px;
+}
+.qb-compact .qb-hero :is(h1, p, .qb-back-link) {
+  display: none;
+}
+.qb-compact .qb-progress {
+  margin-top: 18px;
+}
+.qb-compact .qb-public-grid {
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 16px;
+}
+.qb-compact .qt-card {
+  padding: 22px;
+}
+.qb-compact .qb-date-time {
+  gap: 16px;
+}
+.qb-compact .qb-public-grid > .qb-summary {
+  top: 0;
+}
+.qb-compact .qb-sandbox {
+  border: 1px solid #ffedd5;
+  border-radius: 10px;
+  text-align: left;
+}
+@media (max-width: 1000px) {
+  .qb-public-grid,
+  .qb-compact .qb-public-grid {
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 18px;
+  }
+  .qb-date-time {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .qb-calendar {
+    max-width: 370px;
+  }
+}
+@media (max-width: 760px) {
+  .qb-public-main {
+    padding: 24px 16px 32px;
+  }
+  .qb-public-grid,
+  .qb-compact .qb-public-grid {
+    grid-template-columns: 1fr;
+  }
+  .qb-public-grid > .qb-summary {
+    position: static;
+  }
+  .qb-customer .qt-card {
+    padding: 22px;
+  }
+  .qb-calendar {
+    max-width: none;
+  }
+  .qb-progress {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .qb-progress span {
+    font-size: 11px;
+    padding: 8px 10px;
+    flex: 1;
+    text-align: center;
+    border-radius: 12px;
+  }
+  .qb-trip-review {
+    flex-wrap: wrap;
+  }
+  .qb-native-dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+  .qb-native-dialog__panel {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+  .qb-native-dialog__head {
+    padding: 16px;
+  }
+  .qb-native-dialog__body {
+    padding: 16px;
+  }
+  .qb-native-dialog__foot {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  .qb-compact .qt-card {
+    padding: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qb-customer button {
+    transition: none !important;
+  }
+}
+.qb-calendar__nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.qb-calendar__nav-button {
+  flex: 0 0 44px;
+}
+.qb-calendar__month-label {
+  min-width: 0;
+  flex: 1;
+}
+.qb-calendar__visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.qb-calendar__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.qb-calendar__week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+.qb-calendar__weekday {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 11px;
+  padding: 4px 0 8px;
+}
+.qb-calendar__day {
+  width: 100%;
+  min-width: 0;
+  font-size: 13px !important;
+}
+.qb-calendar__day--outside {
+  visibility: hidden;
+}
+.qb-trip-form {
+  container: booking-trip / inline-size;
+}
+.qb-date-time {
+  grid-template-columns: minmax(320px, 1.15fr) minmax(0, 1fr);
+}
+.qb-calendar {
+  max-width: none;
+}
+@container booking-trip (max-width: 600px) {
+  .qb-date-time {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.qb-calendar__outside:not([aria-selected="true"]) {
+  color: #9ca3af;
+}
+@media (max-width: 400px) {
+  .qb-public-main {
+    padding-inline: 12px;
+  }
+  .qb-customer .qt-card,
+  .qb-compact .qt-card {
+    padding: 12px;
+  }
+  .qb-native-dialog__body {
+    padding: 12px;
+  }
+  .qb-calendar__week,
+  .qb-calendar__weekdays {
+    gap: 0;
+  }
+}
+@media (max-width: 355px) {
+  .qb-calendar__day {
+    min-width: 0 !important;
+  }
+}
+.qb-compact
+  .qb-trip-form[data-fixed-route="true"]
+  :is(.qb-route-choice, .qb-vehicle-choice) {
+  display: none;
+}
+.qb-compact .qb-trip-form[data-fixed-route="true"] .qb-date-time {
+  border-top: 0;
+  padding-top: 0;
+}

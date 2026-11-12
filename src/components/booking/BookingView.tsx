@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { BookingViewProps } from "../../lib/booking/types";
 import type {
   CustomerInput,
   RouteServiceRules,
 } from "../../lib/booking/contracts";
 import { BookingRecovery } from "./BookingRecovery";
+import { ServiceCalendar } from "./ServiceCalendar";
 
 const VANCOUVER_TIME_ZONE = "America/Vancouver";
 const VANCOUVER_FORMATTER = new Intl.DateTimeFormat("en-CA", {
@@ -191,6 +192,8 @@ export function BookingView(p: BookingViewProps) {
     [serviceTime, setServiceTime] = useState(""),
     [passengers, setPassengers] = useState(1),
     [ack, setAck] = useState(false),
+    [editingTrip, setEditingTrip] = useState(true),
+    [timePeriod, setTimePeriod] = useState("morning"),
     [tick, setTick] = useState(Date.now()),
     [customer, setCustomer] = useState<CustomerInput>({
       name: "",
@@ -201,6 +204,8 @@ export function BookingView(p: BookingViewProps) {
       flightNumber: "",
       notes: "",
     });
+  const passengerId = useId();
+  const contactHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     const timer = setInterval(() => setTick(Date.now()), 1000);
     return () => clearInterval(timer);
@@ -214,11 +219,33 @@ export function BookingView(p: BookingViewProps) {
   useEffect(() => {
     setCustomer((current) => ({
       ...current,
-      pickupLocationId: undefined,
-      dropoffLocationId: undefined,
+      pickupLocationId:
+        p.quote?.pickupOptions?.length === 1
+          ? p.quote.pickupOptions[0].id
+          : undefined,
+      dropoffLocationId:
+        p.quote?.dropoffOptions?.length === 1
+          ? p.quote.dropoffOptions[0].id
+          : undefined,
     }));
     setAck(false);
   }, [p.quote?.id]);
+  useEffect(() => {
+    if (p.quote) {
+      setEditingTrip(false);
+    }
+  }, [p.quote?.id]);
+  useEffect(() => {
+    if (!routeId && !p.initialRouteId && p.catalog?.routes.length === 1) {
+      setRouteId(p.catalog.routes[0].id);
+    }
+  }, [p.catalog, p.initialRouteId, routeId]);
+  useEffect(() => {
+    const rates = p.catalog?.rates.filter(
+      (candidate) => candidate.routeId === routeId,
+    );
+    if (!rateId && rates?.length === 1) setRateId(rates[0].id);
+  }, [p.catalog, routeId, rateId]);
   const route = p.catalog?.routes.find((r) => r.id === routeId),
     rate = p.catalog?.rates.find(
       (r) => r.id === rateId && r.routeId === routeId,
@@ -259,6 +286,42 @@ export function BookingView(p: BookingViewProps) {
       quote.passengers === passengers,
     ),
     quoteValid = matches && quote!.expiresAt > tick / 1000;
+  const calendarDateEnabled = useMemo(() => {
+    const enabledDates = new Map<string, boolean>();
+    return (date: string) => {
+      if (!route?.serviceRules) return false;
+      if (!enabledDates.has(date))
+        enabledDates.set(
+          date,
+          serviceTimeOptions(route.serviceRules, date, localNow, rate).length >
+            0,
+        );
+      return enabledDates.get(date)!;
+    };
+  }, [route?.serviceRules, rate, localNow.date, Math.floor(tick / 60_000)]);
+  const showTrip = editingTrip || !quoteValid;
+  useEffect(() => {
+    if (!showTrip) contactHeading.current?.focus();
+  }, [showTrip, p.quote?.id]);
+  const timeGroups = [
+    {
+      id: "morning",
+      label: t("上午", "Morning"),
+      values: times.filter((time) => time < "12:00"),
+    },
+    {
+      id: "afternoon",
+      label: t("下午", "Afternoon"),
+      values: times.filter((time) => time >= "12:00" && time < "18:00"),
+    },
+    {
+      id: "evening",
+      label: t("晚上", "Evening"),
+      values: times.filter((time) => time >= "18:00"),
+    },
+  ].filter((group) => group.values.length);
+  const activeTimeGroup =
+    timeGroups.find((group) => group.id === timePeriod) ?? timeGroups[0];
   const money = (minor: number) =>
     new Intl.NumberFormat(p.lang === "zh" ? "zh-CA" : "en-CA", {
       style: "currency",
@@ -308,35 +371,22 @@ export function BookingView(p: BookingViewProps) {
   const b = p.booking;
   return (
     <div className="qb-customer">
-      <header className="qb-public-head">
-        <a className="qb-brand" href={p.websiteUrl}>
-          QUALITOUR<small>PRIVATE TRANSFER</small>
-        </a>
-        <nav className="qb-languages" aria-label="Language">
-          <button
-            type="button"
-            aria-pressed={p.lang === "en"}
-            onClick={() => p.onLanguage("en")}
-          >
-            EN
-          </button>
-          <button
-            type="button"
-            aria-pressed={p.lang === "zh"}
-            onClick={() => p.onLanguage("zh")}
-          >
-            中文
-          </button>
-        </nav>
-      </header>
       <div className="qb-sandbox" role="note">
         {t(
           "Sandbox 測試環境：不會扣取真實款項，也不會提供真實接送服務。",
           "Sandbox test environment: no real charge and no travel service will be provided.",
         )}
       </div>
-      <main className="qb-public-main">
+      <div className="qb-public-main">
         <div className="qb-hero">
+          <a
+            className="qb-back-link"
+            href={
+              p.lang === "zh" ? "/zh/private-transfers" : "/private-transfers"
+            }
+          >
+            ← {t("私人接送", "Private transfers")}
+          </a>
           <h1>
             {p.showBooking
               ? t("你的測試預訂", "Your test booking")
@@ -352,10 +402,16 @@ export function BookingView(p: BookingViewProps) {
             className="qb-progress"
             aria-label={t("預訂步驟", "Booking progress")}
           >
-            <span className={!p.showBooking ? "is-current" : ""}>
+            <span
+              className={!p.showBooking && showTrip ? "is-current" : ""}
+              aria-current={!p.showBooking && showTrip ? "step" : undefined}
+            >
               1 · {t("行程與報價", "Trip & quote")}
             </span>
-            <span className={quoteValid && !p.showBooking ? "is-current" : ""}>
+            <span
+              className={!showTrip && !p.showBooking ? "is-current" : ""}
+              aria-current={!showTrip && !p.showBooking ? "step" : undefined}
+            >
               2 · {t("接送資料", "Transfer details")}
             </span>
             <span className={p.showBooking ? "is-current" : ""}>
@@ -367,15 +423,6 @@ export function BookingView(p: BookingViewProps) {
           <div className="qt-alert" role="alert">
             {p.error}
           </div>
-        )}
-        {!p.showBooking && (
-          <BookingRecovery
-            bookings={p.recent ?? []}
-            lang={p.lang}
-            loading={p.recoveryLoading ?? false}
-            error={p.recoveryError ?? ""}
-            onRefresh={p.onRecover}
-          />
         )}
         {p.showBooking ? (
           <section className="qt-card qb-summary">
@@ -565,231 +612,346 @@ export function BookingView(p: BookingViewProps) {
         ) : (
           <div className="qb-public-grid">
             <div>
-              <form
-                className="qt-card"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!p.busy && route && rate)
-                    p.onQuote({
-                      routeId,
-                      rateId,
-                      departureLocal: departure,
-                      passengers,
-                    });
-                }}
-              >
-                <h2>{t("選擇行程", "Choose your trip")}</h2>
-                <fieldset className="qb-fields" disabled={p.busy}>
-                  <label className="qt-field qb-full">
-                    <span>{t("路線", "Route")}</span>
-                    <select
-                      required
-                      value={routeId}
-                      onChange={(e) => {
-                        setRouteId(e.target.value);
-                        setRateId("");
-                        setDeparture("");
-                        setServiceDate("");
-                        setServiceTime("");
-                        setCustomer((current) => ({
-                          ...current,
-                          pickupLocationId: undefined,
-                          dropoffLocationId: undefined,
-                        }));
-                        setAck(false);
-                      }}
-                    >
-                      <option value="">
-                        {t("請選擇路線", "Choose a route")}
-                      </option>
-                      {p.catalog.routes.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {name(r)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="qt-field qb-full">
-                    <span>{t("車型方案", "Vehicle option")}</span>
-                    <select
-                      required
-                      value={rateId}
-                      onChange={(e) => {
-                        const nextRate = p.catalog?.rates.find(
-                            (candidate) => candidate.id === e.target.value,
-                          ),
-                          nextDateAllowed = Boolean(
-                            route?.serviceRules &&
-                            serviceDateAllowed(
-                              route.serviceRules,
-                              serviceDate,
-                              localNow.date,
-                              nextRate,
-                              localNow.epochMs,
-                            ),
-                          ),
-                          nextTimes =
-                            route?.serviceRules && nextDateAllowed
-                              ? serviceTimeOptions(
-                                  route.serviceRules,
-                                  serviceDate,
-                                  localNow,
-                                  nextRate,
-                                )
-                              : [];
-                        setRateId(e.target.value);
-                        if (!nextDateAllowed) {
+              {!showTrip && (
+                <div className="qt-card qb-trip-review">
+                  <div>
+                    <span className="qb-eyebrow">
+                      {t("行程已選好", "Your trip is ready")}
+                    </span>
+                    <h2>{route ? name(route) : ""}</h2>
+                    <p>
+                      {quote?.departureLabel} · {passengers}{" "}
+                      {t("位乘客", "passengers")}
+                    </p>
+                  </div>
+                  <button
+                    className="qt-btn"
+                    type="button"
+                    disabled={p.busy}
+                    onClick={() => setEditingTrip(true)}
+                  >
+                    {t("修改行程", "Edit trip")}
+                  </button>
+                </div>
+              )}
+              {showTrip && (
+                <form
+                  className="qt-card qb-trip-form"
+                  data-fixed-route={Boolean(
+                    p.initialRouteId && p.initialRateId,
+                  )}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (
+                      !p.busy &&
+                      route &&
+                      rate &&
+                      (!route.serviceRules ||
+                        (serviceDateIsAllowed && times.includes(serviceTime)))
+                    )
+                      p.onQuote({
+                        routeId,
+                        rateId,
+                        departureLocal: departure,
+                        passengers,
+                      });
+                  }}
+                >
+                  <h2>{t("選擇行程與出發時間", "Where to, and when?")}</h2>
+                  <fieldset className="qb-fields" disabled={p.busy}>
+                    <label className="qt-field qb-full qb-route-choice">
+                      <span>{t("路線", "Route")}</span>
+                      <select
+                        required
+                        value={routeId}
+                        onChange={(e) => {
+                          setRouteId(e.target.value);
+                          setRateId("");
+                          setDeparture("");
                           setServiceDate("");
                           setServiceTime("");
-                          setDeparture("");
-                        } else if (!nextTimes.includes(serviceTime)) {
-                          setServiceTime("");
-                          setDeparture("");
-                        }
-                        setCustomer((current) => ({
-                          ...current,
-                          pickupLocationId: undefined,
-                          dropoffLocationId: undefined,
-                        }));
-                        setAck(false);
-                      }}
-                    >
-                      <option value="">
-                        {t("請選擇方案", "Choose an option")}
-                      </option>
-                      {p.catalog.rates
-                        .filter((r) => r.routeId === routeId)
-                        .map((r) => (
+                          setCustomer((current) => ({
+                            ...current,
+                            pickupLocationId: undefined,
+                            dropoffLocationId: undefined,
+                          }));
+                          setAck(false);
+                        }}
+                      >
+                        <option value="">
+                          {t("請選擇路線", "Choose a route")}
+                        </option>
+                        {p.catalog.routes.map((r) => (
                           <option key={r.id} value={r.id}>
-                            {name(r)} ·{" "}
-                            {t(
-                              `最多${r.maxPassengers}人`,
-                              `Up to ${r.maxPassengers} passengers`,
-                            )}
+                            {name(r)}
                           </option>
                         ))}
-                    </select>
-                  </label>
-                  {route?.serviceRules ? (
-                    <>
-                      <label className="qt-field">
-                        <span>
-                          {t("服務日期（溫哥華）", "Service date (Vancouver)")}
-                        </span>
-                        <input
-                          type="date"
-                          required
-                          min={serviceBounds?.min}
-                          max={serviceBounds?.max}
-                          value={serviceDate}
-                          onInput={(e) => {
-                            setServiceDate(e.currentTarget.value);
+                      </select>
+                    </label>
+                    <label className="qt-field qb-full qb-vehicle-choice">
+                      <span>{t("車型方案", "Vehicle option")}</span>
+                      <select
+                        required
+                        value={rateId}
+                        onChange={(e) => {
+                          const nextRate = p.catalog?.rates.find(
+                              (candidate) => candidate.id === e.target.value,
+                            ),
+                            nextDateAllowed = Boolean(
+                              route?.serviceRules &&
+                              serviceDateAllowed(
+                                route.serviceRules,
+                                serviceDate,
+                                localNow.date,
+                                nextRate,
+                                localNow.epochMs,
+                              ),
+                            ),
+                            nextTimes =
+                              route?.serviceRules && nextDateAllowed
+                                ? serviceTimeOptions(
+                                    route.serviceRules,
+                                    serviceDate,
+                                    localNow,
+                                    nextRate,
+                                  )
+                                : [];
+                          setRateId(e.target.value);
+                          if (!nextDateAllowed) {
+                            setServiceDate("");
                             setServiceTime("");
                             setDeparture("");
+                          } else if (!nextTimes.includes(serviceTime)) {
+                            setServiceTime("");
+                            setDeparture("");
+                          }
+                          setCustomer((current) => ({
+                            ...current,
+                            pickupLocationId: undefined,
+                            dropoffLocationId: undefined,
+                          }));
+                          setAck(false);
+                        }}
+                      >
+                        <option value="">
+                          {t("請選擇方案", "Choose an option")}
+                        </option>
+                        {p.catalog.rates
+                          .filter((r) => r.routeId === routeId)
+                          .map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {name(r)} ·{" "}
+                              {t(
+                                `最多${r.maxPassengers}人`,
+                                `Up to ${r.maxPassengers} passengers`,
+                              )}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                    {route?.serviceRules ? (
+                      <>
+                        <div className="qb-full qb-date-time">
+                          <div className="qb-date-panel">
+                            <h3>{t("選擇日期", "Choose a date")}</h3>
+                            <ServiceCalendar
+                              lang={p.lang}
+                              value={serviceDate}
+                              min={serviceBounds!.min}
+                              max={serviceBounds!.max}
+                              isDateEnabled={calendarDateEnabled}
+                              onChange={(date) => {
+                                setServiceDate(date);
+                                setServiceTime("");
+                                setDeparture("");
+                                setAck(false);
+                              }}
+                            />
+                          </div>
+                          <div className="qb-time-panel">
+                            <h3>{t("選擇出發時間", "Choose a time")}</h3>
+                            <p className="qb-note">
+                              {t(
+                                "溫哥華當地時間 · 24 小時制",
+                                "Vancouver local time · 24-hour clock",
+                              )}
+                            </p>
+                            {!serviceDate ? (
+                              <div className="qb-time-empty">
+                                {t(
+                                  "先選日期，再選出發時間",
+                                  "Choose a date to see service times",
+                                )}
+                              </div>
+                            ) : (
+                              <>
+                                <div
+                                  className="qb-time-periods"
+                                  aria-label={t("時段", "Time of day")}
+                                >
+                                  {timeGroups.map((group) => (
+                                    <button
+                                      type="button"
+                                      key={group.id}
+                                      aria-pressed={
+                                        activeTimeGroup?.id === group.id
+                                      }
+                                      onClick={() => setTimePeriod(group.id)}
+                                    >
+                                      {group.label}
+                                    </button>
+                                  ))}
+                                </div>
+                                <div
+                                  className="qb-time-slots"
+                                  role="group"
+                                  aria-label={t("出發時間", "Departure time")}
+                                >
+                                  {activeTimeGroup?.values.map((time) => (
+                                    <button
+                                      type="button"
+                                      key={time}
+                                      aria-pressed={serviceTime === time}
+                                      onClick={() => {
+                                        setServiceTime(time);
+                                        setDeparture(`${serviceDate}T${time}`);
+                                        setAck(false);
+                                      }}
+                                    >
+                                      {time}
+                                    </button>
+                                  ))}
+                                </div>
+                                {serviceTime && (
+                                  <p className="qb-time-selected" role="status">
+                                    {t("已選", "Selected")}:{" "}
+                                    {timeLabel(serviceTime)}
+                                  </p>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        {serviceDate && !serviceDateIsAllowed ? (
+                          <p className="qb-note qb-full" role="alert">
+                            {t(
+                              "這個日期不在此路線的服務日期或星期內，請另選日期。",
+                              "This route does not operate on that date. Choose another date.",
+                            )}
+                          </p>
+                        ) : serviceDateIsAllowed && !times.length ? (
+                          <p className="qb-note qb-full" role="alert">
+                            {t(
+                              "今天已沒有可選的服務時間，請另選日期。",
+                              "No service times remain today. Choose another date.",
+                            )}
+                          </p>
+                        ) : null}
+                      </>
+                    ) : (
+                      <label className="qt-field">
+                        <span>
+                          {t(
+                            "溫哥華當地日期與時間",
+                            "Vancouver local date & time",
+                          )}
+                        </span>
+                        <input
+                          type="datetime-local"
+                          required
+                          value={departure}
+                          onChange={(e) => {
+                            setDeparture(e.target.value);
                             setAck(false);
                           }}
                         />
                       </label>
-                      <label className="qt-field">
-                        <span>
-                          {t(
-                            "出發時間（溫哥華太平洋時間）",
-                            "Start time (Vancouver Pacific Time)",
-                          )}
-                        </span>
-                        <select
-                          required
-                          disabled={!serviceDateIsAllowed || !times.length}
-                          value={serviceTime}
-                          onChange={(e) => {
-                            const next = e.target.value;
-                            setServiceTime(next);
-                            setDeparture(next ? `${serviceDate}T${next}` : "");
+                    )}
+                    <div className="qt-field qb-full qb-passenger-field">
+                      <label htmlFor={passengerId}>
+                        {t("乘客人數", "Passengers")}
+                      </label>
+                      <div className="qb-passenger-control">
+                        <button
+                          type="button"
+                          aria-label={t("減少乘客", "Remove a passenger")}
+                          disabled={passengers <= 1}
+                          onClick={() => {
+                            setPassengers(Math.max(1, passengers - 1));
                             setAck(false);
                           }}
                         >
-                          <option value="">
-                            {t("請選擇出發時間", "Choose a start time")}
-                          </option>
-                          {times.map((time) => (
-                            <option key={time} value={time}>
-                              {timeLabel(time)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      {serviceDate && !serviceDateIsAllowed ? (
-                        <p className="qb-note qb-full" role="alert">
+                          −
+                        </button>
+                        <input
+                          id={passengerId}
+                          type="number"
+                          inputMode="numeric"
+                          required
+                          min={1}
+                          max={rate?.maxPassengers ?? 60}
+                          step={1}
+                          value={passengers}
+                          onChange={(e) => {
+                            setPassengers(Number(e.target.value));
+                            setAck(false);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          aria-label={t("增加乘客", "Add a passenger")}
+                          disabled={passengers >= (rate?.maxPassengers ?? 60)}
+                          onClick={() => {
+                            setPassengers(
+                              Math.min(
+                                rate?.maxPassengers ?? 60,
+                                passengers + 1,
+                              ),
+                            );
+                            setAck(false);
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                      {rate && (
+                        <span className="qb-note">
                           {t(
-                            "這個日期不在此路線的服務日期或星期內，請另選日期。",
-                            "This route does not operate on that date. Choose another date.",
+                            `一輛車，最多 ${rate.maxPassengers} 位乘客`,
+                            `One vehicle, up to ${rate.maxPassengers} passengers`,
                           )}
-                        </p>
-                      ) : serviceDateIsAllowed && !times.length ? (
-                        <p className="qb-note qb-full" role="alert">
-                          {t(
-                            "今天已沒有可選的服務時間，請另選日期。",
-                            "No service times remain today. Choose another date.",
-                          )}
-                        </p>
-                      ) : null}
-                    </>
-                  ) : (
-                    <label className="qt-field">
-                      <span>
-                        {t(
-                          "溫哥華當地日期與時間",
-                          "Vancouver local date & time",
-                        )}
-                      </span>
-                      <input
-                        type="datetime-local"
-                        required
-                        value={departure}
-                        onChange={(e) => {
-                          setDeparture(e.target.value);
-                          setAck(false);
-                        }}
-                      />
-                    </label>
-                  )}
-                  <label className="qt-field">
-                    <span>{t("乘客人數", "Passengers")}</span>
-                    <input
-                      type="number"
-                      required
-                      min={1}
-                      max={rate?.maxPassengers ?? 60}
-                      step={1}
-                      value={passengers}
-                      onChange={(e) => {
-                        setPassengers(Number(e.target.value));
-                        setAck(false);
-                      }}
-                    />
-                  </label>
-                </fieldset>
-                <p className="qb-note">
-                  {route?.serviceRules
-                    ? t(
-                        "日期與時間只依此路線的服務規則顯示，不代表車輛仍有空位；取得伺服器報價時才會核對。時區：America/Vancouver。",
-                        "Dates and times follow this route's service rules, but do not promise vehicle availability; the server checks when quoting. Time zone: America/Vancouver.",
-                      )
-                    : t(
-                        "目前測試設定：提前至少1小時、最多366天。取得報價時不會保留車位。",
-                        "Test settings: book 1 hour to 366 days ahead. A quote does not hold a vehicle.",
+                        </span>
                       )}
-                </p>
-                <button
-                  className="qt-btn qt-btn--primary"
-                  disabled={p.busy || !route || !rate}
-                >
-                  {p.busy
-                    ? t("核對中…", "Checking…")
-                    : t("取得整車報價", "Get a whole-vehicle quote")}
-                </button>
-              </form>
-              {quote && quoteValid && (
+                    </div>
+                  </fieldset>
+                  <p className="qb-note">
+                    {route?.serviceRules
+                      ? t(
+                          "所有時間以溫哥華當地時間為準。下一步核對價格與車位；取得報價不會保留車位。",
+                          "All times are local to Vancouver. We check price and vehicle availability in the next step; a quote does not hold a vehicle.",
+                        )
+                      : t(
+                          "目前測試設定：提前至少1小時、最多366天。取得報價時不會保留車位。",
+                          "Test settings: book 1 hour to 366 days ahead. A quote does not hold a vehicle.",
+                        )}
+                  </p>
+                  <button
+                    className="qt-btn qt-btn--primary"
+                    disabled={
+                      p.busy ||
+                      !route ||
+                      !rate ||
+                      (Boolean(route?.serviceRules) &&
+                        (!serviceDateIsAllowed || !times.includes(serviceTime)))
+                    }
+                  >
+                    {p.busy
+                      ? t("核對中…", "Checking…")
+                      : t("查看報價及繼續 →", "Review quote & continue →")}
+                  </button>
+                </form>
+              )}
+              {quote && quoteValid && !showTrip && (
                 <form
                   className="qt-card"
                   style={{ marginTop: 22 }}
@@ -798,7 +960,15 @@ export function BookingView(p: BookingViewProps) {
                     if (!p.busy && ack) p.onReserve(customer);
                   }}
                 >
-                  <h2>{t("接送與聯絡資料", "Transfer & contact details")}</h2>
+                  <h2 ref={contactHeading} tabIndex={-1}>
+                    {t("接送與聯絡資料", "Transfer & contact details")}
+                  </h2>
+                  <p className="qb-note">
+                    {t(
+                      "填寫接送地點及聯絡方式，方便安排你的行程。",
+                      "Add your pickup, destination and contact details.",
+                    )}
+                  </p>
                   <fieldset className="qb-fields" disabled={p.busy}>
                     {quote.pickupOptions?.length ? (
                       <label className="qt-field qb-full">
@@ -903,8 +1073,8 @@ export function BookingView(p: BookingViewProps) {
                     {p.busy
                       ? t("建立中…", "Creating…")
                       : t(
-                          "建立測試預訂並暫留車位",
-                          "Create test booking & hold vehicle",
+                          "確認資料，建立測試預訂 →",
+                          "Confirm details & create test booking →",
                         )}
                   </button>
                   <p className="qb-note">
@@ -967,33 +1137,64 @@ export function BookingView(p: BookingViewProps) {
                   </p>
                 </>
               ) : (
-                <p className="qb-note">
-                  {quote
-                    ? t(
-                        "行程已更改，請重新取得報價。",
-                        "Your trip has changed. Please request a new quote.",
-                      )
-                    : t(
-                        "選擇行程後取得伺服器核對的報價。",
-                        "Choose a trip to receive a server-verified quote.",
-                      )}
-                </p>
+                <>
+                  <dl>
+                    <div>
+                      <dt>{t("車型", "Vehicle")}</dt>
+                      <dd>
+                        {rate ? name(rate) : t("尚未選擇", "Not selected")}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>{t("日期", "Date")}</dt>
+                      <dd>{serviceDate || t("尚未選擇", "Not selected")}</dd>
+                    </div>
+                    <div>
+                      <dt>{t("時間", "Time")}</dt>
+                      <dd>{serviceTime || t("尚未選擇", "Not selected")}</dd>
+                    </div>
+                    <div>
+                      <dt>{t("乘客", "Passengers")}</dt>
+                      <dd>{passengers}</dd>
+                    </div>
+                  </dl>
+                  <p className="qb-note">
+                    {quote
+                      ? t(
+                          "行程已更改，請重新取得報價。",
+                          "Your trip has changed. Please request a new quote.",
+                        )
+                      : t(
+                          "選擇行程後取得伺服器核對的報價。",
+                          "Choose a trip to receive a server-verified quote.",
+                        )}
+                  </p>
+                </>
               )}
+              <div className="qb-summary-help">
+                {t("需要協助安排？", "Need a hand planning?")}{" "}
+                <a href={p.lang === "zh" ? "/zh/contact" : "/contact"}>
+                  {t("聯絡我們", "Contact us")} →
+                </a>
+              </div>
             </aside>
           </div>
         )}
-        <footer className="qb-public-footer">
-          <a href={p.websiteUrl}>
-            {t("返回 Qualitour 官網", "Back to Qualitour")}
-          </a>
-          <p>
-            {t(
-              "這是獨立預訂測試頁。真實路線與售價、通知及正式上線仍待核定。",
-              "This is a standalone booking preview. Actual services, pricing, notifications and launch are still pending approval.",
-            )}
-          </p>
-        </footer>
-      </main>
+        {!p.showBooking && (
+          <details className="qb-recovery-disclosure">
+            <summary>
+              {t("已經預訂？找回你的預訂", "Already booked? Find your booking")}
+            </summary>
+            <BookingRecovery
+              bookings={p.recent ?? []}
+              lang={p.lang}
+              loading={p.recoveryLoading ?? false}
+              error={p.recoveryError ?? ""}
+              onRefresh={p.onRecover}
+            />
+          </details>
+        )}
+      </div>
     </div>
   );
 }
