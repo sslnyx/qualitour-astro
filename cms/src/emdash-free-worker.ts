@@ -1,7 +1,9 @@
-import { DurableObject } from 'cloudflare:workers';
+import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
 import handler, { PluginBridge } from '@emdash-cms/cloudflare/worker';
 import { routeNativeBooking } from '../../src/server/native-booking/index.mjs';
 import { durableExecutionContext, fetchFreeRuntime } from './lib/cms/free-runtime.mjs';
+
+import { isNativeProofPath, validateProofTags } from './lib/cms/native-cache-policy.mjs';
 
 export { PluginBridge };
 
@@ -37,9 +39,38 @@ export class QualitourCmsRuntime extends DurableObject<RuntimeEnv> {
   }
 }
 
+/** Only these proof pages enter Workers Cache; existing visitor routes stay static. */
+export class NativeProofCache extends WorkerEntrypoint<RuntimeEnv> {
+  async fetch(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+    if (!isNativeProofPath(url.pathname) || url.search || !['GET', 'HEAD'].includes(request.method)) {
+      return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store', 'Cloudflare-CDN-Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
+    }
+    const response = await fetchFreeRuntime(handler, request, this.env, this.ctx);
+    const headers = new Headers(response.headers);
+    headers.set('X-Robots-Tag', 'noindex, nofollow');
+    headers.set('X-Native-Proof-Rendered', crypto.randomUUID());
+    if (response.status !== 200 || request.headers.has('Authorization')) {
+      headers.set('Cache-Control', 'private, no-store');
+      headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
+      headers.delete('Cache-Tag');
+    }
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  }
+
+  async invalidateNativeProof(tags: unknown) {
+    return this.ctx.cache.purge({ tags: validateProofTags(tags) });
+  }
+}
+
 export default {
   ...handler,
   async fetch(request: Request, env: RuntimeEnv, context: ExecutionContext) {
+    const pathname = new URL(request.url).pathname;
+    if (pathname.startsWith('/native-proof/')) {
+      const proof = (context.exports as { NativeProofCache: { fetch(request: Request): Promise<Response> } }).NativeProofCache;
+      return proof.fetch(request);
+    }
     const native = await routeNativeBooking(request, env, context);
     if (native) return native;
     return fetchFreeRuntime(handler, request, env, context);

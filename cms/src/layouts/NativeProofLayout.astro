@@ -1,0 +1,133 @@
+---
+import "../styles/global.css";
+import { getCurrentLocale, type Locale } from "../i18n/config";
+import SiteNavAstro from "../../../src/components/SiteNavAstro.astro";
+import Footer from "../components/NativeProofFooter.astro";
+import SeoHead from "../../../src/components/SeoHead.astro";
+import type { Alternate } from '../../../src/lib/seo-pages';
+import { nativeProofNavTerms } from "../lib/cms/native-proof.mjs";
+
+interface TourTranslation {
+  id: number;
+  slug: string;
+}
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  heroImage?: string; // LCP image to preload
+  heroImageSrcSet?: string;
+  heroImageSizes?: string;
+  type?: "website" | "article" | "profile";
+  lang?: Locale;
+  canonical?: string;
+  noindex?: boolean;
+  alternates?: Alternate[];
+  structuredData?: Record<string, unknown>[];
+  tourTranslations?: {
+    en?: TourTranslation;
+    zh?: TourTranslation;
+  };
+}
+
+const {
+  title = "Qualitour | Vancouver Tour Operator & Global Visa Services",
+  description = "Qualitour offers premium Canadian tours, private transfers in Vancouver, and expert global visa services. Experience authentic journeys with our professional team.",
+  image,
+  heroImage,
+  heroImageSrcSet,
+  heroImageSizes,
+  type = "website",
+  lang,
+  canonical,
+  noindex,
+  alternates,
+  structuredData,
+  tourTranslations,
+} = Astro.props;
+
+// Get current locale from URL or use provided lang
+const currentLocale = lang || getCurrentLocale(Astro.url);
+const htmlLang = currentLocale === "zh" ? "zh" : "en-CA";
+
+// Frozen public compatibility vocabulary avoids WordPress and build-snapshot
+// reads in this runtime proof while preserving the existing navigation.
+const navData = nativeProofNavTerms();
+---
+
+<!doctype html>
+<html lang={htmlLang}>
+  <head>
+    <SeoHead
+      title={title}
+      description={description}
+      image={image}
+      heroImage={heroImage}
+      heroImageSrcSet={heroImageSrcSet}
+      heroImageSizes={heroImageSizes}
+      type={type}
+      canonical={canonical}
+      noindex={noindex}
+      lang={currentLocale}
+      alternates={alternates}
+      structuredData={structuredData}
+    />
+    <script is:inline>
+      // Global broken image fallback (Capture phase to catch all img errors)
+      document.addEventListener(
+        "error",
+        function (e) {
+          if (e.target.tagName && e.target.tagName.toUpperCase() === "IMG") {
+            // Skip images that have debugging enabled
+            if (e.target.dataset.originalSrc) {
+              console.warn("Image failed to load:", e.target.src);
+              return;
+            }
+            const fallbackUrl =
+              "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=400&fit=crop&q=80";
+            if (
+              e.target.src !== fallbackUrl &&
+              !e.target.dataset.fallbackTried
+            ) {
+              e.target.dataset.fallbackTried = "true";
+              e.target.src = fallbackUrl;
+              e.target.style.objectFit = "cover";
+            }
+          }
+        },
+        true,
+      );
+    </script>
+  </head>
+  <body
+    class="min-h-screen flex flex-col bg-gray-900 text-gray-100 antialiased"
+  >
+    <!-- Navigation (Pure Astro - no React runtime needed) -->
+    <SiteNavAstro
+      lang={currentLocale}
+      destinations={navData.destinations}
+      activities={navData.activities}
+      types={navData.types}
+      durations={navData.durations}
+      tourTranslations={tourTranslations}
+    />
+
+    <!-- Main Content -->
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <Footer lang={currentLocale} formsDisabled={true} />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --font-inter: "Inter", system-ui, sans-serif;
+  }
+  body {
+    font-family: var(--font-inter);
+  }
+</style>

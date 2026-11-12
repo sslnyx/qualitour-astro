@@ -8,6 +8,12 @@ export function assertWorkerBindings(config){
  assert.deepEqual(config.kv_namespaces.map(x=>[x.binding,x.id]),[['SESSION','71990ee89fd4417a9046aacbbdb88fa4']]);
  assert.deepEqual(config.durable_objects.bindings,[{name:'CMS_RUNTIME',class_name:'QualitourCmsRuntime'}]);
  assert.equal(config.vars.EMDASH_CMS_EXECUTION,'durable');
+ assert.deepEqual(config.exports,{default:{type:'worker',cache:{enabled:false}},NativeProofCache:{type:'worker',cache:{enabled:true}}});
+ assert.equal(config.images.binding,'IMAGES');
+ assert.equal(config.cache.enabled,false,'Only the named proof entrypoint may use Workers Cache');
+ assert.ok(config.assets.run_worker_first.includes('/native-proof/*'));
+ assert.ok(config.compatibility_flags.includes('enable_ctx_exports'));
+
  for(const route of ['/_emdash','/_emdash/*','/api/transfer','/api/transfer/*','/book/*','/zh/book/*'])assert.ok(config.assets.run_worker_first.includes(route),'Required Worker route missing: '+route);
  assert.ok(!config.routes?.length,'Domain routes require a separate reviewed cutover');
 }

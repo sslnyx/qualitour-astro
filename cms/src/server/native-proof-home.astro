@@ -1,0 +1,73 @@
+---
+import { getEmDashCollection, getEmDashEntry, getRequestContext } from 'emdash';
+import FeaturedToursHero from '../../../src/components/FeaturedToursHero';
+import TourCardOptimized from '../../../src/components/TourCardOptimized.astro';
+import Layout from '../layouts/NativeProofLayout.astro';
+import {
+  PROOF_FIXTURE_IDS,
+  assertPublicProofRequest,
+  createNativeProofCatalogue,
+  nativeProofTourHref,
+} from '../lib/cms/native-proof.mjs';
+
+export const prerender = false;
+try {
+  assertPublicProofRequest(Astro.url, getRequestContext());
+} catch {
+  return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
+}
+
+const catalogueResult = await getEmDashCollection('tours', { locale: 'zh', status: 'published', limit: 100, orderBy: { published_at: 'desc' } });
+const fixtureResult = await getEmDashEntry('tours', PROOF_FIXTURE_IDS[0], { locale: 'en' });
+if (catalogueResult.error || fixtureResult.error || (fixtureResult.entry && fixtureResult.isPreview)) {
+  return new Response('CMS unavailable', { status: 503, headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
+}
+let proof;
+try {
+  proof = createNativeProofCatalogue(catalogueResult.entries, { proofEntries: fixtureResult.entry ? [fixtureResult.entry] : [] });
+} catch (error) {
+  console.error('[native-proof] rejected public catalogue:', error);
+  return new Response('CMS content unavailable', { status: 503, headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
+}
+Astro.cache.set(catalogueResult.cacheHint);
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+const heroTours = proof.cards.slice(0, 6);
+const featuredTours = proof.catalogue.tours.slice(0, 6);
+---
+
+<Layout
+  title="原生內容發佈驗證 | Qualitour"
+  description="Qualitour 已發佈行程的原生內容驗證頁。"
+  lang="zh"
+  noindex={true}
+  heroImage={heroTours[0]?.optimizedHero?.src}
+  heroImageSrcSet={heroTours[0]?.optimizedHero?.srcSet}
+  heroImageSizes={heroTours[0]?.optimizedHero?.sizes}
+>
+  <FeaturedToursHero tours={heroTours} lang="zh" localePrefix="/native-proof/zh" />
+
+  <section class="py-20 bg-white overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <span class="text-orange-500 font-bold tracking-widest uppercase text-sm mb-2 block">Featured</span>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">精選行程</h1>
+        <p class="text-gray-600 max-w-2xl mx-auto">探索我們最受歡迎的旅遊套餐</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {featuredTours.map(tour => <TourCardOptimized tour={tour} lang="zh" style="featured" />)}
+      </div>
+    </div>
+  </section>
+
+  {proof.proofMarkers.map(marker => (
+    <aside data-native-proof={marker.id} class="bg-gray-50 border-y border-gray-200 py-5">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-gray-600">
+        <strong class="text-gray-900">{marker.title}</strong>{marker.summary ? ` · ${marker.summary}` : ''}
+      </div>
+    </aside>
+  ))}
+
+  <nav aria-label="原生驗證行程" class="sr-only">
+    {proof.cards.map(tour => <a href={nativeProofTourHref(tour.slug)}>{tour.title.rendered}</a>)}
+  </nav>
+</Layout>

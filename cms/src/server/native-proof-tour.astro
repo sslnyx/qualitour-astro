@@ -1,0 +1,47 @@
+---
+import { getEmDashEntry, getRequestContext } from 'emdash';
+import Layout from '../layouts/NativeProofLayout.astro';
+import TourPage from '../components/NativeProofTourPage.astro';
+import { tourMetadata } from '../../../src/lib/seo';
+import {
+  assertPublicProofRequest,
+  createNativeProofTour,
+  nativeProofTourHref,
+} from '../lib/cms/native-proof.mjs';
+
+export const prerender = false;
+try {
+  assertPublicProofRequest(Astro.url, getRequestContext());
+  nativeProofTourHref(Astro.params.id || '');
+} catch {
+  return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
+}
+
+const result = await getEmDashEntry('tours', Astro.params.id!, { locale: 'zh' });
+if (result.error) return new Response('CMS unavailable', { status: 503, headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
+if (!result.entry || result.isPreview || result.entry.data?.id !== Astro.params.id) {
+  return new Response('Tour not found', { status: 404, headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
+}
+let tour;
+try {
+  tour = createNativeProofTour(result.entry);
+} catch (error) {
+  console.error('[native-proof] rejected public tour:', error);
+  return new Response('Tour not found', { status: 404, headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
+}
+Astro.cache.set(result.cacheHint);
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+const metadata = tourMetadata(tour);
+---
+
+<Layout
+  {...metadata}
+  lang="zh"
+  canonical={nativeProofTourHref(Astro.params.id!)}
+  heroImage={tour.optimizedHero?.src}
+  heroImageSrcSet={tour.optimizedHero?.srcSet}
+  heroImageSizes={tour.optimizedHero?.sizes}
+  noindex={true}
+>
+  <TourPage tour={tour} lang="zh" localePrefix="/zh" reviews={[]} inquiryDisabled={true} />
+</Layout>

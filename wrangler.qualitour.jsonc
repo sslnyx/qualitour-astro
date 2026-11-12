@@ -5,7 +5,8 @@
   "main": "./cms/src/emdash-free-worker.ts",
   "compatibility_date": "2026-08-27",
   "compatibility_flags": [
-    "nodejs_compat"
+    "nodejs_compat",
+    "enable_ctx_exports"
   ],
   "workers_dev": true,
   "preview_urls": false,
@@ -70,7 +71,28 @@
       "/api/transfer",
       "/api/transfer/*",
       "/book/*",
-      "/zh/book/*"
+      "/zh/book/*",
+      "/native-proof/*"
     ]
+  },
+  "cache": {
+    "enabled": false
+  },
+  "exports": {
+    "default": {
+      "type": "worker",
+      "cache": {
+        "enabled": false
+      }
+    },
+    "NativeProofCache": {
+      "type": "worker",
+      "cache": {
+        "enabled": true
+      }
+    }
+  },
+  "images": {
+    "binding": "IMAGES"
   }
 }

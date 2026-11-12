@@ -22,3 +22,7 @@ test('Sandbox booking adds only its dedicated database and routes before CMS dis
  assert.ok(source.includes("../../src/server/native-booking/index.mjs"));
  assert.ok(source.indexOf('await routeNativeBooking(request, env, context)')<source.lastIndexOf('return fetchFreeRuntime'));
 });
+
+test('native experiment cannot turn on cache for existing visitor, CMS or booking entrypoints',()=>{
+ for(const mutate of [c=>c.cache.enabled=true,c=>c.exports.default.cache.enabled=true,c=>c.exports.NativeProofCache.cache.enabled=false,c=>c.images.binding='wrong']){const c=structuredClone(config);mutate(c);assert.throws(()=>assertWorkerBindings(c));}
+});

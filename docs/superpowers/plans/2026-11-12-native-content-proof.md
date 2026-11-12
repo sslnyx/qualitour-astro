@@ -1,0 +1,7 @@
+# Native EmDash content proof
+
+Approved 2026-11-12: preserve appearance, prove automatic public content updates after CMS publication and compressed images. No DNS, new Worker, paid upgrade, whole-site migration or GitHub Actions credential creation.
+
+Use isolated branch codex/emdash-native-proof-20261112 from deployed bc80125. Existing static visitor routes remain authoritative. Add noindex /native-proof/zh (existing hero/cards) and /native-proof/zh/tours/:id (existing tour layout) using published runtime EmDash queries; synthetic fixture changes prove publication without customer-tour edits. Keep admin/preview/booking responses no-store. Preserve all database/storage/DO identities and Sandbox secret. Test cache scope with existing Durable runtime before selecting final cache wiring; do not globally cache personalized surfaces. Use official R2/IMAGES endpoint for a bounded number of transformations, assert real format/dimensions/bytes and no original fallback. Keep current optimized assets as baseline.
+
+Steps: inspect native cache/image dependencies; implement two bounded runtime routes and cache/image wiring; focused regression checks; exact-source build/dry-run and independent review; deploy same Worker preserving secrets; publish/draft/unpublish synthetic proof and verify unchanged deployment version, cache invalidation, safe boundaries, current UI and SEO headers. Record actual timings/coverage/limitations and rollback version. Do not expand to all visitor routes until proof accepted.
