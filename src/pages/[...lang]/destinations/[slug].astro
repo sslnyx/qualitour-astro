@@ -74,7 +74,7 @@ export async function getStaticPaths() {
 }
 
 const { lang: langParam, slug } = Astro.params;
-const { destination, overrideTitle } = Astro.props;
+const { destination, overrideTitle } = (Astro.locals as { qualitourPageProps?: typeof Astro.props }).qualitourPageProps || Astro.props;
 const lang: Locale = (langParam as Locale) || "en";
 const localePrefix = getLocalePrefix(lang as Locale);
 

@@ -36,7 +36,7 @@ export async function getStaticPaths() {
 }
 
 interface Props { tour: WPTour; reviews: GoogleReview[]; alternates: Alternate[]; duplicateTitle: boolean }
-const { tour, reviews, alternates, duplicateTitle } = Astro.props;
+const { tour, reviews, alternates, duplicateTitle } = (Astro.locals as { qualitourPageProps?: typeof Astro.props }).qualitourPageProps || Astro.props;
 const lang: Locale = Astro.params.lang === 'zh' ? 'zh' : 'en';
 const localePrefix = getLocalePrefix(lang);
 const metadata = tourMetadata(tour);
