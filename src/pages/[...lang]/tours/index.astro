@@ -9,6 +9,7 @@ import {
   getTourTypes,
 } from "../../../lib/wordpress/api";
 import type { WPTour, WPTourFeaturedImage } from "../../../lib/wordpress/types";
+import { toTourBrowseCard } from "../../../lib/tour-browse.mjs";
 import { ToursGrid } from "../../../components/ToursGrid";
 import { TourFilterSidebarClient } from "../../../components/TourFilterSidebarClient";
 import { wpUrl } from "../../../lib/wp-url";
@@ -91,7 +92,7 @@ const tours = await optimizeTourImages(rawTours, { concurrency: 20 });
           {/* Main Content - React Client Component */}
           <ToursGrid
             client:load
-            tours={tours}
+            tours={tours.map(toTourBrowseCard)}
             destinations={navData.destinations}
             durations={durations}
             types={types}
