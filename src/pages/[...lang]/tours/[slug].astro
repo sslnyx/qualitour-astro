@@ -4,6 +4,7 @@ import Layout from '../../../layouts/Layout.astro';
 import TourPage from '../../../components/TourPage.astro';
 import { getGoogleReviews } from '../../../lib/wordpress/api';
 import { getTourBuildData } from '../../../lib/wordpress/tour-build-data';
+import { applyNativeTourSeo } from '../../../../cms/src/lib/cms/native-site-seo.mjs';
 import { tourMetadata } from '../../../lib/seo';
 import { confirmedTourAlternates, tourStructuredData, type Alternate } from '../../../lib/seo-pages';
 import type { WPTour, GoogleReview } from '../../../lib/wordpress/types';
@@ -44,6 +45,7 @@ const displayTour = tour.optimizedPhotos ? tour : await optimizeTourPresentation
 const price = tour.tour_meta?.['tour-price-text'] || tour.tour_meta?.price;
 const currency = tour.tour_meta?.['tourmaster-tour-currency'];
 if (duplicateTitle && price && currency) metadata.title = metadata.title.replace(' | Qualitour', ` (${price} ${currency}) | Qualitour`);
+const seo = applyNativeTourSeo(metadata, tour.nativeSeo);
 const origin = Astro.site?.origin || 'https://qualitour.ca';
 const base = import.meta.env.BASE_URL;
 const safeTranslations: { en?: { id: number | string; slug: string }; zh?: { id: number | string; slug: string } } = {};
@@ -55,7 +57,7 @@ if (alternates.length) {
 }
 ---
 
-<Layout {...metadata} heroImage={displayTour.optimizedHero?.src} heroImageSrcSet={displayTour.optimizedHero?.srcSet}
+<Layout {...seo.metadata} canonical={seo.canonical} noindex={seo.noindex} heroImage={displayTour.optimizedHero?.src} heroImageSrcSet={displayTour.optimizedHero?.srcSet}
   heroImageSizes={displayTour.optimizedHero?.sizes} lang={lang} tourTranslations={safeTranslations}
   alternates={alternates} structuredData={tourStructuredData(tour, origin, base, lang)}>
   <TourPage tour={displayTour} lang={lang} localePrefix={localePrefix} reviews={reviews} />
