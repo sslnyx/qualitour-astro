@@ -3,7 +3,7 @@ import handler, { PluginBridge } from '@emdash-cms/cloudflare/worker';
 import { routeNativeBooking } from '../../src/server/native-booking/index.mjs';
 import { durableExecutionContext, fetchFreeRuntime } from './lib/cms/free-runtime.mjs';
 
-import { isNativeProofPath, validateProofTags } from './lib/cms/native-cache-policy.mjs';
+import { isNativeProofPath, validateProofTags, forwardNativeProof, privateProofResponse } from './lib/cms/native-cache-policy.mjs';
 
 export { PluginBridge };
 
@@ -50,7 +50,7 @@ export class NativeProofCache extends WorkerEntrypoint<RuntimeEnv> {
     const headers = new Headers(response.headers);
     headers.set('X-Robots-Tag', 'noindex, nofollow');
     headers.set('X-Native-Proof-Rendered', crypto.randomUUID());
-    if (response.status !== 200 || request.headers.has('Authorization')) {
+    if (privateProofResponse(request, response)) {
       headers.set('Cache-Control', 'private, no-store');
       headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
       headers.delete('Cache-Tag');
@@ -69,7 +69,7 @@ export default {
     const pathname = new URL(request.url).pathname;
     if (pathname.startsWith('/native-proof/')) {
       const proof = (context.exports as { NativeProofCache: { fetch(request: Request): Promise<Response> } }).NativeProofCache;
-      return proof.fetch(request);
+      return forwardNativeProof(proof, request);
     }
     const native = await routeNativeBooking(request, env, context);
     if (native) return native;

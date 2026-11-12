@@ -12,3 +12,11 @@ export function scopedCloudflareProvider(nativeProvider,purge){
   if(result?.success!==true)throw Error('Native proof cache invalidation failed');
  }};
 }
+
+const hasPrivateHeaders = request => request.headers.has('Authorization') || request.headers.has('Cookie');
+export function forwardNativeProof(entrypoint, request) {
+ return hasPrivateHeaders(request) ? entrypoint.fetch(request, {cache:'no-store'}) : entrypoint.fetch(request);
+}
+export function privateProofResponse(request, response) {
+ return hasPrivateHeaders(request) || response.status !== 200 || response.headers.has('Set-Cookie');
+}
