@@ -443,7 +443,8 @@ const navData = JSON.stringify({
                                     </div>
 
                                     <!-- Destinations -->
-                                    <div
+                                    {parentDestinations.length > 0 ? (
+<div
                                         class="col-span-6 border-x border-gray-100 px-8"
                                     >
                                         <h4
@@ -459,8 +460,8 @@ const navData = JSON.stringify({
                                             </span>
                                             {
                                                 lang === "zh"
-                                                    ? "熱門目的地"
-                                                    : "Popular Destinations"
+                                                    ? "目的地"
+                                                    : "Destinations"
                                             }
                                         </h4>
                                         <div class="flex gap-6">
@@ -648,9 +649,19 @@ const navData = JSON.stringify({
                                             </div>
                                         </div>
                                     </div>
-
-                                    <!-- Hot Locations -->
-                                    <div class="col-span-3">
+) : (
+<div class="col-span-9 border-l border-gray-100 pl-8 flex flex-col justify-center">
+                                        <p class="text-gray-500 mb-4">
+                                            {lang === "zh" ? "按目的地瀏覽所有行程。" : "Browse every tour by destination."}
+                                        </p>
+                                        <a href={`${localePrefix}/tours`} class="inline-flex items-center gap-2 font-semibold text-orange-500 hover:text-orange-600">
+                                            {lang === "zh" ? "前往行程頁" : "Go to all tours"}
+                                            <span class="material-icons text-lg">arrow_forward</span>
+                                        </a>
+                                    </div>
+)}
+{hotDestinations.length > 0 && (
+<div class="col-span-3">
                                         <h4
                                             class="font-bold text-gray-900 text-xs uppercase tracking-widest mb-5 flex items-center gap-2"
                                         >
@@ -689,6 +700,7 @@ const navData = JSON.stringify({
                                             }
                                         </div>
                                     </div>
+)}
                                 </div>
                             </div>
                         </div>
