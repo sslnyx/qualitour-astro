@@ -29,5 +29,5 @@ export default defineConfig({
   injectRoute({pattern:'/[...lang]/cms-proof/tours/[id]',entrypoint:new URL('./cms/src/server/emdash-tour.astro',import.meta.url),prerender:false});
   injectRoute({pattern:'/[...lang]/cms-proof/tours',entrypoint:new URL('./cms/src/server/emdash-catalog.astro',import.meta.url),prerender:false});
  },'astro:route:setup':({route})=>configureNativeRoute(route)}},emdash({database:d1({binding:'DB'}),storage:r2({binding:'MEDIA'}),maxUploadSize:96*1024*1024,plugins:[tourEditorPlugin()],admin:{hiddenNavItems:['calendar','comments','menus','redirects','widgets','sections','bylines','import']}})],
- vite:{plugins:[tailwindcss(),nativeSiteRuntimePlugin(),tourAdminPlugin(),emdashFreeCpuPlugin()],envPrefix:['PUBLIC_'],optimizeDeps:{exclude:['@emdash-cms/admin']},define:{'import.meta.env.PUBLIC_SITE_INDEXABLE':JSON.stringify('false')}},devToolbar:{enabled:false}
+ vite:{plugins:[tailwindcss(),nativeSiteRuntimePlugin(),tourAdminPlugin(),emdashFreeCpuPlugin()],envPrefix:['PUBLIC_'],optimizeDeps:{exclude:['@emdash-cms/admin']},define:{'process.env.QUALITOUR_CMS_ORIGIN':JSON.stringify(origin),'import.meta.env.PUBLIC_SITE_INDEXABLE':JSON.stringify('false')}},devToolbar:{enabled:false}
 });

@@ -23,3 +23,9 @@ test('gateway bypasses shared cache for auth or cookies before entrypoint lookup
  assert.equal(privateProofResponse(calls[0][0],new Response('ok')),false);
  for(const [request,response] of [[calls[1][0],new Response('ok')],[calls[2][0],new Response('ok')],[calls[0][0],new Response('ok',{headers:{'Set-Cookie':'synthetic=1'}})],[calls[0][0],new Response('missing',{status:404})]])assert.equal(privateProofResponse(request,response),true);
 });
+test('public query variants share a path cache key while editor signals are rejected before lookup',async()=>{
+ const {forwardNativeProof}=await import('../src/lib/cms/native-cache-policy.mjs');const calls=[];const entry={fetch(...args){calls.push(args);return Promise.resolve(new Response('ok'));}};
+ for(const search of ['?utm_source=one','?destination=canada&x=random'])await forwardNativeProof(entry,new Request('https://proof.invalid/tours'+search));
+ assert.deepEqual(calls.map(x=>x[1]?.cf?.cacheKey),['/tours','/tours']);assert.ok(calls[1][0].url.includes('destination=canada'));
+ const before=calls.length;for(const key of ['_preview','_edit']){const response=await forwardNativeProof(entry,new Request('https://proof.invalid/tours?'+key+'=1'));assert.equal(response.status,404);assert.equal(response.headers.get('Cache-Control'),'private, no-store');}assert.equal(calls.length,before);
+});
