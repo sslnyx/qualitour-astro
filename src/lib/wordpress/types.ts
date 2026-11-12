@@ -35,7 +35,7 @@ export interface WPTourFeaturedImage {
 }
 
 export interface WPTour {
-    id: number;
+    id: number | string;
     /** CMS publication timestamp; used for explicit newest-first selections. */
     date?: string;
     slug: string;
@@ -51,6 +51,8 @@ export interface WPTour {
     /** Thumbnail/lightbox derivatives keyed by the original gallery URL. */
     optimizedInlineImages?: Record<string, { src: string; srcSet?: string; sizes?: string; width: number; height: number }>;
     optimizedPhotos?: Record<string, { thumbnail: string; full: string; width: number; height: number }>;
+    /** Explicit live-CMS SEO overrides; absent fields preserve the existing page defaults. */
+    nativeSeo?: { title?: string; description?: string; canonical?: string; noIndex?: boolean };
     tour_category?: number[];
     tour_tag?: number[];
     tour_meta?: {
@@ -93,8 +95,8 @@ export interface WPTour {
     goodlayers_data?: Record<string, unknown>;
     acf_fields?: Record<string, unknown>;
     translations?: {
-        en?: { id: number; slug: string };
-        zh?: { id: number; slug: string };
+        en?: { id: number | string; slug: string };
+        zh?: { id: number | string; slug: string };
     } | Record<string, never>;
     _embedded?: {
         'wp:featuredmedia'?: Array<{
@@ -210,7 +212,7 @@ export interface GoogleReview {
     reviewer_reviews?: number;
     reviewer_photos?: number;
     source?: 'google' | 'tripadvisor'; // Review source platform
-    related_tours?: number | number[]; // Tour IDs associated with this review
+    related_tours?: number | string | Array<number | string>; // Tour IDs associated with this review
 }
 
 export interface PlaceDetails {

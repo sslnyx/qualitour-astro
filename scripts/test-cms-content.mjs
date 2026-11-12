@@ -21,7 +21,7 @@ test('unchanged CMS blocks retain original tables, URLs and presentation metadat
   assert.equal(terms.destinations.find(term=>term.id===9).count,0);
 });
 test('current CMS edits win without leaking raw/private fields or stale HTML/discounts', () => {
-  const f=fixture(); Object.assign(f.data,{title:'<New>',price:'600',overview:block('Edited <safe>'),hero:{meta:{storageKey:'image.jpg'}},tour_classifications:{basis:'PRIVATE'}});
+  const f=fixture(); Object.assign(f.data,{title:'<New>',price:'600',overview:block('Edited <safe>'),hero:{meta:{storageKey:'image.jpg'}},seo:{title:'Edited SEO',description:'Edited description'},tour_classifications:{basis:'PRIVATE'}});
   f.entry.authorId='PRIVATE'; f.tour.tour_meta['tourmaster-tour-discount']='true'; f.tour.tour_meta['tour-price-discount-text']='200';
   const tour=buildCatalogue([f.entry],f.compat,'en').tours[0];
   assert.equal(tour.title.rendered,'&lt;New&gt;'); assert.equal(tour.tour_meta['tour-price-text'],'600');
@@ -29,6 +29,7 @@ test('current CMS edits win without leaking raw/private fields or stale HTML/dis
   assert.equal(tour.content.rendered,'<p>Edited &lt;safe&gt;</p>');
   assert.equal(tour.goodlayers_data.sections.length,0);
   assert.equal(tour.featured_image_url,`${CMS_ORIGIN}/_emdash/api/media/file/image.jpg`);
+  assert.deepEqual(tour.nativeSeo,{title:'Edited SEO',description:'Edited description'});
   assert.doesNotMatch(JSON.stringify(tour),/PRIVATE|authorId|source_key|tour_classifications/);
 });
 test('only current published, locale-matched entries appear; unknown/duplicate identities fail', () => {
@@ -96,6 +97,45 @@ test('homepage latest selection uses CMS publication dates before limiting, inde
   assert.deepEqual(tours.map(t=>t.id),[900,2,1]);
   const f=fixture();assert.equal(buildCatalogue([f.entry],f.compat,'en').tours[0].date,'2026-11-12T00:00:00.000Z');
   delete f.entry.publishedAt;assert.throws(()=>buildCatalogue([f.entry],f.compat,'en'),/publication date/);
+});
+
+test('native published tours use stable string identities, safe defaults, live terms and explicit SEO',()=>{
+  const f=fixture();
+  const entry={
+    id:'01NATIVE0000000000000000001',slug:'new-native-tour',locale:'en',status:'published',publishedAt:'2026-11-12T02:00:00Z',
+    data:{
+      title:'New & Native',currency:'CAD',
+      seo:{title:'Native SEO',description:'Native description',noIndex:true},
+      terms:{destinations:[{id:'term-banff',name:'destinations',slug:'banff',label:'Banff',children:[],locale:'en',translationGroup:'tg-banff'}]},
+    },
+  };
+  const result=buildCatalogue([f.entry,entry],f.compat,'en');
+  const tour=result.tours.find(row=>row.id===entry.id);
+  assert.equal(tour.slug,'new-native-tour');
+  assert.equal(tour.title.rendered,'New &amp; Native');
+  assert.equal(tour.excerpt.rendered,'');
+  assert.equal(tour.content.rendered,'');
+  assert.equal(tour.tour_meta.currency,'CAD');
+  assert.deepEqual(tour.nativeSeo,{title:'Native SEO',description:'Native description',noIndex:true});
+  assert.deepEqual(tour.tour_terms.destinations,[{id:'term-banff',slug:'banff',name:'Banff'}]);
+  assert.equal(result.terms.destinations.find(term=>term.slug==='banff').count,1);
+});
+
+test('native identity validation rejects reserved or colliding slugs and claimed bad imports',()=>{
+  const f=fixture();
+  const native=(slug,data={})=>({id:'01NATIVE0000000000000000002',slug,locale:'en',status:'published',publishedAt:'2026-11-12T02:00:00Z',data:{title:'Native',...data}});
+  assert.throws(()=>buildCatalogue([f.entry,native('featured')],f.compat,'en'),/reserved/);
+  assert.throws(()=>buildCatalogue([f.entry,native('bad?slug')],f.compat,'en'),/invalid native public slug/);
+  assert.throws(()=>buildCatalogue([f.entry,native('ORIGINAL-TOUR')],f.compat,'en'),/legacy URL|public slug/i);
+  assert.throws(()=>buildCatalogue([f.entry,native('original-tour')],f.compat,'en'),/legacy URL|public slug/i);
+  assert.throws(()=>buildCatalogue([native('native',{source_key:'wp-en-999'})],f.compat,'en'),/compatibility/);
+  assert.throws(()=>buildCatalogue([native('native',{source_key:''})],f.compat,'en'),/source identity/);
+  assert.throws(()=>buildCatalogue([native('native',{seo:{canonical:'javascript:alert(1)'}})],f.compat,'en'),/canonical/);
+});
+
+test('publication sorting is deterministic for mixed native and imported IDs',()=>{
+  const tours=[{id:'native-z',date:'2026-11-12T00:00:00Z'},{id:2,date:'2026-11-12T00:00:00Z'},{id:'native-a',date:'2026-11-12T00:00:00Z'}];
+  assert.deepEqual(sortToursByPublishedAt(tours).map(row=>row.id),['native-z','native-a',2]);
 });
 
 test('CMS origin accepts only the approved old, renamed, and branded origins', () => {

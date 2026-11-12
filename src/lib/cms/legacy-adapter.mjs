@@ -60,24 +60,117 @@ export function renderRichText(value) {
 const PROOF_IDS = new Set(['01M75S22W89VBB2VD299MVP3TK', '01M75S913P35FB1Z6DP6MHG17G']);
 const SECTION_IDS = { overview: ['overview','description','detail','details'], itinerary: ['itinerary'], additional_info: ['info','information','additional-info','additional-information'], faq: ['faq','faqs','faq-section'] };
 const termsKeys = ['categories','tags','activities','destinations','durations','types'];
+const termAliases = {
+  categories: ['categories','category','tour_category'], tags: ['tags','tag','tour_tag'],
+  activities: ['activities','activity','tour-activity'], destinations: ['destinations','destination','tour-destination'],
+  durations: ['durations','duration','tour_duration'], types: ['types','type','tour_type'],
+};
+const reservedTourSlugs = new Set(['featured','activity','activities','category','categories','destination','destinations','duration','durations','tag','tags','type','types']);
+const mediaDimensionsKey = Symbol.for('qualitour:native-media-dimensions');
+const compareIds = (a,b) => String(a).localeCompare(String(b), 'en', { numeric: true });
 export function sortToursByPublishedAt(tours, order = 'desc') {
-  return [...tours].sort((a,b)=>(Date.parse(a.date)-Date.parse(b.date)||a.id-b.id)*(order==='asc'?1:-1));
+  return [...tours].sort((a,b)=>(Date.parse(a.date)-Date.parse(b.date)||compareIds(a.id,b.id))*(order==='asc'?1:-1));
 }
 function removeGallery(items) {
   return (Array.isArray(items) ? items : []).filter(item => item?.type !== 'gallery').map(item => ({ ...item, ...(item.items ? {items: removeGallery(item.items)} : {}) }));
 }
 
-export function buildCatalogue(entries, compat, locale) {
+function slugKey(value) {
+  try { return decodeURIComponent(value).normalize('NFC').toLocaleLowerCase('en'); } catch { throw new Error('Invalid public tour slug encoding'); }
+}
+function nativeSlug(value) {
+  if (typeof value !== 'string' || !value || value !== value.trim() || /[\\/?#\u0000-\u0020]/.test(value)) throw new Error('Missing or invalid native public slug');
+  const decoded = slugKey(value);
+  if (!decoded || decoded === '.' || decoded === '..' || /[\\/?#\u0000-\u0020]/.test(decoded)) throw new Error('Missing or invalid native public slug');
+  if (reservedTourSlugs.has(decoded.toLowerCase())) throw new Error(`Native public slug is reserved: ${value}`);
+  return value;
+}
+function recordMediaDimensions(target, url, value) {
+  const width=Number(value?.width),height=Number(value?.height);
+  if (url && Number.isFinite(width) && width>0 && Number.isFinite(height) && height>0) target[url]={width:Math.round(width),height:Math.round(height)};
+}
+function attachMediaDimensions(tour, dimensions) {
+  if (Object.keys(dimensions).length) Object.defineProperty(tour,mediaDimensionsKey,{value:dimensions,enumerable:false});
+}
+function termRows(data, bucket, sourceTerms = []) {
+  const bySlug = new Map(sourceTerms.map(term => [term.slug, term]));
+  const rows = termAliases[bucket].flatMap(name => Array.isArray(data?.terms?.[name]) ? data.terms[name] : []);
+  const seen = new Set();
+  return rows.map(term => {
+    const slug = text(term?.slug).trim(), label = text(term?.label || term?.name).trim();
+    if (!slug || !label || seen.has(slug)) return;
+    seen.add(slug);
+    const legacy = bySlug.get(slug);
+    return legacy ? { id: legacy.id, slug: legacy.slug, name: legacy.name } : { id: text(term.id), slug, name: label };
+  }).filter(Boolean);
+}
+function nativeSeo(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+  const result = {};
+  for (const field of ['title','description']) if (typeof value[field] === 'string' && value[field].trim()) result[field] = value[field].trim();
+  if (typeof value.canonical === 'string' && value.canonical.trim()) {
+    try { const url=new URL(value.canonical.trim());if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw new Error();result.canonical=url.href; }
+    catch { throw new Error('Invalid native CMS canonical URL'); }
+  }
+  if (value.noIndex === true) result.noIndex = true;
+  return Object.keys(result).length ? result : undefined;
+}
+function nativeTour(entry, source) {
+  const data = entry.data || {}, id = text(entry.id).trim(), title = text(data.title).trim();
+  if (!id) throw new Error('Native CMS entry is missing its stable ID');
+  if (!title) throw new Error(`Missing CMS title for native entry ${id}`);
+  const slug = nativeSlug(entry.slug);
+  const published = typeof entry.publishedAt === 'string' ? Date.parse(entry.publishedAt) : NaN;
+  if (!Number.isFinite(published)) throw new Error(`Missing or invalid CMS publication date for native entry ${id}`);
+  const arrays = {};
+  for (const field of ['overview','itinerary','itinerary_continued','additional_info','faq','gallery']) {
+    const value = data[field] ?? [];
+    if (!Array.isArray(value)) throw new Error(`Invalid CMS field ${field} for native entry ${id}`);
+    arrays[field] = value;
+  }
+  for (const field of ['hero','brochure']) if (data[field] && !mediaUrl(data[field])) throw new Error(`Invalid CMS media ${field} for native entry ${id}`);
+  const tourMeta = {};
+  for (const [field, aliases] of Object.entries({price:['price','price_text','tour-price-text'],currency:['currency','tourmaster-tour-currency'],duration:['duration','duration_text'],location:['location'],tour_code:['tour_code','tour-code']})) {
+    for (const alias of aliases) tourMeta[alias] = text(data[field]);
+  }
+  const brochure = mediaUrl(data.brochure);
+  if (Object.hasOwn(data,'brochure')) tourMeta.brochure = brochure ? { ID:0,id:0,url:brochure,title:text(data.brochure?.filename)||'brochure.pdf',filename:text(data.brochure?.filename)||'brochure.pdf',mime_type:'application/pdf' } : false;
+  const days = [...arrays.itinerary, ...arrays.itinerary_continued];
+  const sections = arrays.additional_info.length ? [{value:{id:'info'},items:[{type:'text-box',value:{content:renderRichText(arrays.additional_info)}}]}] : [];
+  const dimensions={},hero=mediaUrl(data.hero);recordMediaDimensions(dimensions,hero,data.hero);
+  const gallery = arrays.gallery.map(item => { const url=mediaUrl(item?.image); if(!url)throw new Error(`Invalid CMS gallery media for native entry ${id}`);recordMediaDimensions(dimensions,url,item.image);return {url,alt:text(item.alt),caption:text(item.caption)}; });
+  const tour = {
+    id, status:'publish', date:new Date(published).toISOString(), slug,
+    title:{rendered:escape(title)}, excerpt:{rendered:escape(data.summary)}, content:{rendered:renderRichText(arrays.overview)}, featured_media:0,
+    featured_image_url:hero||'', tour_meta:tourMeta,
+    tour_terms:Object.fromEntries(termsKeys.map(name=>[name,termRows(data,name,source.terms?.[name] || [])])),
+    goodlayers_data:{sections,tour_itinerary:days.map(item=>({title:text(item.title),content:renderRichText(item.content)})),tour_faq:arrays.faq.map(item=>({title:text(item.title),content:renderRichText(item.content)})),tour_gallery:gallery},
+  };
+  const seo = nativeSeo(data.seo); if (seo) tour.nativeSeo = seo;
+  attachMediaDimensions(tour,dimensions);
+  return tour;
+}
+
+export function buildCatalogue(entries, compat, locale, { taxonomyTerms = {} } = {}) {
   const source = compat.locales[locale]; if (!source) throw new Error('Missing locale compatibility manifest');
-  const seen = new Set(), slugs = new Set(), excluded = [], tours = [];
+  const seen = new Set(), slugs = new Set(), excluded = [], tours = [], sortDates = new Map();
   for (const entry of entries) {
     if (entry.status !== 'published') throw new Error('Non-published CMS entry');
     if (entry.locale !== locale) throw new Error('CMS locale mismatch');
     if (PROOF_IDS.has(entry.id)) { excluded.push(entry.id); continue; }
-    const data = entry.data, key = data?.source_key, original = source.tours[key];
+    const data = entry.data || {};
+    const claimsImport = Object.hasOwn(data,'source_key') || Object.hasOwn(data,'source_status');
+    if (!claimsImport) {
+      const tour = nativeTour(entry, source), slug = slugKey(tour.slug);
+      if (seen.has(`cms:${entry.id}`) || slugs.has(slug)) throw new Error('Duplicate native CMS identity or public slug');
+      seen.add(`cms:${entry.id}`); slugs.add(slug); tours.push(tour); sortDates.set(tour.id,tour.date); continue;
+    }
+    const key = data.source_key, original = source.tours[key];
+    if (typeof key !== 'string' || !key) throw new Error(`Missing public source identity for CMS entry ${entry.id}`);
     if (!original || !new RegExp(`^wp-${locale}-[1-9]\\d*$`).test(key)) throw new Error(`Missing public compatibility identity for CMS entry ${entry.id}`);
-    if (seen.has(key) || slugs.has(original.tour.slug)) throw new Error('Duplicate CMS source identity or legacy URL');
-    seen.add(key); slugs.add(original.tour.slug);
+    const publicSlug = slugKey(original.tour.slug);
+    if (seen.has(key) || slugs.has(publicSlug)) throw new Error('Duplicate CMS source identity or legacy URL');
+    seen.add(key); slugs.add(publicSlug);
     // Imported entries have this complete projection. Absence means an API or
     // schema mismatch; explicit null/empty values represent an editor's removal.
     for (const field of ['title','summary','price','currency','duration','location','tour_code']) {
@@ -117,19 +210,28 @@ export function buildCatalogue(entries, compat, locale) {
     sections = sections.map(section => ({...section,items:removeGallery(section.items)}));
     tour.goodlayers_data.sections = sections;
     delete tour.goodlayers_data['tourmaster-tour-gallery'];
-    tour.goodlayers_data.tour_gallery = (data.gallery || []).map(item => { const url=mediaUrl(item?.image); if(!url)throw new Error(`Invalid CMS gallery media for ${key}`);return {url,alt:text(item.alt),caption:text(item.caption)}; });
-    tour.tour_terms = Object.fromEntries(termsKeys.map(name=>[name,(tour.tour_terms?.[name] || []).map(term=>({id:term.id,slug:term.slug,name:term.name}))]));
-    tours.push(tour);
+    const dimensions={};recordMediaDimensions(dimensions,typeof tour.featured_image_url==='string'?tour.featured_image_url:undefined,data.hero);
+    tour.goodlayers_data.tour_gallery = (data.gallery || []).map(item => { const url=mediaUrl(item?.image); if(!url)throw new Error(`Invalid CMS gallery media for ${key}`);recordMediaDimensions(dimensions,url,item.image);return {url,alt:text(item.alt),caption:text(item.caption)}; });
+    tour.tour_terms = Object.fromEntries(termsKeys.map(name=>{
+      const legacy=(tour.tour_terms?.[name] || []).map(term=>({id:term.id,slug:term.slug,name:term.name}));
+      const live=termRows(data,name,source.terms?.[name] || []);
+      return [name,live.length && live.map(term=>term.slug).sort().join('\0')!==legacy.map(term=>term.slug).sort().join('\0') ? live : legacy];
+    }));
+    const seo=nativeSeo(data.seo);if(seo)tour.nativeSeo=seo;
+    attachMediaDimensions(tour,dimensions);tours.push(tour); sortDates.set(tour.id,original.date);
   }
   if (!tours.length) throw new Error(`Refusing an empty ${locale} CMS catalogue`);
-  tours.sort((a,b)=>source.tours[`wp-${locale}-${b.id}`].date.localeCompare(source.tours[`wp-${locale}-${a.id}`].date)||b.id-a.id);
+  tours.sort((a,b)=>String(sortDates.get(b)).localeCompare(String(sortDates.get(a)))||compareIds(b.id,a.id));
   const terms = Object.fromEntries(termsKeys.map(name=>{
     const counts = new Map();
-    for (const tour of tours) for (const term of new Map(tour.tour_terms[name].map(term=>[term.id,term])).values()) counts.set(term.id,(counts.get(term.id)||0)+1);
+    for (const tour of tours) for (const term of new Map(tour.tour_terms[name].map(term=>[term.slug,term])).values()) counts.set(term.slug,(counts.get(term.slug)||0)+1);
     // This frozen vocabulary was already public. Keep its existing links and
     // navigation order, including empty categories; only counts use live tours.
-    // Never merge unpublished/new CMS taxonomy evidence into this vocabulary.
-    return [name,(source.terms[name]||[]).map(term=>({...term,count:counts.get(term.id)||0}))];
+    const vocabulary = [...(source.terms[name]||[])];
+    const known = new Set(vocabulary.map(term=>term.slug));
+    for (const term of taxonomyTerms[name] || []) if (!known.has(term.slug)) { known.add(term.slug); vocabulary.push(term); }
+    for (const tour of tours) for (const term of tour.tour_terms[name]) if (!known.has(term.slug)) { known.add(term.slug); vocabulary.push({...term,parent:0}); }
+    return [name,vocabulary.map(term=>({...term,count:counts.get(term.slug)||0}))];
   }));
   return {tours,terms,excluded};
 }
