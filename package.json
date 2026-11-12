@@ -12,13 +12,17 @@
     "deploy": "npm run deploy:staging",
     "deploy:staging": "gh workflow run deploy-cpanel-staging.yml --repo sslnyx/qualitour-astro --ref main -f trigger=manual",
     "sync:zaui": "node scripts/sync-zaui.mjs",
+    "sync:cms": "node scripts/sync-cms.mjs",
+    "test:cms": "node --test scripts/test-cms-content.mjs",
     "pages:dev": "wrangler pages dev dist",
-    "test:staging": "node --test scripts/test-transfer-cache.mjs scripts/test-zaui-sync.mjs scripts/test-seo.mjs scripts/test-seo-pages.mjs && python3 -m unittest discover -s scripts -p \"test_staging_*.py\"",
+    "test:staging": "node --test scripts/test-photo-lightbox.mjs scripts/test-image-delivery.mjs scripts/test-cms-content.mjs scripts/test-transfer-cache.mjs scripts/test-zaui-sync.mjs scripts/test-seo.mjs scripts/test-seo-pages.mjs && python3 -m unittest discover -s scripts -p \"test_staging_*.py\"",
     "build:cloudflare": "astro build --config astro.config.cloudflare.mjs",
     "check": "astro check",
     "test:seo": "node --test scripts/test-seo.mjs scripts/test-seo-pages.mjs",
     "deploy:cloudflare": "npm run build:cloudflare && wrangler pages deploy dist",
-    "deploy:cloudflare-staging": "npm run build:cloudflare && wrangler pages deploy dist --project-name=qualitour-astro --branch=staging"
+    "deploy:cloudflare-staging": "npm run build:cloudflare && wrangler pages deploy dist --project-name=qualitour-astro --branch=staging",
+    "build:pages-static": "node scripts/build-pages-static.mjs",
+    "test:pages-static": "python3 -m unittest scripts/test_pages_static.py"
   },
   "dependencies": {
     "@astrojs/check": "0.9.12",

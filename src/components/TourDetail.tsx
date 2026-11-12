@@ -1,3 +1,4 @@
+import { collectTourPhotoSources } from '../lib/image-delivery.mjs';
 /**
  * TourDetail Component
  * 
@@ -219,71 +220,10 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
         return gd?.tour_itinerary || gd?.['tourmaster-tour-itinerary'] || [];
     }, [gd, sections]);
 
-    // Check for photos - collect from multiple sources and process URLs
-    const photos = useMemo(() => {
-        const photoList: string[] = [];
-
-        // Add featured image first
-        const featuredImg = tour.featured_image_url;
-        if (featuredImg) {
-            let featuredUrl: string | undefined;
-            if (typeof featuredImg === 'string') {
-                featuredUrl = featuredImg;
-            } else if (typeof featuredImg === 'object') {
-                const full = (featuredImg as any).full;
-                featuredUrl = typeof full === 'string' ? full : full?.url;
-            }
-            if (featuredUrl) photoList.push(getCfTransformUrl(wpUrl(featuredUrl), { width: 1920, height: 1080, format: 'webp' }));
-        }
-
-        // Look for gallery in Goodlayers sections
-        sections.forEach((section: any) => {
-            section.items?.forEach((item: any) => {
-                if (item.type === 'gallery' && item.value?.gallery) {
-                    item.value.gallery.forEach((img: any) => {
-                        // GoodLayers gallery uses 'thumbnail' property
-                        const imgUrl = img.thumbnail || img.url;
-                        if (imgUrl) photoList.push(getCfTransformUrl(wpUrl(imgUrl), { width: 1600, height: 1200, format: 'webp' }));
-                        else if (typeof img === 'string') photoList.push(getCfTransformUrl(wpUrl(img), { width: 1600, height: 1200, format: 'webp' }));
-                    });
-                }
-                if (item.type === 'image' && item.value?.url) {
-                    photoList.push(getCfTransformUrl(wpUrl(item.value.url), { width: 1600, height: 1200, format: 'webp' }));
-                }
-            });
-        });
-
-        // Check for tour gallery in Goodlayers meta
-        if (gd?.['tourmaster-tour-gallery']) {
-            const gallery = gd['tourmaster-tour-gallery'];
-            if (Array.isArray(gallery)) {
-                gallery.forEach((img: any) => {
-                    if (typeof img === 'string') {
-                        photoList.push(getCfTransformUrl(wpUrl(img), { width: 1600, height: 1200, format: 'webp' }));
-                    } else if (img.url) {
-                        photoList.push(getCfTransformUrl(wpUrl(img.url), { width: 1600, height: 1200, format: 'webp' }));
-                    }
-                });
-            }
-        }
-
-        // Check for tour_gallery field
-        if (gd?.tour_gallery) {
-            const gallery = gd.tour_gallery;
-            if (Array.isArray(gallery)) {
-                gallery.forEach((img: any) => {
-                    if (typeof img === 'string') {
-                        photoList.push(getCfTransformUrl(wpUrl(img), { width: 1600, height: 1200, format: 'webp' }));
-                    } else if (img.url) {
-                        photoList.push(getCfTransformUrl(wpUrl(img.url), { width: 1600, height: 1200, format: 'webp' }));
-                    }
-                });
-            }
-        }
-
-        // Remove duplicates
-        return [...new Set(photoList)];
-    }, [tour, gd, sections]);
+    // Source extraction is shared with the build so thumbnails never need the original upload.
+    const photos = useMemo(() => collectTourPhotoSources(tour).map((url: string) => wpUrl(url)), [tour]);
+    const fullPhotos = photos.map((photo: string) => tour.optimizedPhotos?.[photo]?.full
+        || getCfTransformUrl(photo, { width: 1600, height: 1200, format: 'webp' }));
 
     // Check for FAQ
     const faqItems = useMemo(() => {
@@ -639,7 +579,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                     onClick={() => setLightboxIndex(index)}
                                 >
                                     <img
-                                        src={photo}
+                                        src={tour.optimizedPhotos?.[photo]?.thumbnail || getCfTransformUrl(photo, { width: 600, height: 450, format: 'webp' })}
                                         alt={`Tour photo ${index + 1}`}
                                         className="absolute inset-0 !w-full !h-full object-cover transition-transform duration-300 group-hover:scale-110 !m-0"
                                         loading="lazy"
@@ -656,7 +596,8 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                         {/* Photo Lightbox */}
                         {lightboxIndex !== null && (
                             <PhotoLightbox
-                                images={photos}
+                                images={fullPhotos}
+                                imageDimensions={photos.map((photo: string) => tour.optimizedPhotos?.[photo])}
                                 authorName={tour.title?.rendered || 'Tour'}
                                 initialIndex={lightboxIndex}
                                 onClose={() => setLightboxIndex(null)}

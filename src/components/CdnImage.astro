@@ -7,7 +7,8 @@
  * and serves it via standard <img> tag.
  */
 import type { ImageMetadata } from "astro";
-import { getCfTransformUrl, wpUrl } from "../lib/wp-url";
+import { wpUrl } from "../lib/wp-url";
+import { getImageSafe } from '../lib/wordpress/image';
 
 interface Props {
     src: string | ImageMetadata;
@@ -40,16 +41,17 @@ const resolvedSrc = typeof src === "object" ? src.src : src;
 const baseUri = wpUrl(resolvedSrc);
 
 // Generate Cloudflare Transformation URL
-const optimizedUrl = getCfTransformUrl(baseUri, {
+const optimized = await getImageSafe({
+    src: typeof src === 'object' ? src : baseUri,
     width: width || (typeof src === "object" ? src.width : undefined),
     height: height || (typeof src === "object" ? src.height : undefined),
-    format,
+    format: format === 'auto' ? 'webp' : format,
     quality,
 });
 ---
 
 <img
-    src={optimizedUrl}
+    src={optimized.src}
     alt={alt}
     width={width}
     height={height}

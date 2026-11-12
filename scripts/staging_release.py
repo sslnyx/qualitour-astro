@@ -15,6 +15,7 @@ from html.parser import HTMLParser
 from seo_check import SeoDocument, validate_document, validate_alternates
 from pathlib import Path, PurePosixPath
 from datetime import date, datetime
+from datetime import timezone
 
 SITE = 'https://qualitour.ca/staging'
 MANIFEST = 'qualitour-release.json'
@@ -106,6 +107,25 @@ def validate_catalogue(built, live):
         raise ValueError(f'Tour catalogue count/IDs/slugs mismatch: built={len(built)}, live={len(live)}')
 
 
+def source_tours(lang, snapshot_path=Path('.astro/cms-content/public-catalogue.json')):
+    source = os.environ.get('TOUR_CONTENT_SOURCE', 'emdash')
+    if source == 'wordpress':
+        return live_tours(lang)
+    if source != 'emdash':
+        raise ValueError('Unknown tour content source')
+    snapshot = json.loads(snapshot_path.read_text())
+    if snapshot.get('schema') != 2 or snapshot.get('origin') != 'https://qualitour-cms-free-test.qualitour.workers.dev':
+        raise ValueError('Invalid CMS build snapshot')
+    generated = datetime.fromisoformat(snapshot['generatedAt'].replace('Z', '+00:00'))
+    age = (datetime.now(timezone.utc) - generated).total_seconds()
+    if age < -60 or age > 3600:
+        raise ValueError('Stale CMS build snapshot; rebuild before verification')
+    tours = snapshot['locales'][lang]['tours']
+    if not tours or any(tour.get('status') != 'publish' for tour in tours):
+        raise ValueError('CMS snapshot contains empty or non-public catalogue')
+    return [{'id': tour['id'], 'slug': tour['slug']} for tour in tours]
+
+
 def validate_tour_paths(root, lang, tours):
     prefix = Path('zh') if lang == 'zh' else Path()
     for tour in tours:
@@ -151,7 +171,7 @@ def verify(root):
     for lang in ['en', 'zh']:
         relative = ('zh/' if lang == 'zh' else '') + 'tours.html'
         tours = island_props((root / relative).read_text(), 'ToursGrid')['tours']
-        validate_catalogue(tours, live_tours(lang))
+        validate_catalogue(tours, source_tours(lang))
         validate_tour_paths(root, lang, tours)
         for tour in tours:
             relative_tour = ('zh/' if lang == 'zh' else '') + 'tours/' + urllib.parse.unquote(tour['slug']) + '.html'
@@ -174,9 +194,9 @@ def verify(root):
             if urllib.parse.unquote(path.removeprefix('/staging/')) not in files:
                 raise ValueError(f'Missing asset in {html.name}: {path}')
     for bundle in (root / '_astro').glob('*.js'):
-        if any(private_key in bundle.read_text() for private_key in ['WORDPRESS_AUTH_PASS', 'ZAUI_API_TOKEN', 'GH_DEPLOY_WORKFLOW_TOKEN']):
+        if any(private_key in bundle.read_text() for private_key in ['WORDPRESS_AUTH_PASS', 'ZAUI_API_TOKEN', 'GH_DEPLOY_WORKFLOW_TOKEN', 'EMDASH_TOKEN', 'refreshToken', 'ec_pat_', 'ec_oat_']):
             raise ValueError('Server-only environment key found in browser bundle: ' + bundle.name)
-    manifest = {'schema': 1, 'commit': os.environ.get('GITHUB_SHA', 'local'), 'files': files, 'tours': summary, 'target': 'staging',
+    manifest = {'schema': 1, 'commit': os.environ.get('GITHUB_SHA', 'local'), 'files': files, 'tours': summary, 'target': 'staging', 'content_source': os.environ.get('TOUR_CONTENT_SOURCE', 'emdash'),
                 'transfers': {key: transfer_snapshot[key] for key in ['fetchedAt', 'priceDate', 'currency', 'activityCount']}}
     (root / MANIFEST).write_text(json.dumps(manifest, ensure_ascii=False, sort_keys=True))
     print(json.dumps({'verified': True, 'tours': summary, 'files': len(files), 'bytes': sum(p.stat().st_size for p in root.rglob('*') if p.is_file())}))

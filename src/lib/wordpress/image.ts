@@ -1,19 +1,13 @@
-import { getImage } from "astro:assets";
-import type { WPTour, WPTourFeaturedImage } from "./types";
+import { getImage, inferRemoteSize } from "astro:assets";
+import { createImageDelivery, collectTourPhotoSources, mapWithConcurrency } from '../image-delivery.mjs';
+import type { WPTour } from "./types";
+import { getTourImageUrl } from "./image-source";
+export { getTourImageUrl } from "./image-source";
 import { wpUrl, getCfTransformUrl } from "../wp-url";
 
 /**
  * Extract the best available image URL from a tour object.
  */
-function extractUrl(value: unknown): string | null {
-    if (typeof value === "string" && value.trim()) return value;
-    if (typeof value === "object" && value !== null && "url" in value) {
-        const obj = value as { url?: string };
-        if (typeof obj.url === "string" && obj.url.trim()) return obj.url;
-    }
-    return null;
-}
-
 // Global semaphore for limiting concurrent inferSize operations to prevent segfaults/memory exhaustion
 const MAX_CONCURRENT_INFER_SIZE = 10;
 let activeInferSizeOps = 0;
@@ -39,72 +33,43 @@ function releaseInferSizeSlot() {
     }
 }
 
-async function getImageSafe(options: any) {
-    const env = (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}) as any;
-    const useCf = env.PUBLIC_CF_IMAGE_TRANSFORM === 'true' || env.PUBLIC_CF_IMAGE_TRANSFORM === true;
-
-    // Extract raw src
-    const srcValue = typeof options.src === 'object' ? options.src.src : options.src;
-
-    if (useCf && typeof srcValue === 'string') {
-        const { width, height, format, quality } = options;
-
-        // Construct transformation options
-        const transformOptions = {
-            width: width || (typeof options.src === 'object' ? options.src.width : undefined),
-            height: height || (typeof options.src === 'object' ? options.src.height : undefined),
-            format: format || 'webp',
-            quality: quality || 80
-        };
-
-        const transformed = getCfTransformUrl(srcValue, transformOptions);
-
-        // Return object shape expected by callers of getImage
-        return { src: transformed };
-    }
-
-    // Fallback to Astro's getImage if not using CF or if src is not a string
-    if (options.inferSize) {
+const imageDelivery = createImageDelivery({
+    transform: (src: string, options: any) => getCfTransformUrl(src, options),
+    infer: async (src: string) => {
         await acquireInferSizeSlot();
-        try {
-            return await getImage(options);
-        } finally {
-            releaseInferSizeSlot();
-        }
-    }
-    return getImage(options);
+        try { return await inferRemoteSize(src); }
+        finally { releaseInferSizeSlot(); }
+    },
+    optimize: (options: any) => getImage(options),
+});
+
+export function getImageSafe(options: any): Promise<any> {
+    return imageDelivery.image(options);
 }
 
-export function getTourImageUrl(tour: WPTour): string | null {
-    const featuredImage = tour.featured_image_url;
-    let rawUrl: string | null = null;
+/** Same responsive WebP candidates are used by the visible hero and its preload. */
+export function optimizeResponsiveImage(src: string) {
+    return imageDelivery.responsive(wpUrl(src));
+}
 
-    if (typeof featuredImage === "string" && featuredImage.trim()) {
-        rawUrl = featuredImage;
+/** Display-only copy: preserve CMS originals and brochure/download URLs. */
+export async function optimizeTourPresentation(tour: WPTour): Promise<WPTour> {
+    const source = getTourImageUrl(tour);
+    const optimizedHero = source ? await optimizeResponsiveImage(source) : undefined;
+    const optimizedPhotos: NonNullable<WPTour['optimizedPhotos']> = {};
+    for (const raw of collectTourPhotoSources(tour)) {
+        const url = wpUrl(raw);
+        const [thumbnail, full] = await Promise.all([
+            getImageSafe({ src: url, width: 600, height: 450, format: 'webp', quality: 80 }),
+            imageDelivery.responsive(url, { widths: [1600], width: 1600 }),
+        ]);
+        optimizedPhotos[url] = { thumbnail: thumbnail.src, full: full.src, width: full.width, height: full.height };
     }
+    return { ...tour, optimizedHero, optimizedPhotos };
+}
 
-    if (!rawUrl && typeof featuredImage === "object" && featuredImage !== null) {
-        const img = featuredImage as WPTourFeaturedImage;
-        rawUrl =
-            extractUrl(img.full) ||
-            extractUrl(img.medium_large) ||
-            extractUrl(img.large) ||
-            extractUrl(img.medium) ||
-            extractUrl(img.thumbnail);
-    }
-
-    // Fallback: If featured_image_url failed but we have _embedded featured media
-    if (!rawUrl && tour._embedded?.['wp:featuredmedia']?.[0]) {
-        const media = tour._embedded['wp:featuredmedia'][0];
-        // Try to get a large/medium_large size first, fallback to original source
-        rawUrl =
-            media.media_details?.sizes?.large?.source_url ||
-            media.media_details?.sizes?.medium_large?.source_url ||
-            media.media_details?.sizes?.full?.source_url ||
-            media.source_url;
-    }
-
-    return rawUrl ? wpUrl(rawUrl) : null;
+export function optimizeTourPresentations(tours: WPTour[]): Promise<WPTour[]> {
+    return mapWithConcurrency(tours, optimizeTourPresentation, 4);
 }
 
 /**
@@ -122,7 +87,7 @@ export async function optimizeTourImages(
     const { width = 600, height = 450, concurrency = 10 } = options;
 
     // Create a copy of the tours array to avoid mutating the original
-    const results: WPTour[] = [...tours];
+    const results: WPTour[] = tours.map(tour => ({ ...tour }));
 
     // Process in batches
     for (let i = 0; i < tours.length; i += concurrency) {

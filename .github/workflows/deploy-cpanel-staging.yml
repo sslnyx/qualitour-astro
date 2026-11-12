@@ -56,7 +56,9 @@ jobs:
         run: npm run test:staging
       - name: Check source types
         run: npm run check
-      - name: Build current WordPress content
+      - name: Build current CMS content
+        env:
+          EMDASH_TOKEN: ${{ secrets.EMDASH_TOKEN }}
         run: npm run build:cpanel
       - name: Verify catalogues, detail pages and shared transfers
         run: python3 scripts/staging_release.py verify

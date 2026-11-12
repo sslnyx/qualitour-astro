@@ -4,11 +4,13 @@ import useEmblaCarousel from 'embla-carousel-react';
 // Photo Lightbox with Embla Carousel slider
 export default function PhotoLightbox({
     images,
+    imageDimensions,
     authorName,
     initialIndex = 0,
     onClose
 }: {
     images: string[];
+    imageDimensions?: ({ width: number; height: number } | undefined)[];
     authorName: string;
     initialIndex?: number;
     onClose: () => void;
@@ -84,8 +86,10 @@ export default function PhotoLightbox({
                         >
                             <img
                                 src={src}
+                                width={imageDimensions?.[idx]?.width}
+                                height={imageDimensions?.[idx]?.height}
                                 alt={`${authorName}'s photo ${idx + 1}`}
-                                className="max-w-full max-h-[85vh] object-contain rounded-lg cursor-default"
+                                className="!w-auto !h-auto !max-w-full !max-h-[85vh] !m-0 object-contain rounded-lg cursor-default"
                                 loading="lazy"
                                 referrerPolicy="no-referrer"
                                 onClick={(e) => e.stopPropagation()}

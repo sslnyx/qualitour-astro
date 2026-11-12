@@ -19,6 +19,7 @@ import type {
 } from './types';
 import type { TransferRoute } from '../zaui/zaui';
 import { sanitizeUrls } from '../wp-url';
+import { cmsEnabled, getCmsTours, getAllCmsTours, getCmsTourBySlug, getCmsTerms } from '../cms/content-server.mjs';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
@@ -168,6 +169,7 @@ export function getTours(
     params: WPApiParams = {},
     lang?: string
 ): Promise<WPTour[]> {
+    if (cmsEnabled()) return getCmsTours(params, lang);
     const cacheKey = `tours:${lang || 'en'}:${JSON.stringify(params)}`;
     return cached(cacheKey, async () => {
         const customApiUrl = getApiUrl(lang);
@@ -197,6 +199,7 @@ export function getTours(
  * Fetch all tours with automatic pagination (production API has per_page limit)
  */
 export async function getAllTours(lang?: string): Promise<WPTour[]> {
+    if (cmsEnabled()) return getAllCmsTours(lang);
     const cacheKey = `all-tours:${lang || 'en'}`;
     return cached(cacheKey, async () => {
         const customApiUrl = getApiUrl(lang);
@@ -231,6 +234,7 @@ export async function getAllTours(lang?: string): Promise<WPTour[]> {
 }
 
 export function getTourBySlug(slug: string, lang?: string): Promise<WPTour | null> {
+    if (cmsEnabled()) return getCmsTourBySlug(slug, lang);
     const cacheKey = `tour-slug:${lang || 'en'}:${slug}`;
     return cached(cacheKey, async () => {
         const customApiUrl = getCustomApiUrl(lang);
@@ -264,6 +268,7 @@ type V1TermMinimal = {
 };
 
 function fetchTerms(taxonomy: string, lang?: string): Promise<V1TermMinimal[]> {
+    if (cmsEnabled()) return getCmsTerms(taxonomy, lang);
     const cacheKey = `terms:${lang || 'en'}:${taxonomy}`;
     return cached(cacheKey, async () => {
         const customApiUrl = getCustomApiUrl(lang);
@@ -372,6 +377,13 @@ export interface SiteNavData {
 }
 
 export function getSiteNavData(lang?: string): Promise<SiteNavData> {
+    if (cmsEnabled()) return Promise.all([
+        fetchTerms('tour-activity', lang), fetchTerms('tour-destination', lang),
+        fetchTerms('tour_duration', lang), fetchTerms('tour_type', lang),
+    ]).then(([activities, destinations, durations, types]) => ({
+        activities: activities.map(mapToActivity), destinations: destinations.map(mapToDestination),
+        durations: durations.map(mapToDuration), types: types.map(mapToType), transfers: [],
+    }));
     const cacheKey = `sitenav:${lang || 'en'}`;
     return cached(cacheKey, async () => {
         const customApiUrl = getCustomApiUrl(lang);

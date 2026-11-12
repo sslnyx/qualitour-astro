@@ -3,7 +3,8 @@ import useEmblaCarousel from "embla-carousel-react";
 import type { WPTour } from "../lib/wordpress/types";
 import TourInquiryModal from "./TourInquiryModal";
 import { getCfTransformUrl, wpUrl } from "../lib/wp-url";
-import { getTourImageUrl } from "../lib/wordpress/image";
+import { getTourImageUrl } from "../lib/wordpress/image-source";
+import { applyImageFallback } from '../lib/image-delivery.mjs';
 
 interface FeaturedToursHeroProps {
     tours: WPTour[];
@@ -67,7 +68,7 @@ export default function FeaturedToursHero({
             <div className="overflow-hidden h-full absolute inset-0" ref={emblaRef}>
                 <div className="flex h-full">
                     {tours.map((tour, index) => {
-                        let imageUrl = tour.optimizedImageUrl || getTourImageUrl(tour) || "";
+                        let imageUrl = tour.optimizedHero?.src || tour.optimizedImageUrl || getTourImageUrl(tour) || "";
                         if (imageUrl) {
                             imageUrl = getCfTransformUrl(wpUrl(imageUrl), {
                                 width: 1920,
@@ -89,10 +90,16 @@ export default function FeaturedToursHero({
                                 <div className="absolute inset-0">
                                     <img
                                         src={imageUrl}
+                                        srcSet={tour.optimizedHero?.srcSet || undefined}
+                                        sizes={tour.optimizedHero?.sizes}
+                                        width={tour.optimizedHero?.width}
+                                        height={tour.optimizedHero?.height}
                                         alt={cleanTitle(tour.title.rendered)}
                                         className="w-full h-full object-cover"
                                         loading={index === 0 ? "eager" : "lazy"}
-                                        onError={(e) => { const t = e.currentTarget; t.onerror = null; t.src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&q=80'; }}
+                                        fetchPriority={index === 0 ? 'high' : 'low'}
+                                        decoding="async"
+                                        onError={(e) => applyImageFallback(e.currentTarget, 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&q=80')}
                                     />
                                     {/* Hero Gradient Overlay */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-90" />

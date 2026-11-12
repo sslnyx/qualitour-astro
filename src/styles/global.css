@@ -3,13 +3,18 @@
  * Optimized for minimal bundle size
  */
 
-/* Material Icons class rules - loaded from CDN */
+/* Reserve each icon slot before its self-hosted ligature font is ready. */
 .material-icons {
     font-family: 'Material Icons';
     font-weight: normal;
     font-style: normal;
     font-size: 24px;
     display: inline-block;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    overflow: hidden;
+    vertical-align: middle;
     line-height: 1;
     text-transform: none;
     letter-spacing: normal;
@@ -23,6 +28,11 @@
 }
 
 @import "tailwindcss";
+
+/* Keep streamed content from moving the page when a scrollbar first appears. */
+html {
+    scrollbar-gutter: stable;
+}
 
 /* Base styles */
 @layer base {

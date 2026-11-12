@@ -7,13 +7,15 @@ import { getTourBuildData } from '../../../lib/wordpress/tour-build-data';
 import { tourMetadata } from '../../../lib/seo';
 import { confirmedTourAlternates, tourStructuredData, type Alternate } from '../../../lib/seo-pages';
 import type { WPTour, GoogleReview } from '../../../lib/wordpress/types';
+import { optimizeTourPresentation, optimizeTourPresentations } from '../../../lib/wordpress/image';
 
 export const prerender = true;
 
 export async function getStaticPaths() {
   const en = await getTourBuildData('en');
   const zh = await getTourBuildData('zh');
-  const languages = { en, zh };
+  const presented = await optimizeTourPresentations([...en, ...zh]);
+  const languages = { en: presented.slice(0, en.length), zh: presented.slice(en.length) };
   // Fetch once per build; keep optional reviews separate from essential tour content.
   const reviews = await getGoogleReviews();
   return (['en', 'zh'] as const).flatMap(lang => languages[lang].map(tour => {
@@ -38,6 +40,7 @@ const { tour, reviews, alternates, duplicateTitle } = Astro.props;
 const lang: Locale = Astro.params.lang === 'zh' ? 'zh' : 'en';
 const localePrefix = getLocalePrefix(lang);
 const metadata = tourMetadata(tour);
+const displayTour = tour.optimizedPhotos ? tour : await optimizeTourPresentation(tour);
 const price = tour.tour_meta?.['tour-price-text'] || tour.tour_meta?.price;
 const currency = tour.tour_meta?.['tourmaster-tour-currency'];
 if (duplicateTitle && price && currency) metadata.title = metadata.title.replace(' | Qualitour', ` (${price} ${currency}) | Qualitour`);
@@ -52,7 +55,8 @@ if (alternates.length) {
 }
 ---
 
-<Layout {...metadata} heroImage={metadata.image} lang={lang} tourTranslations={safeTranslations}
+<Layout {...metadata} heroImage={displayTour.optimizedHero?.src} heroImageSrcSet={displayTour.optimizedHero?.srcSet}
+  heroImageSizes={displayTour.optimizedHero?.sizes} lang={lang} tourTranslations={safeTranslations}
   alternates={alternates} structuredData={tourStructuredData(tour, origin, base, lang)}>
-  <TourPage tour={tour} lang={lang} localePrefix={localePrefix} reviews={reviews} />
+  <TourPage tour={displayTour} lang={lang} localePrefix={localePrefix} reviews={reviews} />
 </Layout>

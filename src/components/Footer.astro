@@ -56,7 +56,7 @@ const ci = await getCompanyInfo();
             <div class="text-center mb-10 sm:mb-14 lg:mb-16">
                 <a href={`${localePrefix}/`} class="inline-block group">
                     <img
-                        src={`${import.meta.env.BASE_URL}/qualitour_logo.png`}
+                        src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/qualitour_logo.png`}
                         alt="Qualitour"
                         class="w-[150px] sm:w-[180px] lg:w-[200px] h-auto mx-auto transform transition-transform duration-300 group-hover:scale-105"
                     />
@@ -306,7 +306,7 @@ const ci = await getCompanyInfo();
                                 class="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10 hover:border-orange-500/30 transition-all duration-300 hover:bg-white/15"
                             >
                                 <img
-                                    src={`${import.meta.env.BASE_URL}/iata.png`}
+                                    src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/iata.png`}
                                     alt="IATA Accredited"
                                     class="w-[60px] h-auto opacity-90 group-hover:opacity-100 transition-opacity"
                                 />

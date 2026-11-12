@@ -2,6 +2,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from unittest.mock import patch
 from pathlib import Path
 
@@ -11,6 +12,25 @@ spec.loader.exec_module(release)
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_cms_source_verification_uses_fresh_public_snapshot_without_wordpress(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'cms.json'
+            snapshot = {'schema': 2, 'origin': 'https://qualitour-cms-free-test.qualitour.workers.dev',
+                        'generatedAt': datetime.now(timezone.utc).isoformat(),
+                        'locales': {'en': {'tours': [{'id': 1, 'slug': 'original', 'status': 'publish'}]}}}
+            path.write_text(json.dumps(snapshot))
+            with patch.dict('os.environ', {'TOUR_CONTENT_SOURCE': 'emdash'}), patch.object(release, 'read_url') as network:
+                self.assertEqual(release.source_tours('en', path), [{'id': 1, 'slug': 'original'}])
+                network.assert_not_called()
+                snapshot['locales']['en']['tours'][0]['status'] = 'draft'
+                path.write_text(json.dumps(snapshot))
+                with self.assertRaisesRegex(ValueError, 'non-public'):
+                    release.source_tours('en', path)
+                snapshot['generatedAt'] = '2020-01-01T00:00:00Z'
+                path.write_text(json.dumps(snapshot))
+                with self.assertRaisesRegex(ValueError, 'Stale'):
+                    release.source_tours('en', path)
+
     def test_transfer_pages_match_the_published_json_snapshot(self):
         snapshot = self.transfer_fixture()
         release.validate_shared_transfers(snapshot, snapshot['routes'], snapshot['routes'][:3])

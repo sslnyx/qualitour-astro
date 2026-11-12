@@ -36,6 +36,8 @@ export interface WPTourFeaturedImage {
 
 export interface WPTour {
     id: number;
+    /** CMS publication timestamp; used for explicit newest-first selections. */
+    date?: string;
     slug: string;
     title: { rendered: string };
     content?: { rendered: string };
@@ -44,6 +46,10 @@ export interface WPTour {
     featured_image_url?: string | WPTourFeaturedImage;
     /** Pre-optimized image URL from Astro's getImage() - used for React components */
     optimizedImageUrl?: string | null;
+    /** Build-generated responsive hero; original CMS media remains unchanged. */
+    optimizedHero?: { src: string; srcSet: string; sizes: string; width: number; height: number };
+    /** Thumbnail/lightbox derivatives keyed by the original gallery URL. */
+    optimizedPhotos?: Record<string, { thumbnail: string; full: string; width: number; height: number }>;
     tour_category?: number[];
     tour_tag?: number[];
     tour_meta?: {

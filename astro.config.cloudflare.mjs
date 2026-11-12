@@ -62,6 +62,9 @@ export default defineConfig({
 
   // Tailwind via Vite plugin
   vite: {
+    // This legacy SSR target has no filesystem build snapshot. Keep its
+    // existing WordPress source explicit until its runtime is migrated.
+    define: { 'process.env.TOUR_CONTENT_SOURCE': JSON.stringify('wordpress') },
     plugins: [tailwindcss()],
     // Environment variables
     envPrefix: ['PUBLIC_'],

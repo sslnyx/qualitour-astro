@@ -31,11 +31,11 @@ const { lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || "en";
 const localePrefix = getLocalePrefix(lang as Locale);
 
-import { optimizeTourImages } from "../../lib/wordpress/image";
+import { optimizeTourImages, optimizeResponsiveImage, getTourImageUrl } from "../../lib/wordpress/image";
 
 // Fetch data at build time
 const [rawTours, navData, reviews, transferRoutes] = await Promise.all([
-  getTours({ per_page: 12 }, lang),
+  getTours({ per_page: 6, orderby: 'date', order: 'desc' }, lang),
   getSiteNavData(lang),
   getGoogleReviews(),
   getPrivateTransfersWithPricing(),
@@ -44,8 +44,13 @@ const [rawTours, navData, reviews, transferRoutes] = await Promise.all([
 // Use top 3 transfer routes for homepage
 const featuredTransfers = transferRoutes.slice(0, 3);
 
-// Use raw tours, TourCardOptimized handles optimization via CdnImage
-const featuredTours = rawTours.slice(0, 6);
+// Both the hero and Featured Tours use the latest six published tours.
+// Cards and the full-width hero use separate, build-generated display sizes.
+const featuredTours = await optimizeTourImages(rawTours.slice(0, 6));
+const heroTours = await Promise.all(featuredTours.map(async tour => {
+  const source = getTourImageUrl(tour);
+  return { ...tour, optimizedHero: source ? await optimizeResponsiveImage(source) : undefined };
+}));
 
 // Filter reviews for 5 stars, prioritize those with photos, and limit to 15
 const displayedReviews = reviews
@@ -150,10 +155,12 @@ const whyUsItems = [
     : "Discover authentic Canadian tours, private ski shuttles to Whistler, and expert China visa services. Book your unforgettable journey with Qualitour today."}
   lang={lang}
   image={heroBackground.src}
-  heroImage={heroBackground.src}
+  heroImage={heroTours[0]?.optimizedHero?.src}
+  heroImageSrcSet={heroTours[0]?.optimizedHero?.srcSet}
+  heroImageSizes={heroTours[0]?.optimizedHero?.sizes}
 >
   <FeaturedToursHero
-    tours={sanitizeUrls(featuredTours)}
+    tours={sanitizeUrls(heroTours)}
     lang={lang}
     localePrefix={localePrefix}
     client:load

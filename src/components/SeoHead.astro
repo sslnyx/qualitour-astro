@@ -3,9 +3,9 @@ import { wpUrl } from "../lib/wp-url";
 import { absolutePublicUrl, normalizePublicPath, serializeJsonLd } from '../lib/seo';
 import { pageAlternates, type Alternate } from '../lib/seo-pages';
 
-// All fonts loaded from CDN with async loading for better performance
-// - Inter: Google Fonts CDN
-// - Material Icons: Google Fonts CDN
+// Original fonts are self-hosted and declared before first paint.
+// - Inter: optional display avoids a late body-text swap
+// - Material Icons: fixed geometry is defined in global.css
 // - Kaushan Script: Removed - using SVG image (~35KB saved)
 // - Font Awesome: Removed - using inline SVGs (~99KB saved)
 
@@ -17,6 +17,8 @@ export interface Props {
     canonical?: string;
     noindex?: boolean;
     heroImage?: string; // LCP image to preload
+    heroImageSrcSet?: string;
+    heroImageSizes?: string;
     lang?: 'en' | 'zh';
     alternates?: Alternate[];
     structuredData?: Record<string, unknown>[];
@@ -30,6 +32,8 @@ const {
     canonical,
     noindex = false,
     heroImage,
+    heroImageSrcSet,
+    heroImageSizes,
     lang = 'en',
     alternates,
     structuredData = [],
@@ -79,6 +83,8 @@ const imageUrl = image?.startsWith("http")
                 rel="preload"
                 as="image"
                 href={heroImage}
+                imagesrcset={heroImageSrcSet || undefined}
+                imagesizes={heroImageSizes}
                 media="(min-width: 769px)"
                 fetchpriority="high"
             />
@@ -86,6 +92,8 @@ const imageUrl = image?.startsWith("http")
                 rel="preload"
                 as="image"
                 href={heroImage}
+                imagesrcset={heroImageSrcSet || undefined}
+                imagesizes={heroImageSizes}
                 media="(max-width: 768px)"
                 fetchpriority="high"
             />
@@ -93,23 +101,10 @@ const imageUrl = image?.startsWith("http")
     )
 }
 
-<!-- Preconnect to Google Fonts (2 origins max) -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-<!-- Inter + Material Icons - Combined async loading from Google Fonts CDN -->
-<link
-    rel="preload"
-    as="style"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Icons&display=swap"
-    onload="this.onload=null;this.rel='stylesheet'"
-/>
-<noscript>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Icons&display=swap"
-        rel="stylesheet"
-    />
-</noscript>
+<!-- Load the original fonts without a late, asynchronous stylesheet swap. -->
+<link rel="preload" as="font" type="font/woff2" href={`${base}/fonts/inter-latin.woff2`} crossorigin="anonymous" />
+<link rel="preload" as="font" type="font/woff2" href={`${base}/fonts/material-icons.woff2`} crossorigin="anonymous" />
+<link rel="stylesheet" href={`${base}/fonts/fonts.css`} />
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content={type} />

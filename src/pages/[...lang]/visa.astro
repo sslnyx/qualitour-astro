@@ -6,7 +6,7 @@ import { wpUrl } from "../../lib/wp-url";
 import { VisaInquiryForm } from "../../components/forms";
 import PremiumReviewsGrid from "../../components/PremiumReviewsGrid";
 import { getGoogleReviews } from "../../lib/wordpress/api";
-import { optimizeImageUrl } from "../../lib/wordpress/image";
+import visaHero from "../../assets/images/visa-hero-original.jpg";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -21,9 +21,7 @@ const lang: Locale = (langParam as Locale) || "en";
 const localePrefix = getLocalePrefix(lang as Locale);
 
 // Visa hero background
-const VISA_HERO_BG = await optimizeImageUrl(
-    "/wp-content/uploads/2023/08/nuno-alberto-MykFFC5zolE-unsplash1-scaled.jpg",
-);
+const VISA_HERO_BG = visaHero;
 
 // Fetch reviews
 let reviews: any[] = [];
@@ -164,7 +162,7 @@ const requirements =
         ? "专业签证支持：各类国际旅行签证咨询、材料清单及申请指导。"
         : "Professional visa support: consultation, document checklists, and application guidance for international travel."}
     lang={lang}
-    image={VISA_HERO_BG}
+    image={VISA_HERO_BG.src}
 >
     <!-- Hero Section -->
     <PageHero
@@ -493,7 +491,7 @@ const requirements =
                             class="relative bg-white/10 backdrop-blur-md rounded-3xl p-4 border border-white/20 shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]"
                         >
                             <img
-                                src={`${import.meta.env.BASE_URL}/china-visa-passport.jpg`}
+                                src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/china-visa-passport.jpg`}
                                 alt="China Visa Specialist - MyChinaVisa.ca"
                                 class="w-full h-auto rounded-2xl"
                             />

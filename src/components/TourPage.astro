@@ -48,9 +48,9 @@ if (!tourCode && tour.goodlayers_data) {
 }
 
 const rawHeroUrl = getRawImageUrl(tour.featured_image_url);
-const heroUrl = rawHeroUrl
+const heroUrl = tour.optimizedHero?.src || (rawHeroUrl
   ? getCfTransformUrl(rawHeroUrl, { width: 1920, height: 1080, format: "webp", quality: 80 })
-  : undefined;
+  : undefined);
 const tourTitle = plainText(tour.title.rendered);
 
 const copy =
@@ -94,6 +94,10 @@ const copy =
           <>
             <img
               src={heroUrl}
+              srcset={tour.optimizedHero?.srcSet || undefined}
+              sizes={tour.optimizedHero?.sizes}
+              width={tour.optimizedHero?.width}
+              height={tour.optimizedHero?.height}
               alt={tourTitle}
               class="absolute inset-0 w-full h-full object-cover"
               loading="eager"
