@@ -70,7 +70,7 @@ export function createImageDelivery({ optimize, transform, infer }) {
     return cached(images, JSON.stringify(input), async () => {
       const options = { ...input, ...(input.widths ? { widths: [...input.widths] } : {}) };
       const source = typeof options.src === 'string' ? options.src : options.src.src;
-      if (/^\/(?:[^/?#]+\/)*_astro\//.test(source)) {
+      if (/^\/(?:[^/?#]+\/)*_astro\//.test(source) || source.startsWith('/_image?')) {
         return { src: source, attributes: { width: options.width, height: options.height }, srcSet: { attribute: '' } };
       }
       const transformed = transform(source, options);

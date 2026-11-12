@@ -55,3 +55,8 @@ test('transient source dimension failure retries within a bound and never substi
  assert.deepEqual(r,{width:800,height:600});assert.equal(calls,2);assert.equal(waits.length,1);
  let failures=0;await assert.rejects(inferImageDimensions(async()=>{failures++;throw Error('unavailable');},{wait:async()=>{}}),/unavailable/);assert.equal(failures,3);
 });
+test('official runtime image derivatives are never nested inside a second transform', async()=>{
+ const d=createImageDelivery({transform:s=>s,infer:async()=>{throw Error('unexpected read')},optimize:async()=>({src:'wrong-second-transform.webp'})});
+ const source='/_image?href=%2F_emdash%2Fapi%2Fmedia%2Ffile%2Fcover.png&w=960&f=webp&q=80';
+ assert.equal((await d.image({src:source,width:600,height:450})).src,source);
+});
