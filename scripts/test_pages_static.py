@@ -359,6 +359,28 @@ class PagesStaticFinalizerTests(unittest.TestCase):
 
 
 class InlineImageReleaseTests(unittest.TestCase):
+    def test_cms_pdf_document_embeds_are_allowed_but_raw_img_elements_remain_rejected(self):
+        module = load_finalizer()
+        cms_pdf = "/_emdash/api/media/file/brochures/tour.pdf#toolbar=0"
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for markup in (
+                f'<iframe src="{cms_pdf}"></iframe>',
+                f'<object data="{cms_pdf}" type="application/pdf"></object>',
+                f'<embed src="{cms_pdf}" type="application/pdf">',
+            ):
+                module.validate_assets(root, "tour.html", markup)
+
+            for markup in (
+                f'<img src="{cms_pdf}">',
+                '<img src="/_emdash/api/media/file/gallery/photo.jpg">',
+                '<img srcset="/_emdash/api/media/file/gallery/photo.jpg 1200w">',
+                '<iframe src="/_emdash/api/media/file/gallery/photo.jpg"></iframe>',
+                '<object data="/_emdash/api/media/file/gallery/photo.jpg"></object>',
+            ):
+                with self.assertRaisesRegex(ValueError, "Unoptimized CMS"):
+                    module.validate_assets(root, "tour.html", markup)
+
     def test_unoptimized_cms_browser_images_are_rejected_without_rejecting_brochures(self):
         module = load_finalizer()
         with tempfile.TemporaryDirectory() as temp:

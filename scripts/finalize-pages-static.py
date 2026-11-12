@@ -156,14 +156,20 @@ class BrowserReferences(HTMLParser):
         values = dict(attrs)
         for name in ("src", "poster", "component-url", "renderer-url"):
             if values.get(name):
-                self.assets.append(values[name])
+                self.assets.append((tag, name, values[name]))
+        if tag == "object" and values.get("data"):
+            self.assets.append((tag, "data", values["data"]))
         if values.get("srcset"):
-            self.assets.extend(candidate.strip().split()[0] for candidate in values["srcset"].split(",") if candidate.strip())
+            self.assets.extend(
+                (tag, "srcset", candidate.strip().split()[0])
+                for candidate in values["srcset"].split(",")
+                if candidate.strip()
+            )
         if tag == "link" and values.get("href"):
             rel = set(values.get("rel", "").split())
             if rel.intersection({"stylesheet", "icon", "preload", "modulepreload"}):
-                self.assets.append(values["href"])
-        for name in ("src", "href", "poster", "component-url", "renderer-url"):
+                self.assets.append((tag, "href", values["href"]))
+        for name in ("src", "href", "data", "poster", "component-url", "renderer-url"):
             value = values.get(name)
             if isinstance(value, str) and value.startswith("/"):
                 self.root_references.append(value)
@@ -175,13 +181,20 @@ def validate_assets(root, relative, html_text):
     for reference in parser.root_references:
         if reference.startswith("/staging/"):
             raise ValueError(f"Non-root browser URL in {relative}: {reference}")
-    for reference in parser.assets:
+    for tag, attribute, reference in parser.assets:
         if reference.startswith("//"):
             raise ValueError(f"Protocol-relative browser asset in {relative}: {reference}")
         parsed = urlsplit(reference)
-        if "/_emdash/api/media/file/" in unquote(parsed.path):
+        decoded_path = unquote(parsed.path)
+        document_embed = (
+            (tag, attribute) in {("iframe", "src"), ("object", "data"), ("embed", "src")}
+            and decoded_path.lower().endswith(".pdf")
+        )
+        if document_embed:
+            continue
+        if "/_emdash/api/media/file/" in decoded_path:
             raise ValueError(f"Unoptimized CMS browser image in {relative}: {reference}")
-        if "/wp-content/" in unquote(parsed.path):
+        if "/wp-content/" in decoded_path:
             raise ValueError(f"Unoptimized WordPress browser image in {relative}: {reference}")
         if parsed.scheme or parsed.netloc or not parsed.path.startswith("/"):
             continue
