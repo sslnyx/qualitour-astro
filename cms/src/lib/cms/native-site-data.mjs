@@ -1,16 +1,11 @@
 import compatibilitySource from '../../../../src/data/cms-legacy-compat.json' with { type: 'json' };
+import taxonomyBaselineSource from '../../data/native-taxonomy-baseline.json' with { type: 'json' };
 import { buildCatalogue, retainPublicTranslations } from '../../../../src/lib/cms/legacy-adapter.mjs';
 import { getEmDashCollection, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint } from 'emdash';
+import { projectNativeSiteTaxonomy } from './native-site-taxonomy.mjs';
 
 const locales = ['en','zh'];
-const bucketAliases = new Map([
-  ['categories','categories'],['category','categories'],['tour_category','categories'],
-  ['tags','tags'],['tag','tags'],['tour_tag','tags'],
-  ['activities','activities'],['activity','activities'],['tour-activity','activities'],
-  ['destinations','destinations'],['destination','destinations'],['tour-destination','destinations'],
-  ['durations','durations'],['duration','durations'],['tour_duration','durations'],
-  ['types','types'],['type','types'],['tour_type','types'],
-]);
+const taxonomyNames = ['destinations','travel_styles','travel_regions','cruise_types'];
 const asIso = value => value instanceof Date ? value.toISOString() : value;
 
 function normalizeEntry(entry, locale) {
@@ -27,10 +22,10 @@ function flattenTerms(rows) {
   return (Array.isArray(rows) ? rows : []).flatMap(row => [row, ...flattenTerms(row?.children)]);
 }
 function taxonomyRow(term) {
-  return {id:String(term.id),slug:String(term.slug),name:String(term.label),parent:term.parentId ? String(term.parentId) : 0,translationGroup:term.translationGroup || null};
+  return {id:String(term.id),name:String(term.name),slug:String(term.slug),label:String(term.label),parentId:term.parentId ? String(term.parentId) : undefined,locale:String(term.locale),translationGroup:term.translationGroup || null};
 }
 function attachTermTranslations(vocabulary) {
-  for (const bucket of new Set([...bucketAliases.values()])) {
+  for (const bucket of taxonomyNames) {
     const groups = new Map();
     for (const locale of locales) for (const term of vocabulary[locale][bucket] || []) {
       if (!term.translationGroup) continue;
@@ -81,6 +76,7 @@ function mergeHints(hints) {
 
 export function createNativeSiteData({
   compatibility=compatibilitySource,
+  taxonomyBaseline=taxonomyBaselineSource,
   getCollection=getEmDashCollection,
   getContext=getRequestContext,
   getTaxonomyDefs:getDefs=getTaxonomyDefs,
@@ -103,17 +99,18 @@ export function createNativeSiteData({
     const hints=locales.map(locale=>collectionResults[locale].cacheHint);
     await Promise.all(locales.map(async locale=>{
       const defs=await getDefs({locale});
-      for (const def of defs) {
-        const bucket=bucketAliases.get(def.name);
-        if (!bucket || !def.collections?.includes('tours')) continue;
-        const result=await getTerms(def.name,{locale,includeCounts:false});
+      const tourDefs=new Map(defs.filter(def=>def.collections?.includes('tours')).map(def=>[def.name,def]));
+      for (const name of taxonomyNames) {
+        if (!tourDefs.has(name)) throw new Error(`Missing published CMS taxonomy definition ${name} for ${locale}`);
+        const result=await getTerms(name,{locale,includeCounts:false});
         hints.push(result.cacheHint);
-        vocabulary[locale][bucket]=flattenTerms(result.data).map(taxonomyRow);
+        vocabulary[locale][name]=flattenTerms(result.data).map(taxonomyRow);
       }
     }));
     attachTermTranslations(vocabulary);
     const catalogues=Object.fromEntries(await Promise.all(locales.map(async locale=>{
-      const catalogue=buildCatalogue(entries[locale],compatibility,locale,{taxonomyTerms:vocabulary[locale]});
+      const projection=projectNativeSiteTaxonomy({entries:entries[locale],locale,source:compatibility.locales[locale],baseline:taxonomyBaseline,taxonomyTerms:vocabulary[locale]});
+      const catalogue=buildCatalogue(entries[locale],compatibility,locale,{taxonomyOverrides:projection.overrides});
       catalogue.tours=await presentTours(catalogue.tours);
       return [locale,catalogue];
     })));

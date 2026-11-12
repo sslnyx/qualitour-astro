@@ -20,6 +20,22 @@ test('unchanged CMS blocks retain original tables, URLs and presentation metadat
   assert.equal(terms.destinations.find(term=>term.id===8).count,1);
   assert.equal(terms.destinations.find(term=>term.id===9).count,0);
 });
+test('taxonomy bucket overrides distinguish explicit clear and append only used selectors', () => {
+  const f=fixture();
+  const cleared=buildCatalogue([f.entry],f.compat,'en',{
+    taxonomyOverrides:new Map([[f.entry.id,{destinations:[]}]]),
+    taxonomyTerms:{destinations:[{id:'unused',slug:'cms-unused',name:'Unused',parent:0}]},
+  });
+  assert.deepEqual(cleared.tours[0].tour_terms.destinations,[]);
+  assert.equal(cleared.terms.destinations.find(term=>term.slug==='canada').count,0);
+  assert.equal(cleared.terms.destinations.some(term=>term.slug==='cms-unused'),false);
+
+  const added=buildCatalogue([f.entry],f.compat,'en',{
+    taxonomyOverrides:new Map([[f.entry.id,{destinations:[{id:'new-place',slug:'new-place',name:'New Place'}]}]]),
+  });
+  assert.deepEqual(added.tours[0].tour_terms.destinations,[{id:'new-place',slug:'new-place',name:'New Place'}]);
+  assert.equal(added.terms.destinations.find(term=>term.slug==='new-place').count,1);
+});
 test('current CMS edits win without leaking raw/private fields or stale HTML/discounts', () => {
   const f=fixture(); Object.assign(f.data,{title:'<New>',price:'600',overview:block('Edited <safe>'),hero:{meta:{storageKey:'image.jpg'}},seo:{title:'Edited SEO',description:'Edited description'},tour_classifications:{basis:'PRIVATE'}});
   f.entry.authorId='PRIVATE'; f.tour.tour_meta['tourmaster-tour-discount']='true'; f.tour.tour_meta['tour-price-discount-text']='200';

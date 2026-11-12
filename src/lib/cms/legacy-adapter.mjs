@@ -104,6 +104,20 @@ function termRows(data, bucket, sourceTerms = []) {
     return legacy ? { id: legacy.id, slug: legacy.slug, name: legacy.name } : { id: text(term.id), slug, name: label };
   }).filter(Boolean);
 }
+function projectedTermRows(rows) {
+  if (!Array.isArray(rows)) throw new Error('Invalid projected CMS taxonomy bucket');
+  const seen = new Set();
+  return rows.map(term => {
+    const id = text(term?.id).trim(), slug = text(term?.slug).trim(), name = text(term?.name).trim();
+    if (!id || !slug || !name) throw new Error('Invalid projected CMS taxonomy term');
+    if (seen.has(slug)) return;
+    seen.add(slug);
+    const translations = term?.translations && typeof term.translations === 'object'
+      ? Object.fromEntries(Object.entries(term.translations).filter(([, value])=>typeof value==='string' && value))
+      : undefined;
+    return { id, slug, name, ...(translations && Object.keys(translations).length ? {translations} : {}) };
+  }).filter(Boolean);
+}
 function nativeSeo(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return;
   const result = {};
@@ -115,7 +129,7 @@ function nativeSeo(value) {
   if (value.noIndex === true) result.noIndex = true;
   return Object.keys(result).length ? result : undefined;
 }
-function nativeTour(entry, source) {
+function nativeTour(entry, source, taxonomyOverride) {
   const data = entry.data || {}, id = text(entry.id).trim(), title = text(data.title).trim();
   if (!id) throw new Error('Native CMS entry is missing its stable ID');
   if (!title) throw new Error(`Missing CMS title for native entry ${id}`);
@@ -146,12 +160,15 @@ function nativeTour(entry, source) {
     tour_terms:Object.fromEntries(termsKeys.map(name=>[name,termRows(data,name,source.terms?.[name] || [])])),
     goodlayers_data:{sections,tour_itinerary:days.map(item=>({title:text(item.title),content:renderRichText(item.content)})),tour_faq:arrays.faq.map(item=>({title:text(item.title),content:renderRichText(item.content)})),tour_gallery:gallery},
   };
+  if (taxonomyOverride) for (const bucket of termsKeys) if (Object.hasOwn(taxonomyOverride, bucket)) {
+    tour.tour_terms[bucket] = projectedTermRows(taxonomyOverride[bucket]);
+  }
   const seo = nativeSeo(data.seo); if (seo) tour.nativeSeo = seo;
   attachMediaDimensions(tour,dimensions);
   return tour;
 }
 
-export function buildCatalogue(entries, compat, locale, { taxonomyTerms = {} } = {}) {
+export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = new Map() } = {}) {
   const source = compat.locales[locale]; if (!source) throw new Error('Missing locale compatibility manifest');
   const seen = new Set(), slugs = new Set(), excluded = [], tours = [], sortDates = new Map();
   for (const entry of entries) {
@@ -159,9 +176,10 @@ export function buildCatalogue(entries, compat, locale, { taxonomyTerms = {} } =
     if (entry.locale !== locale) throw new Error('CMS locale mismatch');
     if (PROOF_IDS.has(entry.id)) { excluded.push(entry.id); continue; }
     const data = entry.data || {};
+    const taxonomyOverride = taxonomyOverrides.get?.(entry.id);
     const claimsImport = Object.hasOwn(data,'source_key') || Object.hasOwn(data,'source_status');
     if (!claimsImport) {
-      const tour = nativeTour(entry, source), slug = slugKey(tour.slug);
+      const tour = nativeTour(entry, source, taxonomyOverride), slug = slugKey(tour.slug);
       if (seen.has(`cms:${entry.id}`) || slugs.has(slug)) throw new Error('Duplicate native CMS identity or public slug');
       seen.add(`cms:${entry.id}`); slugs.add(slug); tours.push(tour); sortDates.set(tour.id,tour.date); continue;
     }
@@ -214,8 +232,7 @@ export function buildCatalogue(entries, compat, locale, { taxonomyTerms = {} } =
     tour.goodlayers_data.tour_gallery = (data.gallery || []).map(item => { const url=mediaUrl(item?.image); if(!url)throw new Error(`Invalid CMS gallery media for ${key}`);recordMediaDimensions(dimensions,url,item.image);return {url,alt:text(item.alt),caption:text(item.caption)}; });
     tour.tour_terms = Object.fromEntries(termsKeys.map(name=>{
       const legacy=(tour.tour_terms?.[name] || []).map(term=>({id:term.id,slug:term.slug,name:term.name}));
-      const live=termRows(data,name,source.terms?.[name] || []);
-      return [name,live.length && live.map(term=>term.slug).sort().join('\0')!==legacy.map(term=>term.slug).sort().join('\0') ? live : legacy];
+      return [name,taxonomyOverride && Object.hasOwn(taxonomyOverride,name) ? projectedTermRows(taxonomyOverride[name]) : legacy];
     }));
     const seo=nativeSeo(data.seo);if(seo)tour.nativeSeo=seo;
     attachMediaDimensions(tour,dimensions);tours.push(tour); sortDates.set(tour.id,original.date);
@@ -229,7 +246,6 @@ export function buildCatalogue(entries, compat, locale, { taxonomyTerms = {} } =
     // navigation order, including empty categories; only counts use live tours.
     const vocabulary = [...(source.terms[name]||[])];
     const known = new Set(vocabulary.map(term=>term.slug));
-    for (const term of taxonomyTerms[name] || []) if (!known.has(term.slug)) { known.add(term.slug); vocabulary.push(term); }
     for (const tour of tours) for (const term of tour.tour_terms[name]) if (!known.has(term.slug)) { known.add(term.slug); vocabulary.push({...term,parent:0}); }
     return [name,vocabulary.map(term=>({...term,count:counts.get(term.slug)||0}))];
   }));
