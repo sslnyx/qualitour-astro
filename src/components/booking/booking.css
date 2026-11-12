@@ -1174,3 +1174,54 @@
   border-top: 0;
   padding-top: 0;
 }
+
+/* Availability-aware time slots and spacing fixes */
+.qb-time-slots button:disabled {
+  cursor: not-allowed;
+}
+.qb-time-slots button.qb-slot-full {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  text-decoration: line-through;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+.qb-time-slots button.qb-slot-full small {
+  font-size: 10px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.qb-time-slots button:disabled:not(.qb-slot-full) {
+  opacity: 0.55;
+}
+.qb-time-panel .qb-note[role] {
+  margin: 12px 0 0;
+}
+.qb-time-taken {
+  color: #b42318;
+  font-weight: 650;
+}
+.qb-form-intro {
+  margin: 4px 0 18px;
+}
+.qb-note + .qt-btn--primary {
+  margin-top: 16px;
+}
+.qb-ack {
+  align-items: flex-start;
+}
+.qb-check input[type="checkbox"] {
+  /* a global input min-height (46px) was stretching the box and pushing it below its label */
+  min-height: 0;
+  height: 17px;
+  width: 17px;
+  padding: 0;
+  margin: 3px 0 0;
+}
+.qb-unavailable p {
+  margin: 8px 0 20px;
+}

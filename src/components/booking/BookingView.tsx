@@ -6,6 +6,10 @@ import type {
 } from "../../lib/booking/contracts";
 import { BookingRecovery } from "./BookingRecovery";
 import { ServiceCalendar } from "./ServiceCalendar";
+import {
+  formatDepartureLabel,
+  formatServiceDate,
+} from "../../lib/booking/format";
 
 const VANCOUVER_TIME_ZONE = "America/Vancouver";
 const VANCOUVER_FORMATTER = new Intl.DateTimeFormat("en-CA", {
@@ -195,6 +199,12 @@ export function BookingView(p: BookingViewProps) {
     [editingTrip, setEditingTrip] = useState(true),
     [timePeriod, setTimePeriod] = useState("morning"),
     [tick, setTick] = useState(Date.now()),
+    [availability, setAvailability] = useState<{
+      key: string;
+      status: "loading" | "ready" | "error";
+      slots: Record<string, boolean>;
+    }>({ key: "", status: "loading", slots: {} }),
+    [timeCheck, setTimeCheck] = useState<"idle" | "checking" | "taken">("idle"),
     [customer, setCustomer] = useState<CustomerInput>({
       name: "",
       email: "",
@@ -205,6 +215,7 @@ export function BookingView(p: BookingViewProps) {
       notes: "",
     });
   const passengerId = useId();
+  const checkSeq = useRef(0);
   const contactHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     const timer = setInterval(() => setTick(Date.now()), 1000);
@@ -301,7 +312,11 @@ export function BookingView(p: BookingViewProps) {
   }, [route?.serviceRules, rate, localNow.date, Math.floor(tick / 60_000)]);
   const showTrip = editingTrip || !quoteValid;
   useEffect(() => {
-    if (!showTrip) contactHeading.current?.focus();
+    if (!showTrip) {
+      // Bring the page title and step list back into view, then focus the new step without a second jump.
+      window.scrollTo({ top: 0, behavior: "auto" });
+      contactHeading.current?.focus({ preventScroll: true });
+    }
   }, [showTrip, p.quote?.id]);
   const timeGroups = [
     {
@@ -322,6 +337,86 @@ export function BookingView(p: BookingViewProps) {
   ].filter((group) => group.values.length);
   const activeTimeGroup =
     timeGroups.find((group) => group.id === timePeriod) ?? timeGroups[0];
+  const availabilityKey =
+    p.onAvailability && route && rate && serviceDate && serviceDateIsAllowed
+      ? `${routeId}|${rateId}|${serviceDate}`
+      : "";
+  const availabilityCurrent = availability.key === availabilityKey;
+  const availabilityReady =
+    availabilityCurrent && availability.status === "ready";
+  const availabilityLoading =
+    Boolean(availabilityKey) &&
+    (!availabilityCurrent || availability.status === "loading");
+  const availabilityFailed =
+    Boolean(availabilityKey) &&
+    availabilityCurrent &&
+    availability.status === "error";
+  // Passengers never change which vehicle is free (the rate fixes the vehicle class), so the check uses one passenger.
+  const loadAvailability = async (signal?: AbortSignal) => {
+    const result = await p.onAvailability!(
+      { routeId, rateId, date: serviceDate, passengers: 1 },
+      signal,
+    );
+    return Object.fromEntries(
+      result.slots.map((slot) => [slot.time, slot.available]),
+    ) as Record<string, boolean>;
+  };
+  useEffect(() => {
+    checkSeq.current += 1;
+    setTimeCheck("idle");
+    if (!availabilityKey) return;
+    const controller = new AbortController(),
+      key = availabilityKey;
+    setAvailability({ key, status: "loading", slots: {} });
+    loadAvailability(controller.signal)
+      .then((slots) => setAvailability({ key, status: "ready", slots }))
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setAvailability({ key, status: "error", slots: {} });
+      });
+    return () => controller.abort();
+  }, [availabilityKey]);
+  const slotFull = (time: string) =>
+    availabilityReady && availability.slots[time] !== true;
+  const anySlotOpen =
+    !availabilityReady || times.some((time) => !slotFull(time));
+  useEffect(() => {
+    if (!availabilityReady) return;
+    const open = timeGroups.find((group) =>
+      group.values.some((time) => availability.slots[time] === true),
+    );
+    if (
+      open &&
+      !activeTimeGroup?.values.some((time) => availability.slots[time] === true)
+    )
+      setTimePeriod(open.id);
+  }, [availabilityReady, availabilityKey]);
+  async function chooseTime(time: string) {
+    const seq = ++checkSeq.current;
+    setServiceTime(time);
+    setDeparture("");
+    setAck(false);
+    if (!p.onAvailability) {
+      setDeparture(`${serviceDate}T${time}`);
+      return;
+    }
+    setTimeCheck("checking");
+    try {
+      const slots = await loadAvailability();
+      if (seq !== checkSeq.current) return;
+      setAvailability({ key: availabilityKey, status: "ready", slots });
+      if (slots[time] !== true) {
+        setServiceTime("");
+        setTimeCheck("taken");
+        return;
+      }
+    } catch {
+      // Fail soft: the quote step performs the authoritative vehicle check.
+      if (seq !== checkSeq.current) return;
+    }
+    setDeparture(`${serviceDate}T${time}`);
+    setTimeCheck("idle");
+  }
   const money = (minor: number) =>
     new Intl.NumberFormat(p.lang === "zh" ? "zh-CA" : "en-CA", {
       style: "currency",
@@ -482,7 +577,7 @@ export function BookingView(p: BookingViewProps) {
                   ) : null}
                   <div>
                     <dt>{t("溫哥華出發時間", "Departure in Vancouver")}</dt>
-                    <dd>{b.departureLabel}</dd>
+                    <dd>{formatDepartureLabel(b.departureLabel, p.lang)}</dd>
                   </div>
                   <div>
                     <dt>{t("乘客", "Passengers")}</dt>
@@ -620,8 +715,10 @@ export function BookingView(p: BookingViewProps) {
                     </span>
                     <h2>{route ? name(route) : ""}</h2>
                     <p>
-                      {quote?.departureLabel} · {passengers}{" "}
-                      {t("位乘客", "passengers")}
+                      {quote
+                        ? formatDepartureLabel(quote.departureLabel, p.lang)
+                        : ""}{" "}
+                      · {passengers} {t("位乘客", "passengers")}
                     </p>
                   </div>
                   <button
@@ -807,22 +904,78 @@ export function BookingView(p: BookingViewProps) {
                                   role="group"
                                   aria-label={t("出發時間", "Departure time")}
                                 >
-                                  {activeTimeGroup?.values.map((time) => (
-                                    <button
-                                      type="button"
-                                      key={time}
-                                      aria-pressed={serviceTime === time}
-                                      onClick={() => {
-                                        setServiceTime(time);
-                                        setDeparture(`${serviceDate}T${time}`);
-                                        setAck(false);
-                                      }}
-                                    >
-                                      {time}
-                                    </button>
-                                  ))}
+                                  {activeTimeGroup?.values.map((time) => {
+                                    const full = slotFull(time);
+                                    return (
+                                      <button
+                                        type="button"
+                                        key={time}
+                                        className={
+                                          full ? "qb-slot-full" : undefined
+                                        }
+                                        aria-pressed={serviceTime === time}
+                                        disabled={
+                                          full ||
+                                          availabilityLoading ||
+                                          timeCheck === "checking"
+                                        }
+                                        aria-label={
+                                          full
+                                            ? `${time} ${t("已滿", "unavailable")}`
+                                            : undefined
+                                        }
+                                        onClick={() => void chooseTime(time)}
+                                      >
+                                        {time}
+                                        {full && (
+                                          <small>{t("已滿", "Full")}</small>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
                                 </div>
-                                {serviceTime && (
+                                {availabilityLoading ? (
+                                  <p className="qb-note" role="status">
+                                    {t(
+                                      "正在核對車位…",
+                                      "Checking vehicle availability…",
+                                    )}
+                                  </p>
+                                ) : availabilityFailed ? (
+                                  <p className="qb-note" role="status">
+                                    {t(
+                                      "暫時無法核對車位；下一步仍會再確認。",
+                                      "We could not check availability right now; the next step still verifies it.",
+                                    )}
+                                  </p>
+                                ) : availabilityReady && !anySlotOpen ? (
+                                  <p className="qb-note" role="alert">
+                                    {t(
+                                      "這一天已沒有可用時段，請另選日期。",
+                                      "No vehicle is free on this date. Choose another date.",
+                                    )}
+                                  </p>
+                                ) : null}
+                                {timeCheck === "checking" && (
+                                  <p className="qb-note" role="status">
+                                    {t(
+                                      "正在確認這個時段…",
+                                      "Confirming this time…",
+                                    )}
+                                  </p>
+                                )}
+                                {timeCheck === "taken" && (
+                                  <p
+                                    className="qb-note qb-time-taken"
+                                    role="alert"
+                                  >
+                                    {t(
+                                      "這個時段剛剛已被預訂，請選擇其他時間。",
+                                      "That time was just taken. Please choose another time.",
+                                    )}
+                                  </p>
+                                )}
+                                {serviceTime && timeCheck !== "taken" && (
                                   <p className="qb-time-selected" role="status">
                                     {t("已選", "Selected")}:{" "}
                                     {timeLabel(serviceTime)}
@@ -941,8 +1094,11 @@ export function BookingView(p: BookingViewProps) {
                       p.busy ||
                       !route ||
                       !rate ||
+                      timeCheck === "checking" ||
                       (Boolean(route?.serviceRules) &&
-                        (!serviceDateIsAllowed || !times.includes(serviceTime)))
+                        (!serviceDateIsAllowed ||
+                          !times.includes(serviceTime) ||
+                          !departure))
                     }
                   >
                     {p.busy
@@ -963,7 +1119,7 @@ export function BookingView(p: BookingViewProps) {
                   <h2 ref={contactHeading} tabIndex={-1}>
                     {t("接送與聯絡資料", "Transfer & contact details")}
                   </h2>
-                  <p className="qb-note">
+                  <p className="qb-note qb-form-intro">
                     {t(
                       "填寫接送地點及聯絡方式，方便安排你的行程。",
                       "Add your pickup, destination and contact details.",
@@ -1117,7 +1273,9 @@ export function BookingView(p: BookingViewProps) {
                     ) : null}
                     <div>
                       <dt>{t("出發", "Departure")}</dt>
-                      <dd>{quote.departureLabel}</dd>
+                      <dd>
+                        {formatDepartureLabel(quote.departureLabel, p.lang)}
+                      </dd>
                     </div>
                     <div>
                       <dt>{t("乘客", "Passengers")}</dt>
@@ -1147,11 +1305,19 @@ export function BookingView(p: BookingViewProps) {
                     </div>
                     <div>
                       <dt>{t("日期", "Date")}</dt>
-                      <dd>{serviceDate || t("尚未選擇", "Not selected")}</dd>
+                      <dd>
+                        {serviceDate
+                          ? formatServiceDate(serviceDate, p.lang)
+                          : t("尚未選擇", "Not selected")}
+                      </dd>
                     </div>
                     <div>
                       <dt>{t("時間", "Time")}</dt>
-                      <dd>{serviceTime || t("尚未選擇", "Not selected")}</dd>
+                      <dd>
+                        {serviceTime
+                          ? timeLabel(serviceTime)
+                          : t("尚未選擇", "Not selected")}
+                      </dd>
                     </div>
                     <div>
                       <dt>{t("乘客", "Passengers")}</dt>
