@@ -76,6 +76,25 @@ export type QuoteInput = {
   departureLocal: string;
   passengers: number;
 };
+export type AvailabilityInput = {
+  routeId: string;
+  rateId: string;
+  date: string;
+  passengers: number;
+};
+export type AvailabilitySlot = {
+  time: string;
+  available: boolean;
+  reason?: string;
+};
+export type AvailabilityResult = {
+  routeId: string;
+  rateId: string;
+  date: string;
+  passengers: number;
+  checkedAt: number;
+  slots: AvailabilitySlot[];
+};
 export type BookingQuote = {
   pickupOptions?: RouteLocation[];
   dropoffOptions?: RouteLocation[];

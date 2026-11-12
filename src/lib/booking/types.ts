@@ -2,6 +2,8 @@ import type {
   PublicCatalog,
   BookingQuote,
   QuoteInput,
+  AvailabilityInput,
+  AvailabilityResult,
   CustomerInput,
   GuestBooking,
 } from "./contracts";
@@ -19,6 +21,10 @@ export type BookingViewProps = {
   error: string;
   initialRouteId?: string;
   initialRateId?: string;
+  onAvailability?: (
+    value: AvailabilityInput,
+    signal?: AbortSignal,
+  ) => Promise<AvailabilityResult>;
   onQuote: (value: QuoteInput) => void;
   onReserve: (customer: CustomerInput) => void;
   onCheckout: () => void;

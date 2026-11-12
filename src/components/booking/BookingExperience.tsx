@@ -3,6 +3,7 @@ import { bookingApi, ApiError } from "../../lib/booking/api";
 import { bookingMessage } from "../../lib/booking/errors";
 import { settleAbortable } from "../../lib/booking/request";
 import type {
+  AvailabilityResult,
   BookingQuote,
   BookingReceipt,
   CustomerInput,
@@ -325,6 +326,9 @@ export default function BookingExperience({
         error={error ? bookingMessage(error, lang) : ""}
         initialRouteId={requestedRoute?.id}
         initialRateId={requestedRate?.id}
+        onAvailability={(input, signal) =>
+          bookingApi<AvailabilityResult>("availability", input, signal)
+        }
         onQuote={requestQuote}
         onReserve={reserve}
         onCheckout={checkout}

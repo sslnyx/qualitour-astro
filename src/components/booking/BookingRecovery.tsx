@@ -1,4 +1,5 @@
 import type { GuestBooking, BookingReceipt } from "../../lib/booking/contracts";
+import { formatDepartureLabel } from "../../lib/booking/format";
 export function BookingRecovery(p: {
   bookings: GuestBooking[];
   lang: "zh" | "en";
@@ -38,7 +39,7 @@ export function BookingRecovery(p: {
               <strong>{b.reference}</strong>
               <span>{p.lang === "zh" ? b.routeNameZh : b.routeNameEn}</span>
             </a>
-            <span>{b.departureLabel}</span>
+            <span>{formatDepartureLabel(b.departureLabel, p.lang)}</span>
             <span className="qb-note">
               {b.paymentNotification
                 ? t(
@@ -122,7 +123,7 @@ export function ReceiptView(p: {
         ) : null}
         <div>
           <dt>{t("出發時間（溫哥華）", "Departure (Vancouver)")}</dt>
-          <dd>{r.departureLabel}</dd>
+          <dd>{formatDepartureLabel(r.departureLabel, p.lang)}</dd>
         </div>
         <div>
           <dt>{t("乘客", "Passengers")}</dt>

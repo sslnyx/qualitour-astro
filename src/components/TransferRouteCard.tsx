@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type { TransferRoute } from "../lib/zaui/zaui";
 import NativeBookingDialog from "./booking/NativeBookingDialog";
+import { localizedLocation } from "../lib/transfer-locations";
 
 interface Props {
   route: TransferRoute;
@@ -21,8 +22,14 @@ export default function TransferRouteCard({
   }>();
   const trigger = useRef<HTMLButtonElement>(null);
   const vehicles = isReversed ? route.reverseActivityIds : route.vehicles;
-  const fromLocation = isReversed ? route.toLocation : route.fromLocation;
-  const toLocation = isReversed ? route.fromLocation : route.toLocation;
+  const fromLocation = localizedLocation(
+    isReversed ? route.toLocation : route.fromLocation,
+    lang,
+  );
+  const toLocation = localizedLocation(
+    isReversed ? route.fromLocation : route.toLocation,
+    lang,
+  );
   const lowestPrice =
     vehicles?.reduce((minimum, vehicle) => {
       const price = Number(vehicle.price.replace(/[^0-9.]/g, ""));
