@@ -121,7 +121,7 @@ test('native published tours use stable string identities, safe defaults, live t
     id:'01NATIVE0000000000000000001',slug:'new-native-tour',locale:'en',status:'published',publishedAt:'2026-11-12T02:00:00Z',
     data:{
       title:'New & Native',currency:'CAD',
-      seo:{title:'Native SEO',description:'Native description',noIndex:true},
+      seo:{title:'Native SEO',description:'Native description',image:'/_emdash/api/media/file/01SHARE.png',canonical:'https://qualitour.ca/tours/new-native-tour',noIndex:true},
       terms:{destinations:[{id:'term-banff',name:'destinations',slug:'banff',label:'Banff',children:[],locale:'en',translationGroup:'tg-banff'}]},
     },
   };
@@ -132,7 +132,7 @@ test('native published tours use stable string identities, safe defaults, live t
   assert.equal(tour.excerpt.rendered,'');
   assert.equal(tour.content.rendered,'');
   assert.equal(tour.tour_meta.currency,'CAD');
-  assert.deepEqual(tour.nativeSeo,{title:'Native SEO',description:'Native description',noIndex:true});
+  assert.deepEqual(tour.nativeSeo,{title:'Native SEO',description:'Native description',image:'/_emdash/api/media/file/01SHARE.png',canonical:'https://qualitour.ca/tours/new-native-tour',noIndex:true});
   assert.deepEqual(tour.tour_terms.destinations,[{id:'term-banff',slug:'banff',name:'Banff'}]);
   assert.equal(result.terms.destinations.find(term=>term.slug==='banff').count,1);
 });

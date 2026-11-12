@@ -68,6 +68,26 @@ function linkPublishedTranslations(catalogues, entries) {
     zh.translations={en:{id:en.id,slug:en.slug}};
   }
 }
+const bareMediaId=value=>typeof value==='string'&&value.trim()&&!/^(?:[a-z][a-z\d+.-]*:|\/)/i.test(value.trim())?value.trim():undefined;
+const mediaFilePath=key=>`/_emdash/api/media/file/${key.split('/').map(encodeURIComponent).join('/')}`;
+/** The SEO image picker stores a media ID, but the public file route is keyed by storage key. */
+async function lookupStorageKeys(ids) {
+  const [{getDb},{MediaRepository}]=await Promise.all([import('emdash/runtime'),import('emdash')]);
+  const repository=new MediaRepository(await getDb());
+  return new Map(await Promise.all([...ids].map(async id=>[id,(await repository.findById(id))?.storageKey])));
+}
+async function resolveSeoImages(entries, lookup) {
+  const ids=new Set();
+  for (const locale of locales) for (const entry of entries[locale]) { const id=bareMediaId(entry.data.seo?.image); if(id)ids.add(id); }
+  if (!ids.size) return;
+  const keys=await lookup(ids);
+  for (const locale of locales) for (const entry of entries[locale]) {
+    const id=bareMediaId(entry.data.seo?.image); if(!id)continue;
+    const key=keys.get(id), seo={...entry.data.seo};
+    if (typeof key==='string' && key) seo.image=mediaFilePath(key); else delete seo.image; // an unresolved image must not become a 404 og:image
+    entry.data.seo=seo;
+  }
+}
 function mergeHints(hints) {
   const tags=[];
   for (const hint of hints) for (const tag of hint?.tags || []) if (typeof tag === 'string' && !tags.includes(tag)) tags.push(tag);
@@ -81,6 +101,7 @@ export function createNativeSiteData({
   getContext=getRequestContext,
   getTaxonomyDefs:getDefs=getTaxonomyDefs,
   getTaxonomyTermsWithCacheHint:getTerms=getTaxonomyTermsWithCacheHint,
+  lookupMediaStorageKeys=lookupStorageKeys,
   presentTours=async tours=>(await import('./native-site-image.mjs')).optimizeTourPresentations(tours),
 }={}) {
   const requestLoads=new WeakMap();
@@ -95,6 +116,7 @@ export function createNativeSiteData({
     for (const locale of locales) {
       const ids=new Set(); for (const entry of entries[locale]) { if(ids.has(entry.id))throw new Error(`Duplicate published CMS tour ID ${entry.id}`); ids.add(entry.id); }
     }
+    await resolveSeoImages(entries,lookupMediaStorageKeys);
     const vocabulary={en:{},zh:{}};
     const hints=locales.map(locale=>collectionResults[locale].cacheHint);
     await Promise.all(locales.map(async locale=>{

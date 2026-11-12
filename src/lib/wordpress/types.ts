@@ -52,7 +52,7 @@ export interface WPTour {
     optimizedInlineImages?: Record<string, { src: string; srcSet?: string; sizes?: string; width: number; height: number }>;
     optimizedPhotos?: Record<string, { thumbnail: string; full: string; width: number; height: number }>;
     /** Explicit live-CMS SEO overrides; absent fields preserve the existing page defaults. */
-    nativeSeo?: { title?: string; description?: string; canonical?: string; noIndex?: boolean };
+    nativeSeo?: { title?: string; description?: string; image?: string; canonical?: string; noIndex?: boolean };
     tour_category?: number[];
     tour_tag?: number[];
     tour_meta?: {

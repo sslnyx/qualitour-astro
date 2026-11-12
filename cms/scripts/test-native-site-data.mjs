@@ -11,11 +11,13 @@ const taxonomyNames=['destinations','travel_styles','travel_regions','cruise_typ
 const taxonomyBaseline={schema:1,taxonomies:taxonomyNames,entries:{},terms:[]};
 const row=(locale,id,slug,title)=>({id:locale==='zh'?`${locale}/${slug}`:slug,slug,seo:{title:`${locale} SEO`,description:null,canonical:null,image:null,noIndex:false},data:{id,status:'published',locale,publishedAt:new Date('2026-11-12T00:00:00Z'),translationGroup:'pair-1',title,hero:{meta:{storageKey:`${locale}-hero.jpg`},width:1200,height:800},terms:{destinations:[{id:`term-${locale}`,name:'destinations',slug:locale==='zh'?'banff-zh':'banff',label:locale==='zh'?'班夫':'Banff',children:[],locale,translationGroup:'term-pair'}]}}});
 
-function harness({context={request:true},error}={}){
+function harness({context={request:true},error,lookup,seoImage}={}){
   const calls=[],taxonomyCalls=[];
   const entries={en:[row('en','native-en','native-en','Native EN')],zh:[row('zh','native-zh','native-zh','原生中文')]};
+  if(seoImage!==undefined)entries.en[0].seo.image=seoImage;
   const api=createNativeSiteData({
     compatibility,
+    ...(lookup?{lookupMediaStorageKeys:lookup}:{}),
     taxonomyBaseline,
     getContext:()=>context,
     getCollection:async(type,filter)=>{calls.push({type,filter});return error?{entries:[],error:new Error('database failed'),cacheHint:{}}:{entries:entries[filter.locale],cacheHint:{tags:[`collection:${filter.locale}`]}};},
@@ -69,4 +71,17 @@ test('does not create an isolate cache when no request context exists',async()=>
   await api.getNativeSiteCatalogues();
   await api.getNativeSiteCatalogues();
   assert.equal(calls.length,4);
+});
+
+test('SEO image media IDs resolve to the public storage-key route; unresolved IDs are dropped',async()=>{
+  const lookups=[];
+  const lookup=async ids=>{lookups.push([...ids]);return new Map([['01MEDIA',"hero/01 share.png"]]);};
+  const found=harness({lookup,seoImage:'01MEDIA'});
+  const catalogues=await found.api.getNativeSiteCatalogues();
+  assert.deepEqual(lookups,[['01MEDIA']]);
+  assert.deepEqual(catalogues.en.tours[0].nativeSeo,{title:'en SEO',image:'/_emdash/api/media/file/hero/01%20share.png'});
+  const missing=harness({lookup:async()=>new Map(),seoImage:'01GONE'});
+  assert.deepEqual((await missing.api.getNativeSiteCatalogues()).en.tours[0].nativeSeo,{title:'en SEO'});
+  const absolute=harness({lookup:async()=>{throw new Error('must not look up URLs');},seoImage:'https://cdn.example.test/share.jpg'});
+  assert.equal((await absolute.api.getNativeSiteCatalogues()).en.tours[0].nativeSeo.image,'https://cdn.example.test/share.jpg');
 });

@@ -8,3 +8,7 @@ test('explicit published SEO overrides are plain text with safe URL fields only'
  assert.equal(result.metadata.title,'New title');assert.equal(result.metadata.description,'Published description');assert.equal(result.canonical,'https://example.test/tours/selected');assert.equal(result.noindex,true);
  const unsafe=applyNativeTourSeo({title:'Legacy'},{image:'javascript:alert(1)',canonical:'javascript:alert(1)'});assert.equal(unsafe.metadata.image,undefined);assert.equal(unsafe.canonical,undefined);
 });
+test('owned CMS media paths are accepted as share images; traversal and foreign paths are not',()=>{
+ assert.equal(applyNativeTourSeo({title:'L'},{image:'/_emdash/api/media/file/01ABC.png'}).metadata.image,'/_emdash/api/media/file/01ABC.png');
+ for(const image of ['/_emdash/api/media/file/../secret','/other/path.png','01ABC'])assert.equal(applyNativeTourSeo({title:'L',image:'keep'},{image}).metadata.image,'keep');
+});

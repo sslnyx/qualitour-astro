@@ -32,10 +32,11 @@ export function confirmedTourAlternates(tour: WPTour, lang: 'en' | 'zh', tours: 
     return [{ lang: 'en', href: en }, { lang: 'zh', href: zh }, { lang: 'x-default', href: en }];
 }
 
-export function tourStructuredData(tour: WPTour, origin: string, base: string, lang: 'en' | 'zh') {
+export function tourStructuredData(tour: WPTour, origin: string, base: string, lang: 'en' | 'zh', canonicalOverride?: string) {
     const prefix = base === '/' ? '' : base.replace(/\/$/, '');
     const locale = lang === 'zh' ? `${prefix}/zh` : prefix;
-    const canonical = absolutePublicUrl(origin, `${locale}/tours/${tour.slug}`);
+    // Same normalization SeoHead applies to the <link rel=canonical>, so schema URLs never diverge from it.
+    const canonical = absolutePublicUrl(origin, canonicalOverride || `${locale}/tours/${tour.slug}`);
     return [
         { '@context': 'https://schema.org', '@type': 'TouristTrip', '@id': canonical + '#trip', name: plainText(tour.title.rendered), url: canonical, provider: { '@id': origin + '/#organization' } },
         { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [

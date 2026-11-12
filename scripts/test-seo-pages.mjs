@@ -30,6 +30,16 @@ test('trip schema never invents ratings, prices or offers', () => {
     assert.equal('offers' in schema[0], false);
 });
 
+test('trip schema follows an effective canonical override exactly like SeoHead',() => {
+    const tour = { slug: 'one', title: { rendered: 'One' } };
+    const schema = tourStructuredData(tour, 'https://qualitour.ca', '/', 'en', 'https://other.example/tours/selected.html?x=1');
+    assert.equal(schema[0].url, 'https://qualitour.ca/tours/selected');
+    assert.equal(schema[0]['@id'], 'https://qualitour.ca/tours/selected#trip');
+    assert.equal(schema[1].itemListElement[2].item, 'https://qualitour.ca/tours/selected');
+    assert.equal(schema[0].name, 'One');
+    assert.deepEqual(tourStructuredData(tour, 'https://qualitour.ca', '/', 'en', undefined), tourStructuredData(tour, 'https://qualitour.ca', '/', 'en'));
+});
+
 test('home alternate uses canonical trailing slash only for the staging root', () => {
     assert.equal(pageAlternates('/staging/index.html', 'https://qualitour.ca', '/staging')[0].href, 'https://qualitour.ca/staging/');
     assert.equal(pageAlternates('/index.html', 'https://qualitour.ca', '/')[0].href, 'https://qualitour.ca/');

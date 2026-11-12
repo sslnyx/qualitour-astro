@@ -126,6 +126,11 @@ function nativeSeo(value) {
     try { const url=new URL(value.canonical.trim());if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw new Error();result.canonical=url.href; }
     catch { throw new Error('Invalid native CMS canonical URL'); }
   }
+  // Only an absolute http(s) URL or an owned CMS media path survives; the data layer resolves bare media IDs first.
+  if (typeof value.image === 'string') {
+    const image = value.image.trim();
+    if (/^https?:\/\//i.test(image) || /^\/_emdash\/api\/media\/file\/[A-Za-z0-9][A-Za-z0-9._%\/-]*$/.test(image) && !image.split('/').includes('..')) result.image = image;
+  }
   if (value.noIndex === true) result.noIndex = true;
   return Object.keys(result).length ? result : undefined;
 }
