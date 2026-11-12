@@ -1,7 +1,7 @@
 import { confirmedTourAlternates } from '../../../../src/lib/seo-pages.ts';
+import { absolutePublicUrl } from '../../../../src/lib/seo.ts';
 
 const LOCALES = new Set(['en', 'zh']);
-const DESTINATION_ALIASES = Object.freeze({ rockies: 'banff', maritimes: 'atlantic-canada' });
 
 function decoded(value) {
   try { return decodeURIComponent(value); } catch { return value; }
@@ -31,21 +31,22 @@ function catalogue(catalogues, locale) {
   return result && Array.isArray(result.tours) && result.terms && typeof result.terms === 'object' ? result : null;
 }
 
-function term(catalogues, locale, field, slug, { zhFallback = false } = {}) {
-  const current = catalogue(catalogues, locale)?.terms?.[field];
-  const exact = Array.isArray(current) && current.find(item => item?.slug === slug);
-  if (exact || locale !== 'zh' || !zhFallback) return exact || null;
-  const english = catalogue(catalogues, 'en')?.terms?.[field];
-  return Array.isArray(english) ? english.find(item => item?.slug === slug) || null : null;
+/** A category page exists only for a term some published tour of that locale uses. */
+function usedTerm(catalogues, locale, bucket, slug) {
+  const rows = catalogue(catalogues, locale)?.terms?.[bucket];
+  const found = Array.isArray(rows) && rows.find(item => item?.slug === slug);
+  return found && found.count > 0 ? found : null;
 }
 
-function publicDestination(catalogues, locale, slug) {
-  const field = 'destinations';
-  const target = DESTINATION_ALIASES[slug] || slug;
-  if (locale === 'en') return term(catalogues, 'en', field, target);
-  const destinations = catalogue(catalogues, 'zh')?.terms?.[field];
-  if (!Array.isArray(destinations)) return null;
-  return destinations.find(item => item?.translations?.en === target || item?.slug === `${target}-zh` || item?.slug?.replace(/-zh$/, '') === target) || null;
+const CATEGORY_ROUTES = Object.freeze({ style: ['styles', 'style'], destination: ['destinations', 'destination'] });
+
+function categoryAlternates(catalogues, locale, route, slug, origin, base) {
+  const [bucket] = CATEGORY_ROUTES[route];
+  if (!usedTerm(catalogues, 'en', bucket, slug) || !usedTerm(catalogues, 'zh', bucket, slug)) return [];
+  const prefix = base && base !== '/' ? `/${String(base).replace(/^\/+|\/+$/g, '')}` : '';
+  const en = absolutePublicUrl(origin, `${prefix}/tours/${route}/${slug}`);
+  const zh = absolutePublicUrl(origin, `${prefix}/zh/tours/${route}/${slug}`);
+  return [{ lang: 'en', href: en }, { lang: 'zh', href: zh }, { lang: 'x-default', href: en }];
 }
 
 /**
@@ -84,20 +85,10 @@ export function resolveNativePageProps({ pathname, params = {}, origin = 'https:
   if (parts.length === 3 && parts[0] === 'tours') {
     const slug = decoded(params.slug || parts[2]);
     const route = parts[1];
-    const mapping = {
-      activity: ['activities', 'activity'],
-      destination: ['destinations', 'destination'],
-      duration: ['durations', 'duration'],
-      type: ['types', 'tourType'],
-    }[route];
+    const mapping = CATEGORY_ROUTES[route];
     if (!mapping) return null;
-    const selected = term(catalogues, locale, mapping[0], slug, { zhFallback: true });
-    return selected ? { [mapping[1]]: selected } : null;
-  }
-
-  if (parts.length === 2 && parts[0] === 'destinations') {
-    const destination = publicDestination(catalogues, locale, decoded(params.slug || parts[1]));
-    return destination ? { destination } : null;
+    const selected = usedTerm(catalogues, locale, mapping[0], slug);
+    return selected ? { [mapping[1]]: selected, alternates: categoryAlternates(catalogues, locale, route, slug, origin, base) } : null;
   }
   return null;
 }

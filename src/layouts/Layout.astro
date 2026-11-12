@@ -55,10 +55,10 @@ const htmlLang = currentLocale === "zh" ? "zh" : "en-CA";
 
 // Fetch navigation data at build time
 let navData: SiteNavData = {
-  activities: [],
+  styles: [],
+  cruiseTypes: [],
+  regions: [],
   destinations: [],
-  durations: [],
-  types: [],
   transfers: [],
 };
 
@@ -120,9 +120,9 @@ try {
     <SiteNavAstro
       lang={currentLocale}
       destinations={navData.destinations}
-      activities={navData.activities}
-      types={navData.types}
-      durations={navData.durations}
+      styles={navData.styles}
+      cruiseTypes={navData.cruiseTypes}
+      alternates={alternates}
       tourTranslations={tourTranslations}
     />
 

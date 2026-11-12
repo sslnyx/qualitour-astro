@@ -4,14 +4,13 @@ import { resolveNativePageProps } from '../src/lib/cms/native-site-page-props.mj
 
 const enTour = { id: 1, slug: 'rockies', title: { rendered: 'Rockies' }, translations: { zh: { id: 2, slug: 'luo-ji-shan' } } };
 const zhTour = { id: 2, slug: 'luo-ji-shan', title: { rendered: '洛磯山' }, translations: { en: { id: 1, slug: 'rockies' } } };
-const activity = { id: 10, slug: 'hiking', name: 'Hiking' };
-const destination = { id: 20, slug: 'banff', name: 'Banff' };
-const zhDestination = { id: 21, slug: 'banff-zh', name: '班夫', translations: { en: 'banff' } };
-const duration = { id: 30, slug: '7-days', name: '7 days' };
-const type = { id: 40, slug: 'group', name: 'Group' };
+const style = { id: 's1', slug: 'cruises', name: 'Cruises', count: 2 };
+const emptyStyle = { id: 's2', slug: 'rail-journeys', name: 'Rail', count: 0 };
+const destination = { id: 'ca', slug: 'geo-ca', name: 'Canada', count: 3 };
+const zhDestination = { id: 'ca-zh', slug: 'geo-ca', name: '加拿大', count: 1 };
 const catalogues = {
-  en: { tours: [enTour, { id: 3, slug: 'same-title', title: { rendered: 'Rockies' } }], terms: { activities: [activity], destinations: [destination], durations: [duration], types: [type] } },
-  zh: { tours: [zhTour], terms: { activities: [], destinations: [zhDestination], durations: [], types: [] } },
+  en: { tours: [enTour, { id: 3, slug: 'same-title', title: { rendered: 'Rockies' } }], terms: { styles: [style, emptyStyle], destinations: [destination] } },
+  zh: { tours: [zhTour], terms: { styles: [], destinations: [zhDestination] } },
 };
 
 test('detail props preserve alternate, review, and duplicate-title rules', () => {
@@ -26,20 +25,26 @@ test('detail props preserve alternate, review, and duplicate-title rules', () =>
   assert.equal(zh.alternates.length, 3);
 });
 
-test('taxonomy props retain zh-only English fallbacks and reject missing routes', () => {
-  assert.deepEqual(resolveNativePageProps({ pathname: '/zh/tours/activity/hiking', catalogues }), { activity });
-  assert.deepEqual(resolveNativePageProps({ pathname: '/zh/tours/duration/7-days', catalogues }), { duration });
-  assert.deepEqual(resolveNativePageProps({ pathname: '/zh/tours/type/group', catalogues }), { tourType: type });
-  assert.equal(resolveNativePageProps({ pathname: '/fr/tours/rockies', catalogues }), null);
-  assert.equal(resolveNativePageProps({ pathname: '/tours/missing', catalogues }), null);
-  assert.equal(resolveNativePageProps({ pathname: '/zh/tours/unknown/nope', catalogues }), null);
+test('category props require a used term and carry reciprocal alternates only when both locales have it', () => {
+  const origin = 'https://qualitour.ca';
+  assert.deepEqual(resolveNativePageProps({ pathname: '/tours/destination/geo-ca', catalogues, origin }), {
+    destination,
+    alternates: [
+      { lang: 'en', href: 'https://qualitour.ca/tours/destination/geo-ca' },
+      { lang: 'zh', href: 'https://qualitour.ca/zh/tours/destination/geo-ca' },
+      { lang: 'x-default', href: 'https://qualitour.ca/tours/destination/geo-ca' },
+    ],
+  });
+  assert.deepEqual(resolveNativePageProps({ pathname: '/zh/tours/destination/geo-ca', catalogues, origin }).destination, zhDestination);
+  assert.deepEqual(resolveNativePageProps({ pathname: '/tours/style/cruises', catalogues, origin }), { style, alternates: [] });
+  assert.equal(resolveNativePageProps({ pathname: '/tours/style/rail-journeys', catalogues }), null, 'a term without published tours is a 404, not a thin page');
+  assert.equal(resolveNativePageProps({ pathname: '/zh/tours/style/cruises', catalogues }), null, 'no English fallback for a Chinese page');
+  assert.equal(resolveNativePageProps({ pathname: '/staging/zh/tours/destination/geo-ca', base: '/staging', catalogues }).destination, zhDestination);
 });
 
-test('destination URLs retain zh translation mapping, aliases, and base handling', () => {
-  assert.deepEqual(resolveNativePageProps({ pathname: '/destinations/rockies', catalogues }), { destination });
-  assert.deepEqual(resolveNativePageProps({ pathname: '/zh/destinations/rockies', catalogues }), { destination: zhDestination });
-  assert.deepEqual(resolveNativePageProps({ pathname: '/staging/zh/destinations/banff', base: '/staging', catalogues }), { destination: zhDestination });
-  assert.equal(resolveNativePageProps({ pathname: '/zh/destinations/nope', catalogues }), null);
+test('removed legacy category routes and unknown or foreign locales resolve to nothing', () => {
+  for (const pathname of ['/tours/type/group', '/tours/activity/hiking', '/tours/duration/7-days', '/destinations/rockies', '/zh/tours/unknown/nope', '/fr/tours/rockies', '/tours/missing'])
+    assert.equal(resolveNativePageProps({ pathname, catalogues }), null, pathname);
 });
 
 test('listing-only routes receive empty props', () => {

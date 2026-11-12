@@ -1,7 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {nativeSiteRoute,nativeSiteWorkerPatterns} from '../src/lib/cms/native-site-policy.mjs';
 test('all original visitor page families route to public runtime without swallowing APIs or booking',()=>{
- for(const p of ['/','/zh','/about-us','/zh/faq','/contact','/privacy-policy','/terms','/private-transfers','/visa','/reviews','/tours','/zh/tours/featured','/tours/new-native-tour','/zh/tours/長江七號','/tours/activity/adventure','/tours/destination/canada','/tours/type/cruises','/tours/duration/15-days','/destinations/rockies'])assert.ok(nativeSiteRoute(p),p);
+ for(const p of ['/','/zh','/about-us','/zh/faq','/contact','/privacy-policy','/terms','/private-transfers','/visa','/reviews','/tours','/zh/tours/featured','/tours/new-native-tour','/zh/tours/長江七號','/tours/style/cruises','/zh/tours/style/day-tours','/tours/destination/geo-ca','/zh/tours/destination/geo-continent-as'])assert.ok(nativeSiteRoute(p),p);
+ for(const p of ['/tours/activity/adventure','/tours/type/cruises','/tours/duration/15-days','/destinations/rockies','/tours/style/a/b'])assert.equal(nativeSiteRoute(p),null,`${p} was removed with the old categories`);
  for(const p of ['/_emdash/admin','/_image','/_astro/file.webp','/logo.svg','/api/transfer/catalog','/book','/zh/book/manage/id','/fr/tours','/zh/foo/bar','/tours/x/y','/native-proof/zh'])assert.equal(nativeSiteRoute(p),null,p);
  assert.ok(nativeSiteWorkerPatterns.includes('/'));assert.ok(nativeSiteWorkerPatterns.includes('/zh/tours/*'));
 });

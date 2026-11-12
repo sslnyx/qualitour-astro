@@ -1,0 +1,181 @@
+---
+/**
+ * One page template for every native category: a travel style (/tours/style/<slug>)
+ * or a destination at any level (/tours/destination/<slug>). Destination pages
+ * list every tour in the place or below it; style pages carry cruise-type chips.
+ */
+import { getLocalePrefix, type Locale } from '../i18n/config';
+import Layout from '../layouts/Layout.astro';
+import TourCardOptimized from './TourCardOptimized.astro';
+import { decodeHtml } from '../lib/utils';
+import type { CategoryTerm, WPTour } from '../lib/wordpress/types';
+import type { Alternate } from '../lib/seo-pages';
+
+interface Props {
+  kind: 'style' | 'destination';
+  term: CategoryTerm;
+  tours: WPTour[];
+  destinations: CategoryTerm[];
+  cruiseTypes: CategoryTerm[];
+  alternates: Alternate[];
+  lang: Locale;
+}
+const { kind, term, tours, destinations, cruiseTypes, alternates, lang } = Astro.props;
+const localePrefix = getLocalePrefix(lang);
+const zh = lang === 'zh';
+const name = decodeHtml(term.name);
+
+// Breadcrumb trail for destinations: continent > country > ... > this place.
+const trail: CategoryTerm[] = [];
+if (kind === 'destination') {
+  const bySlug = new Map(destinations.map((dest) => [dest.slug, dest]));
+  for (let node = bySlug.get(term.parentSlug ?? ''); node; node = bySlug.get(node.parentSlug ?? '')) trail.unshift(node);
+}
+const children = kind === 'destination' ? destinations.filter((dest) => dest.parentSlug === term.slug) : [];
+
+// Travel regions appear only inside destination pages, taken from the tours shown here.
+const regions = kind === 'destination'
+  ? [...new Map(tours.flatMap((tour) => tour.tour_terms?.regions || []).map((region) => [region.slug, region])).values()]
+  : [];
+// Cruise types belong to the Cruises style only; each is a hash filter, so the page stays cacheable by path.
+const showCruiseTypes = kind === 'style' && term.slug === 'cruises' && cruiseTypes.length > 0;
+
+const title = zh ? `${name}行程 | Qualitour` : `${name} Tours | Qualitour`;
+const description = zh
+  ? `瀏覽 ${tours.length} 個${name}行程，查看路線、出發資訊與價格，並聯絡 Qualitour 安排旅程。`
+  : `Browse ${tours.length} ${name} tours with itineraries, departure details and pricing, and contact Qualitour to plan your journey.`;
+const label = kind === 'style' ? (zh ? '旅遊方式' : 'Travel Style') : (zh ? '目的地' : 'Destination');
+---
+
+<Layout title={title} description={description} lang={lang} alternates={alternates} noindex={tours.length === 0}>
+  <main class="min-h-screen bg-gray-50">
+    <section class="relative bg-gradient-to-r from-gray-900 to-gray-800 py-16 md:py-24 overflow-hidden">
+      <div class="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-0 left-0 w-64 h-64 bg-orange-400/10 rounded-full blur-2xl"></div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center text-white">
+          <nav class="text-sm mb-4 flex flex-wrap items-center justify-center gap-2" aria-label="Breadcrumb">
+            <a href={`${localePrefix}/`} class="text-gray-400 hover:text-white transition-colors">{zh ? '首頁' : 'Home'}</a>
+            <span class="text-gray-600">/</span>
+            <a href={`${localePrefix}/tours`} class="text-gray-400 hover:text-white transition-colors">{zh ? '行程' : 'Tours'}</a>
+            {trail.map((node) => (
+              <>
+                <span class="text-gray-600">/</span>
+                <a href={`${localePrefix}/tours/destination/${node.slug}`} class="text-gray-400 hover:text-white transition-colors">{decodeHtml(node.name)}</a>
+              </>
+            ))}
+            <span class="text-gray-600">/</span>
+            <span class="text-orange-400">{name}</span>
+          </nav>
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6">
+            <span class="material-icons text-orange-400">{kind === 'style' ? 'category' : 'place'}</span>
+            <span class="text-white/80 text-sm">{label}</span>
+          </div>
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">{name}</h1>
+          <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+            {zh ? `共 ${tours.length} 個行程` : `${tours.length} ${tours.length === 1 ? 'tour' : 'tours'} to explore`}
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {(children.length > 0 || regions.length > 0 || showCruiseTypes) && (
+      <section class="py-8 bg-white border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
+          {children.length > 0 && (
+            <div>
+              <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">{zh ? '更多目的地' : 'Explore within'} {name}</h2>
+              <div class="flex flex-wrap gap-3">
+                {children.map((child) => (
+                  <a href={`${localePrefix}/tours/destination/${child.slug}`} class="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-300 text-gray-700 hover:text-orange-600 rounded-full transition-all">
+                    {decodeHtml(child.name)}<span class="text-xs text-gray-400">({child.count})</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          {regions.length > 0 && (
+            <div>
+              <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">{zh ? '旅遊區域／路線' : 'Travel regions & routes'}</h2>
+              <ul class="flex flex-wrap gap-2">
+                {regions.map((region) => (
+                  <li class="px-3 py-1 text-sm bg-orange-50 text-orange-700 rounded-full">{decodeHtml(region.name)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {showCruiseTypes && (
+            <div>
+              <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">{zh ? '郵輪類型' : 'Cruise types'}</h2>
+              <div class="flex flex-wrap gap-3" id="cruise-type-chips">
+                <a href="#all" data-cruise-chip="" class="px-4 py-2 bg-gray-50 border border-gray-200 text-gray-700 rounded-full transition-all">{zh ? '全部' : 'All'}</a>
+                {cruiseTypes.map((type) => (
+                  <a href={`#${type.slug}`} data-cruise-chip={type.slug} class="px-4 py-2 bg-gray-50 border border-gray-200 text-gray-700 rounded-full transition-all">
+                    {decodeHtml(type.name)}<span class="ml-1 text-xs text-gray-400">({type.count})</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    )}
+
+    <section class="py-12 md:py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between gap-4 mb-8">
+          <p class="text-gray-600">{zh ? '顯示' : 'Showing'} <span class="font-semibold text-gray-900" id="category-count">{tours.length}</span> {zh ? '個行程' : 'tours'}</p>
+          <a href={`${localePrefix}/tours`} class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 transition-colors">
+            <span class="material-icons text-lg">arrow_back</span>{zh ? '查看全部行程' : 'View all tours'}
+          </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {tours.map((tour) => (
+            <div data-cruise-types={(tour.tour_terms?.cruiseTypes || []).map((type) => type.slug).join(' ')}>
+              <TourCardOptimized tour={tour} lang={lang} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="py-16 bg-gradient-to-r from-orange-500 to-amber-500">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">{zh ? '想找特別的行程？' : 'Looking for Something Specific?'}</h2>
+        <p class="text-xl opacity-90 mb-8">{zh ? '聯絡我們，為你安排專屬行程建議。' : 'Contact us for personalized recommendations and custom itineraries'}</p>
+        <a href={`${localePrefix}/contact`} class="inline-flex items-center gap-2 px-8 py-4 bg-white text-orange-500 font-bold rounded-full hover:shadow-xl hover:scale-105 transition-all">
+          <span class="material-icons">mail</span>{zh ? '取得報價' : 'Get a Quote'}
+        </a>
+      </div>
+    </section>
+  </main>
+</Layout>
+
+{showCruiseTypes && (
+  <script is:inline>
+    (function () {
+      var cards = document.querySelectorAll('[data-cruise-types]');
+      var chips = document.querySelectorAll('[data-cruise-chip]');
+      var count = document.getElementById('category-count');
+      function apply() {
+        var wanted = decodeURIComponent(location.hash.replace(/^#/, ''));
+        if (wanted === 'all') wanted = '';
+        var shown = 0;
+        cards.forEach(function (card) {
+          var show = !wanted || card.getAttribute('data-cruise-types').split(' ').indexOf(wanted) !== -1;
+          card.hidden = !show;
+          if (show) shown++;
+        });
+        chips.forEach(function (chip) {
+          var active = (chip.getAttribute('data-cruise-chip') || '') === wanted;
+          chip.classList.toggle('bg-orange-500', active);
+          chip.classList.toggle('text-white', active);
+          chip.setAttribute('aria-current', active ? 'true' : 'false');
+        });
+        if (count) count.textContent = String(shown);
+      }
+      window.addEventListener('hashchange', apply);
+      apply();
+    })();
+  </script>
+)}

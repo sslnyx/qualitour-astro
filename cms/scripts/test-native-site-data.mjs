@@ -8,7 +8,6 @@ const compatibility={schema:1,locales:{
   zh:{tours:{},terms:{categories:[],tags:[],activities:[],destinations:[],durations:[],types:[]}},
 }};
 const taxonomyNames=['destinations','travel_styles','travel_regions','cruise_types'];
-const taxonomyBaseline={schema:1,taxonomies:taxonomyNames,entries:{},terms:[]};
 const row=(locale,id,slug,title)=>({id:locale==='zh'?`${locale}/${slug}`:slug,slug,seo:{title:`${locale} SEO`,description:null,canonical:null,image:null,noIndex:false},data:{id,status:'published',locale,publishedAt:new Date('2026-11-12T00:00:00Z'),translationGroup:'pair-1',title,hero:{meta:{storageKey:`${locale}-hero.jpg`},width:1200,height:800},terms:{destinations:[{id:`term-${locale}`,name:'destinations',slug:locale==='zh'?'banff-zh':'banff',label:locale==='zh'?'班夫':'Banff',children:[],locale,translationGroup:'term-pair'}]}}});
 
 function harness({context={request:true},error,lookup,seoImage}={}){
@@ -18,7 +17,6 @@ function harness({context={request:true},error,lookup,seoImage}={}){
   const api=createNativeSiteData({
     compatibility,
     ...(lookup?{lookupMediaStorageKeys:lookup}:{}),
-    taxonomyBaseline,
     getContext:()=>context,
     getCollection:async(type,filter)=>{calls.push({type,filter});return error?{entries:[],error:new Error('database failed'),cacheHint:{}}:{entries:entries[filter.locale],cacheHint:{tags:[`collection:${filter.locale}`]}};},
     getTaxonomyDefs:async({locale})=>taxonomyNames.map(name=>({name,collections:['tours'],locale})),
@@ -42,8 +40,9 @@ test('loads every published locale without a limit and links native translations
   assert.equal(catalogues.en.tours[0].optimizedHero.height,800);
   assert.doesNotMatch(catalogues.en.tours[0].optimizedHero.srcSet,/1280w|1920w/);
   assert.deepEqual(catalogues.zh.tours[0].translations.en,{id:'native-en',slug:'native-en'});
-  assert.deepEqual(catalogues.en.terms.destinations[0].translations,{en:'banff',zh:'banff-zh'});
-  assert.equal(catalogues.en.terms.destinations[0].count,1);
+  assert.deepEqual(catalogues.en.terms.destinations.map(term=>({slug:term.slug,count:term.count,parent:term.parent})),[{slug:'banff',count:1,parent:0}]);
+  assert.deepEqual(catalogues.en.tours[0].tour_terms.destinationScope,['banff']);
+  assert.deepEqual(catalogues.zh.terms.destinations.map(term=>term.slug),['banff-zh']);
   assert.deepEqual(taxonomyCalls.map(call=>`${call.locale}:${call.name}`).sort(),[
     'en:cruise_types','en:destinations','en:travel_regions','en:travel_styles',
     'zh:cruise_types','zh:destinations','zh:travel_regions','zh:travel_styles',

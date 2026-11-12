@@ -91,6 +91,12 @@ export interface WPTour {
         destinations?: { id: number; slug: string; name: string }[];
         durations?: { id: number; slug: string; name: string }[];
         types?: { id: number; slug: string; name: string }[];
+        /** Native CMS categories (travel styles, cruise types, travel regions). Ids are CMS string IDs. */
+        styles?: { id: number | string; slug: string; name: string }[];
+        cruiseTypes?: { id: number | string; slug: string; name: string }[];
+        regions?: { id: number | string; slug: string; name: string }[];
+        /** Slugs of every assigned destination and all of its ancestors. */
+        destinationScope?: string[];
     };
     goodlayers_data?: Record<string, unknown>;
     acf_fields?: Record<string, unknown>;
@@ -130,6 +136,19 @@ export interface WPTourTag {
     taxonomy: string;
     link?: string;
     translations?: Record<string, string>;
+}
+
+/** A public CMS category (travel style, cruise type, region, or destination node). */
+export interface CategoryTerm {
+    id: number | string;
+    slug: string;
+    name: string;
+    parent: number | string;
+    parentSlug?: string | null;
+    /** 1 = continent, 2 = country, 3 = province/state, 4 = city. Destinations only. */
+    level?: number;
+    /** Published tours in this category (destinations include descendants). */
+    count: number;
 }
 
 export interface WPTourActivity {

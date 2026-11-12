@@ -2,12 +2,7 @@
 import { getLocalePrefix, type Locale } from "../../../i18n/config";
 import Layout from "../../../layouts/Layout.astro";
 import { getImage } from "astro:assets";
-import {
-  getAllTours,
-  getSiteNavData,
-  getTourDurations,
-  getTourTypes,
-} from "../../../lib/wordpress/api";
+import { getAllTours, getSiteNavData } from "../../../lib/wordpress/api";
 import type { WPTour, WPTourFeaturedImage } from "../../../lib/wordpress/types";
 import { toTourBrowseCard } from "../../../lib/tour-browse.mjs";
 import { ToursGrid } from "../../../components/ToursGrid";
@@ -33,7 +28,11 @@ const [rawTours, navData] = await Promise.all([
   getAllTours(lang),
   getSiteNavData(lang),
 ]);
-const { durations, types } = navData;
+// Countries (level 2) with the most tours; every link is a real category page.
+const featuredDestinations = navData.destinations
+  .filter((dest) => dest.level === 2)
+  .sort((a, b) => b.count - a.count)
+  .slice(0, 12);
 
 // Pre-optimize tour images at build time with concurrency limit
 const tours = await optimizeTourImages(rawTours, { concurrency: 20 });
@@ -84,8 +83,7 @@ const tours = await optimizeTourImages(rawTours, { concurrency: 20 });
           <TourFilterSidebarClient
             client:load
             destinations={navData.destinations}
-            durations={durations}
-            types={types}
+            styles={navData.styles}
             lang={lang}
           />
 
@@ -93,9 +91,6 @@ const tours = await optimizeTourImages(rawTours, { concurrency: 20 });
           <ToursGrid
             client:load
             tours={tours.map(toTourBrowseCard)}
-            destinations={navData.destinations}
-            durations={durations}
-            types={types}
             lang={lang}
           />
         </div>
@@ -120,9 +115,9 @@ const tours = await optimizeTourImages(rawTours, { concurrency: 20 });
           class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
         >
           {
-            navData.destinations.map((dest) => (
+            featuredDestinations.map((dest) => (
               <a
-                href={`${localePrefix}/tours?destination=${dest.slug}`}
+                href={`${localePrefix}/tours/destination/${dest.slug}`}
                 class="group p-4 bg-gray-50 rounded-xl hover:bg-orange-50 border border-gray-100 hover:border-orange-200 transition-all text-center"
               >
                 <span class="material-icons text-2xl text-gray-400 group-hover:text-orange-500 mb-2 block">

@@ -8,20 +8,18 @@ import { getLocalePrefix, type Locale } from "../i18n/config";
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import type { WPTourDestination, WPTourDuration, WPTourType } from '../lib/wordpress/types';
+import type { CategoryTerm } from '../lib/wordpress/types';
 import { decodeHtml } from '../lib/utils';
 
 interface Props {
-    destinations: WPTourDestination[];
-    durations: WPTourDuration[];
-    types: WPTourType[];
+    destinations: CategoryTerm[];
+    styles: CategoryTerm[];
     lang: string;
 }
 
 interface FilterState {
     destination: string;
-    type: string;
-    duration: string;
+    style: string;
     q: string;
 }
 
@@ -30,10 +28,9 @@ interface FilterContentProps {
     updateFilter: (key: keyof FilterState, value: string | null) => void;
     clearAllFilters: () => void;
     t: any;
-    durations: WPTourDuration[];
-    types: WPTourType[];
-    topLevelDestinations: WPTourDestination[];
-    destinationChildren: Map<number, WPTourDestination[]>;
+    styles: CategoryTerm[];
+    topLevelDestinations: CategoryTerm[];
+    destinationChildren: Map<number | string, CategoryTerm[]>;
     collapsedSections: Set<string>;
     toggleSection: (section: string) => void;
     hasActiveFilters: boolean;
@@ -42,22 +39,22 @@ interface FilterContentProps {
 
 function getFiltersFromUrl(): FilterState {
     if (typeof window === 'undefined') {
-        return { destination: '', type: '', duration: '', q: '' };
+        return { destination: '', style: '', q: '' };
     }
     const params = new URLSearchParams(window.location.search);
     return {
         destination: params.get('destination') || '',
-        type: params.get('type') || '',
-        duration: params.get('duration') || '',
+        style: params.get('style') || '',
         q: params.get('q') || '',
     };
 }
 
-function buildDestinationTree(destinations: WPTourDestination[]) {
-    const parentMap = new Map<number, WPTourDestination[]>();
-    const topLevel: WPTourDestination[] = [];
+/** Continents with their countries; deeper levels stay reachable through the filter's roll-up but are not listed. */
+function buildDestinationTree(destinations: CategoryTerm[]) {
+    const parentMap = new Map<number | string, CategoryTerm[]>();
+    const topLevel: CategoryTerm[] = [];
 
-    destinations.forEach((dest) => {
+    destinations.filter((dest) => (dest.level ?? 1) <= 2).forEach((dest) => {
         if (dest.parent === 0) {
             topLevel.push(dest);
         } else {
@@ -76,8 +73,7 @@ function FilterContent({
     updateFilter,
     clearAllFilters,
     t,
-    durations,
-    types,
+    styles,
     topLevelDestinations,
     destinationChildren,
     collapsedSections,
@@ -136,24 +132,12 @@ function FilterContent({
                                 </button>
                             </span>
                         )}
-                        {filters.duration && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-full text-xs border border-gray-200 text-gray-900">
-                                <span className="material-icons text-xs">schedule</span>
-                                {decodeHtml(durations.find((d) => d.slug === filters.duration)?.name || filters.duration)}
-                                <button
-                                    onClick={() => updateFilter('duration', null)}
-                                    className="text-gray-400 hover:text-gray-600"
-                                >
-                                    ×
-                                </button>
-                            </span>
-                        )}
-                        {filters.type && (
+                        {filters.style && (
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-full text-xs border border-gray-200 text-gray-900">
                                 <span className="material-icons text-xs">category</span>
-                                {decodeHtml(types.find((t) => t.slug === filters.type)?.name || filters.type)}
+                                {decodeHtml(styles.find((t) => t.slug === filters.style)?.name || filters.style)}
                                 <button
-                                    onClick={() => updateFilter('type', null)}
+                                    onClick={() => updateFilter('style', null)}
                                     className="text-gray-400 hover:text-gray-600"
                                 >
                                     ×
@@ -178,75 +162,32 @@ function FilterContent({
                 </div>
             )}
 
-            {/* Tour Length Section */}
-            {durations.length > 0 && (
+            {/* Travel Style Section */}
+            {styles.length > 0 && (
                 <div className="border-b border-gray-100 pb-4 mb-4">
                     <button
                         className="flex items-center justify-between w-full py-2 text-left group"
-                        onClick={() => toggleSection('duration')}
-                    >
-                        <span className="font-semibold text-gray-900 flex items-center gap-2">
-                            <span className="material-icons text-[#f7941e] text-lg">schedule</span>
-                            {t.tourLength}
-                        </span>
-                        <span
-                            className={`material-icons text-gray-500 transition-transform duration-200 ${collapsedSections.has('duration') ? '' : 'rotate-180'
-                                }`}
-                        >
-                            expand_more
-                        </span>
-                    </button>
-                    {!collapsedSections.has('duration') && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                            {durations.map((dur) => {
-                                const isSelected = filters.duration === dur.slug;
-                                return (
-                                    <button
-                                        key={dur.id}
-                                        onClick={() => updateFilter('duration', isSelected ? null : dur.slug)}
-                                        className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${isSelected
-                                            ? 'bg-gradient-to-r from-[#f7941e] to-[#ffb347] text-white border-transparent shadow-md shadow-orange-200'
-                                            : 'bg-white text-gray-700 border-gray-200 hover:border-[#f7941e] hover:text-[#f7941e] hover:shadow-sm'
-                                            }`}
-                                    >
-                                        {decodeHtml(dur.name)}
-                                        <span className={`ml-1.5 text-xs ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
-                                            ({dur.count || 0})
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Tour Type Section */}
-            {types.length > 0 && (
-                <div className="border-b border-gray-100 pb-4 mb-4">
-                    <button
-                        className="flex items-center justify-between w-full py-2 text-left group"
-                        onClick={() => toggleSection('types')}
+                        onClick={() => toggleSection('styles')}
                     >
                         <span className="font-semibold text-gray-900 flex items-center gap-2">
                             <span className="material-icons text-[#f7941e] text-lg">category</span>
-                            {t.tourType}
+                            {t.travelStyle}
                         </span>
                         <span
-                            className={`material-icons text-gray-500 transition-transform duration-200 ${collapsedSections.has('types') ? '' : 'rotate-180'
+                            className={`material-icons text-gray-500 transition-transform duration-200 ${collapsedSections.has('styles') ? '' : 'rotate-180'
                                 }`}
                         >
                             expand_more
                         </span>
                     </button>
-                    {!collapsedSections.has('types') && (
+                    {!collapsedSections.has('styles') && (
                         <div className="mt-2 space-y-1">
-                            {types.map((type) => {
-                                const isSelected = filters.type === type.slug;
+                            {styles.map((type) => {
+                                const isSelected = filters.style === type.slug;
                                 return (
                                     <button
                                         key={type.id}
-                                        onClick={() => updateFilter('type', isSelected ? null : type.slug)}
+                                        onClick={() => updateFilter('style', isSelected ? null : type.slug)}
                                         className="flex items-center gap-3 py-2 w-full text-left hover:text-[#f7941e] transition-colors"
                                     >
                                         <span
@@ -364,7 +305,7 @@ function FilterContent({
     );
 }
 
-export function TourFilterSidebarClient({ destinations, durations, types, lang }: Props) {
+export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
     const [filters, setFilters] = useState<FilterState>(getFiltersFromUrl);
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -448,7 +389,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
     const clearAllFilters = () => {
         const localePrefix = getLocalePrefix(lang as Locale);
         window.history.pushState({}, '', `${localePrefix}/tours`);
-        setFilters({ destination: '', type: '', duration: '', q: '' });
+        setFilters({ destination: '', style: '', q: '' });
         window.dispatchEvent(new Event('urlchange'));
     };
 
@@ -464,16 +405,15 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
         });
     };
 
-    const hasActiveFilters = !!(filters.destination || filters.type || filters.duration || filters.q);
-    const activeFilterCount = (filters.duration ? 1 : 0) + (filters.type ? 1 : 0) + (filters.destination ? 1 : 0) + (filters.q ? 1 : 0);
+    const hasActiveFilters = !!(filters.destination || filters.style || filters.q);
+    const activeFilterCount = (filters.style ? 1 : 0) + (filters.destination ? 1 : 0) + (filters.q ? 1 : 0);
 
     const t = {
         filters: lang === 'zh' ? '筛选' : 'Filters',
         searchPlaceholder: lang === 'zh' ? '搜索行程...' : 'Search tours...',
         activeFilters: lang === 'zh' ? '已选筛选条件' : 'Active Filters',
         clearAll: lang === 'zh' ? '清除所有' : 'Clear All',
-        tourLength: lang === 'zh' ? '行程天数' : 'Tour Length',
-        tourType: lang === 'zh' ? '旅游类型' : 'Tour Type',
+        travelStyle: lang === 'zh' ? '旅遊方式' : 'Travel Style',
         destinations: lang === 'zh' ? '目的地' : 'Destinations',
         applyFilters: lang === 'zh' ? '应用筛选' : 'Apply Filters',
         close: lang === 'zh' ? '关闭' : 'Close',
@@ -484,8 +424,7 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
         updateFilter,
         clearAllFilters,
         t,
-        durations,
-        types,
+        styles,
         topLevelDestinations,
         destinationChildren,
         collapsedSections,

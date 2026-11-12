@@ -7,12 +7,8 @@
  */
 
 import { getLocalePrefix, type Locale } from "../i18n/config";
-import type {
-    WPTourDestination,
-    WPTourActivity,
-    WPTourType,
-    WPTourDuration,
-} from "../lib/wordpress/types";
+import type { CategoryTerm } from "../lib/wordpress/types";
+import type { Alternate } from "../lib/seo-pages";
 import { decodeHtml } from "../lib/utils";
 
 interface TourTranslation {
@@ -22,10 +18,11 @@ interface TourTranslation {
 
 interface Props {
     lang?: "en" | "zh";
-    destinations?: WPTourDestination[];
-    activities?: WPTourActivity[];
-    types?: WPTourType[];
-    durations?: WPTourDuration[];
+    destinations?: CategoryTerm[];
+    styles?: CategoryTerm[];
+    cruiseTypes?: CategoryTerm[];
+    /** hreflang pairs of the current page; present on category pages that exist in both languages. */
+    alternates?: Alternate[];
     tourTranslations?: {
         en?: TourTranslation;
         zh?: TourTranslation;
@@ -34,12 +31,15 @@ interface Props {
 
 const {
     lang = "en",
-    destinations = [],
-    activities = [],
-    types = [],
-    durations = [],
+    destinations: allDestinations = [],
+    styles = [],
+    cruiseTypes = [],
+    alternates = [],
     tourTranslations,
 } = Astro.props;
+
+// The menu shows continents and countries only; deeper levels live on the category pages.
+const destinations = allDestinations.filter((dest) => (dest.level ?? 1) <= 2);
 
 const localePrefix = getLocalePrefix(lang as Locale);
 const currentPath = Astro.url.pathname;
@@ -123,24 +123,36 @@ function getDestName(name: string): string {
     return decodedName;
 }
 
-// Tour types with icons
-const tourTypeLinks = [
-    {
-        label: lang === "zh" ? "陸地遊" : "Land Tours",
-        slug: "land-tours",
-        icon: "hiking",
-    },
-    {
-        label: lang === "zh" ? "郵輪" : "Cruises",
-        slug: "cruises",
-        icon: "sailing",
-    },
-    {
-        label: lang === "zh" ? "票務 & 通票" : "Tickets & Passes",
-        slug: "attraction-tickets",
-        icon: "confirmation_number",
-    },
+// Travel styles come from the CMS. Static and recovery builds carry none, so the
+// six fixed styles are the fallback (the CMS runtime pages always override them).
+const STYLE_ICONS: Record<string, string> = {
+    "day-tours": "wb_sunny",
+    "multi-day-tours": "hiking",
+    cruises: "sailing",
+    "independent-packages": "directions_car",
+    "rail-journeys": "train",
+    "tickets-experiences": "confirmation_number",
+};
+const FALLBACK_STYLES: [string, string, string][] = [
+    ["day-tours", "Day Tours", "一日遊"],
+    ["multi-day-tours", "Multi-day Land Journeys", "多日陸地行程"],
+    ["cruises", "Cruises", "郵輪"],
+    ["independent-packages", "Independent & Self-drive Packages", "自由行及自駕套餐"],
+    ["rail-journeys", "Rail Journeys", "鐵路旅程"],
+    ["tickets-experiences", "Tickets & Experiences", "門票及體驗"],
 ];
+const tourTypeLinks = (styles.length
+    ? styles.map((style) => ({ slug: style.slug, label: decodeHtml(style.name) }))
+    : FALLBACK_STYLES.map(([slug, en, zhName]) => ({ slug, label: lang === "zh" ? zhName : en }))
+).map((style) => ({
+    ...style,
+    icon: STYLE_ICONS[style.slug] || "category",
+    // Cruise types hang under Cruises as hash filters on the same page.
+    children:
+        style.slug === "cruises"
+            ? cruiseTypes.map((type) => ({ slug: type.slug, label: decodeHtml(type.name) }))
+            : [],
+}));
 
 // Service links
 const serviceLinks = [
@@ -161,47 +173,21 @@ const serviceLinks = [
     },
 ];
 
-// Hot destinations
-const hotDestinations = [
-    {
-        label: lang === "zh" ? "黃刀鎮 (極光)" : "Yellowknife (Aurora)",
-        type: "destination",
-        value: "yellowknife",
-        icon: "ac_unit",
-    },
-    {
-        label: lang === "zh" ? "白馬市 (極光)" : "Whitehorse (Aurora)",
-        type: "destination",
-        value: "whitehorse",
-        icon: "auto_awesome",
-    },
-    {
-        label: lang === "zh" ? "落基山脈" : "Rocky Mountains",
-        type: "destination",
-        value: "banff",
-        icon: "landscape",
-    },
-    {
-        label: lang === "zh" ? "海洋三省" : "Maritimes",
-        type: "destination",
-        value: "atlantic-canada",
-        icon: "sailing",
-    },
-];
+// Popular destinations: the countries with the most published tours.
+const hotDestinations = destinations
+    .filter((dest) => dest.level === 2)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 4)
+    .map((dest) => ({ label: getDestName(dest.name), value: dest.slug, icon: "place" }));
 
 // Parent destinations
-const parentDestinations = destinations
-    .filter((d) => d.parent === 0)
-    .slice(0, 8);
+const parentDestinations = destinations.filter((d) => d.parent === 0);
 
 // Serialize data for client-side JS
 const navData = JSON.stringify({
     lang,
     localePrefix,
-    destinations,
-    activities,
-    types,
-    durations,
+    alternates,
     tourTranslations,
     currentPath,
 });
@@ -378,8 +364,8 @@ const navData = JSON.stringify({
                                             </span>
                                             {
                                                 lang === "zh"
-                                                    ? "旅遊類型"
-                                                    : "Tour Types"
+                                                    ? "旅遊方式"
+                                                    : "Travel Styles"
                                             }
                                         </h4>
                                         <ul class="space-y-1">
@@ -387,7 +373,7 @@ const navData = JSON.stringify({
                                                 tourTypeLinks.map((link) => (
                                                     <li>
                                                         <a
-                                                            href={`${localePrefix}/tours/type/${link.slug}`}
+                                                            href={`${localePrefix}/tours/style/${link.slug}`}
                                                             class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-500 transition-all group"
                                                         >
                                                             <span class="w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-white group-hover:shadow-md flex items-center justify-center transition-all">
@@ -399,6 +385,20 @@ const navData = JSON.stringify({
                                                                 {link.label}
                                                             </span>
                                                         </a>
+{link.children.length > 0 && (
+    <ul class="ml-14 mb-1 space-y-0.5">
+        {link.children.map((child) => (
+            <li>
+                <a
+                    href={`${localePrefix}/tours/style/${link.slug}#${child.slug}`}
+                    class="block px-3 py-1.5 text-sm text-gray-500 hover:text-orange-500 rounded-lg transition-colors"
+                >
+                    {child.label}
+                </a>
+            </li>
+        ))}
+    </ul>
+)}
                                                     </li>
                                                 ))
                                             }
@@ -664,8 +664,8 @@ const navData = JSON.stringify({
                                             </span>
                                             {
                                                 lang === "zh"
-                                                    ? "熱門地點"
-                                                    : "Hot Locations"
+                                                    ? "熱門目的地"
+                                                    : "Popular Destinations"
                                             }
                                         </h4>
 
@@ -673,7 +673,7 @@ const navData = JSON.stringify({
                                             {
                                                 hotDestinations.map((dest) => (
                                                     <a
-                                                        href={`${localePrefix}/destinations/${dest.value}`}
+                                                        href={`${localePrefix}/tours/destination/${dest.value}`}
                                                         class="flex items-center gap-3 p-2 rounded-xl hover:bg-red-50 transition-all group"
                                                     >
                                                         <span class="w-10 h-10 rounded-lg bg-white shadow-sm border border-gray-100 group-hover:border-red-200 flex items-center justify-center transition-colors">
@@ -898,24 +898,34 @@ const navData = JSON.stringify({
                                 <h4
                                     class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4"
                                 >
-                                    {lang === "zh" ? "旅游类型" : "Tour Types"}
+                                    {lang === "zh" ? "旅遊方式" : "Travel Styles"}
                                 </h4>
                                 <div class="space-y-2">
                                     {
                                         tourTypeLinks.map((link) => (
-                                            <a
-                                                href={`${localePrefix}/tours/type/${link.slug}`}
-                                                class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition-colors"
-                                            >
-                                                <span class="w-9 h-9 rounded-lg bg-white shadow flex items-center justify-center">
-                                                    <span class="material-icons text-gray-500 text-lg">
-                                                        {link.icon}
+                                            <>
+                                                <a
+                                                    href={`${localePrefix}/tours/style/${link.slug}`}
+                                                    class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition-colors"
+                                                >
+                                                    <span class="w-9 h-9 rounded-lg bg-white shadow flex items-center justify-center">
+                                                        <span class="material-icons text-gray-500 text-lg">
+                                                            {link.icon}
+                                                        </span>
                                                     </span>
-                                                </span>
-                                                <span class="font-medium text-gray-700">
-                                                    {link.label}
-                                                </span>
-                                            </a>
+                                                    <span class="font-medium text-gray-700">
+                                                        {link.label}
+                                                    </span>
+                                                </a>
+                                                {link.children.map((child) => (
+                                                    <a
+                                                        href={`${localePrefix}/tours/style/${link.slug}#${child.slug}`}
+                                                        class="block ml-12 py-1.5 text-sm text-gray-500 hover:text-orange-500"
+                                                    >
+                                                        {child.label}
+                                                    </a>
+                                                ))}
+                                            </>
                                         ))
                                     }
                                 </div>
@@ -956,15 +966,15 @@ const navData = JSON.stringify({
                                 >
                                     {
                                         lang === "zh"
-                                            ? "热门地点"
-                                            : "Hot Locations"
+                                            ? "熱門目的地"
+                                            : "Popular Destinations"
                                     }
                                 </h4>
                                 <div class="space-y-2">
                                     {
                                         hotDestinations.map((dest) => (
                                             <a
-                                                href={`${localePrefix}/destinations/${dest.value}`}
+                                                href={`${localePrefix}/tours/destination/${dest.value}`}
                                                 class="flex items-center gap-3 p-2 rounded-xl hover:bg-white transition-all group"
                                             >
                                                 <span class="w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 flex items-center justify-center">
@@ -1347,8 +1357,7 @@ const navData = JSON.stringify({
     function handleLanguageSwitch() {
         const lang = data.lang;
         const targetLang = lang === "en" ? "zh" : "en";
-        const { destinations, activities, types, durations, tourTranslations } =
-            data;
+        const { alternates, tourTranslations } = data;
 
         let pathWithoutBase = window.location.pathname;
         if (baseUrl && pathWithoutBase.startsWith(baseUrl)) {
@@ -1372,9 +1381,7 @@ const navData = JSON.stringify({
         const isTourPage =
             pathWithoutBase.includes("/tours/") &&
             !pathWithoutBase.includes("/tours/destination/") &&
-            !pathWithoutBase.includes("/tours/activity/") &&
-            !pathWithoutBase.includes("/tours/type/") &&
-            !pathWithoutBase.includes("/tours/duration/") &&
+            !pathWithoutBase.includes("/tours/style/") &&
             !pathWithoutBase.includes("/tours/featured") &&
             pathWithoutBase !== "/tours" &&
             pathWithoutBase !== "/zh/tours" &&
@@ -1400,37 +1407,14 @@ const navData = JSON.stringify({
             }
         }
 
-        // Handle taxonomy pages
-        const taxPathRegex =
-            /\/tours\/(destination|activity|type|duration)\/([^\/\?#]+)/;
-        const taxMatch = pathWithoutBase.match(taxPathRegex);
-
-        if (taxMatch) {
-            const taxType = taxMatch[1];
-            const currentSlug = decodeURIComponent(taxMatch[2])
-                .trim()
-                .replace(/\/$/, "");
-            let term = null;
-
-            if (taxType === "destination") {
-                term = destinations.find((d) => d.slug === currentSlug);
-            } else if (taxType === "activity") {
-                term = activities.find((a) => a.slug === currentSlug);
-            } else if (taxType === "type") {
-                term = types.find((t) => t.slug === currentSlug);
-            } else if (taxType === "duration") {
-                term = durations.find((d) => d.slug === currentSlug);
-            }
-
-            if (term?.translations?.[targetLang]) {
-                const targetSlug = term.translations[targetLang];
-                const newPath =
-                    targetLang === "en"
-                        ? `${baseUrl}/tours/${taxType}/${targetSlug}`
-                        : `${baseUrl}/zh/tours/${taxType}/${targetSlug}`;
-                window.location.href = newPath;
-                return;
-            }
+        // Category pages: the same slug exists in both languages only when both
+        // have tours there; the server tells us so through the hreflang pairs.
+        if (/\/tours\/(destination|style)\/[^\/\?#]+/.test(pathWithoutBase)) {
+            const counterpart = (alternates || []).find((item) => item.lang === targetLang);
+            window.location.href = counterpart
+                ? new URL(counterpart.href).pathname
+                : `${baseUrl}${targetLang === "zh" ? "/zh" : ""}/tours`;
+            return;
         }
 
         // Fallback

@@ -7,21 +7,17 @@ import { getLocalePrefix, type Locale } from "../i18n/config";
  */
 
 import { useEffect, useState, useMemo, useRef } from 'react';
-import type { WPTour, WPTourDestination, WPTourDuration, WPTourType } from '../lib/wordpress/types';
+import type { WPTour } from '../lib/wordpress/types';
 import { TourCard } from './TourCard';
 
 interface ToursGridProps {
     tours: WPTour[];
-    destinations: WPTourDestination[];
-    durations: WPTourDuration[];
-    types: WPTourType[];
     lang: string;
 }
 
 interface FilterState {
     destination: string;
-    type: string;
-    duration: string;
+    style: string;
     q: string;
 }
 
@@ -29,18 +25,17 @@ const ITEMS_PER_PAGE = 12;
 
 function getFiltersFromUrl(): FilterState {
     if (typeof window === 'undefined') {
-        return { destination: '', type: '', duration: '', q: '' };
+        return { destination: '', style: '', q: '' };
     }
     const params = new URLSearchParams(window.location.search);
     return {
         destination: params.get('destination') || '',
-        type: params.get('type') || '',
-        duration: params.get('duration') || '',
+        style: params.get('style') || '',
         q: params.get('q') || '',
     };
 }
 
-export function ToursGrid({ tours, destinations, durations, types, lang }: ToursGridProps) {
+export function ToursGrid({ tours, lang }: ToursGridProps) {
     const [filters, setFilters] = useState<FilterState>(getFiltersFromUrl);
     const [currentPage, setCurrentPage] = useState(1);
     const gridRef = useRef<HTMLDivElement>(null);
@@ -66,57 +61,20 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
         };
     }, []);
 
-    // Map destination slugs to their descendant IDs for recursive filtering
-    const destinationIdMap = useMemo(() => {
-        const map = new Map<string, number[]>();
-
-        const getDescendantIds = (parentId: number): number[] => {
-            const children = destinations.filter(d => d.parent === parentId);
-            let ids = children.map(c => c.id);
-            children.forEach(c => {
-                ids = [...ids, ...getDescendantIds(c.id)];
-            });
-            return ids;
-        };
-
-        destinations.forEach(dest => {
-            map.set(dest.slug, [dest.id, ...getDescendantIds(dest.id)]);
-        });
-
-        return map;
-    }, [destinations]);
-
     // Filter tours based on current filters
     const filteredTours = useMemo(() => {
         let result = tours;
 
-        if (filters.duration) {
-            result = result.filter((tour) => {
-                // Check in durations taxonomy
-                const hasDuration = tour.tour_terms?.durations?.some((d) => d.slug === filters.duration);
-                if (hasDuration) return true;
-
-                // Check in categories taxonomy (fallback for tours tagged with categories instead of durations)
-                const hasCategory = tour.tour_terms?.categories?.some((c) => {
-                    if (c.slug === filters.duration) return true;
-                    // Special case for single-day duration which often maps to '1-day-tour' category
-                    if (filters.duration === 'single-day' && c.slug === '1-day-tour') return true;
-                    return false;
-                });
-                return hasCategory;
-            });
-        }
-
-        if (filters.type) {
+        if (filters.style) {
             result = result.filter((tour) =>
-                tour.tour_terms?.types?.some((t) => t.slug === filters.type)
+                tour.tour_terms?.styles?.some((t) => t.slug === filters.style)
             );
         }
 
+        // Tours are tagged at a city; destinationScope also lists every ancestor, so a country or continent matches.
         if (filters.destination) {
-            const allowedIds = destinationIdMap.get(filters.destination) || [];
             result = result.filter((tour) =>
-                tour.tour_terms?.destinations?.some((d) => allowedIds.includes(d.id))
+                tour.tour_terms?.destinationScope?.includes(filters.destination)
             );
         }
 
@@ -133,7 +91,7 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
         }
 
         return result;
-    }, [tours, filters, destinationIdMap]);
+    }, [tours, filters]);
 
     // Reset to page 1 when filters change
     useEffect(() => {
@@ -189,7 +147,7 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
         return pages;
     };
 
-    const hasActiveFilters = filters.destination || filters.type || filters.duration || filters.q;
+    const hasActiveFilters = filters.destination || filters.style || filters.q;
     const localePrefix = getLocalePrefix(lang as Locale);
 
     const t = {
@@ -221,7 +179,7 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
                     {t.filters}
                     {hasActiveFilters && (
                         <span className="bg-[#f7941e] text-white text-xs px-2 py-0.5 rounded-full">
-                            {(filters.duration ? 1 : 0) + (filters.type ? 1 : 0) + (filters.destination ? 1 : 0)}
+                            {(filters.style ? 1 : 0) + (filters.destination ? 1 : 0)}
                         </span>
                     )}
                 </button>

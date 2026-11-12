@@ -16,6 +16,7 @@ import type {
     WPTourDuration,
     WPTourType,
     WPApiParams,
+    CategoryTerm,
 } from './types';
 import type { TransferRoute } from '../zaui/zaui';
 import { sanitizeUrls } from '../wp-url';
@@ -369,49 +370,21 @@ export async function getTourTypes(lang?: string): Promise<WPTourType[]> {
 // =====================
 
 export interface SiteNavData {
-    activities: WPTourActivity[];
-    destinations: WPTourDestination[];
-    durations: WPTourDuration[];
-    types: WPTourType[];
+    styles: CategoryTerm[];
+    cruiseTypes: CategoryTerm[];
+    regions: CategoryTerm[];
+    destinations: CategoryTerm[];
     transfers: TransferRoute[];
 }
 
-export function getSiteNavData(lang?: string): Promise<SiteNavData> {
-    if (cmsEnabled()) return Promise.all([
-        fetchTerms('tour-activity', lang), fetchTerms('tour-destination', lang),
-        fetchTerms('tour_duration', lang), fetchTerms('tour_type', lang),
-    ]).then(([activities, destinations, durations, types]) => ({
-        activities: activities.map(mapToActivity), destinations: destinations.map(mapToDestination),
-        durations: durations.map(mapToDuration), types: types.map(mapToType), transfers: [],
-    }));
-    const cacheKey = `sitenav:${lang || 'en'}`;
-    return cached(cacheKey, async () => {
-        const customApiUrl = getCustomApiUrl(lang);
-        const url = new URL(`${customApiUrl}/sitenav`);
-
-        try {
-            const response = await fetchWithTimeout(url.toString());
-            const data = await response.json();
-
-            return {
-                activities: Array.isArray(data.activities) ? data.activities.map(mapToActivity) : [],
-                destinations: Array.isArray(data.destinations) ? data.destinations.map(mapToDestination) : [],
-                durations: Array.isArray(data.durations) ? data.durations.map(mapToDuration) : [],
-                types: Array.isArray(data.types) ? data.types.map(mapToType) : [],
-                transfers: [],
-            };
-        } catch (error) {
-            console.error('[Astro SSG] Error fetching site nav data:', error);
-            // Fallback to individual fetches
-            const [activities, destinations, durations, types] = await Promise.all([
-                getTourActivities(lang),
-                getTourDestinations(lang),
-                getTourDurations(lang),
-                getTourTypes(lang),
-            ]);
-            return { activities, destinations, durations, types, transfers: [] };
-        }
-    });
+/**
+ * WordPress-backed and static recovery builds carry no native CMS categories.
+ * Pages rendered by the CMS runtime use the native implementation instead
+ * (see cms/src/lib/cms/native-site-api.mjs); here the menu falls back to its
+ * built-in travel styles.
+ */
+export function getSiteNavData(_lang?: string): Promise<SiteNavData> {
+    return Promise.resolve({ styles: [], cruiseTypes: [], regions: [], destinations: [], transfers: [] });
 }
 
 // Helper mappers

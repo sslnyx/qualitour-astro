@@ -65,7 +65,7 @@ const termAliases = {
   activities: ['activities','activity','tour-activity'], destinations: ['destinations','destination','tour-destination'],
   durations: ['durations','duration','tour_duration'], types: ['types','type','tour_type'],
 };
-const reservedTourSlugs = new Set(['featured','activity','activities','category','categories','destination','destinations','duration','durations','tag','tags','type','types']);
+const reservedTourSlugs = new Set(['featured','activity','activities','category','categories','destination','destinations','duration','durations','tag','tags','type','types','style','styles']);
 const mediaDimensionsKey = Symbol.for('qualitour:native-media-dimensions');
 const compareIds = (a,b) => String(a).localeCompare(String(b), 'en', { numeric: true });
 export function sortToursByPublishedAt(tours, order = 'desc') {

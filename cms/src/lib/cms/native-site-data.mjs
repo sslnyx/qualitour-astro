@@ -1,8 +1,8 @@
 import compatibilitySource from '../../../../src/data/cms-legacy-compat.json' with { type: 'json' };
-import taxonomyBaselineSource from '../../data/native-taxonomy-baseline.json' with { type: 'json' };
 import { buildCatalogue, retainPublicTranslations } from '../../../../src/lib/cms/legacy-adapter.mjs';
-import { getEmDashCollection, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint } from 'emdash';
-import { projectNativeSiteTaxonomy } from './native-site-taxonomy.mjs';
+import { getEmDashCollection, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
+import { getDb } from 'emdash/runtime';
+import { applyNativeCategories } from './native-site-categories.mjs';
 
 const locales = ['en','zh'];
 const taxonomyNames = ['destinations','travel_styles','travel_regions','cruise_types'];
@@ -23,20 +23,6 @@ function flattenTerms(rows) {
 }
 function taxonomyRow(term) {
   return {id:String(term.id),name:String(term.name),slug:String(term.slug),label:String(term.label),parentId:term.parentId ? String(term.parentId) : undefined,locale:String(term.locale),translationGroup:term.translationGroup || null};
-}
-function attachTermTranslations(vocabulary) {
-  for (const bucket of taxonomyNames) {
-    const groups = new Map();
-    for (const locale of locales) for (const term of vocabulary[locale][bucket] || []) {
-      if (!term.translationGroup) continue;
-      const group = groups.get(term.translationGroup) || {};
-      group[locale] = term; groups.set(term.translationGroup,group);
-    }
-    for (const group of groups.values()) if (group.en && group.zh) {
-      const translations={en:group.en.slug,zh:group.zh.slug};
-      group.en.translations=translations; group.zh.translations=translations;
-    }
-  }
 }
 function projectedId(entry) {
   const source = entry.data.source_key;
@@ -72,7 +58,7 @@ const bareMediaId=value=>typeof value==='string'&&value.trim()&&!/^(?:[a-z][a-z\
 const mediaFilePath=key=>`/_emdash/api/media/file/${key.split('/').map(encodeURIComponent).join('/')}`;
 /** The SEO image picker stores a media ID, but the public file route is keyed by storage key. */
 async function lookupStorageKeys(ids) {
-  const [{getDb},{MediaRepository}]=await Promise.all([import('emdash/runtime'),import('emdash')]);
+  // Named static imports only: a dynamic import('emdash') would keep every export, including the image decoders the Free runtime must not ship.
   const repository=new MediaRepository(await getDb());
   return new Map(await Promise.all([...ids].map(async id=>[id,(await repository.findById(id))?.storageKey])));
 }
@@ -96,7 +82,6 @@ function mergeHints(hints) {
 
 export function createNativeSiteData({
   compatibility=compatibilitySource,
-  taxonomyBaseline=taxonomyBaselineSource,
   getCollection=getEmDashCollection,
   getContext=getRequestContext,
   getTaxonomyDefs:getDefs=getTaxonomyDefs,
@@ -129,10 +114,9 @@ export function createNativeSiteData({
         vocabulary[locale][name]=flattenTerms(result.data).map(taxonomyRow);
       }
     }));
-    attachTermTranslations(vocabulary);
     const catalogues=Object.fromEntries(await Promise.all(locales.map(async locale=>{
-      const projection=projectNativeSiteTaxonomy({entries:entries[locale],locale,source:compatibility.locales[locale],baseline:taxonomyBaseline,taxonomyTerms:vocabulary[locale]});
-      const catalogue=buildCatalogue(entries[locale],compatibility,locale,{taxonomyOverrides:projection.overrides});
+      const catalogue=buildCatalogue(entries[locale],compatibility,locale);
+      applyNativeCategories({catalogue,entries:entries[locale],vocabulary:vocabulary[locale],locale,tourIdFor:projectedId});
       catalogue.tours=await presentTours(catalogue.tours);
       return [locale,catalogue];
     })));
