@@ -49,7 +49,7 @@ const featuredTransfers = transferRoutes.slice(0, 3);
 const featuredTours = await optimizeTourImages(rawTours.slice(0, 6));
 const heroTours = await Promise.all(featuredTours.map(async tour => {
   const source = getTourImageUrl(tour);
-  return { ...tour, optimizedHero: source ? await optimizeResponsiveImage(source) : undefined };
+  return { ...tour, optimizedHero: tour.optimizedHero || (source ? await optimizeResponsiveImage(source) : undefined) };
 }));
 
 // Filter reviews for 5 stars, prioritize those with photos, and limit to 15
