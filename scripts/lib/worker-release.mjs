@@ -3,11 +3,12 @@ export const WORKER_ID='2e3006ccf9f04193b0b795a6ae7c49f8';
 export const ACCOUNT_ID='ca4d347f96116e87e8f5dbd6c62f0b30';
 export function assertWorkerBindings(config){
  assert.equal(config.name,'qualitour');assert.equal(config.account_id,ACCOUNT_ID);
- assert.deepEqual(config.d1_databases.map(x=>[x.binding,x.database_id]),[['DB','cf36703e-a507-4810-b865-9cd57f6681a8']]);
+ assert.deepEqual(config.d1_databases.map(x=>[x.binding,x.database_id]),[['DB','cf36703e-a507-4810-b865-9cd57f6681a8'],['TRANSFER_DB','f8cb062c-16b1-4f44-992f-8563b71ced20']]);
  assert.deepEqual(config.r2_buckets.map(x=>[x.binding,x.bucket_name]),[['MEDIA','qualitour-cms-free-test-media']]);
  assert.deepEqual(config.kv_namespaces.map(x=>[x.binding,x.id]),[['SESSION','71990ee89fd4417a9046aacbbdb88fa4']]);
  assert.deepEqual(config.durable_objects.bindings,[{name:'CMS_RUNTIME',class_name:'QualitourCmsRuntime'}]);
  assert.equal(config.vars.EMDASH_CMS_EXECUTION,'durable');
+ for(const route of ['/_emdash','/_emdash/*','/api/transfer','/api/transfer/*','/book/*','/zh/book/*'])assert.ok(config.assets.run_worker_first.includes(route),'Required Worker route missing: '+route);
  assert.ok(!config.routes?.length,'Domain routes require a separate reviewed cutover');
 }
 export function assertCmsRuntime(entry,chunks){

@@ -30,6 +30,11 @@
       "binding": "DB",
       "database_name": "qualitour-cms-free-test",
       "database_id": "cf36703e-a507-4810-b865-9cd57f6681a8"
+    },
+    {
+      "binding": "TRANSFER_DB",
+      "database_name": "qualitour-transfer-staging",
+      "database_id": "f8cb062c-16b1-4f44-992f-8563b71ced20"
     }
   ],
   "r2_buckets": [
@@ -61,7 +66,11 @@
       "/_emdash/*",
       "/cms-proof/*",
       "/zh/cms-proof/*",
-      "/_image"
+      "/_image",
+      "/api/transfer",
+      "/api/transfer/*",
+      "/book/*",
+      "/zh/book/*"
     ]
   }
 }

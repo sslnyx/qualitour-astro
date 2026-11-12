@@ -1,0 +1,20 @@
+{
+  "sourceRepository": "qualitour-ops",
+  "baseCommit": "48d1150",
+  "buildCommand": "npm exec -- wrangler deploy --config wrangler.website.bundle.json --dry-run --minify --outdir .private/website-booking-staging/same-worker-bundle",
+  "bundleSha256": "c8bde5ddf4b45e7fbde5b512c058e6dbc25b50db663fcb8f3947a4e55f532fa8",
+  "sourceHashes": {
+    "src/booking/website-worker.ts": "221675ea69df64f85bf4b521925cf9d252f8c62827845deeb47d1f48a14d8b00",
+    "src/booking/catalog.ts": "d94acc0ba677fc83f34c88aa5864062a58753162723ac2d2e22562844784f610",
+    "src/booking/contracts.ts": "b1a159e80f218517a52d4140658d9b742b5518f8c9968af8b5f2b637c4d83537",
+    "src/booking/routes.ts": "ba07cfa2334f204c0385555ffc511f391aba41d55630a9facbe90e1d73d2747f",
+    "src/booking/payments.ts": "eb00c011fcc626ad79533702033a779883c9dcfda18bb58615803995c1354f1a",
+    "src/booking/guest.ts": "19ce5cbdf4f7b8d800fd0703e4c0faf6799e79161c6b913f2ac5ddd9a1979085"
+  },
+  "customerOnly": true,
+  "origin": "https://qualitour.qualitour.workers.dev",
+  "binding": "TRANSFER_DB",
+  "stripeBinding": "TRANSFER_SANDBOX_KEY",
+  "livePayments": false,
+  "sourceCommit": "39fc1d4bb7100417ab51bb2b0080136982937187"
+}

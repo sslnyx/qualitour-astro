@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import handler, { PluginBridge } from '@emdash-cms/cloudflare/worker';
+import { routeNativeBooking } from '../../src/server/native-booking/index.mjs';
 import { durableExecutionContext, fetchFreeRuntime } from './lib/cms/free-runtime.mjs';
 
 export { PluginBridge };
@@ -38,7 +39,9 @@ export class QualitourCmsRuntime extends DurableObject<RuntimeEnv> {
 
 export default {
   ...handler,
-  fetch(request: Request, env: RuntimeEnv, context: ExecutionContext) {
+  async fetch(request: Request, env: RuntimeEnv, context: ExecutionContext) {
+    const native = await routeNativeBooking(request, env, context);
+    if (native) return native;
     return fetchFreeRuntime(handler, request, env, context);
   },
 };

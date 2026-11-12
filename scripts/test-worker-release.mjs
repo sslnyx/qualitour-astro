@@ -14,3 +14,11 @@ test('standalone deployment freshness uses renamed origin for requests and media
  const code=`const {loadWorkerCmsModules}=await import('./scripts/lib/worker-release.mjs');const m=await loadWorkerCmsModules('https://qualitour.qualitour.workers.dev');const seen=[];const reader=m.createCmsReader({origin:'https://qualitour.qualitour.workers.dev',token:'synthetic',allowCli:false,fetchImpl:async url=>{seen.push(url.origin);return new Response(JSON.stringify({success:true,data:{items:[],total:0}}),{headers:{'content-type':'application/json'}})}});await reader.listPublished('en');console.log(JSON.stringify({seen,media:m.mediaUrl({meta:{storageKey:'a/cover.jpg'}})}));`;
  const result=JSON.parse(execFileSync(process.execPath,['--input-type=module','-e',code],{cwd:new URL('..',import.meta.url),env,encoding:'utf8'}));assert.ok(result.seen.length>0);assert.ok(result.seen.every(x=>x==='https://qualitour.qualitour.workers.dev'));assert.match(result.media,/^https:\/\/qualitour\.qualitour\.workers\.dev\//);
 });
+
+test('Sandbox booking adds only its dedicated database and routes before CMS dispatch',async()=>{
+ const c=structuredClone(config);c.d1_databases[1].database_id='wrong-transfer-db';assert.throws(()=>assertWorkerBindings(c));
+ const missing=structuredClone(config);missing.assets.run_worker_first=missing.assets.run_worker_first.filter(x=>x!=='/book/*');assert.throws(()=>assertWorkerBindings(missing));
+ const source=await readFile(new URL('../cms/src/emdash-free-worker.ts',import.meta.url),'utf8');
+ assert.ok(source.includes("../../src/server/native-booking/index.mjs"));
+ assert.ok(source.indexOf('await routeNativeBooking(request, env, context)')<source.lastIndexOf('return fetchFreeRuntime'));
+});
