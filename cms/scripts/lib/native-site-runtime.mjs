@@ -13,3 +13,8 @@ export function nativeSiteRuntimePlugin(){
   for(const [original,replacement] of aliases)if(target===resolve(root,original))return resolve(root,replacement);
  }};
 }
+
+export function configureNativeRoute(route){
+ const target=resolve(root,route.component);
+ if(target.startsWith(resolve(root,'src/pages')+'/'))route.prerender=false;
+}

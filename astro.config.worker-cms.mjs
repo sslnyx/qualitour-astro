@@ -7,7 +7,7 @@ import {d1,r2} from '@emdash-cms/cloudflare';
 import {tourEditorPlugin} from './cms/src/plugins/tour-editor/index.ts';
 import {tourAdminPlugin} from './cms/scripts/lib/tour-admin-routes.mjs';
 import {nativeSitePagePatterns} from './cms/src/lib/cms/native-site-policy.mjs';
-import {nativeSiteRuntimePlugin} from './cms/scripts/lib/native-site-runtime.mjs';
+import {nativeSiteRuntimePlugin,configureNativeRoute} from './cms/scripts/lib/native-site-runtime.mjs';
 import {emdashFreeCpuPlugin} from './cms/scripts/lib/emdash-free-cpu.mjs';
 
 const origin=process.env.QUALITOUR_WORKER_ORIGIN||'https://qualitour.qualitour.workers.dev';
@@ -28,6 +28,6 @@ export default defineConfig({
   injectRoute({pattern:'/native-proof/zh/tours/[id]',entrypoint:new URL('./cms/src/server/native-proof-tour.astro',import.meta.url),prerender:false});
   injectRoute({pattern:'/[...lang]/cms-proof/tours/[id]',entrypoint:new URL('./cms/src/server/emdash-tour.astro',import.meta.url),prerender:false});
   injectRoute({pattern:'/[...lang]/cms-proof/tours',entrypoint:new URL('./cms/src/server/emdash-catalog.astro',import.meta.url),prerender:false});
- },'astro:route:setup':({route})=>{if(route.component.replaceAll('\\','/').includes('/src/pages/')&&!route.component.includes('/cms/src/'))route.prerender=false;}}},emdash({database:d1({binding:'DB'}),storage:r2({binding:'MEDIA'}),maxUploadSize:96*1024*1024,plugins:[tourEditorPlugin()],admin:{hiddenNavItems:['calendar','comments','menus','redirects','widgets','sections','bylines','import']}})],
+ },'astro:route:setup':({route})=>configureNativeRoute(route)}},emdash({database:d1({binding:'DB'}),storage:r2({binding:'MEDIA'}),maxUploadSize:96*1024*1024,plugins:[tourEditorPlugin()],admin:{hiddenNavItems:['calendar','comments','menus','redirects','widgets','sections','bylines','import']}})],
  vite:{plugins:[tailwindcss(),nativeSiteRuntimePlugin(),tourAdminPlugin(),emdashFreeCpuPlugin()],envPrefix:['PUBLIC_'],optimizeDeps:{exclude:['@emdash-cms/admin']},define:{'import.meta.env.PUBLIC_SITE_INDEXABLE':JSON.stringify('false')}},devToolbar:{enabled:false}
 });
