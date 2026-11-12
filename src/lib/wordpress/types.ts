@@ -49,6 +49,7 @@ export interface WPTour {
     /** Build-generated responsive hero; original CMS media remains unchanged. */
     optimizedHero?: { src: string; srcSet: string; sizes: string; width: number; height: number };
     /** Thumbnail/lightbox derivatives keyed by the original gallery URL. */
+    optimizedInlineImages?: Record<string, { src: string; srcSet?: string; sizes?: string; width: number; height: number }>;
     optimizedPhotos?: Record<string, { thumbnail: string; full: string; width: number; height: number }>;
     tour_category?: number[];
     tour_tag?: number[];

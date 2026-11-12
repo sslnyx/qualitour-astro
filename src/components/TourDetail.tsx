@@ -1,3 +1,4 @@
+import { renderInlineImages } from '../lib/inline-images.mjs';
 import { collectTourPhotoSources } from '../lib/image-delivery.mjs';
 /**
  * TourDetail Component
@@ -9,7 +10,7 @@ import { collectTourPhotoSources } from '../lib/image-delivery.mjs';
 
 import { useState, useMemo } from 'react';
 import type { WPTour } from '../lib/wordpress/types';
-import { wpUrl, processHtmlContent, getCfTransformUrl } from '../lib/wp-url';
+import { wpUrl, processHtmlContent as normalizeHtmlContent, getCfTransformUrl } from '../lib/wp-url';
 import PhotoLightbox from './PhotoLightbox';
 
 interface TourDetailProps {
@@ -62,6 +63,8 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const [expandedDay, setExpandedDay] = useState<number | null>(null);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+    const processHtmlContent = (html: string) => renderInlineImages(normalizeHtmlContent(html), tour.optimizedInlineImages, wpUrl);
 
     const t = translations[lang as keyof typeof translations] || translations.en;
 
@@ -163,7 +166,10 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 blocks.push({
                     type: 'image',
                     content: {
-                        url: getCfTransformUrl(wpUrl(item.value.url), { width: 1200, format: 'webp' }),
+                        url: tour.optimizedInlineImages?.[wpUrl(item.value.url)]?.src || getCfTransformUrl(wpUrl(item.value.url), { width: 1200, format: 'webp' }),
+                        width: tour.optimizedInlineImages?.[wpUrl(item.value.url)]?.width,
+                        height: tour.optimizedInlineImages?.[wpUrl(item.value.url)]?.height,
+                        srcSet: tour.optimizedInlineImages?.[wpUrl(item.value.url)]?.srcSet,
                         alt: item.value.alt || '',
                     },
                     order: blocks.length,
@@ -382,6 +388,12 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                         <div key={idx} className="overflow-hidden">
                                             <img
                                                 src={block.content.url}
+                                                width={block.content.width}
+                                                height={block.content.height}
+                                                srcSet={block.content.srcSet}
+                                                sizes="(min-width: 1024px) 66vw, 100vw"
+                                                loading="lazy"
+                                                decoding="async"
                                                 alt={block.content.alt}
                                                 className="w-full h-auto block"
                                                 data-original-src={block.content.url}

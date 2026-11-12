@@ -278,6 +278,18 @@ class PagesStaticFinalizerTests(unittest.TestCase):
                 self.run_finalize(fixture)
 
 
+class InlineImageReleaseTests(unittest.TestCase):
+    def test_wordpress_browser_images_are_rejected_but_download_links_are_retained(self):
+        module = load_finalizer()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for markup in ('<img src="https://qualitour.ca/wp-content/uploads/large.png">',
+                           '<img srcset="https://qualitour.ca/wp-content/uploads/large.png 1200w">'):
+                with self.assertRaisesRegex(ValueError, "Unoptimized WordPress"):
+                    module.validate_assets(root, "tour.html", markup)
+            module.validate_assets(root, "tour.html", '<a href="https://qualitour.ca/wp-content/uploads/original.pdf">Download</a>')
+
+
 class PagesStaticBuildRunnerTests(unittest.TestCase):
     def make_project(self, root):
         root = Path(root)

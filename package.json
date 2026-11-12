@@ -15,7 +15,7 @@
     "sync:cms": "node scripts/sync-cms.mjs",
     "test:cms": "node --test scripts/test-cms-content.mjs",
     "pages:dev": "wrangler pages dev dist",
-    "test:staging": "node --test scripts/test-photo-lightbox.mjs scripts/test-image-delivery.mjs scripts/test-cms-content.mjs scripts/test-transfer-cache.mjs scripts/test-zaui-sync.mjs scripts/test-seo.mjs scripts/test-seo-pages.mjs && python3 -m unittest discover -s scripts -p \"test_staging_*.py\"",
+    "test:staging": "node --test scripts/test-inline-images.mjs scripts/test-photo-lightbox.mjs scripts/test-image-delivery.mjs scripts/test-cms-content.mjs scripts/test-transfer-cache.mjs scripts/test-zaui-sync.mjs scripts/test-seo.mjs scripts/test-seo-pages.mjs && python3 -m unittest discover -s scripts -p \"test_staging_*.py\"",
     "build:cloudflare": "astro build --config astro.config.cloudflare.mjs",
     "check": "astro check",
     "test:seo": "node --test scripts/test-seo.mjs scripts/test-seo-pages.mjs",

@@ -1,3 +1,4 @@
+import { collectInlineImageSources } from '../inline-images.mjs';
 import { getImage, inferRemoteSize } from "astro:assets";
 import { createImageDelivery, collectTourPhotoSources, mapWithConcurrency } from '../image-delivery.mjs';
 import type { WPTour } from "./types";
@@ -65,7 +66,15 @@ export async function optimizeTourPresentation(tour: WPTour): Promise<WPTour> {
         ]);
         optimizedPhotos[url] = { thumbnail: thumbnail.src, full: full.src, width: full.width, height: full.height };
     }
-    return { ...tour, optimizedHero, optimizedPhotos };
+    const optimizedInlineImages: NonNullable<WPTour['optimizedInlineImages']> = {};
+    for (const raw of collectInlineImageSources(tour)) {
+        const url = wpUrl(raw);
+        // Supplier-hosted maps retain their supported external URLs; bundle owned media only.
+        if (!/^https:\/\/(?:[^/]+\.)?qualitour\.ca\//.test(url)
+            && !url.startsWith('https://qualitour-cms-free-test.qualitour.workers.dev/')) continue;
+        optimizedInlineImages[url] = await imageDelivery.responsive(url, { widths: [480, 960, 1200], width: 1200 });
+    }
+    return { ...tour, optimizedHero, optimizedPhotos, optimizedInlineImages };
 }
 
 export function optimizeTourPresentations(tours: WPTour[]): Promise<WPTour[]> {

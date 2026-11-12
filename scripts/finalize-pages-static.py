@@ -160,6 +160,8 @@ def validate_assets(root, relative, html_text):
         if reference.startswith("//"):
             raise ValueError(f"Protocol-relative browser asset in {relative}: {reference}")
         parsed = urlsplit(reference)
+        if "/wp-content/" in unquote(parsed.path):
+            raise ValueError(f"Unoptimized WordPress browser image in {relative}: {reference}")
         if parsed.scheme or parsed.netloc or not parsed.path.startswith("/"):
             continue
         asset_path = unquote(parsed.path).removeprefix("/")
