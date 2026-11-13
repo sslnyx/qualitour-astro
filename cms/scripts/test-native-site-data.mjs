@@ -62,7 +62,7 @@ test('memoizes only within one request context and retries after failures',async
   const failed=harness({error:true});
   await assert.rejects(failed.api.getNativeSiteCatalogues(),/database failed/);
   await assert.rejects(failed.api.getNativeSiteCatalogues(),/database failed/);
-  assert.equal(failed.calls.length,4,'failed request memo is evicted so callers can retry');
+  assert.equal(failed.calls.length,2,'failed request memo is evicted so callers can retry (each attempt stops at the first failing locale)');
 });
 
 test('does not create an isolate cache when no request context exists',async()=>{

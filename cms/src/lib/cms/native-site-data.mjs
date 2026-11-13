@@ -91,29 +91,35 @@ export function createNativeSiteData({
 }={}) {
   const requestLoads=new WeakMap();
   const load=async()=>{
-    const collectionResults=Object.fromEntries(await Promise.all(locales.map(async locale=>{
-      const result=await getCollection('tours',{status:'published',locale,orderBy:{published_at:'desc'}});
-      if (result.error) throw result.error;
-      if (!Array.isArray(result.entries)) throw new Error(`Invalid published ${locale} CMS collection result`);
-      return [locale,result];
-    })));
-    const entries=Object.fromEntries(locales.map(locale=>[locale,collectionResults[locale].entries.map(entry=>normalizeEntry(entry,locale))]));
-    for (const locale of locales) {
-      const ids=new Set(); for (const entry of entries[locale]) { if(ids.has(entry.id))throw new Error(`Duplicate published CMS tour ID ${entry.id}`); ids.add(entry.id); }
-    }
-    await resolveSeoImages(entries,lookupMediaStorageKeys);
+    // Taxonomy first: it loads EmDash's taxonomy module while memory is still free.
+    // That module is otherwise imported lazily in the middle of hydrating hundreds of
+    // large entries, where the Worker aborts with "Dynamic import exceeded memory limits".
     const vocabulary={en:{},zh:{}};
-    const hints=locales.map(locale=>collectionResults[locale].cacheHint);
-    await Promise.all(locales.map(async locale=>{
+    const taxonomyHints=[];
+    for (const locale of locales) {
       const defs=await getDefs({locale});
       const tourDefs=new Map(defs.filter(def=>def.collections?.includes('tours')).map(def=>[def.name,def]));
       for (const name of taxonomyNames) {
         if (!tourDefs.has(name)) throw new Error(`Missing published CMS taxonomy definition ${name} for ${locale}`);
         const result=await getTerms(name,{locale,includeCounts:false});
-        hints.push(result.cacheHint);
+        taxonomyHints.push(result.cacheHint);
         vocabulary[locale][name]=flattenTerms(result.data).map(taxonomyRow);
       }
-    }));
+    }
+    // One locale at a time keeps peak memory to a single hydrated collection.
+    const collectionResults={};
+    for (const locale of locales) {
+      const result=await getCollection('tours',{status:'published',locale,orderBy:{published_at:'desc'}});
+      if (result.error) throw result.error;
+      if (!Array.isArray(result.entries)) throw new Error(`Invalid published ${locale} CMS collection result`);
+      collectionResults[locale]=result;
+    }
+    const entries=Object.fromEntries(locales.map(locale=>[locale,collectionResults[locale].entries.map(entry=>normalizeEntry(entry,locale))]));
+    for (const locale of locales) {
+      const ids=new Set(); for (const entry of entries[locale]) { if(ids.has(entry.id))throw new Error(`Duplicate published CMS tour ID ${entry.id}`); ids.add(entry.id); }
+    }
+    await resolveSeoImages(entries,lookupMediaStorageKeys);
+    const hints=[...locales.map(locale=>collectionResults[locale].cacheHint),...taxonomyHints];
     const catalogues=Object.fromEntries(await Promise.all(locales.map(async locale=>{
       const catalogue=buildCatalogue(entries[locale],compatibility,locale);
       applyNativeCategories({catalogue,entries:entries[locale],vocabulary:vocabulary[locale],locale,tourIdFor:projectedId});
