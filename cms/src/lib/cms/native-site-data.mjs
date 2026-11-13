@@ -106,7 +106,9 @@ export function createSqlTourSource({ getDatabase = getDb, pageSize = PAGE_SIZE 
     for (let offset = 0; ; offset += pageSize) {
       const rows = await readPublishedPage(db, locale, { limit: pageSize, offset });
       if (!rows.length) return;
-      yield rows.map(row => rowToEntry(row, locale, termsForEntry(assignments.get(row.id) || [], vocabulary[locale], fallback)));
+      // EmDash stores an assignment once per content translation group (an English entry and its Chinese
+      // translation share the rows saved under the group), while imported entries have rows of their own.
+      yield rows.map(row => rowToEntry(row, locale, termsForEntry([...new Set([...(assignments.get(row.id) || []), ...(assignments.get(row.translation_group) || [])])], vocabulary[locale], fallback)));
       if (rows.length < pageSize) return;
     }
   };

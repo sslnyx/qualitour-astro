@@ -122,3 +122,22 @@ test('cross-language parents are re-linked by slug so translated terms are not o
   assert.deepEqual(vocabulary.en.travel_styles, [], 'every taxonomy exists even when empty');
   assert.equal(vocabulary.zh.destinations[0].translationGroup, 'gNA');
 });
+
+test('a translation shares the assignments saved under its content group, and an own row is not duplicated',async()=>{
+  const en = row('en-1', { translation_group: 'en-1' });
+  const zh = row('zh-1', { locale: 'zh', translation_group: 'en-1' });
+  const own = row('own', { translation_group: 'own-group' });
+  const { db } = fakeDb({
+    ec_tours: () => [en, zh, own],
+    content_taxonomies: () => [{ entry_id: 'en-1', taxonomy_id: 'g1' }, { entry_id: 'own', taxonomy_id: 'g1' }, { entry_id: 'own-group', taxonomy_id: 'g1' }],
+  });
+  const vocabulary = {
+    en: { destinations: [{ id: 'd-en', slug: 'geo-ca', label: 'Canada', locale: 'en', translationGroup: 'g1' }] },
+    zh: { destinations: [{ id: 'd-zh', slug: 'geo-ca', label: '加拿大', locale: 'zh', translationGroup: 'g1' }] },
+  };
+  const slugs = {};
+  for (const locale of ['en', 'zh']) for await (const page of createSqlTourSource({ getDatabase: async () => db, pageSize: 10 })(locale, vocabulary)) for (const entry of page) slugs[`${locale}:${entry.id}`] = (entry.data.terms.destinations || []).map(term => term.label);
+  assert.deepEqual(slugs['en:en-1'], ['Canada']);
+  assert.deepEqual(slugs['zh:zh-1'], ['加拿大'], 'the Chinese translation takes the group rows in its own language');
+  assert.deepEqual(slugs['en:own'], ['Canada'], 'an entry and its group both pointing at the same term count once');
+});
