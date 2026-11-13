@@ -1,6 +1,7 @@
 import {defineMiddleware} from 'astro:middleware';
 import {getRequestContext} from 'emdash';
-import {getNativeSiteCatalogues,getNativeSiteCacheHint,getNativeTourDetail} from './native-site-data.mjs';
+import {env} from 'cloudflare:workers';
+import {getNativeSiteCatalogues,getNativeSiteCacheHint,getNativeTourDetail,setNativeSnapshotKv} from './native-site-data.mjs';
 import {getGoogleReviews} from './native-site-api.mjs';
 import {resolveNativePageProps} from './native-site-page-props.mjs';
 import {nativeSiteRoute} from './native-site-policy.mjs';
@@ -25,6 +26,7 @@ export const onRequest=defineMiddleware(async(context,next)=>{
  }
  if(route.redirect)return context.redirect(route.redirect+context.url.search,307);
  await warmImageService();
+ setNativeSnapshotKv(env.SESSION);
  const mode=getRequestContext();
  if(mode?.preview||mode?.editMode||context.url.searchParams.has('_preview')||context.url.searchParams.has('_edit'))return failure(404,'Page not found');
  try{

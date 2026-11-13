@@ -147,3 +147,12 @@ export function buildVocabulary(rows) {
   }
   return vocabulary;
 }
+
+/** Cheap change detector for the published tours: how many, and the newest edit and publication. */
+export async function readTourVersion(db) {
+  const rows = await db.selectFrom(COLLECTION)
+    .select(eb => [eb.fn.countAll().as('n'), eb.fn.max('updated_at').as('updated'), eb.fn.max('published_at').as('published')])
+    .where('status', '=', 'published').where('deleted_at', 'is', null).execute();
+  const row = rows[0] || {};
+  return { n: Number(row.n ?? 0), updated: row.updated ?? null, published: row.published ?? null };
+}

@@ -10,7 +10,7 @@ const compatibility={schema:1,locales:{
 const taxonomyNames=['destinations','travel_styles','travel_regions','cruise_types'];
 const row=(locale,id,slug,title)=>({id:locale==='zh'?`${locale}/${slug}`:slug,slug,seo:{title:`${locale} SEO`,description:null,canonical:null,image:null,noIndex:false},data:{id,status:'published',locale,publishedAt:new Date('2026-11-12T00:00:00Z'),translationGroup:'pair-1',title,hero:{meta:{storageKey:`${locale}-hero.jpg`},width:1200,height:800},terms:{destinations:[{id:`term-${locale}`,name:'destinations',slug:locale==='zh'?'banff-zh':'banff',label:locale==='zh'?'班夫':'Banff',children:[],locale,translationGroup:'term-pair'}]}}});
 
-function harness({context={request:true},error,lookup,seoImage,paging,readEntry}={}){
+function harness({context={request:true},error,lookup,seoImage,paging,readEntry,snapshotStore,readVersionParts}={}){
   const calls=[],vocabularyReads=[];
   const entries={en:[row('en','native-en','native-en','Native EN')],zh:[row('zh','native-zh','native-zh','原生中文')]};
   if(seoImage!==undefined)entries.en[0].seo.image=seoImage;
@@ -22,6 +22,8 @@ function harness({context={request:true},error,lookup,seoImage,paging,readEntry}
     compatibility,
     ...(lookup?{lookupMediaStorageKeys:lookup}:{}),
     ...(readEntry?{readEntry:readEntry(entries)}:{}),
+    ...(snapshotStore?{snapshotStore}:{}),
+    readVersionParts:readVersionParts||(async()=>null),
     getContext:()=>context,
     readTourPages:async function*(locale){
       calls.push({locale});
@@ -110,17 +112,54 @@ test('a page holding only excluded proof fixtures does not fail the load',async(
   assert.deepEqual(catalogues.en.tours.map(tour=>tour.id).sort(),['native-en-2','native-en-3']);
 });
 
-test('itinerary data is held packed and unpacked lazily, identically for readers and copies',async()=>{
+test('catalogue tours are cards: no itinerary or content, with the CMS entry remembered out of sight',async()=>{
   const {api}=harness();
   const tour=(await api.getNativeSiteCatalogues()).en.tours[0];
-  const descriptor=Object.getOwnPropertyDescriptor(tour,'goodlayers_data');
-  assert.equal(typeof descriptor.get,'function','stored as a lazy getter, not a resident object tree');
-  assert.equal(descriptor.enumerable,true);
-  const first=tour.goodlayers_data;
-  assert.ok(first&&typeof first==='object');
-  assert.equal(tour.goodlayers_data,first,'unpacked once per tour');
-  assert.deepEqual({...tour}.goodlayers_data,first,'spread copies still carry it');
-  assert.deepEqual(JSON.parse(JSON.stringify(tour)).goodlayers_data,first);
+  assert.equal(Object.hasOwn(tour,'goodlayers_data'),false);
+  assert.deepEqual(tour.content,{rendered:''});
+  assert.equal(tour.entryId,'native-en');
+  assert.equal(Object.keys(tour).includes('entryId'),false);
+  assert.ok(tour.title.rendered&&tour.slug&&tour.tour_terms);
+});
+
+function memoryStore(){
+  const values=new Map();const log=[];
+  return {values,log,async get(key){log.push(['get',key]);const found=values.get(key);return found===undefined?null:JSON.parse(found);},async put(key,value){log.push(['put',key]);values.set(key,JSON.stringify(value));}};
+}
+test('a built catalogue is stored under a database-derived key and reused by the next isolate without reading tours',async()=>{
+  const store=memoryStore();const parts={tours:{n:2,updated:'2026-11-12T00:00:00.000Z'},assignments:[['a',['g1']]]};
+  const first=harness({snapshotStore:store,readVersionParts:async()=>parts});
+  const built=await first.api.getNativeSiteCatalogues();
+  assert.equal(first.calls.length,2,'a miss reads every locale');
+  assert.deepEqual(store.log.map(entry=>entry[0]),['get','put']);
+  const second=harness({snapshotStore:store,readVersionParts:async()=>parts});
+  const reused=await second.api.getNativeSiteCatalogues();
+  assert.equal(second.calls.length,0,'a hit reads no tours at all');
+  assert.deepEqual(reused.en.tours.map(tour=>tour.id),built.en.tours.map(tour=>tour.id));
+  assert.deepEqual(reused.zh.terms,built.zh.terms);
+  assert.equal(reused.en.tours[0].entryId,'native-en','the CMS entry is restored for detail pages');
+  assert.equal(Object.keys(reused.en.tours[0]).includes('entryId'),false);
+  assert.deepEqual(reused.en.tours[0].translations,built.en.tours[0].translations);
+  assert.deepEqual(await second.api.getNativeSiteCacheHint(),await first.api.getNativeSiteCacheHint());
+});
+test('any change in the database state makes the old snapshot unreachable',async()=>{
+  const store=memoryStore();
+  const run=async parts=>{const h=harness({snapshotStore:store,readVersionParts:async()=>parts});await h.api.getNativeSiteCatalogues();return h.calls.length;};
+  const base={tours:{n:2,updated:'t1'},assignments:[['a',['g1']]]};
+  assert.equal(await run(base),2);
+  assert.equal(await run(base),0);
+  assert.equal(await run({...base,tours:{n:2,updated:'t2'}}),2,'an edit');
+  assert.equal(await run({...base,tours:{n:3,updated:'t1'}}),2,'a publication');
+  assert.equal(await run({...base,assignments:[['a',['g2']]]}),2,'a term assignment change');
+  assert.equal(store.values.size,4);
+});
+test('snapshot trouble never breaks a render',async()=>{
+  const failing={async get(){throw new Error('kv down');},async put(){throw new Error('kv down');}};
+  const unreadable=harness({snapshotStore:{async get(){return {broken:true};},async put(){}},readVersionParts:async()=>({tours:{n:1},assignments:[]})});
+  assert.equal((await unreadable.api.getNativeSiteCatalogues()).en.tours.length,1,'a malformed entry is ignored');
+  const noVersion=harness({snapshotStore:memoryStore(),readVersionParts:async()=>{throw new Error('db hiccup');}});
+  assert.equal((await noVersion.api.getNativeSiteCatalogues()).en.tours.length,1,'no version means no snapshot, still a result');
+  assert.equal(noVersion.calls.length,2);
 });
 
 test('a detail page reads one complete entry and keeps the catalogue terms, translations and hero',async()=>{

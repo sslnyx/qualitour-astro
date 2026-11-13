@@ -4,7 +4,7 @@ import { getRequestContext, MediaRepository } from 'emdash';
 import { getDb } from 'emdash/runtime';
 import { assignTourCategories, buildCategoryTerms } from './native-site-categories.mjs';
 import { optimizeTourHeroes } from './native-site-image.mjs';
-import { TAXONOMY_NAMES, buildVocabulary, readAssignments, readPublishedEntryRow, readPublishedPage, readSeo, readVocabularyRows, rowToEntry, termsForEntry } from './native-site-sql.mjs';
+import { TAXONOMY_NAMES, buildVocabulary, readAssignments, readPublishedEntryRow, readPublishedPage, readSeo, readTourVersion, readVocabularyRows, rowToEntry, termsForEntry } from './native-site-sql.mjs';
 
 const locales = ['en','zh'];
 const PAGE_SIZE = 64;
@@ -142,6 +142,70 @@ export function createSqlEntrySource({ getDatabase = getDb } = {}) {
   };
 }
 
+const SNAPSHOT_FORMAT = 1;
+const SNAPSHOT_TTL_SECONDS = 7 * 24 * 3600;
+const sha256 = async text => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)))].map(byte => byte.toString(16).padStart(2, '0')).join('');
+
+let snapshotKv = null;
+/** Called per request by the middleware with the Worker's KV binding; without one, catalogues are just not cached. */
+export function setNativeSnapshotKv(kv) { snapshotKv = kv || null; }
+
+/**
+ * A built catalogue stored in KV under a key derived from the database itself (vocabulary, term assignments, the
+ * newest tour edit and the tour count), so a content change makes the old snapshot unreachable instead of stale.
+ * KV is only a read-through for the expensive part; failures simply mean "compute it".
+ */
+export function createKvSnapshotStore({ getKv = () => snapshotKv } = {}) {
+  const name = key => `native-catalogue:${key}`;
+  return {
+    async get(key) {
+      const kv = getKv(); if (!kv) return null;
+      try { return await kv.get(name(key), 'json'); } catch { return null; }
+    },
+    async put(key, value) {
+      const kv = getKv(); if (!kv) return;
+      try { await kv.put(name(key), JSON.stringify(value), { expirationTtl: SNAPSHOT_TTL_SECONDS }); } catch { /* the next request recomputes */ }
+    },
+  };
+}
+
+/** Parts of the database state a catalogue depends on besides the vocabulary. */
+export function createSqlVersionSource({ getDatabase = getDb } = {}) {
+  return async function readVersionParts(shared = {}) {
+    const db = await getDatabase();
+    shared.assignments ??= readAssignments(db);
+    const [assignments, tours] = await Promise.all([shared.assignments, readTourVersion(db)]);
+    return { tours, assignments: [...assignments] };
+  };
+}
+
+const LITE_DROP = new Set(['content', 'goodlayers_data']);
+/** List pages need cards, not itineraries; a detail page re-reads its one complete entry. */
+function toLiteCatalogues(catalogues) {
+  const lite = {}, entryIds = {};
+  for (const locale of locales) {
+    entryIds[locale] = {};
+    lite[locale] = {
+      terms: catalogues[locale].terms,
+      excluded: catalogues[locale].excluded,
+      tours: catalogues[locale].tours.map(tour => {
+        const card = {};
+        for (const key of Object.keys(tour)) if (!LITE_DROP.has(key)) card[key] = tour[key];
+        card.content = { rendered: '' };
+        entryIds[locale][String(tour.id)] = tour.entryId;
+        return card;
+      }),
+    };
+  }
+  return { catalogues: lite, entryIds };
+}
+function restoreEntryIds({ catalogues, entryIds }) {
+  for (const locale of locales) for (const tour of catalogues[locale].tours) {
+    Object.defineProperty(tour, 'entryId', { value: entryIds[locale]?.[String(tour.id)], enumerable: false });
+  }
+  return catalogues;
+}
+
 export function createNativeSiteData({
   compatibility=compatibilitySource,
   readTourPages=createSqlTourSource(),
@@ -150,15 +214,26 @@ export function createNativeSiteData({
   lookupMediaStorageKeys=lookupStorageKeys,
   presentTours=optimizeTourHeroes,
   readEntry=createSqlEntrySource(),
+  snapshotStore=createKvSnapshotStore(),
+  readVersionParts=createSqlVersionSource(),
 }={}) {
   const requestLoads=new WeakMap();
   const load=async()=>{
-    // The vocabulary comes first: every page of tours needs it to attach terms.
-    const {vocabulary:rawVocabulary,hints:taxonomyHints}=await readVocabulary();
+    const shared={};
+    // The vocabulary and the version parts are independent queries, so they go out together.
+    const [{vocabulary:rawVocabulary,hints:taxonomyHints},versionParts]=await Promise.all([
+      readVocabulary(),
+      Promise.resolve().then(()=>readVersionParts(shared)).catch(()=>null),
+    ]);
     const vocabulary=Object.fromEntries(locales.map(locale=>[locale,Object.fromEntries(TAXONOMY_NAMES.map(name=>[name,rawVocabulary[locale]?.[name]||[]]))]));
+    const snapshotKey=versionParts?await sha256(JSON.stringify([SNAPSHOT_FORMAT,vocabulary,versionParts])):null;
+    if (snapshotKey) {
+      const hit=await snapshotStore.get(snapshotKey);
+      if (hit?.catalogues?.en?.tours && hit.catalogues.zh?.tours) return {catalogues:restoreEntryIds(hit),cacheHint:mergeHints([{tags:['tours']},{tags:['tours']},...taxonomyHints])};
+    }
     // Memory is the constraint in the Worker: one locale at a time, in pages of PAGE_SIZE, and each page's raw
     // entries are released as soon as its tours exist. Only a small stub per entry survives for translation linking.
-    const catalogues={}, stubs={}, collectionHints=[], shared={};
+    const catalogues={}, stubs={}, collectionHints=[];
     for (const locale of locales) {
       const tours=[], excluded=[], seenIds=new Set(), sortDates=new Map();
       stubs[locale]=[];
@@ -186,8 +261,10 @@ export function createNativeSiteData({
       catalogues[locale]={tours:await presentTours(tours),terms,excluded};
     }
     linkPublishedTranslations(catalogues,stubs);
+    const snapshot=toLiteCatalogues(catalogues);
+    if (snapshotKey) await snapshotStore.put(snapshotKey,snapshot);
     const hints=[...collectionHints,...taxonomyHints];
-    return {catalogues,cacheHint:mergeHints(hints)};
+    return {catalogues:restoreEntryIds(snapshot),cacheHint:mergeHints(hints)};
   };
   const current=()=>{
     const context=getContext();
