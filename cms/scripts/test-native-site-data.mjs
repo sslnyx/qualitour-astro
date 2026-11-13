@@ -32,8 +32,10 @@ function harness({context={request:true},error,lookup,seoImage}={}){
 test('loads every published locale without a limit and links native translations and terms',async()=>{
   const {api,calls,taxonomyCalls}=harness();
   const catalogues=await api.getNativeSiteCatalogues();
-  assert.equal(calls.length,2);
-  for(const call of calls){assert.equal(call.type,'tours');assert.equal(call.filter.status,'published');assert.equal(Object.hasOwn(call.filter,'limit'),false);assert.deepEqual(call.filter.orderBy,{published_at:'desc'});}
+  assert.equal(calls.length,3,'one warm-up query, then one full query per locale');
+  assert.equal(calls[0].filter.limit,1,'the warm-up is a one-entry query that runs first');
+  assert.deepEqual(calls.slice(1).map(call=>call.filter.locale),['en','zh'],'locales load one at a time');
+  for(const call of calls.slice(1)){assert.equal(call.type,'tours');assert.equal(call.filter.status,'published');assert.equal(Object.hasOwn(call.filter,'limit'),false);assert.deepEqual(call.filter.orderBy,{published_at:'desc'});}
   assert.deepEqual(catalogues.en.tours[0].translations.zh,{id:'native-zh',slug:'native-zh'});
   assert.deepEqual(catalogues.en.tours[0].nativeSeo,{title:'en SEO'});
   assert.equal(catalogues.en.tours[0].optimizedHero.width,1200);
@@ -48,28 +50,28 @@ test('loads every published locale without a limit and links native translations
     'zh:cruise_types','zh:destinations','zh:travel_regions','zh:travel_styles',
   ]);
   assert.deepEqual(await api.getNativeSiteCacheHint(),{tags:['collection:en','collection:zh','taxonomy:destinations','taxonomy:travel_styles','taxonomy:travel_regions','taxonomy:cruise_types']});
-  assert.equal(calls.length,2,'cache hint must share the same request-scoped load');
+  assert.equal(calls.length,3,'cache hint must share the same request-scoped load');
 });
 
 test('memoizes only within one request context and retries after failures',async()=>{
   const context={request:1};
   const {api,calls}=harness({context});
   await Promise.all([api.getNativeSiteCatalogues(),api.getNativeSiteCatalogues()]);
-  assert.equal(calls.length,2);
+  assert.equal(calls.length,3);
   context.request=2;
   await api.getNativeSiteCatalogues();
-  assert.equal(calls.length,2,'the same context object remains the same request identity');
+  assert.equal(calls.length,3,'the same context object remains the same request identity');
   const failed=harness({error:true});
   await assert.rejects(failed.api.getNativeSiteCatalogues(),/database failed/);
   await assert.rejects(failed.api.getNativeSiteCatalogues(),/database failed/);
-  assert.equal(failed.calls.length,2,'failed request memo is evicted so callers can retry (each attempt stops at the first failing locale)');
+  assert.equal(failed.calls.length,2,'failed request memo is evicted so callers can retry (each attempt stops at the failing warm-up)');
 });
 
 test('does not create an isolate cache when no request context exists',async()=>{
   const {api,calls}=harness({context:null});
   await api.getNativeSiteCatalogues();
   await api.getNativeSiteCatalogues();
-  assert.equal(calls.length,4);
+  assert.equal(calls.length,6);
 });
 
 test('SEO image media IDs resolve to the public storage-key route; unresolved IDs are dropped',async()=>{

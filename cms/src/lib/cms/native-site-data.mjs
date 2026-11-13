@@ -106,6 +106,10 @@ export function createNativeSiteData({
         vocabulary[locale][name]=flattenTerms(result.data).map(taxonomyRow);
       }
     }
+    // Hydrating a collection lazily imports EmDash's taxonomy module. A one-entry query runs that import
+    // now, while memory is free, so the large queries below find the module already evaluated.
+    const warmup=await getCollection('tours',{status:'published',locale:locales[0],limit:1,orderBy:{published_at:'desc'}});
+    if (warmup.error) throw warmup.error;
     // One locale at a time keeps peak memory to a single hydrated collection.
     const collectionResults={};
     for (const locale of locales) {
