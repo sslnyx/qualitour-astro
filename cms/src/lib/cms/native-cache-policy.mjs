@@ -25,6 +25,18 @@ export function privateProofResponse(request, response) {
  return hasPrivateHeaders(request) || response.status !== 200 || response.headers.has('Set-Cookie');
 }
 
+/**
+ * The assets service matches a non-ASCII file name only when its percent-escapes are uppercase (%E8), while the
+ * links on our own pages spell them in lowercase (%e8). Without this, every Chinese tour page whose render failed
+ * missed its prerendered page and came back as a 503.
+ */
+const assetRequest = request => {
+ const url=new URL(request.url), pathname=url.pathname.replace(/%[0-9a-f]{2}/gi,escape=>escape.toUpperCase());
+ if(pathname===url.pathname)return request;
+ url.pathname=pathname;
+ return new Request(url,request);
+};
+
 const reasonOf = error => String(error instanceof Error ? `${error.name}: ${error.message}` : error).replace(/[^\w .:,'()/-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140);
 
 /**
@@ -45,7 +57,7 @@ export async function withStaticFallback(request, response, assets) {
  if(!failed)return body===undefined?response:new Response(body,{status:response.status,statusText:response.statusText,headers:response.headers});
  if(!assets)return body===undefined?response:new Response(null,{status:503,headers:{'Cache-Control':'private, no-store','X-Qualitour-Fallback-Reason':reason||'unknown'}});
  let fallback;
- try{fallback=await assets.fetch(request);}catch{return response.status===200?new Response('Content temporarily unavailable',{status:503,headers:{'Cache-Control':'private, no-store','X-Qualitour-Fallback-Reason':reason||'unknown'}}):response;}
+ try{fallback=await assets.fetch(assetRequest(request));}catch{return response.status===200?new Response('Content temporarily unavailable',{status:503,headers:{'Cache-Control':'private, no-store','X-Qualitour-Fallback-Reason':reason||'unknown'}}):response;}
  if(fallback.status!==200)return response.status===200?new Response('Content temporarily unavailable',{status:503,headers:{'Cache-Control':'private, no-store','X-Qualitour-Fallback-Reason':reason||'unknown'}}):response;
  const headers=new Headers(fallback.headers);
  headers.set('Cache-Control','private, no-store');

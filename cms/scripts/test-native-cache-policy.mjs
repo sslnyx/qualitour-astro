@@ -85,3 +85,14 @@ test('derived images get a year-long immutable cache, other responses are left a
  const missing=new Response('nope',{status:404,headers:{'Content-Type':'image/webp'}});assert.equal(immutableImageResponse(missing),missing);
  const html=new Response('<p>',{status:200,headers:{'Content-Type':'text/html'}});assert.equal(immutableImageResponse(html),html);
 });
+test('a failed render of a path with lowercase percent-escapes still finds its prerendered page',async()=>{
+ // Our own links spell escapes in lowercase (%e8), but the assets service only matches the uppercase spelling of a non-ASCII file name.
+ const looked=[];
+ const assets={fetch:async request=>{const path=new URL(request.url).pathname;looked.push(path);return path==='/zh/tours/2027%E5%B9%B4-tour'?new Response('<html>static zh tour</html>',{status:200,headers:{'Content-Type':'text/html'}}):new Response('not found',{status:404});}};
+ const result=await withStaticFallback(get('/zh/tours/2027%e5%b9%b4-tour'),failed(),assets);
+ assert.equal(result.status,200);assert.equal(await result.text(),'<html>static zh tour</html>');
+ assert.equal(result.headers.get('X-Qualitour-Rendered'),'static-fallback');
+ assert.ok(looked.every(path=>path==='/zh/tours/2027%E5%B9%B4-tour'),'the asset is requested with uppercase escapes');
+ const head=await withStaticFallback(new Request('https://example.test/zh/tours/2027%e5%b9%b4-tour?x=1',{method:'HEAD'}),failed(),assets);
+ assert.equal(head.status,200,'HEAD and query strings follow the same path');
+});
