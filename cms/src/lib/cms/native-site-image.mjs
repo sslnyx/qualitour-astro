@@ -29,7 +29,7 @@ export function ownedMediaPath(value) {
 function transformHref(value) {
   const owned=ownedMediaPath(value);if(owned)return owned;
   if(typeof value!=='string')return;
-  try{const url=new URL(value);if((url.hostname==='qualitour.ca'||url.hostname.endsWith('.qualitour.ca'))&&url.pathname.startsWith('/wp-content/uploads/'))return url.href;}catch{return;}
+  try{const url=new URL(value);if((url.hostname==='qualitour.ca'||url.hostname.endsWith('.qualitour.ca'))&&/^\/(?:zh\/)?wp-content\/uploads\//.test(url.pathname))return url.href;}catch{return;}
 }
 function claimsCmsMedia(value){return typeof value==='string'&&/(?:^|\/)\_emdash\/api\/media\/file\//.test(value);}
 

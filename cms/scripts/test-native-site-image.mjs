@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { deepOptimizeTourData, getImageSafe, getTourImageUrl, optimizeResponsiveImage, optimizeTourHero, optimizeTourImages, optimizeTourPresentation } from '../src/lib/cms/native-site-image.mjs';
+import { deepOptimizeTourData, getImageSafe, imageTransformUrl, getTourImageUrl, optimizeResponsiveImage, optimizeTourHero, optimizeTourImages, optimizeTourPresentation } from '../src/lib/cms/native-site-image.mjs';
 
 const owned='https://qualitour.qualitour.workers.dev/_emdash/api/media/file/hero.jpg';
 const inline='https://qualitour-cms-free-test.qualitour.workers.dev/_emdash/api/media/file/inline.jpg';
@@ -55,4 +55,11 @@ test('catalogue presentation adds only the hero, in place, and detail presentati
   const detail=await optimizeTourPresentation(result);
   assert.equal(detail.optimizedPhotos[owned].width,1200,'media-size hints survive for the detail page');
   assert.equal(detail.optimizedHero,result.optimizedHero);
+});
+
+test('images from both WordPress installs (English and /zh) are transformed, other paths and hosts are not',()=>{
+ for(const url of ['https://qualitour.ca/wp-content/uploads/2024/04/a.jpg','https://qualitour.ca/zh/wp-content/uploads/2021/02/whistler-6.jpg','https://www.qualitour.ca/zh/wp-content/uploads/x.avif'])
+  assert.match(imageTransformUrl(url,600),/^\/_image\?href=https%3A%2F%2F.*qualitour\.ca.*wp-content%2Fuploads.*&w=600&f=webp&q=80$/,url);
+ for(const url of ['https://qualitour.ca/zh/wp-content/plugins/x.jpg','https://qualitour.ca/fr/wp-content/uploads/x.jpg','https://evil.example/zh/wp-content/uploads/x.jpg'])
+  assert.equal(imageTransformUrl(url,600),undefined,url);
 });
