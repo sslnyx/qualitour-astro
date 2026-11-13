@@ -39,7 +39,7 @@ export async function withStaticFallback(request, response, assets) {
  if(!get||!nativeSiteRoute(new URL(request.url).pathname))return response;
  let reason=response.headers.get('X-Qualitour-Error')||undefined, failed=response.status===503, body;
  if(response.status===200&&request.method==='GET'){
-  try{body=await response.arrayBuffer();if(body.byteLength===0){failed=true;reason='empty body';}}
+  try{body=await response.arrayBuffer();if(body.byteLength===0){failed=true;reason=`empty body (length ${response.headers.get('content-length')??'-'}, type ${response.headers.get('content-type')??'-'}, encoding ${response.headers.get('content-encoding')??'-'}, ${response.body===null?'null body':'had body'})`;}}
   catch(error){failed=true;reason=`body stream failed: ${reasonOf(error)}`;}
  }
  if(!failed)return body===undefined?response:new Response(body,{status:response.status,statusText:response.statusText,headers:response.headers});

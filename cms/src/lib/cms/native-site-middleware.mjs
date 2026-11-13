@@ -34,8 +34,12 @@ export const onRequest=defineMiddleware(async(context,next)=>{
   if(context.request.headers.has('Authorization')||context.request.headers.has('Cookie'))context.cache.set(false);
   else {const hint=await getNativeSiteCacheHint();context.cache.set({...hint,tags:[...new Set(['tours',...(hint?.tags||[])])],maxAge:300});}
   const response=await next();
-  if(response.status!==200)context.cache.set(false);
-  return response;
+  if(response.status!==200){context.cache.set(false);return response;}
+  // Astro streams the page, so a render error after the response starts ends the stream silently (a 200 with
+  // nothing in it). Reading it here turns that into the real error, which the outer Worker reports and falls back on.
+  const html=await response.arrayBuffer();
+  if(html.byteLength===0)throw new Error('The page rendered an empty body');
+  return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});
  }catch(error){
   context.cache.set(false);
   // Operator-only log line: the visitor still gets the generic 503 below.

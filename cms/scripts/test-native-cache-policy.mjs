@@ -67,7 +67,7 @@ test('the fallback never replaces a good answer, a real 404, other methods, othe
 test('an empty or unreadable 200 is treated as a failed render; a good page passes through intact',async()=>{
  const asset=()=>assetsReturning(new Response('<html>static</html>',{status:200,headers:{'Content-Type':'text/html'}}));
  const empty=await withStaticFallback(get('/tours'),new Response('',{status:200}),asset());
- assert.equal(await empty.text(),'<html>static</html>');assert.equal(empty.headers.get('X-Qualitour-Rendered'),'static-fallback');assert.equal(empty.headers.get('X-Qualitour-Fallback-Reason'),'empty body');
+ assert.equal(await empty.text(),'<html>static</html>');assert.equal(empty.headers.get('X-Qualitour-Rendered'),'static-fallback');assert.match(empty.headers.get('X-Qualitour-Fallback-Reason'),/^empty body \(length -, type text\/plain/);
  const broken=new Response(new ReadableStream({start(controller){controller.enqueue(new TextEncoder().encode('<ht'));controller.error(new Error('Dynamic import exceeded memory limits.'));}}),{status:200});
  const recovered=await withStaticFallback(get('/'),broken,asset());
  assert.equal(await recovered.text(),'<html>static</html>');assert.match(recovered.headers.get('X-Qualitour-Fallback-Reason'),/body stream failed: Error: Dynamic import exceeded memory limits/);
@@ -75,6 +75,6 @@ test('an empty or unreadable 200 is treated as a failed render; a good page pass
  assert.equal(await good.text(),'<html>native</html>');assert.equal(good.headers.get('X-Qualitour-Rendered'),'abc');
  const noAsset=await withStaticFallback(get('/tours/style/cruises'),new Response('',{status:200}),assetsReturning(new Response('nope',{status:404})));
  assert.equal(noAsset.status,503,'a blank page with no static twin becomes an honest 503, never a white screen');
- assert.equal(noAsset.headers.get('X-Qualitour-Fallback-Reason'),'empty body');
+ assert.match(noAsset.headers.get('X-Qualitour-Fallback-Reason'),/^empty body/);
  const head=new Response(null,{status:200});assert.equal(await withStaticFallback(get('/tours','HEAD'),head,asset()),head);
 });
