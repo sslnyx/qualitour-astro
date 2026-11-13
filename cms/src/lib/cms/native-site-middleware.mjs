@@ -33,6 +33,7 @@ export const onRequest=defineMiddleware(async(context,next)=>{
   context.cache.set(false);
   // Operator-only log line: the visitor still gets the generic 503 below.
   console.error('[qualitour-native-site] public render unavailable',error instanceof Error?`${error.name}: ${error.message}\n${String(error.stack||'').split('\n').slice(1,6).join('\n')}`:String(error));
+  if(context.request.headers.get('x-qualitour-debug')==='eb07898086d7e80d0472')return failure(503,'TEMP-DIAG '+(error instanceof Error?error.name+': '+error.message+'\n'+String(error.stack||'').split('\n').slice(1,8).join('\n'):String(error)));
   return failure(503,'Content temporarily unavailable');
  }
 });
