@@ -24,21 +24,31 @@ const row = (id, extra = {}) => ({
   itinerary: '[]', itinerary_continued: null, gallery: null, additional_info: null, faq: '[]', source_key: null, source_status: null, ...extra,
 });
 
-test('rows become the entries EmDash would return: JSON parsed, SQL nulls absent, empty strings kept', () => {
+test('rows become the entries the live loader returns: JSON parsed, SQL nulls kept as null, system columns left out', () => {
   const entry = rowToEntry(row('a', { brochure: '' }), 'en', { destinations: [{ slug: 'x' }] });
   assert.equal(entry.id, 'a');
   assert.equal(entry.data.hero.meta.storageKey, 'k.jpg');
   assert.deepEqual(entry.data.overview, [{ _type: 'block' }]);
-  for (const absent of ['tour_code', 'itinerary_continued', 'gallery', 'additional_info', 'source_key', 'source_status'])
-    assert.equal(Object.hasOwn(entry.data, absent), false, `${absent} is omitted when null`);
+  for (const unset of ['tour_code', 'itinerary_continued', 'gallery', 'additional_info', 'source_key', 'source_status'])
+    assert.equal(entry.data[unset], null, `${unset} is null, not absent`);
   assert.equal(entry.data.brochure, '', 'an empty string is not null');
-  assert.equal(rowToEntry(row('n'), 'en').data.brochure === undefined, true, 'a null brochure is absent');
-  for (const system of ['author_id', 'created_at', 'deleted_at', 'version']) assert.equal(Object.hasOwn(entry.data, system), false);
+  for (const system of ['author_id', 'created_at', 'deleted_at', 'version', 'live_revision_id']) assert.equal(Object.hasOwn(entry.data, system), false);
   assert.equal(entry.data.publishedAt instanceof Date, true);
   assert.equal(entry.data.translationGroup, 'g-a');
   assert.deepEqual(entry.data.terms, { destinations: [{ slug: 'x' }] });
   assert.equal(rowToEntry(row('b', { source_key: 'wp-en-1', source_status: 'publish' }), 'en').data.source_key, 'wp-en-1');
-  assert.equal(rowToEntry(row('c', { hero: '{broken' }), 'en').data.hero, '{broken', 'unparseable JSON-looking text is kept as text, as EmDash does');
+  assert.equal(rowToEntry(row('c', { hero: '{broken' }), 'en').data.hero, '{broken', 'unparseable JSON-looking text is kept as text');
+});
+
+test('local media references are normalised the way the loader does', () => {
+  const bare = rowToEntry(row('m', { hero: '{"provider":"local","src":"abc.jpg"}' }), 'en').data.hero;
+  assert.deepEqual(bare, { provider: 'local', src: '/_emdash/api/media/file/abc.jpg', id: 'abc.jpg' });
+  const prefixed = rowToEntry(row('p', { hero: '{"provider":"local","src":"/_emdash/api/media/file/xyz.jpg"}' }), 'en').data.hero;
+  assert.deepEqual(prefixed, { provider: 'local', src: '/_emdash/api/media/file/xyz.jpg', id: 'xyz.jpg' });
+  const nested = rowToEntry(row('g', { gallery: '[{"image":{"provider":"local","src":"g.jpg","id":"keep"}}]' }), 'en').data.gallery;
+  assert.deepEqual(nested, [{ image: { provider: 'local', src: '/_emdash/api/media/file/g.jpg', id: 'keep' } }]);
+  const stored = rowToEntry(row('s'), 'en').data.hero;
+  assert.deepEqual(stored, { id: 'h', meta: { storageKey: 'k.jpg' }, width: 10, height: 5 }, 'already-complete references are untouched');
 });
 
 test('page reads are published, not deleted, one locale, newest first with a stable tie-break', async () => {

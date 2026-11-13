@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildCatalogue, contentHash, renderRichText, mediaUrl, normalizeCmsMediaReferences, sortToursByPublishedAt } from '../src/lib/cms/legacy-adapter.mjs';
+import { buildCatalogue, claimsImport, contentHash, renderRichText, mediaUrl, normalizeCmsMediaReferences, sortToursByPublishedAt } from '../src/lib/cms/legacy-adapter.mjs';
 import { createCmsReader, CMS_ORIGIN, normalizeCmsMediaUrl, resolveCmsOrigin } from '../src/lib/cms/read-client.mjs';
 
 const block = text => [{ _type: 'block', children: [{ _type: 'span', text }] }];
@@ -192,4 +192,16 @@ test('stale CMS media hosts normalize in a derived presentation without mutating
   assert.match(presentation.goodlayers_data.sections[0].value.content, new RegExp(`${old}/ordinary-page`));
   assert.equal(presentation.external, source.external);
   assert.equal(normalizeCmsMediaUrl(`${old}/_emdash/api/media/file/photo.jpg`, current), `${current}/_emdash/api/media/file/photo.jpg`);
+});
+
+test('the live loader exposes unset columns as null: a native tour with null source columns is native, any string claims an import',()=>{
+  const f=fixture();
+  const native=(extra={})=>({id:'01NATIVE0000000000000000009',slug:'null-source-native',locale:'en',status:'published',publishedAt:'2026-11-12T02:00:00Z',data:{title:'Null source',currency:'CAD',source_key:null,source_status:null,brochure:null,gallery:null,...extra}});
+  const result=buildCatalogue([f.entry,native()],f.compat,'en');
+  assert.equal(result.tours.find(row=>row.slug==='null-source-native').id,'01NATIVE0000000000000000009');
+  assert.equal(claimsImport({source_key:null,source_status:null}),false);
+  assert.equal(claimsImport({}),false);
+  assert.equal(claimsImport({source_key:'wp-en-1'}),true);
+  assert.equal(claimsImport({source_key:''}),true);
+  assert.equal(claimsImport({source_key:null,source_status:'publish'}),true);
 });

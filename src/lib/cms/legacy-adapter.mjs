@@ -177,6 +177,14 @@ function nativeTour(entry, source, taxonomyOverride) {
 export function sortCatalogueTours(tours, sortDates) {
   return tours.sort((a,b)=>String(sortDates.get(b.id)).localeCompare(String(sortDates.get(a.id)))||compareIds(b.id,a.id));
 }
+/**
+ * Whether an entry is one of the imported WordPress tours. The live loader exposes unset columns as null, so a
+ * native tour carries `source_key: null`; any string (even an empty one, which then fails identity checks) claims
+ * an import.
+ */
+export function claimsImport(data) {
+  return ['source_key','source_status'].some(field => typeof data?.[field] === 'string');
+}
 export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = new Map(), allowEmpty = false } = {}) {
   const source = compat.locales[locale]; if (!source) throw new Error('Missing locale compatibility manifest');
   const seen = new Set(), slugs = new Set(), excluded = [], tours = [], sortDates = new Map();
@@ -186,8 +194,7 @@ export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = ne
     if (PROOF_IDS.has(entry.id)) { excluded.push(entry.id); continue; }
     const data = entry.data || {};
     const taxonomyOverride = taxonomyOverrides.get?.(entry.id);
-    const claimsImport = Object.hasOwn(data,'source_key') || Object.hasOwn(data,'source_status');
-    if (!claimsImport) {
+    if (!claimsImport(data)) {
       const tour = nativeTour(entry, source, taxonomyOverride), slug = slugKey(tour.slug);
       if (seen.has(`cms:${entry.id}`) || slugs.has(slug)) throw new Error('Duplicate native CMS identity or public slug');
       seen.add(`cms:${entry.id}`); slugs.add(slug); tours.push(tour); sortDates.set(tour.id,tour.date); continue;

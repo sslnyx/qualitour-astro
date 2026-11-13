@@ -1,5 +1,5 @@
 import compatibilitySource from '../../../../src/data/cms-legacy-compat.json' with { type: 'json' };
-import { buildCatalogue, retainPublicTranslations, sortCatalogueTours } from '../../../../src/lib/cms/legacy-adapter.mjs';
+import { buildCatalogue, claimsImport, retainPublicTranslations, sortCatalogueTours } from '../../../../src/lib/cms/legacy-adapter.mjs';
 import { getEmDashEntry, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
 import { getDb } from 'emdash/runtime';
 import { assignTourCategories, buildCategoryTerms } from './native-site-categories.mjs';
@@ -60,8 +60,7 @@ function linkPublishedTranslations(catalogues, entries) {
     if (!group.en || !group.zh) continue;
     const en=byLocale.en.get(projectedId(group.en)), zh=byLocale.zh.get(projectedId(group.zh));
     if (!en || !zh) continue;
-    const importedEn=Object.hasOwn(group.en.data,'source_key') || Object.hasOwn(group.en.data,'source_status');
-    const importedZh=Object.hasOwn(group.zh.data,'source_key') || Object.hasOwn(group.zh.data,'source_status');
+    const importedEn=claimsImport(group.en.data), importedZh=claimsImport(group.zh.data);
     if (importedEn && importedZh) continue;
     if (en.translations && Object.keys(en.translations).length || zh.translations && Object.keys(zh.translations).length) continue;
     en.translations={zh:{id:zh.id,slug:zh.slug}};
@@ -91,7 +90,8 @@ async function resolveSeoImages(entries, lookup) {
 /** Only what translation linking needs; the full entry (itineraries, rich text) can then be released. */
 function linkingStub(entry) {
   const data={};
-  for (const key of ['translationGroup','source_key','source_status']) if (Object.hasOwn(entry.data,key)) data[key]=entry.data[key];
+  if (typeof entry.data.translationGroup==='string') data.translationGroup=entry.data.translationGroup;
+  if (claimsImport(entry.data)) for (const key of ['source_key','source_status']) if (typeof entry.data[key]==='string') data[key]=entry.data[key];
   return { id:entry.id, data };
 }
 function mergeHints(hints) {

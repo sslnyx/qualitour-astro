@@ -9,17 +9,37 @@
  * The functions take a Kysely-compatible `db` so they can be exercised without a Worker.
  */
 const COLLECTION = 'ec_tours';
-// Mirrors EmDash's content repository (`SYSTEM_COLUMNS`, `mapRow`, `deserializeValue`) so entries built here
-// are indistinguishable from collection entries: SQL nulls are omitted (never exposed as null), and any value
-// that looks like JSON is parsed. An empty string stays an empty string.
+// Mirrors the live loader EmDash serves collections through (`mapRowToData` in loader.ts): system columns are
+// left out, SQL nulls stay null, text that looks like JSON is parsed, and local media references are normalised.
 const SYSTEM_COLUMNS = new Set([
   'id', 'slug', 'status', 'author_id', 'primary_byline_id', 'created_at', 'updated_at', 'published_at',
   'scheduled_at', 'deleted_at', 'version', 'live_revision_id', 'draft_revision_id', 'locale', 'translation_group',
 ]);
+const LOCAL_MEDIA_FILE_PREFIX = '/_emdash/api/media/file/';
+const isRecord = value => typeof value === 'object' && value !== null && !Array.isArray(value);
+const isBareMediaKey = src => !src.startsWith('/') && !/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(src);
 
-function deserializeValue(value) {
+function normalizeLocalMediaValue(value) {
+  if (Array.isArray(value)) return value.map(normalizeLocalMediaValue);
+  if (!isRecord(value)) return value;
+  const normalized = {};
+  for (const [key, child] of Object.entries(value)) normalized[key] = normalizeLocalMediaValue(child);
+  if (normalized.provider === 'local' && typeof normalized.src === 'string' && normalized.src.length > 0) {
+    const src = normalized.src;
+    if (src.startsWith(LOCAL_MEDIA_FILE_PREFIX)) {
+      const id = src.slice(LOCAL_MEDIA_FILE_PREFIX.length);
+      if (!normalized.id && id) normalized.id = id;
+    } else if (isBareMediaKey(src)) {
+      if (!normalized.id) normalized.id = src;
+      normalized.src = `${LOCAL_MEDIA_FILE_PREFIX}${src}`;
+    }
+  }
+  return normalized;
+}
+
+function mapValue(value) {
   if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))) {
-    try { return JSON.parse(value); } catch { return value; }
+    try { return normalizeLocalMediaValue(JSON.parse(value)); } catch { return value; }
   }
   return value;
 }
@@ -27,7 +47,7 @@ function deserializeValue(value) {
 /** A content row in the shape `getEmDashCollection` returns, minus hydration. */
 export function rowToEntry(row, locale, terms = {}) {
   const data = {};
-  for (const [key, value] of Object.entries(row)) if (!SYSTEM_COLUMNS.has(key) && value !== null && value !== undefined) data[key] = deserializeValue(value);
+  for (const [key, value] of Object.entries(row)) if (!SYSTEM_COLUMNS.has(key)) data[key] = mapValue(value);
   return {
     id: row.id,
     slug: row.slug,
