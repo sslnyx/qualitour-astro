@@ -151,3 +151,11 @@ test('a detail page for a missing or preview-only entry is not served, and read 
   await assert.rejects(failing.api.getNativeTourDetail('en',(await failing.api.getNativeSiteCatalogues()).en.tours[0]),/read failed/);
   await assert.rejects(failing.api.getNativeTourDetail('en',{id:1}),/no CMS entry/);
 });
+
+test('a detail page drops baseline translation links the catalogue did not keep',async()=>{
+  const {api}=harness({getEntry:entries=>async(type,id,options)=>({entry:structuredClone(entries[options.locale].find(row=>row.id===id))})});
+  const tour={...(await api.getNativeSiteCatalogues()).en.tours[0]};
+  delete tour.translations;
+  Object.defineProperty(tour,'entryId',{value:'native-en'});
+  assert.equal(Object.hasOwn(await api.getNativeTourDetail('en',tour),'translations'),false);
+});

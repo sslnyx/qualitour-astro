@@ -9,27 +9,25 @@
  * The functions take a Kysely-compatible `db` so they can be exercised without a Worker.
  */
 const COLLECTION = 'ec_tours';
-const JSON_FIELDS = ['hero', 'brochure', 'overview', 'itinerary', 'itinerary_continued', 'gallery', 'additional_info', 'faq'];
-const PLAIN_FIELDS = ['title', 'tour_code', 'summary', 'price', 'currency', 'duration', 'location', 'source_key', 'source_status'];
+// Mirrors EmDash's content repository (`SYSTEM_COLUMNS`, `mapRow`, `deserializeValue`) so entries built here
+// are indistinguishable from collection entries: SQL nulls are omitted (never exposed as null), and any value
+// that looks like JSON is parsed. An empty string stays an empty string.
+const SYSTEM_COLUMNS = new Set([
+  'id', 'slug', 'status', 'author_id', 'primary_byline_id', 'created_at', 'updated_at', 'published_at',
+  'scheduled_at', 'deleted_at', 'version', 'live_revision_id', 'draft_revision_id', 'locale', 'translation_group',
+]);
 
-function parseJson(value, field, id) {
-  if (value === null || value === undefined || value === '') return null;
-  if (typeof value !== 'string') return value;
-  try { return JSON.parse(value); }
-  catch { throw new Error(`Invalid stored ${field} for CMS entry ${id}`); }
+function deserializeValue(value) {
+  if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))) {
+    try { return JSON.parse(value); } catch { return value; }
+  }
+  return value;
 }
 
-/**
- * A content row in the shape `getEmDashCollection` returns, minus hydration. Absent columns stay absent
- * (EmDash omits fields a collection does not declare), while null columns stay null.
- */
+/** A content row in the shape `getEmDashCollection` returns, minus hydration. */
 export function rowToEntry(row, locale, terms = {}) {
   const data = {};
-  for (const field of PLAIN_FIELDS) if (field in row) data[field] = row[field];
-  for (const field of JSON_FIELDS) if (field in row) data[field] = parseJson(row[field], field, row.id);
-  // EmDash leaves an unset structured field out of `data` instead of exposing null, and the adapter tells
-  // imported entries from native ones by whether `source_key`/`source_status` exist at all.
-  for (const field of [...JSON_FIELDS, 'source_key', 'source_status']) if (data[field] === null) delete data[field];
+  for (const [key, value] of Object.entries(row)) if (!SYSTEM_COLUMNS.has(key) && value !== null && value !== undefined) data[key] = deserializeValue(value);
   return {
     id: row.id,
     slug: row.slug,

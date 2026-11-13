@@ -197,7 +197,8 @@ export function createNativeSiteData({
     const full=buildCatalogue([entry],compatibility,locale,{allowEmpty:true}).tours[0];
     if (!full) return null;
     full.tour_terms=tour.tour_terms;
-    if (tour.translations) full.translations=tour.translations;
+    // The single-entry build carries the frozen baseline's links; only the catalogue knows which are still public.
+    if (tour.translations) full.translations=tour.translations; else delete full.translations;
     if (tour.optimizedHero) full.optimizedHero=tour.optimizedHero;
     return full;
   };

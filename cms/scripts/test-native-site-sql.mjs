@@ -24,19 +24,21 @@ const row = (id, extra = {}) => ({
   itinerary: '[]', itinerary_continued: null, gallery: null, additional_info: null, faq: '[]', source_key: null, source_status: null, ...extra,
 });
 
-test('rows become the entries EmDash would return: parsed JSON, null structured fields absent, dates as Date', () => {
-  const entry = rowToEntry(row('a'), 'en', { destinations: [{ slug: 'x' }] });
+test('rows become the entries EmDash would return: JSON parsed, SQL nulls absent, empty strings kept', () => {
+  const entry = rowToEntry(row('a', { brochure: '' }), 'en', { destinations: [{ slug: 'x' }] });
   assert.equal(entry.id, 'a');
   assert.equal(entry.data.hero.meta.storageKey, 'k.jpg');
   assert.deepEqual(entry.data.overview, [{ _type: 'block' }]);
-  for (const absent of ['brochure', 'gallery', 'additional_info', 'itinerary_continued', 'source_key', 'source_status'])
+  for (const absent of ['tour_code', 'itinerary_continued', 'gallery', 'additional_info', 'source_key', 'source_status'])
     assert.equal(Object.hasOwn(entry.data, absent), false, `${absent} is omitted when null`);
-  assert.equal(entry.data.tour_code, null, 'plain null columns stay null');
+  assert.equal(entry.data.brochure, '', 'an empty string is not null');
+  assert.equal(rowToEntry(row('n'), 'en').data.brochure === undefined, true, 'a null brochure is absent');
+  for (const system of ['author_id', 'created_at', 'deleted_at', 'version']) assert.equal(Object.hasOwn(entry.data, system), false);
   assert.equal(entry.data.publishedAt instanceof Date, true);
   assert.equal(entry.data.translationGroup, 'g-a');
   assert.deepEqual(entry.data.terms, { destinations: [{ slug: 'x' }] });
   assert.equal(rowToEntry(row('b', { source_key: 'wp-en-1', source_status: 'publish' }), 'en').data.source_key, 'wp-en-1');
-  assert.throws(() => rowToEntry(row('c', { hero: '{broken' }), 'en'), /Invalid stored hero for CMS entry c/);
+  assert.equal(rowToEntry(row('c', { hero: '{broken' }), 'en').data.hero, '{broken', 'unparseable JSON-looking text is kept as text, as EmDash does');
 });
 
 test('page reads are published, not deleted, one locale, newest first with a stable tie-break', async () => {
@@ -60,7 +62,7 @@ test('terms resolve by translation group and a language without the translation 
   const en = { destinations: [{ id: 'd-en', slug: 'geo-ca', label: 'Canada', parentId: null, locale: 'en', translationGroup: 'g1' }, { id: 'd2-en', slug: 'geo-us', label: 'USA', parentId: null, locale: 'en', translationGroup: 'g2' }] };
   const zh = { destinations: [{ id: 'd-zh', slug: 'geo-ca', label: '加拿大', parentId: null, locale: 'zh', translationGroup: 'g1' }] };
   const result = termsForEntry(['g1', 'g2', 'gone'], zh, en);
-  assert.deepEqual(result.destinations.map(term => [term.slug, term.label, term.locale]), [['geo-ca', '加拿大', 'zh'], ['geo-us', 'USA', 'en']]);
+  assert.deepEqual(result.destinations.map(term => [term.slug, term.label, term.locale]), [['geo-us', 'USA', 'en'], ['geo-ca', '加拿大', 'zh']]);
   assert.deepEqual(termsForEntry(['nothing'], zh, en), {}, 'taxonomies with no assignment are absent');
   assert.deepEqual(termsForEntry(['g1'], en, undefined).destinations.map(term => term.id), ['d-en']);
 });
