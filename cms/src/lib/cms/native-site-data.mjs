@@ -1,9 +1,10 @@
 import compatibilitySource from '../../../../src/data/cms-legacy-compat.json' with { type: 'json' };
 import { buildCatalogue, retainPublicTranslations, sortCatalogueTours } from '../../../../src/lib/cms/legacy-adapter.mjs';
-import { getEmDashCollection, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
+import { getEmDashEntry, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
 import { getDb } from 'emdash/runtime';
 import { assignTourCategories, buildCategoryTerms } from './native-site-categories.mjs';
 import { optimizeTourHeroes } from './native-site-image.mjs';
+import { readAssignments, readPublishedPage, rowToEntry, termsForEntry } from './native-site-sql.mjs';
 
 const locales = ['en','zh'];
 const PAGE_SIZE = 32;
@@ -99,20 +100,37 @@ function mergeHints(hints) {
   return {tags};
 }
 
+/**
+ * Published tours as pages of entries with their taxonomy terms attached, read straight from the database
+ * (see native-site-sql.mjs for why this does not go through getEmDashCollection).
+ */
+export function createSqlTourSource({ getDatabase = getDb, pageSize = PAGE_SIZE } = {}) {
+  return async function* readTourPages(locale, vocabulary) {
+    const db = await getDatabase();
+    const assignments = await readAssignments(db);
+    const fallback = locale === 'en' ? undefined : vocabulary.en;
+    for (let offset = 0; ; offset += pageSize) {
+      const rows = await readPublishedPage(db, locale, { limit: pageSize, offset });
+      if (!rows.length) return;
+      yield rows.map(row => rowToEntry(row, locale, termsForEntry(assignments.get(row.id) || [], vocabulary[locale], fallback)));
+      if (rows.length < pageSize) return;
+    }
+  };
+}
+
 export function createNativeSiteData({
   compatibility=compatibilitySource,
-  getCollection=getEmDashCollection,
+  readTourPages=createSqlTourSource(),
   getContext=getRequestContext,
   getTaxonomyDefs:getDefs=getTaxonomyDefs,
   getTaxonomyTermsWithCacheHint:getTerms=getTaxonomyTermsWithCacheHint,
   lookupMediaStorageKeys=lookupStorageKeys,
   presentTours=optimizeTourHeroes,
+  getEntry=getEmDashEntry,
 }={}) {
   const requestLoads=new WeakMap();
   const load=async()=>{
-    // Taxonomy first: it loads EmDash's taxonomy module while memory is still free.
-    // That module is otherwise imported lazily in the middle of hydrating hundreds of
-    // large entries, where the Worker aborts with "Dynamic import exceeded memory limits".
+    // The vocabulary comes first: every page of tours needs it to attach terms.
     const vocabulary={en:{},zh:{}};
     const taxonomyHints=[];
     for (const locale of locales) {
@@ -125,35 +143,31 @@ export function createNativeSiteData({
         vocabulary[locale][name]=flattenTerms(result.data).map(taxonomyRow);
       }
     }
-    // Memory is the constraint in the Worker: one hydrated locale at a time, in pages of PAGE_SIZE (one 192-entry
-    // hydration aborts with "Dynamic import exceeded memory limits"), and each locale's raw entries are released
-    // as soon as its catalogue exists. Only a small stub per entry survives for translation linking.
+    // Memory is the constraint in the Worker: one locale at a time, in pages of PAGE_SIZE, and each page's raw
+    // entries are released as soon as its tours exist. Only a small stub per entry survives for translation linking.
     const catalogues={}, stubs={}, collectionHints=[];
     for (const locale of locales) {
-      const tours=[], excluded=[], sortDates=new Map(), hints=[], seenIds=new Set();
+      const tours=[], excluded=[], seenIds=new Set(), sortDates=new Map();
       stubs[locale]=[];
-      let cursor, pageCount=0;
-      do {
-        const result=await getCollection('tours',{status:'published',locale,orderBy:{published_at:'desc'},limit:PAGE_SIZE,...(cursor?{cursor}:{})});
-        if (result.error) throw result.error;
-        if (!Array.isArray(result.entries)) throw new Error(`Invalid published ${locale} CMS collection result`);
-        const rows=result.entries.map(entry=>normalizeEntry(entry,locale));
+      let pageCount=0;
+      for await (const page of readTourPages(locale,vocabulary)) {
+        if (!Array.isArray(page)) throw new Error(`Invalid published ${locale} CMS collection result`);
+        const rows=page.map(entry=>normalizeEntry(entry,locale));
         for (const entry of rows) { if(seenIds.has(entry.id))throw new Error(`Duplicate published CMS tour ID ${entry.id}`); seenIds.add(entry.id); }
         await resolveSeoImages({[locale]:rows},lookupMediaStorageKeys);
         if (rows.length) {
           const part=buildCatalogue(rows,compatibility,locale,{allowEmpty:true});
           assignTourCategories({tours:part.tours,entries:rows,vocabulary:vocabulary[locale],tourIdFor:projectedId});
-          for (const tour of part.tours) packTourDetail(tour);
+          const entryIds=new Map(rows.map(entry=>[String(projectedId(entry)),entry.id]));
+          for (const tour of part.tours) { Object.defineProperty(tour,'entryId',{value:entryIds.get(String(tour.id)),enumerable:false}); packTourDetail(tour); }
           tours.push(...part.tours); excluded.push(...part.excluded);
           for (const [id,date] of part.sortDates) sortDates.set(id,date);
           stubs[locale].push(...rows.map(linkingStub));
         }
-        hints.push(result.cacheHint);
-        cursor=result.nextCursor;
         if (++pageCount>100) throw new Error(`Published ${locale} CMS collection did not terminate`);
-      } while (cursor);
+      }
       if (!tours.length) throw new Error(`Refusing an empty ${locale} CMS catalogue`);
-      collectionHints.push(mergeHints(hints));
+      collectionHints.push({tags:['tours']});
       sortCatalogueTours(tours,sortDates);
       const terms=buildCategoryTerms({tours,vocabulary:vocabulary[locale],locale});
       catalogues[locale]={tours:await presentTours(tours),terms,excluded};
@@ -169,12 +183,32 @@ export function createNativeSiteData({
     const pending=load().catch(error=>{requestLoads.delete(context);throw error;});
     requestLoads.set(context,pending); return pending;
   };
+  /**
+   * The catalogue holds card-level tours; a detail page reads its one complete entry through the official
+   * single-entry API (editor SEO overrides included) and keeps the catalogue's terms and translations.
+   */
+  const getNativeTourDetail=async(locale,tour)=>{
+    if (!tour?.entryId) throw new Error('Catalogue tour has no CMS entry');
+    const result=await getEntry('tours',tour.entryId,{locale});
+    if (result.error) throw result.error;
+    if (!result.entry || result.isPreview) return null;
+    const entry=normalizeEntry(result.entry,locale);
+    await resolveSeoImages({[locale]:[entry]},lookupMediaStorageKeys);
+    const full=buildCatalogue([entry],compatibility,locale,{allowEmpty:true}).tours[0];
+    if (!full) return null;
+    full.tour_terms=tour.tour_terms;
+    if (tour.translations) full.translations=tour.translations;
+    if (tour.optimizedHero) full.optimizedHero=tour.optimizedHero;
+    return full;
+  };
   return {
     getNativeSiteCatalogues:async()=>(await current()).catalogues,
     getNativeSiteCacheHint:async()=>(await current()).cacheHint,
+    getNativeTourDetail,
   };
 }
 
 const runtime=createNativeSiteData();
 export const getNativeSiteCatalogues=runtime.getNativeSiteCatalogues;
 export const getNativeSiteCacheHint=runtime.getNativeSiteCacheHint;
+export const getNativeTourDetail=runtime.getNativeTourDetail;

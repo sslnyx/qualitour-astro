@@ -4,7 +4,7 @@ import { routeNativeBooking } from '../../src/server/native-booking/index.mjs';
 import { durableExecutionContext, fetchFreeRuntime } from './lib/cms/free-runtime.mjs';
 
 import {nativeSiteRoute} from './lib/cms/native-site-policy.mjs';
-import { isNativeProofPath, validateProofTags, forwardNativeProof, privateProofResponse } from './lib/cms/native-cache-policy.mjs';
+import { isNativeProofPath, validateProofTags, forwardNativeProof, privateProofResponse, withStaticFallback } from './lib/cms/native-cache-policy.mjs';
 
 export { PluginBridge };
 
@@ -72,7 +72,8 @@ export default {
     const pathname = new URL(request.url).pathname;
     if (pathname.startsWith('/native-proof/') || nativeSiteRoute(pathname)) {
       const proof = (context.exports as { NativeProofCache: { fetch(request: Request): Promise<Response> } }).NativeProofCache;
-      return forwardNativeProof(proof, request);
+      const response = await forwardNativeProof(proof, request);
+      return withStaticFallback(request, response, env.ASSETS as { fetch(request: Request): Promise<Response> } | undefined);
     }
     const native = await routeNativeBooking(request, env, context);
     if (native) return native;

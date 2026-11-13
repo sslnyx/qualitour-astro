@@ -1,6 +1,6 @@
 import {defineMiddleware} from 'astro:middleware';
 import {getRequestContext} from 'emdash';
-import {getNativeSiteCatalogues,getNativeSiteCacheHint} from './native-site-data.mjs';
+import {getNativeSiteCatalogues,getNativeSiteCacheHint,getNativeTourDetail} from './native-site-data.mjs';
 import {getGoogleReviews} from './native-site-api.mjs';
 import {resolveNativePageProps} from './native-site-page-props.mjs';
 import {nativeSiteRoute} from './native-site-policy.mjs';
@@ -22,6 +22,11 @@ export const onRequest=defineMiddleware(async(context,next)=>{
   if(!['home','simple','tours','featured'].includes(route.kind)){
    props=resolveNativePageProps({pathname:route.pathname,params:route.params,origin:context.site?.origin||context.url.origin,base:'/',catalogues,reviews:await getGoogleReviews()});
    if(!props){context.cache.set(false);return failure(404,'Page not found');}
+   if(route.kind==='tour'){
+    const full=await getNativeTourDetail(route.locale,props.tour);
+    if(!full){context.cache.set(false);return failure(404,'Page not found');}
+    props={...props,tour:full};
+   }
   }
   context.locals.qualitourPageProps=props;
   if(context.request.headers.has('Authorization')||context.request.headers.has('Cookie'))context.cache.set(false);
