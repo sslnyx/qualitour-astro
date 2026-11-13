@@ -1,7 +1,6 @@
 import compatibilitySource from '../../../../src/data/cms-legacy-compat.json' with { type: 'json' };
 import { buildCatalogue, retainPublicTranslations } from '../../../../src/lib/cms/legacy-adapter.mjs';
-import { getEmDashCollection, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
-import { getDb } from 'emdash/runtime';
+import { getEmDashCollection, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint } from 'emdash';
 import { applyNativeCategories } from './native-site-categories.mjs';
 
 const locales = ['en','zh'];
@@ -58,9 +57,8 @@ const bareMediaId=value=>typeof value==='string'&&value.trim()&&!/^(?:[a-z][a-z\
 const mediaFilePath=key=>`/_emdash/api/media/file/${key.split('/').map(encodeURIComponent).join('/')}`;
 /** The SEO image picker stores a media ID, but the public file route is keyed by storage key. */
 async function lookupStorageKeys(ids) {
-  // Named static imports only: a dynamic import('emdash') would keep every export, including the image decoders the Free runtime must not ship.
-  const repository=new MediaRepository(await getDb());
-  return new Map(await Promise.all([...ids].map(async id=>[id,(await repository.findById(id))?.storageKey])));
+  // EXPERIMENT: no runtime import.
+  return new Map();
 }
 async function resolveSeoImages(entries, lookup) {
   const ids=new Set();
