@@ -1,10 +1,10 @@
 import compatibilitySource from '../../../../src/data/cms-legacy-compat.json' with { type: 'json' };
 import { buildCatalogue, claimsImport, retainPublicTranslations, sortCatalogueTours } from '../../../../src/lib/cms/legacy-adapter.mjs';
-import { getEmDashEntry, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
+import { getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
 import { getDb } from 'emdash/runtime';
 import { assignTourCategories, buildCategoryTerms } from './native-site-categories.mjs';
 import { optimizeTourHeroes } from './native-site-image.mjs';
-import { readAssignments, readPublishedPage, rowToEntry, termsForEntry } from './native-site-sql.mjs';
+import { readAssignments, readPublishedEntryRow, readPublishedPage, readSeo, rowToEntry, termsForEntry } from './native-site-sql.mjs';
 
 const locales = ['en','zh'];
 const PAGE_SIZE = 32;
@@ -118,6 +118,23 @@ export function createSqlTourSource({ getDatabase = getDb, pageSize = PAGE_SIZE 
   };
 }
 
+/**
+ * One complete published tour with its editor SEO, again straight from the database: the single-entry
+ * EmDash API also hydrates through lazy imports, and a detail page already holds the whole catalogue.
+ * Resolves to null for a missing, draft or trashed entry.
+ */
+export function createSqlEntrySource({ getDatabase = getDb } = {}) {
+  return async function readEntry(entryId, locale) {
+    const db = await getDatabase();
+    const row = await readPublishedEntryRow(db, entryId);
+    if (!row) return null;
+    const entry = rowToEntry(row, locale);
+    const seo = await readSeo(db, entryId);
+    if (seo) entry.seo = seo;
+    return entry;
+  };
+}
+
 export function createNativeSiteData({
   compatibility=compatibilitySource,
   readTourPages=createSqlTourSource(),
@@ -126,7 +143,7 @@ export function createNativeSiteData({
   getTaxonomyTermsWithCacheHint:getTerms=getTaxonomyTermsWithCacheHint,
   lookupMediaStorageKeys=lookupStorageKeys,
   presentTours=optimizeTourHeroes,
-  getEntry=getEmDashEntry,
+  readEntry=createSqlEntrySource(),
 }={}) {
   const requestLoads=new WeakMap();
   const load=async()=>{
@@ -184,15 +201,14 @@ export function createNativeSiteData({
     requestLoads.set(context,pending); return pending;
   };
   /**
-   * The catalogue holds card-level tours; a detail page reads its one complete entry through the official
-   * single-entry API (editor SEO overrides included) and keeps the catalogue's terms and translations.
+   * The catalogue holds card-level tours; a detail page reads its one complete entry
+   * (editor SEO overrides included) and keeps the catalogue's terms and translations.
    */
   const getNativeTourDetail=async(locale,tour)=>{
     if (!tour?.entryId) throw new Error('Catalogue tour has no CMS entry');
-    const result=await getEntry('tours',tour.entryId,{locale});
-    if (result.error) throw result.error;
-    if (!result.entry || result.isPreview) return null;
-    const entry=normalizeEntry(result.entry,locale);
+    const found=await readEntry(tour.entryId,locale);
+    if (!found) return null;
+    const entry=normalizeEntry(found,locale);
     await resolveSeoImages({[locale]:[entry]},lookupMediaStorageKeys);
     const full=buildCatalogue([entry],compatibility,locale,{allowEmpty:true}).tours[0];
     if (!full) return null;

@@ -103,3 +103,19 @@ export function termsForEntry(groups, vocabulary, fallbackVocabulary) {
   }
   return result;
 }
+
+/** One published row by ID, or undefined (a draft, trashed or missing entry must not be served). */
+export async function readPublishedEntryRow(db, id) {
+  const rows = await db.selectFrom(COLLECTION).selectAll()
+    .where('id', '=', id).where('status', '=', 'published').where('deleted_at', 'is', null).limit(1).execute();
+  return rows[0];
+}
+
+/** Editor SEO overrides in the loader's shape; null when the entry has no SEO row. */
+export async function readSeo(db, id) {
+  const rows = await db.selectFrom('_emdash_seo').selectAll().where('collection', '=', 'tours').where('content_id', '=', id).limit(1).execute();
+  const row = rows[0];
+  if (!row || row.seo_no_index === null || row.seo_no_index === undefined) return null;
+  const text = value => typeof value === 'string' ? value : null;
+  return { title: text(row.seo_title), description: text(row.seo_description), image: text(row.seo_image), canonical: text(row.seo_canonical), noIndex: row.seo_no_index === 1 };
+}

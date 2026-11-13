@@ -4,7 +4,9 @@ import {getNativeSiteCatalogues,getNativeSiteCacheHint,getNativeTourDetail} from
 import {getGoogleReviews} from './native-site-api.mjs';
 import {resolveNativePageProps} from './native-site-page-props.mjs';
 import {nativeSiteRoute} from './native-site-policy.mjs';
-const failure=(status,text)=>new Response(text,{status,headers:{'Cache-Control':'private, no-store','X-Robots-Tag':'noindex, nofollow'}});
+const failure=(status,text,reason)=>new Response(text,{status,headers:{'Cache-Control':'private, no-store','X-Robots-Tag':'noindex, nofollow',...(reason?{'X-Qualitour-Error':reason}:{})}});
+/** Class and a short message only (no stack, no markup), so a fallback response says why without leaking internals. */
+const safeReason=error=>String(error instanceof Error?`${error.name}: ${error.message}`:error).replace(/[^\w .:,'()/-]+/g,' ').replace(/\s+/g,' ').trim().slice(0,140);
 export const onRequest=defineMiddleware(async(context,next)=>{
  const route=nativeSiteRoute(context.url.pathname);
  if(!route){
@@ -38,6 +40,6 @@ export const onRequest=defineMiddleware(async(context,next)=>{
   context.cache.set(false);
   // Operator-only log line: the visitor still gets the generic 503 below.
   console.error('[qualitour-native-site] public render unavailable',error instanceof Error?`${error.name}: ${error.message}\n${String(error.stack||'').split('\n').slice(1,6).join('\n')}`:String(error));
-  return failure(503,'Content temporarily unavailable');
+  return failure(503,'Content temporarily unavailable',safeReason(error));
  }
 });

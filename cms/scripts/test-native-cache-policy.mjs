@@ -43,6 +43,14 @@ test('a failed native render is answered from the matching prerendered page, unc
  const head=await withStaticFallback(get('/zh/tours','HEAD'),failed(),assetsReturning(new Response('x',{status:200})));
  assert.equal(head.status,200);assert.equal(await head.text(),'');
 });
+test('the fallback says why the live render failed, when it was told',async()=>{
+ const failedWithReason=new Response('Content temporarily unavailable',{status:503,headers:{'X-Qualitour-Error':'Error: Dynamic import exceeded memory limits.'}});
+ const result=await withStaticFallback(get('/tours/x'),failedWithReason,assetsReturning(new Response('static',{status:200})));
+ assert.equal(result.headers.get('X-Qualitour-Fallback-Reason'),'Error: Dynamic import exceeded memory limits.');
+ assert.equal(result.headers.has('X-Qualitour-Error'),false,'the internal header is not forwarded under its own name');
+ const plain=await withStaticFallback(get('/tours/x'),failed(),assetsReturning(new Response('static',{status:200})));
+ assert.equal(plain.headers.has('X-Qualitour-Fallback-Reason'),false);
+});
 test('the fallback never replaces a good answer, a real 404, other methods, other paths or a missing asset',async()=>{
  const asset=()=>assetsReturning(new Response('static',{status:200}));
  const ok=new Response('native',{status:200});

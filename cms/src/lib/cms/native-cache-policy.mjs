@@ -39,5 +39,7 @@ export async function withStaticFallback(request, response, assets) {
  headers.set('Cache-Control','private, no-store');
  headers.set('Cloudflare-CDN-Cache-Control','no-store');
  headers.set('X-Qualitour-Rendered','static-fallback');
+ const reason=response.headers.get('X-Qualitour-Error');
+ if(reason)headers.set('X-Qualitour-Fallback-Reason',reason);
  return new Response(request.method==='HEAD'?null:fallback.body,{status:200,statusText:fallback.statusText,headers});
 }
