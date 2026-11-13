@@ -4,6 +4,14 @@ import {getNativeSiteCatalogues,getNativeSiteCacheHint,getNativeTourDetail} from
 import {getGoogleReviews} from './native-site-api.mjs';
 import {resolveNativePageProps} from './native-site-page-props.mjs';
 import {nativeSiteRoute} from './native-site-policy.mjs';
+import {getImage} from 'astro:assets';
+/**
+ * Astro loads the configured image service with a lazy import the first time any <Image> renders. In the Worker
+ * that import fails once a page's data is in memory ("InvalidImageService"), blanking every page that renders an
+ * image, so it is done once per isolate before any data is loaded. A failure is retried on the next request.
+ */
+let imageServiceWarm;
+const warmImageService=()=>imageServiceWarm??=getImage({src:'/qualitour-image-service-warmup.png',width:8,height:8,format:'webp'}).then(()=>true,()=>{imageServiceWarm=undefined;return false;});
 const failure=(status,text,reason)=>new Response(text,{status,headers:{'Cache-Control':'private, no-store','X-Robots-Tag':'noindex, nofollow',...(reason?{'X-Qualitour-Error':reason}:{})}});
 /** Class and a short message only (no stack, no markup), so a fallback response says why without leaking internals. */
 const safeReason=error=>String(error instanceof Error?`${error.name}: ${error.message}`:error).replace(/[^\w .:,'()/-]+/g,' ').replace(/\s+/g,' ').trim().slice(0,140);
@@ -16,6 +24,7 @@ export const onRequest=defineMiddleware(async(context,next)=>{
   return next();
  }
  if(route.redirect)return context.redirect(route.redirect+context.url.search,307);
+ await warmImageService();
  const mode=getRequestContext();
  if(mode?.preview||mode?.editMode||context.url.searchParams.has('_preview')||context.url.searchParams.has('_edit'))return failure(404,'Page not found');
  try{
