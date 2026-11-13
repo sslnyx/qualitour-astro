@@ -54,7 +54,7 @@ test('the fallback says why the live render failed, when it was told',async()=>{
 test('the fallback never replaces a good answer, a real 404, other methods, other paths or a missing asset',async()=>{
  const asset=()=>assetsReturning(new Response('static',{status:200}));
  const ok=new Response('native',{status:200});
- assert.equal(await withStaticFallback(get('/tours/x'),ok,asset()),ok);
+ const passed=await withStaticFallback(get('/tours/x'),ok,asset());assert.equal(passed.status,200);assert.equal(await passed.text(),'native');
  const notFound=new Response('missing',{status:404});
  assert.equal(await withStaticFallback(get('/tours/x'),notFound,asset()),notFound);
  const f1=failed();assert.equal(await withStaticFallback(get('/tours/x','POST'),f1,asset()),f1);
@@ -62,4 +62,19 @@ test('the fallback never replaces a good answer, a real 404, other methods, othe
  const f3=failed();assert.equal(await withStaticFallback(get('/tours/x'),f3,undefined),f3);
  const f4=failed();assert.equal(await withStaticFallback(get('/tours/x'),f4,assetsReturning(new Response('nope',{status:404}))),f4);
  const f5=failed();assert.equal(await withStaticFallback(get('/tours/x'),f5,{fetch:async()=>{throw new Error('assets down');}}),f5);
+});
+
+test('an empty or unreadable 200 is treated as a failed render; a good page passes through intact',async()=>{
+ const asset=()=>assetsReturning(new Response('<html>static</html>',{status:200,headers:{'Content-Type':'text/html'}}));
+ const empty=await withStaticFallback(get('/tours'),new Response('',{status:200}),asset());
+ assert.equal(await empty.text(),'<html>static</html>');assert.equal(empty.headers.get('X-Qualitour-Rendered'),'static-fallback');assert.equal(empty.headers.get('X-Qualitour-Fallback-Reason'),'empty body');
+ const broken=new Response(new ReadableStream({start(controller){controller.enqueue(new TextEncoder().encode('<ht'));controller.error(new Error('Dynamic import exceeded memory limits.'));}}),{status:200});
+ const recovered=await withStaticFallback(get('/'),broken,asset());
+ assert.equal(await recovered.text(),'<html>static</html>');assert.match(recovered.headers.get('X-Qualitour-Fallback-Reason'),/body stream failed: Error: Dynamic import exceeded memory limits/);
+ const good=await withStaticFallback(get('/'),new Response('<html>native</html>',{status:200,headers:{'X-Qualitour-Rendered':'abc','Content-Type':'text/html'}}),asset());
+ assert.equal(await good.text(),'<html>native</html>');assert.equal(good.headers.get('X-Qualitour-Rendered'),'abc');
+ const noAsset=await withStaticFallback(get('/tours/style/cruises'),new Response('',{status:200}),assetsReturning(new Response('nope',{status:404})));
+ assert.equal(noAsset.status,503,'a blank page with no static twin becomes an honest 503, never a white screen');
+ assert.equal(noAsset.headers.get('X-Qualitour-Fallback-Reason'),'empty body');
+ const head=new Response(null,{status:200});assert.equal(await withStaticFallback(get('/tours','HEAD'),head,asset()),head);
 });

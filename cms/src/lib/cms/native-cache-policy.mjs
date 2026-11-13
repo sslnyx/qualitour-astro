@@ -25,21 +25,32 @@ export function privateProofResponse(request, response) {
  return hasPrivateHeaders(request) || response.status !== 200 || response.headers.has('Set-Cookie');
 }
 
+const reasonOf = error => String(error instanceof Error ? `${error.name}: ${error.message}` : error).replace(/[^\w .:,'()/-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140);
+
 /**
- * A visitor page whose live render failed (503) is answered from the matching prerendered asset, if one
- * exists, instead of an error page. It is never cached, and X-Qualitour-Rendered names it so monitoring can
- * tell a static answer from a native one. Anything other than a plain GET/HEAD 503 is returned untouched.
+ * A visitor page whose live render failed is answered from the matching prerendered asset, if one exists,
+ * instead of an error page or a blank one. "Failed" means a 503, a response whose body cannot be read to the
+ * end, or a 200 whose body is empty. The answer is never cached and X-Qualitour-Rendered names it so
+ * monitoring can tell a static answer from a native one; X-Qualitour-Fallback-Reason says why. A good native
+ * page is returned as the fully read body (visitor pages are small enough to buffer).
  */
 export async function withStaticFallback(request, response, assets) {
- if(!assets||response.status!==503||!['GET','HEAD'].includes(request.method)||!nativeSiteRoute(new URL(request.url).pathname))return response;
+ const get=['GET','HEAD'].includes(request.method);
+ if(!get||!nativeSiteRoute(new URL(request.url).pathname))return response;
+ let reason=response.headers.get('X-Qualitour-Error')||undefined, failed=response.status===503, body;
+ if(response.status===200&&request.method==='GET'){
+  try{body=await response.arrayBuffer();if(body.byteLength===0){failed=true;reason='empty body';}}
+  catch(error){failed=true;reason=`body stream failed: ${reasonOf(error)}`;}
+ }
+ if(!failed)return body===undefined?response:new Response(body,{status:response.status,statusText:response.statusText,headers:response.headers});
+ if(!assets)return body===undefined?response:new Response(null,{status:503,headers:{'Cache-Control':'private, no-store','X-Qualitour-Fallback-Reason':reason||'unknown'}});
  let fallback;
- try{fallback=await assets.fetch(request);}catch{return response;}
- if(fallback.status!==200)return response;
+ try{fallback=await assets.fetch(request);}catch{return response.status===200?new Response('Content temporarily unavailable',{status:503,headers:{'Cache-Control':'private, no-store','X-Qualitour-Fallback-Reason':reason||'unknown'}}):response;}
+ if(fallback.status!==200)return response.status===200?new Response('Content temporarily unavailable',{status:503,headers:{'Cache-Control':'private, no-store','X-Qualitour-Fallback-Reason':reason||'unknown'}}):response;
  const headers=new Headers(fallback.headers);
  headers.set('Cache-Control','private, no-store');
  headers.set('Cloudflare-CDN-Cache-Control','no-store');
  headers.set('X-Qualitour-Rendered','static-fallback');
- const reason=response.headers.get('X-Qualitour-Error');
  if(reason)headers.set('X-Qualitour-Fallback-Reason',reason);
  return new Response(request.method==='HEAD'?null:fallback.body,{status:200,statusText:fallback.statusText,headers});
 }
