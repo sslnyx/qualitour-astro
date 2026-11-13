@@ -1,10 +1,10 @@
 import compatibilitySource from '../../../../src/data/cms-legacy-compat.json' with { type: 'json' };
 import { buildCatalogue, claimsImport, retainPublicTranslations, sortCatalogueTours } from '../../../../src/lib/cms/legacy-adapter.mjs';
-import { getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
+import { getRequestContext, MediaRepository } from 'emdash';
 import { getDb } from 'emdash/runtime';
 import { assignTourCategories, buildCategoryTerms } from './native-site-categories.mjs';
 import { optimizeTourHeroes } from './native-site-image.mjs';
-import { readAssignments, readPublishedEntryRow, readPublishedPage, readSeo, rowToEntry, termsForEntry } from './native-site-sql.mjs';
+import { TAXONOMY_NAMES, buildVocabulary, readAssignments, readPublishedEntryRow, readPublishedPage, readSeo, readVocabularyRows, rowToEntry, termsForEntry } from './native-site-sql.mjs';
 
 const locales = ['en','zh'];
 const PAGE_SIZE = 64;
@@ -19,7 +19,6 @@ function packTourDetail(tour) {
   Object.defineProperty(tour,'goodlayers_data',{get:()=>value??=JSON.parse(packed),enumerable:true,configurable:true});
   return tour;
 }
-const taxonomyNames = ['destinations','travel_styles','travel_regions','cruise_types'];
 const asIso = value => value instanceof Date ? value.toISOString() : value;
 
 function normalizeEntry(entry, locale) {
@@ -31,12 +30,6 @@ function normalizeEntry(entry, locale) {
   const id = typeof normalized.id === 'string' ? normalized.id : '';
   if (!id || normalized.status !== 'published' || normalized.locale !== locale) throw new Error(`Invalid published ${locale} CMS tour entry`);
   return { id, slug: entry.slug??normalized.slug, status:normalized.status, locale:normalized.locale, publishedAt:asIso(normalized.publishedAt), data:normalized };
-}
-function flattenTerms(rows) {
-  return (Array.isArray(rows) ? rows : []).flatMap(row => [row, ...flattenTerms(row?.children)]);
-}
-function taxonomyRow(term) {
-  return {id:String(term.id),name:String(term.name),slug:String(term.slug),label:String(term.label),parentId:term.parentId ? String(term.parentId) : undefined,locale:String(term.locale),translationGroup:term.translationGroup || null};
 }
 function projectedId(entry) {
   const source = entry.data.source_key;
@@ -124,6 +117,17 @@ export function createSqlTourSource({ getDatabase = getDb, pageSize = PAGE_SIZE 
  * EmDash API also hydrates through lazy imports, and a detail page already holds the whole catalogue.
  * Resolves to null for a missing, draft or trashed entry.
  */
+/**
+ * The tour vocabulary straight from the taxonomies table, with the cache tags EmDash invalidates when an editor
+ * changes a taxonomy (`emdash:taxonomy:<name>`).
+ */
+export function createSqlVocabularySource({ getDatabase = getDb } = {}) {
+  return async function readVocabulary() {
+    const vocabulary = buildVocabulary(await readVocabularyRows(await getDatabase()));
+    return { vocabulary, hints: TAXONOMY_NAMES.map(name => ({ tags: [`emdash:taxonomy:${name}`] })) };
+  };
+}
+
 export function createSqlEntrySource({ getDatabase = getDb } = {}) {
   return async function readEntry(entryId, locale) {
     const db = await getDatabase();
@@ -140,8 +144,7 @@ export function createNativeSiteData({
   compatibility=compatibilitySource,
   readTourPages=createSqlTourSource(),
   getContext=getRequestContext,
-  getTaxonomyDefs:getDefs=getTaxonomyDefs,
-  getTaxonomyTermsWithCacheHint:getTerms=getTaxonomyTermsWithCacheHint,
+  readVocabulary=createSqlVocabularySource(),
   lookupMediaStorageKeys=lookupStorageKeys,
   presentTours=optimizeTourHeroes,
   readEntry=createSqlEntrySource(),
@@ -149,17 +152,8 @@ export function createNativeSiteData({
   const requestLoads=new WeakMap();
   const load=async()=>{
     // The vocabulary comes first: every page of tours needs it to attach terms.
-    const vocabulary={en:{},zh:{}};
-    const taxonomyHints=[];
-    // Each query is a D1 round trip, so independent ones go out together.
-    await Promise.all(locales.map(async locale=>{
-      const defs=await getDefs({locale});
-      const tourDefs=new Map(defs.filter(def=>def.collections?.includes('tours')).map(def=>[def.name,def]));
-      for (const name of taxonomyNames) if (!tourDefs.has(name)) throw new Error(`Missing published CMS taxonomy definition ${name} for ${locale}`);
-      const results=await Promise.all(taxonomyNames.map(name=>getTerms(name,{locale,includeCounts:false})));
-      taxonomyNames.forEach((name,index)=>{vocabulary[locale][name]=flattenTerms(results[index].data).map(taxonomyRow);});
-      taxonomyHints.push(...results.map(result=>result.cacheHint));
-    }));
+    const {vocabulary:rawVocabulary,hints:taxonomyHints}=await readVocabulary();
+    const vocabulary=Object.fromEntries(locales.map(locale=>[locale,Object.fromEntries(TAXONOMY_NAMES.map(name=>[name,rawVocabulary[locale]?.[name]||[]]))]));
     // Memory is the constraint in the Worker: one locale at a time, in pages of PAGE_SIZE, and each page's raw
     // entries are released as soon as its tours exist. Only a small stub per entry survives for translation linking.
     const catalogues={}, stubs={}, collectionHints=[], shared={};

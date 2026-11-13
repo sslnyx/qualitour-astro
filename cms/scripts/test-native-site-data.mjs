@@ -11,7 +11,7 @@ const taxonomyNames=['destinations','travel_styles','travel_regions','cruise_typ
 const row=(locale,id,slug,title)=>({id:locale==='zh'?`${locale}/${slug}`:slug,slug,seo:{title:`${locale} SEO`,description:null,canonical:null,image:null,noIndex:false},data:{id,status:'published',locale,publishedAt:new Date('2026-11-12T00:00:00Z'),translationGroup:'pair-1',title,hero:{meta:{storageKey:`${locale}-hero.jpg`},width:1200,height:800},terms:{destinations:[{id:`term-${locale}`,name:'destinations',slug:locale==='zh'?'banff-zh':'banff',label:locale==='zh'?'班夫':'Banff',children:[],locale,translationGroup:'term-pair'}]}}});
 
 function harness({context={request:true},error,lookup,seoImage,paging,readEntry}={}){
-  const calls=[],taxonomyCalls=[];
+  const calls=[],vocabularyReads=[];
   const entries={en:[row('en','native-en','native-en','Native EN')],zh:[row('zh','native-zh','native-zh','原生中文')]};
   if(seoImage!==undefined)entries.en[0].seo.image=seoImage;
   if(paging){
@@ -29,18 +29,18 @@ function harness({context={request:true},error,lookup,seoImage,paging,readEntry}
       if(paging){for(const [index,entry] of entries[locale].entries()){paging.seen.push({locale,page:index});yield [entry];}return;}
       yield entries[locale];
     },
-    getTaxonomyDefs:async({locale})=>taxonomyNames.map(name=>({name,collections:['tours'],locale})),
-    getTaxonomyTermsWithCacheHint:async(name,{locale})=>{
-      taxonomyCalls.push({name,locale});
-      return {data:name==='destinations'?[{id:`term-${locale}`,name,slug:locale==='zh'?'banff-zh':'banff',label:locale==='zh'?'班夫':'Banff',children:[],locale,translationGroup:'term-pair'}]:[],cacheHint:{tags:[`taxonomy:${name}`]}};
+    readVocabulary:async()=>{
+      vocabularyReads.push(true);
+      const term=locale=>({id:`term-${locale}`,name:'destinations',slug:locale==='zh'?'banff-zh':'banff',label:locale==='zh'?'班夫':'Banff',parentId:null,locale,translationGroup:'term-pair'});
+      return {vocabulary:{en:{destinations:[term('en')]},zh:{destinations:[term('zh')]}},hints:taxonomyNames.map(name=>({tags:[`emdash:taxonomy:${name}`]}))};
     },
     presentTours:optimizeTourHeroes,
   });
-  return {api,calls,taxonomyCalls,entries};
+  return {api,calls,vocabularyReads,entries};
 }
 
 test('loads every published locale without a limit and links native translations and terms',async()=>{
-  const {api,calls,taxonomyCalls}=harness();
+  const {api,calls,vocabularyReads}=harness();
   const catalogues=await api.getNativeSiteCatalogues();
   assert.equal(calls.length,2,'one read per locale');
   assert.deepEqual(calls.map(call=>call.locale),['en','zh'],'locales load one at a time');
@@ -53,11 +53,8 @@ test('loads every published locale without a limit and links native translations
   assert.deepEqual(catalogues.en.terms.destinations.map(term=>({slug:term.slug,count:term.count,parent:term.parent})),[{slug:'banff',count:1,parent:0}]);
   assert.deepEqual(catalogues.en.tours[0].tour_terms.destinationScope,['banff']);
   assert.deepEqual(catalogues.zh.terms.destinations.map(term=>term.slug),['banff-zh']);
-  assert.deepEqual(taxonomyCalls.map(call=>`${call.locale}:${call.name}`).sort(),[
-    'en:cruise_types','en:destinations','en:travel_regions','en:travel_styles',
-    'zh:cruise_types','zh:destinations','zh:travel_regions','zh:travel_styles',
-  ]);
-  assert.deepEqual(await api.getNativeSiteCacheHint(),{tags:['tours','taxonomy:destinations','taxonomy:travel_styles','taxonomy:travel_regions','taxonomy:cruise_types']});
+  assert.equal(vocabularyReads.length,1,'one vocabulary read serves both locales');
+  assert.deepEqual(await api.getNativeSiteCacheHint(),{tags:['tours','emdash:taxonomy:destinations','emdash:taxonomy:travel_styles','emdash:taxonomy:travel_regions','emdash:taxonomy:cruise_types']});
   assert.equal(calls.length,2,'cache hint must share the same request-scoped load');
 });
 

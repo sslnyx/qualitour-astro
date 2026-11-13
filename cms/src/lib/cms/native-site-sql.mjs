@@ -119,3 +119,31 @@ export async function readSeo(db, id) {
   const text = value => typeof value === 'string' ? value : null;
   return { title: text(row.seo_title), description: text(row.seo_description), image: text(row.seo_image), canonical: text(row.seo_canonical), noIndex: row.seo_no_index === 1 };
 }
+
+export const TAXONOMY_NAMES = ['destinations', 'travel_styles', 'travel_regions', 'cruise_types'];
+
+/** Every term of the four tour taxonomies, in the order EmDash lists them (sort_order, then label). */
+export async function readVocabularyRows(db) {
+  return db.selectFrom('taxonomies')
+    .select(['id', 'name', 'slug', 'label', 'parent_id', 'locale', 'translation_group'])
+    .where('name', 'in', TAXONOMY_NAMES).orderBy('sort_order', 'asc').orderBy('label', 'asc').execute();
+}
+
+/**
+ * Vocabulary per locale and taxonomy. A translated term may point at its parent's *English* term (80 of the 129
+ * Chinese destinations do), which leaves it an orphan in a per-locale tree and drops it from EmDash's term lists.
+ * Slugs are shared across languages, so each parent is re-linked to the same-locale term with the parent's slug,
+ * and becomes a root only when that language has no such term.
+ */
+export function buildVocabulary(rows) {
+  const byId = new Map(rows.map(row => [row.id, row]));
+  const inLocale = new Map(rows.map(row => [`${row.locale}|${row.name}|${row.slug}`, row]));
+  const vocabulary = {};
+  for (const row of rows) {
+    const parent = row.parent_id ? byId.get(row.parent_id) : undefined;
+    const localParent = parent ? inLocale.get(`${row.locale}|${row.name}|${parent.slug}`) : undefined;
+    const term = { id: row.id, name: row.name, slug: row.slug, label: row.label, parentId: localParent?.id ?? null, locale: row.locale, translationGroup: row.translation_group || null };
+    ((vocabulary[row.locale] ||= Object.fromEntries(TAXONOMY_NAMES.map(name => [name, []])))[row.name] ||= []).push(term);
+  }
+  return vocabulary;
+}

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createSqlTourSource } from '../src/lib/cms/native-site-data.mjs';
-import { readAssignments, readPublishedPage, rowToEntry, termsForEntry } from '../src/lib/cms/native-site-sql.mjs';
+import { buildVocabulary, readAssignments, readPublishedPage, readVocabularyRows, rowToEntry, termsForEntry } from '../src/lib/cms/native-site-sql.mjs';
 
 /** Records the builder calls and answers `execute` from a scripted list of result sets. */
 function fakeDb(results) {
@@ -95,4 +95,30 @@ test('the SQL source pages until a short page and attaches terms per locale', as
   for await (const page of source('en', vocabulary)) seen.push(page.map(entry => [entry.id, (entry.data.terms.destinations || []).map(term => term.slug)]));
   assert.deepEqual(seen, [[['a', ['geo-ca']], ['b', []]], [['c', ['geo-ca']]]]);
   assert.equal(calls.filter(call => call.table === 'ec_tours').length, 2, 'stops after the short page without an extra query');
+});
+
+test('the vocabulary is read flat in EmDash order for the four tour taxonomies',async()=>{
+  const { db, calls } = fakeDb({ taxonomies: () => [] });
+  await readVocabularyRows(db);
+  assert.deepEqual(calls[0].steps.map(step => step.join(' ')).slice(1),
+    ['where name in destinations,travel_styles,travel_regions,cruise_types', 'orderBy sort_order asc', 'orderBy label asc']);
+});
+
+test('cross-language parents are re-linked by slug so translated terms are not orphaned',() => {
+  const rows = [
+    { id: 'na-en', name: 'destinations', slug: 'geo-continent-na', label: 'North America', parent_id: null, locale: 'en', translation_group: 'gNA' },
+    { id: 'ca-en', name: 'destinations', slug: 'geo-ca', label: 'Canada', parent_id: 'na-en', locale: 'en', translation_group: 'gCA' },
+    { id: 'na-zh', name: 'destinations', slug: 'geo-continent-na', label: '北美洲', parent_id: null, locale: 'zh', translation_group: 'gNA' },
+    { id: 'ca-zh', name: 'destinations', slug: 'geo-ca', label: '加拿大', parent_id: 'na-en', locale: 'zh', translation_group: 'gCA' },
+    { id: 'banff-zh', name: 'destinations', slug: 'geo-banff', label: '班芙', parent_id: 'ab-en', locale: 'zh', translation_group: 'gB' },
+    { id: 'ab-en', name: 'destinations', slug: 'geo-ca-ab', label: 'Alberta', parent_id: 'ca-en', locale: 'en', translation_group: 'gAB' },
+  ];
+  const vocabulary = buildVocabulary(rows);
+  const zh = Object.fromEntries(vocabulary.zh.destinations.map(term => [term.slug, term.parentId]));
+  assert.equal(zh['geo-ca'], 'na-zh', 'a Chinese country hangs under the Chinese continent, not the English one');
+  assert.equal(zh['geo-continent-na'], null);
+  assert.equal(zh['geo-banff'], null, 'a parent that has no Chinese term leaves the term a root instead of pointing across languages');
+  assert.equal(vocabulary.en.destinations.find(term => term.slug === 'geo-ca').parentId, 'na-en');
+  assert.deepEqual(vocabulary.en.travel_styles, [], 'every taxonomy exists even when empty');
+  assert.equal(vocabulary.zh.destinations[0].translationGroup, 'gNA');
 });
