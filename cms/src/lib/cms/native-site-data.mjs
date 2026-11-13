@@ -3,6 +3,7 @@ import { buildCatalogue, retainPublicTranslations } from '../../../../src/lib/cm
 import { getEmDashCollection, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
 import { getDb } from 'emdash/runtime';
 import { applyNativeCategories } from './native-site-categories.mjs';
+import { optimizeTourPresentations } from './native-site-image.mjs';
 
 const locales = ['en','zh'];
 const PAGE_SIZE = 32;
@@ -65,15 +66,21 @@ async function lookupStorageKeys(ids) {
 }
 async function resolveSeoImages(entries, lookup) {
   const ids=new Set();
-  for (const locale of locales) for (const entry of entries[locale]) { const id=bareMediaId(entry.data.seo?.image); if(id)ids.add(id); }
+  for (const rows of Object.values(entries)) for (const entry of rows) { const id=bareMediaId(entry.data.seo?.image); if(id)ids.add(id); }
   if (!ids.size) return;
   const keys=await lookup(ids);
-  for (const locale of locales) for (const entry of entries[locale]) {
+  for (const rows of Object.values(entries)) for (const entry of rows) {
     const id=bareMediaId(entry.data.seo?.image); if(!id)continue;
     const key=keys.get(id), seo={...entry.data.seo};
     if (typeof key==='string' && key) seo.image=mediaFilePath(key); else delete seo.image; // an unresolved image must not become a 404 og:image
     entry.data.seo=seo;
   }
+}
+/** Only what translation linking needs; the full entry (itineraries, rich text) can then be released. */
+function linkingStub(entry) {
+  const data={};
+  for (const key of ['translationGroup','source_key','source_status']) if (Object.hasOwn(entry.data,key)) data[key]=entry.data[key];
+  return { id:entry.id, data };
 }
 function mergeHints(hints) {
   const tags=[];
@@ -88,7 +95,7 @@ export function createNativeSiteData({
   getTaxonomyDefs:getDefs=getTaxonomyDefs,
   getTaxonomyTermsWithCacheHint:getTerms=getTaxonomyTermsWithCacheHint,
   lookupMediaStorageKeys=lookupStorageKeys,
-  presentTours=async tours=>(await import('./native-site-image.mjs')).optimizeTourPresentations(tours),
+  presentTours=optimizeTourPresentations,
 }={}) {
   const requestLoads=new WeakMap();
   const load=async()=>{
@@ -107,10 +114,10 @@ export function createNativeSiteData({
         vocabulary[locale][name]=flattenTerms(result.data).map(taxonomyRow);
       }
     }
-    // Pages of PAGE_SIZE keep each EmDash hydration small. One 192-entry query makes the Worker abort with
-    // "Dynamic import exceeded memory limits" when EmDash lazily imports its taxonomy module mid-hydration,
-    // while the 64-entry Chinese collection loads fine. Locales also load one at a time.
-    const collectionResults={};
+    // Memory is the constraint in the Worker: one hydrated locale at a time, in pages of PAGE_SIZE (one 192-entry
+    // hydration aborts with "Dynamic import exceeded memory limits"), and each locale's raw entries are released
+    // as soon as its catalogue exists. Only a small stub per entry survives for translation linking.
+    const catalogues={}, stubs={}, collectionHints=[];
     for (const locale of locales) {
       const pages=[];
       let cursor;
@@ -118,25 +125,22 @@ export function createNativeSiteData({
         const result=await getCollection('tours',{status:'published',locale,orderBy:{published_at:'desc'},limit:PAGE_SIZE,...(cursor?{cursor}:{})});
         if (result.error) throw result.error;
         if (!Array.isArray(result.entries)) throw new Error(`Invalid published ${locale} CMS collection result`);
-        pages.push(result);
+        pages.push({entries:result.entries.map(entry=>normalizeEntry(entry,locale)),cacheHint:result.cacheHint});
         cursor=result.nextCursor;
         if (pages.length>100) throw new Error(`Published ${locale} CMS collection did not terminate`);
       } while (cursor);
-      collectionResults[locale]={entries:pages.flatMap(page=>page.entries),cacheHint:mergeHints(pages.map(page=>page.cacheHint))};
-    }
-    const entries=Object.fromEntries(locales.map(locale=>[locale,collectionResults[locale].entries.map(entry=>normalizeEntry(entry,locale))]));
-    for (const locale of locales) {
-      const ids=new Set(); for (const entry of entries[locale]) { if(ids.has(entry.id))throw new Error(`Duplicate published CMS tour ID ${entry.id}`); ids.add(entry.id); }
-    }
-    await resolveSeoImages(entries,lookupMediaStorageKeys);
-    const hints=[...locales.map(locale=>collectionResults[locale].cacheHint),...taxonomyHints];
-    const catalogues=Object.fromEntries(await Promise.all(locales.map(async locale=>{
-      const catalogue=buildCatalogue(entries[locale],compatibility,locale);
-      applyNativeCategories({catalogue,entries:entries[locale],vocabulary:vocabulary[locale],locale,tourIdFor:projectedId});
+      const rows=pages.flatMap(page=>page.entries);
+      collectionHints.push(mergeHints(pages.map(page=>page.cacheHint)));
+      const ids=new Set(); for (const entry of rows) { if(ids.has(entry.id))throw new Error(`Duplicate published CMS tour ID ${entry.id}`); ids.add(entry.id); }
+      await resolveSeoImages({[locale]:rows},lookupMediaStorageKeys);
+      const catalogue=buildCatalogue(rows,compatibility,locale);
+      applyNativeCategories({catalogue,entries:rows,vocabulary:vocabulary[locale],locale,tourIdFor:projectedId});
+      stubs[locale]=rows.map(linkingStub);
       catalogue.tours=await presentTours(catalogue.tours);
-      return [locale,catalogue];
-    })));
-    linkPublishedTranslations(catalogues,entries);
+      catalogues[locale]=catalogue;
+    }
+    linkPublishedTranslations(catalogues,stubs);
+    const hints=[...collectionHints,...taxonomyHints];
     return {catalogues,cacheHint:mergeHints(hints)};
   };
   const current=()=>{
