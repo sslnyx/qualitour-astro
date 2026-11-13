@@ -75,6 +75,20 @@ export async function optimizeTourPresentation(tour) {
   return {...tour,optimizedHero,optimizedPhotos,optimizedInlineImages};
 }
 
+/**
+ * Catalogue-wide presentation: only the responsive hero, decorated in place. The per-photo and inline
+ * derivatives of every tour made the whole catalogue too large for the Worker's memory; the detail page
+ * adds them for its single tour (optimizeTourPresentation keeps this hero and the media-size hints).
+ */
+export async function optimizeTourHero(tour) {
+  if(tour.optimizedHero)return tour;
+  const source=getTourImageUrl(tour);
+  const heroSize=source&&(tour?.[mediaDimensionsKey]||{})[source];
+  if(source)tour.optimizedHero=await optimizeResponsiveImage(source,heroSize);
+  return tour;
+}
+export function optimizeTourHeroes(tours){return mapWithConcurrency(tours,optimizeTourHero,8);}
+
 export function optimizeTourPresentations(tours){return mapWithConcurrency(tours,optimizeTourPresentation,4);}
 
 export async function optimizeTourImages(tours,{width=600,height=450,concurrency=10}={}) {

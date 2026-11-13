@@ -3,7 +3,7 @@ import { buildCatalogue, retainPublicTranslations, sortCatalogueTours } from '..
 import { getEmDashCollection, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
 import { getDb } from 'emdash/runtime';
 import { assignTourCategories, buildCategoryTerms } from './native-site-categories.mjs';
-import { optimizeTourPresentations } from './native-site-image.mjs';
+import { optimizeTourHeroes } from './native-site-image.mjs';
 
 const locales = ['en','zh'];
 const PAGE_SIZE = 32;
@@ -95,7 +95,7 @@ export function createNativeSiteData({
   getTaxonomyDefs:getDefs=getTaxonomyDefs,
   getTaxonomyTermsWithCacheHint:getTerms=getTaxonomyTermsWithCacheHint,
   lookupMediaStorageKeys=lookupStorageKeys,
-  presentTours=optimizeTourPresentations,
+  presentTours=optimizeTourHeroes,
 }={}) {
   const requestLoads=new WeakMap();
   const load=async()=>{

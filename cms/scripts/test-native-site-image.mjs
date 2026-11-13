@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { deepOptimizeTourData, getImageSafe, getTourImageUrl, optimizeResponsiveImage, optimizeTourImages, optimizeTourPresentation } from '../src/lib/cms/native-site-image.mjs';
+import { deepOptimizeTourData, getImageSafe, getTourImageUrl, optimizeResponsiveImage, optimizeTourHero, optimizeTourImages, optimizeTourPresentation } from '../src/lib/cms/native-site-image.mjs';
 
 const owned='https://qualitour.qualitour.workers.dev/_emdash/api/media/file/hero.jpg';
 const inline='https://qualitour-cms-free-test.qualitour.workers.dev/_emdash/api/media/file/inline.jpg';
@@ -41,4 +41,18 @@ test('legacy Qualitour uploads are transformed while malformed R2 paths fail clo
   const legacy='https://qualitour.ca/wp-content/uploads/2024/01/rockies.jpg';
   assert.match((await getImageSafe({src:legacy,width:600})).src,/^\/_image\?href=https%3A%2F%2Fqualitour\.ca%2Fwp-content%2Fuploads%2F2024%2F01%2Frockies\.jpg&w=600/);
   await assert.rejects(getImageSafe({src:'https://qualitour.qualitour.workers.dev/_emdash/api/media/file/../private.jpg',width:600}),/unsafe CMS media/);
+});
+
+test('catalogue presentation adds only the hero, in place, and detail presentation still gets photo sizes',async()=>{
+  const key=Symbol.for('qualitour:native-media-dimensions');
+  const tour={id:'native',slug:'native',featured_image_url:owned,content:{rendered:`<p><img src="${inline}"></p>`},excerpt:{rendered:''},title:{rendered:'Native'},featured_media:0,goodlayers_data:{tour_gallery:[{url:owned}]}};
+  Object.defineProperty(tour,key,{value:{[owned]:{width:1200,height:800},[inline]:{width:700,height:500}},enumerable:false});
+  const result=await optimizeTourHero(tour);
+  assert.equal(result,tour,'decorated in place');
+  assert.match(result.optimizedHero.src,/^\/_image\?/);
+  assert.equal(result.optimizedHero.width,1200);
+  assert.equal('optimizedPhotos' in result,false);assert.equal('optimizedInlineImages' in result,false);
+  const detail=await optimizeTourPresentation(result);
+  assert.equal(detail.optimizedPhotos[owned].width,1200,'media-size hints survive for the detail page');
+  assert.equal(detail.optimizedHero,result.optimizedHero);
 });
