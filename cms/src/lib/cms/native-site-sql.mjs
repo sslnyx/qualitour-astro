@@ -80,7 +80,8 @@ export function termsForEntry(groups, vocabulary, fallbackVocabulary) {
       const term = byGroup.get(group) || fallbackByGroup.get(group);
       if (term) assigned.push({ id: term.id, name, slug: term.slug, label: term.label, parentId: term.parentId, locale: term.locale, translationGroup: term.translationGroup });
     }
-    if (assigned.length) result[name] = assigned;
+    // EmDash's own hydration orders each taxonomy's terms by label; cards show the first two, so the order is visible.
+    if (assigned.length) result[name] = assigned.toSorted((a, b) => String(a.label).localeCompare(String(b.label)));
   }
   return result;
 }

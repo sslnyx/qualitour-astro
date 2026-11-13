@@ -65,6 +65,12 @@ test('terms resolve by translation group and a language without the translation 
   assert.deepEqual(termsForEntry(['g1'], en, undefined).destinations.map(term => term.id), ['d-en']);
 });
 
+test('assigned terms are ordered by label like EmDash hydration orders them',() => {
+  const vocabulary = { destinations: ['Zeta', 'Alpha', 'Moraine Lake', 'Lake Louise'].map((label, index) => ({ id: `d${index}`, slug: label.toLowerCase().replace(/ /g, '-'), label, locale: 'en', translationGroup: `g${index}` })) };
+  const result = termsForEntry(['g0', 'g1', 'g2', 'g3'], vocabulary);
+  assert.deepEqual(result.destinations.map(term => term.label), ['Alpha', 'Lake Louise', 'Moraine Lake', 'Zeta']);
+});
+
 test('the SQL source pages until a short page and attaches terms per locale', async () => {
   const pages = [[row('a'), row('b')], [row('c')]];
   const { db, calls } = fakeDb({
