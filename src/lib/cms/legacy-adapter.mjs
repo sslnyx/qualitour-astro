@@ -177,7 +177,7 @@ function nativeTour(entry, source, taxonomyOverride) {
 export function sortCatalogueTours(tours, sortDates) {
   return tours.sort((a,b)=>String(sortDates.get(b.id)).localeCompare(String(sortDates.get(a.id)))||compareIds(b.id,a.id));
 }
-export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = new Map() } = {}) {
+export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = new Map(), allowEmpty = false } = {}) {
   const source = compat.locales[locale]; if (!source) throw new Error('Missing locale compatibility manifest');
   const seen = new Set(), slugs = new Set(), excluded = [], tours = [], sortDates = new Map();
   for (const entry of entries) {
@@ -246,7 +246,8 @@ export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = ne
     const seo=nativeSeo(data.seo);if(seo)tour.nativeSeo=seo;
     attachMediaDimensions(tour,dimensions);tours.push(tour); sortDates.set(tour.id,original.date);
   }
-  if (!tours.length) throw new Error(`Refusing an empty ${locale} CMS catalogue`);
+  // A page of a larger collection may hold only excluded proof fixtures; the caller guards the merged result.
+  if (!tours.length && !allowEmpty) throw new Error(`Refusing an empty ${locale} CMS catalogue`);
   sortCatalogueTours(tours,sortDates);
   const terms = Object.fromEntries(termsKeys.map(name=>{
     const counts = new Map();

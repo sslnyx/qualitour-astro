@@ -99,3 +99,11 @@ test('follows the collection cursor page by page and keeps every entry',async()=
   assert.deepEqual(catalogues.en.tours.map(tour=>tour.id).sort(),['native-en','native-en-2','native-en-3']);
   assert.ok(entries);
 });
+
+test('a page holding only excluded proof fixtures does not fail the load',async()=>{
+  const seen=[];
+  const {api,entries}=harness({paging:{seen}});
+  entries.en[0].id='01M75S22W89VBB2VD299MVP3TK';entries.en[0].data.id='01M75S22W89VBB2VD299MVP3TK';
+  const catalogues=await api.getNativeSiteCatalogues();
+  assert.deepEqual(catalogues.en.tours.map(tour=>tour.id).sort(),['native-en-2','native-en-3']);
+});

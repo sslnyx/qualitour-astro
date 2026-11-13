@@ -130,7 +130,7 @@ export function createNativeSiteData({
         for (const entry of rows) { if(seenIds.has(entry.id))throw new Error(`Duplicate published CMS tour ID ${entry.id}`); seenIds.add(entry.id); }
         await resolveSeoImages({[locale]:rows},lookupMediaStorageKeys);
         if (rows.length) {
-          const part=buildCatalogue(rows,compatibility,locale);
+          const part=buildCatalogue(rows,compatibility,locale,{allowEmpty:true});
           assignTourCategories({tours:part.tours,entries:rows,vocabulary:vocabulary[locale],tourIdFor:projectedId});
           tours.push(...part.tours); excluded.push(...part.excluded);
           for (const [id,date] of part.sortDates) sortDates.set(id,date);
