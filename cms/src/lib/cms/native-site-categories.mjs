@@ -53,21 +53,21 @@ function destinationPath(term, index) {
 
 const byLabel = locale => (a, b) => a.name.localeCompare(b.name, locale === 'zh' ? 'zh-Hant' : 'en');
 
-/**
- * Replaces tour_terms/terms on a built catalogue. `tourIdFor(entry)` returns the
- * catalogue tour id for a CMS entry (legacy numeric ID for imports).
- */
-export function applyNativeCategories({ catalogue, entries, vocabulary, locale, tourIdFor }) {
-  const index = {
-    destinations: indexVocabulary(vocabulary?.destinations),
-    styles: indexVocabulary(vocabulary?.travel_styles),
-    cruiseTypes: indexVocabulary(vocabulary?.cruise_types),
-    regions: indexVocabulary(vocabulary?.travel_regions),
-  };
-  const toursById = new Map(catalogue.tours.map(tour => [String(tour.id), tour]));
-  const counts = { destinations: new Map(), styles: new Map(), cruiseTypes: new Map(), regions: new Map() };
-  const used = { destinations: new Map(), styles: new Map(), cruiseTypes: new Map(), regions: new Map() };
+const indexVocabularies = vocabulary => ({
+  destinations: indexVocabulary(vocabulary?.destinations),
+  styles: indexVocabulary(vocabulary?.travel_styles),
+  cruiseTypes: indexVocabulary(vocabulary?.cruise_types),
+  regions: indexVocabulary(vocabulary?.travel_regions),
+});
 
+/**
+ * Sets `tour_terms` on the catalogue tours that match these CMS entries. Works on any subset of
+ * entries, so a large collection can be processed one page at a time.
+ * `tourIdFor(entry)` returns the catalogue tour id for a CMS entry (legacy numeric ID for imports).
+ */
+export function assignTourCategories({ tours, entries, vocabulary, tourIdFor }) {
+  const index = indexVocabularies(vocabulary);
+  const toursById = new Map(tours.map(tour => [String(tour.id), tour]));
   for (const entry of entries) {
     const tour = toursById.get(String(tourIdFor(entry)));
     if (!tour) continue;
@@ -83,9 +83,22 @@ export function applyNativeCategories({ catalogue, entries, vocabulary, locale, 
       for (const slug of term ? destinationPath(term, index.destinations) : [row.slug]) scope.add(slug);
     }
     tour.tour_terms = { ...rows, destinationScope: [...scope] };
+  }
+}
+
+/** The public term lists (with counts) for tours that already carry `tour_terms`. */
+export function buildCategoryTerms({ tours, vocabulary, locale }) {
+  const index = indexVocabularies(vocabulary);
+  const counts = { destinations: new Map(), styles: new Map(), cruiseTypes: new Map(), regions: new Map() };
+  const used = { cruiseTypes: new Map(), regions: new Map() };
+  for (const tour of tours) {
+    const terms = tour.tour_terms || {};
+    for (const slug of terms.destinationScope || []) counts.destinations.set(slug, (counts.destinations.get(slug) || 0) + 1);
     for (const bucket of ['styles', 'cruiseTypes', 'regions'])
-      for (const row of rows[bucket]) { used[bucket].set(row.slug, row); counts[bucket].set(row.slug, (counts[bucket].get(row.slug) || 0) + 1); }
-    for (const slug of scope) counts.destinations.set(slug, (counts.destinations.get(slug) || 0) + 1);
+      for (const row of terms[bucket] || []) {
+        if (used[bucket]) used[bucket].set(row.slug, row);
+        counts[bucket].set(row.slug, (counts[bucket].get(row.slug) || 0) + 1);
+      }
   }
 
   const destinations = [];
@@ -105,12 +118,18 @@ export function applyNativeCategories({ catalogue, entries, vocabulary, locale, 
     const slug = string(term?.slug);
     return slug && counts.styles.has(slug) ? [{ id: string(term.id), slug, name: termLabel(term), parent: 0, count: counts.styles.get(slug) }] : [];
   });
-  catalogue.terms = {
+  return {
     styles,
     cruiseTypes: flat('cruiseTypes').sort(byLabel(locale)),
     regions: flat('regions').sort(byLabel(locale)),
     destinations,
   };
+}
+
+/** Replaces tour_terms/terms on a built catalogue (the whole-collection form of the two steps above). */
+export function applyNativeCategories({ catalogue, entries, vocabulary, locale, tourIdFor }) {
+  assignTourCategories({ tours: catalogue.tours, entries, vocabulary, tourIdFor });
+  catalogue.terms = buildCategoryTerms({ tours: catalogue.tours, vocabulary, locale });
   return catalogue;
 }
 

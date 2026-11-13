@@ -173,6 +173,10 @@ function nativeTour(entry, source, taxonomyOverride) {
   return tour;
 }
 
+/** Newest first by the catalogue's own sort key (the original public date for imports), ties by ID. */
+export function sortCatalogueTours(tours, sortDates) {
+  return tours.sort((a,b)=>String(sortDates.get(b.id)).localeCompare(String(sortDates.get(a.id)))||compareIds(b.id,a.id));
+}
 export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = new Map() } = {}) {
   const source = compat.locales[locale]; if (!source) throw new Error('Missing locale compatibility manifest');
   const seen = new Set(), slugs = new Set(), excluded = [], tours = [], sortDates = new Map();
@@ -243,7 +247,7 @@ export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = ne
     attachMediaDimensions(tour,dimensions);tours.push(tour); sortDates.set(tour.id,original.date);
   }
   if (!tours.length) throw new Error(`Refusing an empty ${locale} CMS catalogue`);
-  tours.sort((a,b)=>String(sortDates.get(b)).localeCompare(String(sortDates.get(a)))||compareIds(b.id,a.id));
+  sortCatalogueTours(tours,sortDates);
   const terms = Object.fromEntries(termsKeys.map(name=>{
     const counts = new Map();
     for (const tour of tours) for (const term of new Map(tour.tour_terms[name].map(term=>[term.slug,term])).values()) counts.set(term.slug,(counts.get(term.slug)||0)+1);
@@ -254,7 +258,10 @@ export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = ne
     for (const tour of tours) for (const term of tour.tour_terms[name]) if (!known.has(term.slug)) { known.add(term.slug); vocabulary.push({...term,parent:0}); }
     return [name,vocabulary.map(term=>({...term,count:counts.get(term.slug)||0}))];
   }));
-  return {tours,terms,excluded};
+  // Not serialized: lets a caller that builds a catalogue in pages re-sort the merged result identically.
+  const catalogue = {tours,terms,excluded};
+  Object.defineProperty(catalogue,'sortDates',{value:sortDates,enumerable:false});
+  return catalogue;
 }
 
 /** Expose only verified reciprocal relationships whose two tours remain published. */

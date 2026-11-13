@@ -1,8 +1,8 @@
 import compatibilitySource from '../../../../src/data/cms-legacy-compat.json' with { type: 'json' };
-import { buildCatalogue, retainPublicTranslations } from '../../../../src/lib/cms/legacy-adapter.mjs';
+import { buildCatalogue, retainPublicTranslations, sortCatalogueTours } from '../../../../src/lib/cms/legacy-adapter.mjs';
 import { getEmDashCollection, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
 import { getDb } from 'emdash/runtime';
-import { applyNativeCategories } from './native-site-categories.mjs';
+import { assignTourCategories, buildCategoryTerms } from './native-site-categories.mjs';
 import { optimizeTourPresentations } from './native-site-image.mjs';
 
 const locales = ['en','zh'];
@@ -119,25 +119,32 @@ export function createNativeSiteData({
     // as soon as its catalogue exists. Only a small stub per entry survives for translation linking.
     const catalogues={}, stubs={}, collectionHints=[];
     for (const locale of locales) {
-      const pages=[];
-      let cursor;
+      const tours=[], excluded=[], sortDates=new Map(), hints=[], seenIds=new Set();
+      stubs[locale]=[];
+      let cursor, pageCount=0;
       do {
         const result=await getCollection('tours',{status:'published',locale,orderBy:{published_at:'desc'},limit:PAGE_SIZE,...(cursor?{cursor}:{})});
         if (result.error) throw result.error;
         if (!Array.isArray(result.entries)) throw new Error(`Invalid published ${locale} CMS collection result`);
-        pages.push({entries:result.entries.map(entry=>normalizeEntry(entry,locale)),cacheHint:result.cacheHint});
+        const rows=result.entries.map(entry=>normalizeEntry(entry,locale));
+        for (const entry of rows) { if(seenIds.has(entry.id))throw new Error(`Duplicate published CMS tour ID ${entry.id}`); seenIds.add(entry.id); }
+        await resolveSeoImages({[locale]:rows},lookupMediaStorageKeys);
+        if (rows.length) {
+          const part=buildCatalogue(rows,compatibility,locale);
+          assignTourCategories({tours:part.tours,entries:rows,vocabulary:vocabulary[locale],tourIdFor:projectedId});
+          tours.push(...part.tours); excluded.push(...part.excluded);
+          for (const [id,date] of part.sortDates) sortDates.set(id,date);
+          stubs[locale].push(...rows.map(linkingStub));
+        }
+        hints.push(result.cacheHint);
         cursor=result.nextCursor;
-        if (pages.length>100) throw new Error(`Published ${locale} CMS collection did not terminate`);
+        if (++pageCount>100) throw new Error(`Published ${locale} CMS collection did not terminate`);
       } while (cursor);
-      const rows=pages.flatMap(page=>page.entries);
-      collectionHints.push(mergeHints(pages.map(page=>page.cacheHint)));
-      const ids=new Set(); for (const entry of rows) { if(ids.has(entry.id))throw new Error(`Duplicate published CMS tour ID ${entry.id}`); ids.add(entry.id); }
-      await resolveSeoImages({[locale]:rows},lookupMediaStorageKeys);
-      const catalogue=buildCatalogue(rows,compatibility,locale);
-      applyNativeCategories({catalogue,entries:rows,vocabulary:vocabulary[locale],locale,tourIdFor:projectedId});
-      stubs[locale]=rows.map(linkingStub);
-      catalogue.tours=await presentTours(catalogue.tours);
-      catalogues[locale]=catalogue;
+      if (!tours.length) throw new Error(`Refusing an empty ${locale} CMS catalogue`);
+      collectionHints.push(mergeHints(hints));
+      sortCatalogueTours(tours,sortDates);
+      const terms=buildCategoryTerms({tours,vocabulary:vocabulary[locale],locale});
+      catalogues[locale]={tours:await presentTours(tours),terms,excluded};
     }
     linkPublishedTranslations(catalogues,stubs);
     const hints=[...collectionHints,...taxonomyHints];
