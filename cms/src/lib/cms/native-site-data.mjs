@@ -7,7 +7,17 @@ import { optimizeTourHeroes } from './native-site-image.mjs';
 
 const locales = ['en','zh'];
 const PAGE_SIZE = 32;
-const probe=label=>{try{(globalThis.__qtPhases||=[]).push(label+':'+Math.round((globalThis.process?.memoryUsage?.().heapUsed??-1)/1e6)+'MB');}catch{}}; // TEMP
+/**
+ * The itinerary/FAQ tree (goodlayers_data) is thousands of small objects per tour. Held as one JSON string it
+ * costs a fraction of the Worker memory, and it is rebuilt only for a tour whose detail page actually reads it.
+ */
+function packTourDetail(tour) {
+  if (!tour.goodlayers_data) return tour;
+  const packed=JSON.stringify(tour.goodlayers_data);
+  let value;
+  Object.defineProperty(tour,'goodlayers_data',{get:()=>value??=JSON.parse(packed),enumerable:true,configurable:true});
+  return tour;
+}
 const taxonomyNames = ['destinations','travel_styles','travel_regions','cruise_types'];
 const asIso = value => value instanceof Date ? value.toISOString() : value;
 
@@ -100,7 +110,6 @@ export function createNativeSiteData({
 }={}) {
   const requestLoads=new WeakMap();
   const load=async()=>{
-    globalThis.__qtPhases=[];probe('start'); // TEMP
     // Taxonomy first: it loads EmDash's taxonomy module while memory is still free.
     // That module is otherwise imported lazily in the middle of hydrating hundreds of
     // large entries, where the Worker aborts with "Dynamic import exceeded memory limits".
@@ -116,7 +125,6 @@ export function createNativeSiteData({
         vocabulary[locale][name]=flattenTerms(result.data).map(taxonomyRow);
       }
     }
-    probe('taxonomy-done'); // TEMP
     // Memory is the constraint in the Worker: one hydrated locale at a time, in pages of PAGE_SIZE (one 192-entry
     // hydration aborts with "Dynamic import exceeded memory limits"), and each locale's raw entries are released
     // as soon as its catalogue exists. Only a small stub per entry survives for translation linking.
@@ -129,13 +137,13 @@ export function createNativeSiteData({
         const result=await getCollection('tours',{status:'published',locale,orderBy:{published_at:'desc'},limit:PAGE_SIZE,...(cursor?{cursor}:{})});
         if (result.error) throw result.error;
         if (!Array.isArray(result.entries)) throw new Error(`Invalid published ${locale} CMS collection result`);
-        probe(`${locale}-page${pageCount}-fetched`); // TEMP
         const rows=result.entries.map(entry=>normalizeEntry(entry,locale));
         for (const entry of rows) { if(seenIds.has(entry.id))throw new Error(`Duplicate published CMS tour ID ${entry.id}`); seenIds.add(entry.id); }
         await resolveSeoImages({[locale]:rows},lookupMediaStorageKeys);
         if (rows.length) {
           const part=buildCatalogue(rows,compatibility,locale,{allowEmpty:true});
           assignTourCategories({tours:part.tours,entries:rows,vocabulary:vocabulary[locale],tourIdFor:projectedId});
+          for (const tour of part.tours) packTourDetail(tour);
           tours.push(...part.tours); excluded.push(...part.excluded);
           for (const [id,date] of part.sortDates) sortDates.set(id,date);
           stubs[locale].push(...rows.map(linkingStub));
@@ -146,10 +154,9 @@ export function createNativeSiteData({
       } while (cursor);
       if (!tours.length) throw new Error(`Refusing an empty ${locale} CMS catalogue`);
       collectionHints.push(mergeHints(hints));
-      probe(`${locale}-pages-done`); // TEMP
       sortCatalogueTours(tours,sortDates);
       const terms=buildCategoryTerms({tours,vocabulary:vocabulary[locale],locale});
-      catalogues[locale]={tours:await presentTours(tours),terms,excluded};probe(`${locale}-presented`); // TEMP
+      catalogues[locale]={tours:await presentTours(tours),terms,excluded};
     }
     linkPublishedTranslations(catalogues,stubs);
     const hints=[...collectionHints,...taxonomyHints];

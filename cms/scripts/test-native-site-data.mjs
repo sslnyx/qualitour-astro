@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createNativeSiteData } from '../src/lib/cms/native-site-data.mjs';
-import { optimizeTourPresentations } from '../src/lib/cms/native-site-image.mjs';
+import { optimizeTourHeroes } from '../src/lib/cms/native-site-image.mjs';
 
 const compatibility={schema:1,locales:{
   en:{tours:{},terms:{categories:[],tags:[],activities:[],destinations:[],durations:[],types:[]}},
@@ -28,7 +28,7 @@ function harness({context={request:true},error,lookup,seoImage,paging}={}){
       taxonomyCalls.push({name,locale});
       return {data:name==='destinations'?[{id:`term-${locale}`,name,slug:locale==='zh'?'banff-zh':'banff',label:locale==='zh'?'班夫':'Banff',children:[],locale,translationGroup:'term-pair'}]:[],cacheHint:{tags:[`taxonomy:${name}`]}};
     },
-    presentTours:optimizeTourPresentations,
+    presentTours:optimizeTourHeroes,
   });
   return {api,calls,taxonomyCalls,entries};
 }
@@ -106,4 +106,17 @@ test('a page holding only excluded proof fixtures does not fail the load',async(
   entries.en[0].id='01M75S22W89VBB2VD299MVP3TK';entries.en[0].data.id='01M75S22W89VBB2VD299MVP3TK';
   const catalogues=await api.getNativeSiteCatalogues();
   assert.deepEqual(catalogues.en.tours.map(tour=>tour.id).sort(),['native-en-2','native-en-3']);
+});
+
+test('itinerary data is held packed and unpacked lazily, identically for readers and copies',async()=>{
+  const {api}=harness();
+  const tour=(await api.getNativeSiteCatalogues()).en.tours[0];
+  const descriptor=Object.getOwnPropertyDescriptor(tour,'goodlayers_data');
+  assert.equal(typeof descriptor.get,'function','stored as a lazy getter, not a resident object tree');
+  assert.equal(descriptor.enumerable,true);
+  const first=tour.goodlayers_data;
+  assert.ok(first&&typeof first==='object');
+  assert.equal(tour.goodlayers_data,first,'unpacked once per tour');
+  assert.deepEqual({...tour}.goodlayers_data,first,'spread copies still carry it');
+  assert.deepEqual(JSON.parse(JSON.stringify(tour)).goodlayers_data,first);
 });
