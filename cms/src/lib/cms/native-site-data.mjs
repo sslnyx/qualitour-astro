@@ -1,9 +1,11 @@
 import compatibilitySource from '../../../../src/data/cms-legacy-compat.json' with { type: 'json' };
 import { buildCatalogue, retainPublicTranslations } from '../../../../src/lib/cms/legacy-adapter.mjs';
-import { getEmDashCollection, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint } from 'emdash';
+import { getEmDashCollection, getRequestContext, getTaxonomyDefs, getTaxonomyTermsWithCacheHint, MediaRepository } from 'emdash';
+import { getDb } from 'emdash/runtime';
 import { applyNativeCategories } from './native-site-categories.mjs';
 
 const locales = ['en','zh'];
+const PAGE_SIZE = 32;
 const taxonomyNames = ['destinations','travel_styles','travel_regions','cruise_types'];
 const asIso = value => value instanceof Date ? value.toISOString() : value;
 
@@ -57,8 +59,9 @@ const bareMediaId=value=>typeof value==='string'&&value.trim()&&!/^(?:[a-z][a-z\
 const mediaFilePath=key=>`/_emdash/api/media/file/${key.split('/').map(encodeURIComponent).join('/')}`;
 /** The SEO image picker stores a media ID, but the public file route is keyed by storage key. */
 async function lookupStorageKeys(ids) {
-  // EXPERIMENT: no runtime import.
-  return new Map();
+  // Named static imports only: a dynamic import('emdash') would keep every export, including the image decoders the Free runtime must not ship.
+  const repository=new MediaRepository(await getDb());
+  return new Map(await Promise.all([...ids].map(async id=>[id,(await repository.findById(id))?.storageKey])));
 }
 async function resolveSeoImages(entries, lookup) {
   const ids=new Set();
@@ -104,17 +107,22 @@ export function createNativeSiteData({
         vocabulary[locale][name]=flattenTerms(result.data).map(taxonomyRow);
       }
     }
-    // Hydrating a collection lazily imports EmDash's taxonomy module. A one-entry query runs that import
-    // now, while memory is free, so the large queries below find the module already evaluated.
-    const warmup=await getCollection('tours',{status:'published',locale:locales[0],limit:1,orderBy:{published_at:'desc'}});
-    if (warmup.error) throw warmup.error;
-    // One locale at a time keeps peak memory to a single hydrated collection.
+    // Pages of PAGE_SIZE keep each EmDash hydration small. One 192-entry query makes the Worker abort with
+    // "Dynamic import exceeded memory limits" when EmDash lazily imports its taxonomy module mid-hydration,
+    // while the 64-entry Chinese collection loads fine. Locales also load one at a time.
     const collectionResults={};
     for (const locale of locales) {
-      const result=await getCollection('tours',{status:'published',locale,orderBy:{published_at:'desc'}});
-      if (result.error) throw result.error;
-      if (!Array.isArray(result.entries)) throw new Error(`Invalid published ${locale} CMS collection result`);
-      collectionResults[locale]=result;
+      const pages=[];
+      let cursor;
+      do {
+        const result=await getCollection('tours',{status:'published',locale,orderBy:{published_at:'desc'},limit:PAGE_SIZE,...(cursor?{cursor}:{})});
+        if (result.error) throw result.error;
+        if (!Array.isArray(result.entries)) throw new Error(`Invalid published ${locale} CMS collection result`);
+        pages.push(result);
+        cursor=result.nextCursor;
+        if (pages.length>100) throw new Error(`Published ${locale} CMS collection did not terminate`);
+      } while (cursor);
+      collectionResults[locale]={entries:pages.flatMap(page=>page.entries),cacheHint:mergeHints(pages.map(page=>page.cacheHint))};
     }
     const entries=Object.fromEntries(locales.map(locale=>[locale,collectionResults[locale].entries.map(entry=>normalizeEntry(entry,locale))]));
     for (const locale of locales) {

@@ -10,15 +10,19 @@ const compatibility={schema:1,locales:{
 const taxonomyNames=['destinations','travel_styles','travel_regions','cruise_types'];
 const row=(locale,id,slug,title)=>({id:locale==='zh'?`${locale}/${slug}`:slug,slug,seo:{title:`${locale} SEO`,description:null,canonical:null,image:null,noIndex:false},data:{id,status:'published',locale,publishedAt:new Date('2026-11-12T00:00:00Z'),translationGroup:'pair-1',title,hero:{meta:{storageKey:`${locale}-hero.jpg`},width:1200,height:800},terms:{destinations:[{id:`term-${locale}`,name:'destinations',slug:locale==='zh'?'banff-zh':'banff',label:locale==='zh'?'班夫':'Banff',children:[],locale,translationGroup:'term-pair'}]}}});
 
-function harness({context={request:true},error,lookup,seoImage}={}){
+function harness({context={request:true},error,lookup,seoImage,paging}={}){
   const calls=[],taxonomyCalls=[];
   const entries={en:[row('en','native-en','native-en','Native EN')],zh:[row('zh','native-zh','native-zh','原生中文')]};
   if(seoImage!==undefined)entries.en[0].seo.image=seoImage;
+  if(paging){
+    entries.en=[1,2,3].map(n=>{const r=row('en',n===1?'native-en':`native-en-${n}`,n===1?'native-en':`native-en-${n}`,`Native EN ${n}`);r.data.translationGroup=`group-${n}`;return r;});
+    entries.zh[0].data.translationGroup='group-1';
+  }
   const api=createNativeSiteData({
     compatibility,
     ...(lookup?{lookupMediaStorageKeys:lookup}:{}),
     getContext:()=>context,
-    getCollection:async(type,filter)=>{calls.push({type,filter});return error?{entries:[],error:new Error('database failed'),cacheHint:{}}:{entries:entries[filter.locale],cacheHint:{tags:[`collection:${filter.locale}`]}};},
+    getCollection:async(type,filter)=>{calls.push({type,filter});if(paging){paging.seen.push({locale:filter.locale,cursor:filter.cursor});if(filter.locale==='en'){const index={undefined:0,p2:1,p3:2}[String(filter.cursor)];return {entries:[entries.en[index]],cacheHint:{tags:['collection:en']},...(index<2?{nextCursor:`p${index+2}`}:{})};}}return error?{entries:[],error:new Error('database failed'),cacheHint:{}}:{entries:entries[filter.locale],cacheHint:{tags:[`collection:${filter.locale}`]}};},
     getTaxonomyDefs:async({locale})=>taxonomyNames.map(name=>({name,collections:['tours'],locale})),
     getTaxonomyTermsWithCacheHint:async(name,{locale})=>{
       taxonomyCalls.push({name,locale});
@@ -32,10 +36,9 @@ function harness({context={request:true},error,lookup,seoImage}={}){
 test('loads every published locale without a limit and links native translations and terms',async()=>{
   const {api,calls,taxonomyCalls}=harness();
   const catalogues=await api.getNativeSiteCatalogues();
-  assert.equal(calls.length,3,'one warm-up query, then one full query per locale');
-  assert.equal(calls[0].filter.limit,1,'the warm-up is a one-entry query that runs first');
-  assert.deepEqual(calls.slice(1).map(call=>call.filter.locale),['en','zh'],'locales load one at a time');
-  for(const call of calls.slice(1)){assert.equal(call.type,'tours');assert.equal(call.filter.status,'published');assert.equal(Object.hasOwn(call.filter,'limit'),false);assert.deepEqual(call.filter.orderBy,{published_at:'desc'});}
+  assert.equal(calls.length,2,'one paged query per locale');
+  assert.deepEqual(calls.map(call=>call.filter.locale),['en','zh'],'locales load one at a time');
+  for(const call of calls){assert.equal(call.type,'tours');assert.equal(call.filter.status,'published');assert.equal(call.filter.limit,32);assert.equal(Object.hasOwn(call.filter,'cursor'),false);assert.deepEqual(call.filter.orderBy,{published_at:'desc'});}
   assert.deepEqual(catalogues.en.tours[0].translations.zh,{id:'native-zh',slug:'native-zh'});
   assert.deepEqual(catalogues.en.tours[0].nativeSeo,{title:'en SEO'});
   assert.equal(catalogues.en.tours[0].optimizedHero.width,1200);
@@ -50,28 +53,28 @@ test('loads every published locale without a limit and links native translations
     'zh:cruise_types','zh:destinations','zh:travel_regions','zh:travel_styles',
   ]);
   assert.deepEqual(await api.getNativeSiteCacheHint(),{tags:['collection:en','collection:zh','taxonomy:destinations','taxonomy:travel_styles','taxonomy:travel_regions','taxonomy:cruise_types']});
-  assert.equal(calls.length,3,'cache hint must share the same request-scoped load');
+  assert.equal(calls.length,2,'cache hint must share the same request-scoped load');
 });
 
 test('memoizes only within one request context and retries after failures',async()=>{
   const context={request:1};
   const {api,calls}=harness({context});
   await Promise.all([api.getNativeSiteCatalogues(),api.getNativeSiteCatalogues()]);
-  assert.equal(calls.length,3);
+  assert.equal(calls.length,2);
   context.request=2;
   await api.getNativeSiteCatalogues();
-  assert.equal(calls.length,3,'the same context object remains the same request identity');
+  assert.equal(calls.length,2,'the same context object remains the same request identity');
   const failed=harness({error:true});
   await assert.rejects(failed.api.getNativeSiteCatalogues(),/database failed/);
   await assert.rejects(failed.api.getNativeSiteCatalogues(),/database failed/);
-  assert.equal(failed.calls.length,2,'failed request memo is evicted so callers can retry (each attempt stops at the failing warm-up)');
+  assert.equal(failed.calls.length,2,'failed request memo is evicted so callers can retry (each attempt stops at the first failing page)');
 });
 
 test('does not create an isolate cache when no request context exists',async()=>{
   const {api,calls}=harness({context:null});
   await api.getNativeSiteCatalogues();
   await api.getNativeSiteCatalogues();
-  assert.equal(calls.length,6);
+  assert.equal(calls.length,4);
 });
 
 test('SEO image media IDs resolve to the public storage-key route; unresolved IDs are dropped',async()=>{
@@ -85,4 +88,14 @@ test('SEO image media IDs resolve to the public storage-key route; unresolved ID
   assert.deepEqual((await missing.api.getNativeSiteCatalogues()).en.tours[0].nativeSeo,{title:'en SEO'});
   const absolute=harness({lookup:async()=>{throw new Error('must not look up URLs');},seoImage:'https://cdn.example.test/share.jpg'});
   assert.equal((await absolute.api.getNativeSiteCatalogues()).en.tours[0].nativeSeo.image,'https://cdn.example.test/share.jpg');
+});
+
+test('follows the collection cursor page by page and keeps every entry',async()=>{
+  const seen=[];
+  const {api,entries}=harness({paging:{seen}});
+  const catalogues=await api.getNativeSiteCatalogues();
+  assert.deepEqual(seen,[undefined,'p2','p3'].map(cursor=>({locale:'en',cursor})).concat([{locale:'zh',cursor:undefined}]));
+  assert.equal(catalogues.en.tours.length,3);
+  assert.deepEqual(catalogues.en.tours.map(tour=>tour.id).sort(),['native-en','native-en-2','native-en-3']);
+  assert.ok(entries);
 });
