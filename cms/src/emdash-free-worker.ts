@@ -4,7 +4,7 @@ import { routeNativeBooking } from '../../src/server/native-booking/index.mjs';
 import { durableExecutionContext, fetchFreeRuntime } from './lib/cms/free-runtime.mjs';
 
 import {nativeSiteRoute} from './lib/cms/native-site-policy.mjs';
-import { isNativeProofPath, validateProofTags, forwardNativeProof, privateProofResponse, withStaticFallback } from './lib/cms/native-cache-policy.mjs';
+import { isNativeProofPath, validateProofTags, forwardNativeProof, privateProofResponse, withStaticFallback, immutableImageResponse } from './lib/cms/native-cache-policy.mjs';
 
 export { PluginBridge };
 
@@ -74,6 +74,15 @@ export default {
       const proof = (context.exports as { NativeProofCache: { fetch(request: Request): Promise<Response> } }).NativeProofCache;
       const response = await forwardNativeProof(proof, request);
       return withStaticFallback(request, response, env.ASSETS as { fetch(request: Request): Promise<Response> } | undefined);
+    }
+    if (pathname === '/_image' && request.method === 'GET') {
+      // Content-addressed derivatives: serve from the edge cache, transform once.
+      const edge = (caches as unknown as { default: Cache }).default;
+      const cached = await edge.match(request);
+      if (cached) return cached;
+      const response = immutableImageResponse(await fetchFreeRuntime(handler, request, env, context));
+      if (response.status === 200 && response.headers.get('Cache-Control')?.includes('immutable')) context.waitUntil(edge.put(request, response.clone()));
+      return response;
     }
     const native = await routeNativeBooking(request, env, context);
     if (native) return native;

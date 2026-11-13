@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isNativeProofPath, validateProofTags, scopedCloudflareProvider, withStaticFallback} from '../src/lib/cms/native-cache-policy.mjs';
+import {isNativeProofPath, validateProofTags, scopedCloudflareProvider, withStaticFallback, immutableImageResponse} from '../src/lib/cms/native-cache-policy.mjs';
 test('cache entrypoint admits only the bounded native proof routes',()=>{
  for(const path of ['/native-proof/zh','/native-proof/zh/tours/01M77CFJT9M7H2YPYV1J8GF8PV'])assert.ok(isNativeProofPath(path));
  for(const path of ['/zh','/_emdash/admin','/api/transfer/catalog','/book/return/id','/native-proof/zh/anything','/native-proof/zh/tours/a/b','/native-proof/zh/tours/%2e%2e'])assert.equal(isNativeProofPath(path),false);
@@ -77,4 +77,11 @@ test('an empty or unreadable 200 is treated as a failed render; a good page pass
  assert.equal(noAsset.status,503,'a blank page with no static twin becomes an honest 503, never a white screen');
  assert.match(noAsset.headers.get('X-Qualitour-Fallback-Reason'),/^empty body/);
  const head=new Response(null,{status:200});assert.equal(await withStaticFallback(get('/tours','HEAD'),head,asset()),head);
+});
+
+test('derived images get a year-long immutable cache, other responses are left alone',async()=>{
+ const image=immutableImageResponse(new Response('webp',{status:200,headers:{'Content-Type':'image/webp','Cache-Control':'public, max-age=0, must-revalidate','Set-Cookie':'a=b'}}));
+ assert.equal(image.headers.get('Cache-Control'),'public, max-age=31536000, immutable');assert.equal(image.headers.has('Set-Cookie'),false);assert.equal(await image.text(),'webp');
+ const missing=new Response('nope',{status:404,headers:{'Content-Type':'image/webp'}});assert.equal(immutableImageResponse(missing),missing);
+ const html=new Response('<p>',{status:200,headers:{'Content-Type':'text/html'}});assert.equal(immutableImageResponse(html),html);
 });

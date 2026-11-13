@@ -7,7 +7,7 @@ import { optimizeTourHeroes } from './native-site-image.mjs';
 import { readAssignments, readPublishedEntryRow, readPublishedPage, readSeo, rowToEntry, termsForEntry } from './native-site-sql.mjs';
 
 const locales = ['en','zh'];
-const PAGE_SIZE = 32;
+const PAGE_SIZE = 64;
 /**
  * The itinerary/FAQ tree (goodlayers_data) is thousands of small objects per tour. Held as one JSON string it
  * costs a fraction of the Worker memory, and it is rebuilt only for a tour whose detail page actually reads it.
@@ -105,9 +105,10 @@ function mergeHints(hints) {
  * (see native-site-sql.mjs for why this does not go through getEmDashCollection).
  */
 export function createSqlTourSource({ getDatabase = getDb, pageSize = PAGE_SIZE } = {}) {
-  return async function* readTourPages(locale, vocabulary) {
+  return async function* readTourPages(locale, vocabulary, shared = {}) {
     const db = await getDatabase();
-    const assignments = await readAssignments(db);
+    // One pivot read per load, shared by both locales.
+    const assignments = await (shared.assignments ??= readAssignments(db));
     const fallback = locale === 'en' ? undefined : vocabulary.en;
     for (let offset = 0; ; offset += pageSize) {
       const rows = await readPublishedPage(db, locale, { limit: pageSize, offset });
@@ -150,24 +151,23 @@ export function createNativeSiteData({
     // The vocabulary comes first: every page of tours needs it to attach terms.
     const vocabulary={en:{},zh:{}};
     const taxonomyHints=[];
-    for (const locale of locales) {
+    // Each query is a D1 round trip, so independent ones go out together.
+    await Promise.all(locales.map(async locale=>{
       const defs=await getDefs({locale});
       const tourDefs=new Map(defs.filter(def=>def.collections?.includes('tours')).map(def=>[def.name,def]));
-      for (const name of taxonomyNames) {
-        if (!tourDefs.has(name)) throw new Error(`Missing published CMS taxonomy definition ${name} for ${locale}`);
-        const result=await getTerms(name,{locale,includeCounts:false});
-        taxonomyHints.push(result.cacheHint);
-        vocabulary[locale][name]=flattenTerms(result.data).map(taxonomyRow);
-      }
-    }
+      for (const name of taxonomyNames) if (!tourDefs.has(name)) throw new Error(`Missing published CMS taxonomy definition ${name} for ${locale}`);
+      const results=await Promise.all(taxonomyNames.map(name=>getTerms(name,{locale,includeCounts:false})));
+      taxonomyNames.forEach((name,index)=>{vocabulary[locale][name]=flattenTerms(results[index].data).map(taxonomyRow);});
+      taxonomyHints.push(...results.map(result=>result.cacheHint));
+    }));
     // Memory is the constraint in the Worker: one locale at a time, in pages of PAGE_SIZE, and each page's raw
     // entries are released as soon as its tours exist. Only a small stub per entry survives for translation linking.
-    const catalogues={}, stubs={}, collectionHints=[];
+    const catalogues={}, stubs={}, collectionHints=[], shared={};
     for (const locale of locales) {
       const tours=[], excluded=[], seenIds=new Set(), sortDates=new Map();
       stubs[locale]=[];
       let pageCount=0;
-      for await (const page of readTourPages(locale,vocabulary)) {
+      for await (const page of readTourPages(locale,vocabulary,shared)) {
         if (!Array.isArray(page)) throw new Error(`Invalid published ${locale} CMS collection result`);
         const rows=page.map(entry=>normalizeEntry(entry,locale));
         for (const entry of rows) { if(seenIds.has(entry.id))throw new Error(`Duplicate published CMS tour ID ${entry.id}`); seenIds.add(entry.id); }

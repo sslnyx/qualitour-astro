@@ -41,7 +41,7 @@ export const onRequest=defineMiddleware(async(context,next)=>{
   }
   context.locals.qualitourPageProps=props;
   if(context.request.headers.has('Authorization')||context.request.headers.has('Cookie'))context.cache.set(false);
-  else {const hint=await getNativeSiteCacheHint();context.cache.set({...hint,tags:[...new Set(['tours',...(hint?.tags||[])])],maxAge:300});}
+  else {const hint=await getNativeSiteCacheHint();context.cache.set({...hint,tags:[...new Set(['tours',...(hint?.tags||[])])],maxAge:3600,swr:86400});}
   const response=await next();
   if(response.status!==200){context.cache.set(false);return response;}
   // Astro streams the page, so a render error after the response starts ends the stream silently (a 200 with

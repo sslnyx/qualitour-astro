@@ -54,3 +54,16 @@ export async function withStaticFallback(request, response, assets) {
  if(reason)headers.set('X-Qualitour-Fallback-Reason',reason);
  return new Response(request.method==='HEAD'?null:fallback.body,{status:200,statusText:fallback.statusText,headers});
 }
+
+/**
+ * Derived images are addressed by content: the source is a media storage key (a new upload is a new key) and the
+ * width/format are in the URL. A 200 can therefore be cached for a year by browsers and the edge, instead of the
+ * endpoint's default `max-age=0, must-revalidate`, which re-transformed every image on every view.
+ */
+export function immutableImageResponse(response) {
+ if(response.status!==200||!(response.headers.get('Content-Type')||'').startsWith('image/'))return response;
+ const headers=new Headers(response.headers);
+ headers.set('Cache-Control','public, max-age=31536000, immutable');
+ headers.delete('Set-Cookie');
+ return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
+}
