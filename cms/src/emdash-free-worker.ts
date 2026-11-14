@@ -4,6 +4,7 @@ import { routeNativeBooking } from '../../src/server/native-booking/index.mjs';
 import { durableExecutionContext, fetchFreeRuntime } from './lib/cms/free-runtime.mjs';
 
 import {nativeSiteRoute} from './lib/cms/native-site-policy.mjs';
+import { siteGate } from './lib/cms/site-gate.mjs';
 import { isNativeProofPath, validateProofTags, forwardNativeProof, privateProofResponse, withStaticFallback, immutableImageResponse } from './lib/cms/native-cache-policy.mjs';
 
 export { PluginBridge };
@@ -70,6 +71,12 @@ export default {
   ...handler,
   async fetch(request: Request, env: RuntimeEnv, context: ExecutionContext) {
     const pathname = new URL(request.url).pathname;
+    // Public pages belong to the static Worker `qualitour-site`; only its build may render them here.
+    const gated = siteGate(request, env as { SITE_BUILD_KEY?: string; PUBLIC_SITE_ORIGIN?: string });
+    if (gated) return gated;
+    if (['/book', '/zh/book', '/404', '/500'].includes(pathname) && ['GET', 'HEAD'].includes(request.method)) {
+      return (env.ASSETS as { fetch(request: Request): Promise<Response> }).fetch(request);
+    }
     if (pathname.startsWith('/native-proof/') || nativeSiteRoute(pathname)) {
       const proof = (context.exports as { NativeProofCache: { fetch(request: Request): Promise<Response> } }).NativeProofCache;
       const response = await forwardNativeProof(proof, request);

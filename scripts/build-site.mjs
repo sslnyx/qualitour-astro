@@ -60,7 +60,7 @@ async function crawlAll() {
     queued.add(key); queue.push(key);
   };
   const fetchHtml = async path => {
-    const response = await fetch(new URL(path, cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0', accept: 'text/html' }, redirect: 'manual' });
+    const response = await fetch(new URL(path, cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0', accept: 'text/html', ...(process.env.SITE_BUILD_KEY ? { 'x-qualitour-site-build': process.env.SITE_BUILD_KEY } : {}) }, redirect: 'manual' });
     if (response.status !== 200) { failures.push(`${response.status} ${path}`); return null; }
     if (!(response.headers.get('content-type') || '').includes('text/html')) { failures.push(`not html ${path}`); return null; }
     if (response.headers.get('x-qualitour-rendered') === 'static-fallback') { failures.push(`static fallback ${path}`); return null; }

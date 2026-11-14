@@ -49,6 +49,7 @@ jobs:
       - name: Build the static site from the published content
         env:
           EMDASH_TOKEN: ${{ secrets.EMDASH_TOKEN }}
+          SITE_BUILD_KEY: ${{ secrets.SITE_BUILD_KEY }}
         run: npm run release:site
       - name: Deploy qualitour-site
         env:
