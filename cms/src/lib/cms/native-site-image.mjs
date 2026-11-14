@@ -1,5 +1,6 @@
 import { collectInlineImageSources } from '../../../../src/lib/inline-images.mjs';
 import { collectTourPhotoSources, mapWithConcurrency } from '../../../../src/lib/image-delivery.mjs';
+import prebuiltManifest from '../../data/prebuilt-images.json' with { type: 'json' };
 
 const mediaOrigins=new Set(['https://qualitour-cms-free-test.qualitour.workers.dev','https://qualitour.qualitour.workers.dev','https://qualitour.ca']);
 const widths=[480,960,1280,1920];
@@ -33,9 +34,22 @@ function transformHref(value) {
 }
 function claimsCmsMedia(value){return typeof value==='string'&&/(?:^|\/)\_emdash\/api\/media\/file\//.test(value);}
 
+/**
+ * Derivatives made at build time (scripts/prebuild-images.mjs) and shipped as static assets under /img/.
+ * Entries are "<id>|<width>"; a pair that is not listed keeps using the Worker's /_image transform.
+ */
+export const prebuiltImages=new Set(prebuiltManifest);
+export function prebuiltImageId(href) {
+  if(typeof href!=='string')return;
+  const owned=ownedMediaPath(href);
+  if(owned)return owned.slice('/_emdash/api/media/file/'.length).replaceAll('/','~');
+  try{const url=new URL(href);return 'wp-'+(url.hostname+url.pathname).replace(/[^A-Za-z0-9._-]/g,'~');}catch{return;}
+}
+
 export function imageTransformUrl(value,width,quality=80) {
   const href=transformHref(value);
   if(!href||!Number.isSafeInteger(width)||width<1||width>4096)return;
+  if(quality===80){const id=prebuiltImageId(href);if(id&&prebuiltImages.has(`${id}|${width}`))return `/img/${id}-${width}.webp`;}
   return `/_image?href=${encodeURIComponent(href)}&w=${width}&f=webp&q=${quality}`;
 }
 

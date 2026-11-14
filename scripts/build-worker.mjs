@@ -1,4 +1,4 @@
-import {mkdir,readFile,writeFile,readdir,rm} from 'node:fs/promises';
+import {mkdir,readFile,writeFile,readdir,rm,cp} from 'node:fs/promises';
 import {resolve,relative} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {mergeWorkerAssets} from './lib/merge-worker-assets.mjs';
@@ -13,9 +13,11 @@ function run(args){const r=spawnSync(process.execPath,args,{stdio:'inherit',env:
 try{
  await beginWorkerRelease(root);
  const astro=JSON.parse(await readFile('node_modules/astro/package.json','utf8'));const bin=typeof astro.bin==='string'?astro.bin:astro.bin.astro;
+ run(['scripts/prebuild-images.mjs']);
  run([resolve('node_modules/astro',bin),'build','--config','astro.config.worker-cms.mjs']);
  const entry=await readFile(cms+'/server/entry.mjs','utf8');const chunks=await Promise.all((await readdir(cms+'/server/chunks')).filter(x=>x.endsWith('.mjs')).map(x=>readFile(cms+'/server/chunks/'+x,'utf8')));assertCmsRuntime(entry,chunks);
  run(['scripts/build-worker-static.mjs']);
+ for(const key of JSON.parse(await readFile('cms/src/data/prebuilt-images.json','utf8'))){const [id,width]=key.split('|');await mkdir(front+'/img',{recursive:true});await cp(`.astro/prebuilt-images/${id}-${width}.webp`,`${front}/img/${id}-${width}.webp`);}
  const result=await mergeWorkerAssets({frontendDir:front,cmsClientDir:cms+'/client',outputDir:assets});
  const config=JSON.parse(await readFile(cms+'/server/wrangler.json','utf8'));config.cache={enabled:false};assertWorkerBindings(config);config.assets.directory=relative(cms+'/server',assets);config.cache={enabled:false};await writeFile(cms+'/server/wrangler.json',JSON.stringify(config)+'\n');
  const source=JSON.parse(await readFile('.astro/cms-content/public-catalogue.json','utf8'));await writeFile(root+'/source-fingerprint.json',JSON.stringify({origin:source.origin,compatibilityHash:source.compatibilityHash,contentHash:contentHash(source.locales)})+'\n');

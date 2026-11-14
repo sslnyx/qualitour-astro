@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { deepOptimizeTourData, getImageSafe, imageTransformUrl, getTourImageUrl, optimizeResponsiveImage, optimizeTourHero, optimizeTourImages, optimizeTourPresentation } from '../src/lib/cms/native-site-image.mjs';
+import { prebuiltImages, prebuiltImageId, deepOptimizeTourData, getImageSafe, imageTransformUrl, getTourImageUrl, optimizeResponsiveImage, optimizeTourHero, optimizeTourImages, optimizeTourPresentation } from '../src/lib/cms/native-site-image.mjs';
 
 const owned='https://qualitour.qualitour.workers.dev/_emdash/api/media/file/hero.jpg';
 const inline='https://qualitour-cms-free-test.qualitour.workers.dev/_emdash/api/media/file/inline.jpg';
@@ -62,4 +62,18 @@ test('images from both WordPress installs (English and /zh) are transformed, oth
   assert.match(imageTransformUrl(url,600),/^\/_image\?href=https%3A%2F%2F.*qualitour\.ca.*wp-content%2Fuploads.*&w=600&f=webp&q=80$/,url);
  for(const url of ['https://qualitour.ca/zh/wp-content/plugins/x.jpg','https://qualitour.ca/fr/wp-content/uploads/x.jpg','https://evil.example/zh/wp-content/uploads/x.jpg'])
   assert.equal(imageTransformUrl(url,600),undefined,url);
+});
+
+test('a prebuilt derivative is served as a static asset; anything not prebuilt keeps the Worker transform',()=>{
+  assert.equal(prebuiltImageId(owned.replace('https://qualitour.qualitour.workers.dev','')),'hero.jpg');
+  assert.equal(prebuiltImageId('/_emdash/api/media/file/a/b.jpg'),'a~b.jpg');
+  prebuiltImages.add('hero.jpg|600');
+  try{
+    assert.equal(imageTransformUrl(owned,600),'/img/hero.jpg-600.webp');
+    assert.match(imageTransformUrl(owned,960),/^\/_image\?href=/,'a width that was not prebuilt falls back');
+    assert.match(imageTransformUrl(owned,600,60),/^\/_image\?href=/,'only the default quality is prebuilt');
+    assert.equal(imageTransformUrl(supplier,600),undefined);
+  }finally{prebuiltImages.delete('hero.jpg|600');}
+  const wp='https://qualitour.ca/wp-content/uploads/2024/04/a.jpg';
+  const id=prebuiltImageId(wp);assert.match(id,/^wp-qualitour\.ca~wp-content~uploads~2024~04~a\.jpg$/);
 });
