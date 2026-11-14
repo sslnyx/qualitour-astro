@@ -27,9 +27,7 @@
       "/zh/book/return/*",
       "/zh/book/receipt/*",
       "/_image",
-      "/_emdash/api/media/file/*",
-      "/sitemap.xml",
-      "/sitemap-*.xml"
+      "/_emdash/api/media/file/*"
     ]
   },
   "observability": { "enabled": false }

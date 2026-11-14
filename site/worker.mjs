@@ -2,13 +2,12 @@
 // Only the paths listed under assets.run_worker_first reach this script; they belong to the CMS Worker
 // (`qualitour`) and are forwarded over a service binding as a same-origin reverse proxy:
 //   /api/transfer/*   booking API          /book/{manage,return,receipt}/<id>   transactional pages
-//   /_image           image transform      /_emdash/api/media/file/*            public media
-//   /sitemap*.xml     sitemaps
+//   /_image           image transform (fallback)   /_emdash/api/media/file/*    public media
 // The CMS Worker pins its public origin (booking Origin check, Stripe return URLs), so the proxy presents the
 // request under the CMS origin and maps the answer back. The CMS admin is NOT proxied: passkeys are bound to
 // the CMS host, which stays reachable on its own address.
 
-const FORWARDED = [/^\/api\/transfer(?:\/|$)/, /^\/(?:zh\/)?book\/(?:manage|return|receipt)\//, /^\/_image$/, /^\/_emdash\/api\/media\/file\//, /^\/sitemap[^/]*\.xml$/];
+const FORWARDED = [/^\/api\/transfer(?:\/|$)/, /^\/(?:zh\/)?book\/(?:manage|return|receipt)\//, /^\/_image$/, /^\/_emdash\/api\/media\/file\//];
 
 export function isForwardedPath(pathname) {
   return FORWARDED.some(pattern => pattern.test(pathname));

@@ -6,9 +6,9 @@ const cms = 'https://qualitour.qualitour.workers.dev';
 const pub = 'https://qualitour-site.qualitour.workers.dev';
 
 test('only the CMS-owned paths are forwarded; every page is a static asset', () => {
-  for (const path of ['/api/transfer', '/api/transfer/availability', '/book/manage/abc', '/zh/book/return/abc', '/_image', '/_emdash/api/media/file/a.jpg', '/sitemap.xml', '/sitemap-tours.xml'])
+  for (const path of ['/api/transfer', '/api/transfer/availability', '/book/manage/abc', '/zh/book/return/abc', '/_image', '/_emdash/api/media/file/a.jpg'])
     assert.equal(isForwardedPath(path), true, path);
-  for (const path of ['/', '/zh', '/tours', '/tours/x', '/tours/style/cruises', '/book', '/zh/book', '/_emdash/admin', '/_emdash/api/auth/me', '/img/a-600.webp', '/_astro/a.js', '/api/other', '/apix', '/native-proof/x'])
+  for (const path of ['/', '/zh', '/tours', '/tours/x', '/tours/style/cruises', '/book', '/zh/book', '/_emdash/admin', '/_emdash/api/auth/me', '/img/a-600.webp', '/_astro/a.js', '/api/other', '/apix', '/native-proof/x', '/sitemap.xml', '/robots.txt'])
     assert.equal(isForwardedPath(path), false, path);
 });
 

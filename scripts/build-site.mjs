@@ -17,59 +17,97 @@ import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { dirname, join, resolve } from 'node:path';
 import { nativeSiteRoute } from '../cms/src/lib/cms/native-site-policy.mjs';
+import { syncCmsSnapshot } from '../src/lib/cms/content-server.mjs';
 
 const cmsOrigin = process.env.QUALITOUR_CMS_ORIGIN || 'https://qualitour.qualitour.workers.dev';
 const baseAssets = resolve(process.env.SITE_BASE_ASSETS || '.astro/worker-release/assets');
 const outDir = resolve(process.env.SITE_OUT_DIR || '.astro/site-release/assets');
 const concurrency = Number(process.env.SITE_CRAWL_CONCURRENCY || 6);
-// Pages the CMS does not render: the transactional booking shell stays the prerendered static page.
-const keepFromBase = new Set(['404.html', '500.html', 'book.html', 'zh/book.html']);
+const publicOrigin = process.env.SITE_PUBLIC_ORIGIN || cmsOrigin;
 
-const snapshot = JSON.parse(await readFile('.astro/cms-content/public-catalogue.json', 'utf8'));
+// The published set comes from the CMS itself (EMDASH_TOKEN in CI, the CLI login on a workstation) unless
+// SITE_USE_SNAPSHOT=1 reuses the snapshot already on disk.
+const snapshot = process.env.SITE_USE_SNAPSHOT
+  ? JSON.parse(await readFile('.astro/cms-content/public-catalogue.json', 'utf8'))
+  : await syncCmsSnapshot();
 if (snapshot.origin !== cmsOrigin) throw new Error(`Snapshot origin ${snapshot.origin} differs from ${cmsOrigin}`);
+const decode = path => { try { return decodeURIComponent(path); } catch { return path; } };
+const sleep = ms => new Promise(done => setTimeout(done, ms));
 
 const seeds = ['/', '/zh', '/tours', '/zh/tours', '/tours/featured', '/zh/tours/featured'];
 for (const page of ['about-us', 'contact', 'faq', 'privacy-policy', 'terms', 'visa', 'reviews', 'private-transfers']) seeds.push('/' + page, '/zh/' + page);
 const requiredTours = [];
+const publishedSlugs = new Set();
 for (const locale of ['en', 'zh']) for (const tour of snapshot.locales[locale].tours) {
-  const path = (locale === 'zh' ? '/zh' : '') + '/tours/' + tour.slug;
-  requiredTours.push(path); seeds.push(path);
+  const path = decode((locale === 'zh' ? '/zh' : '') + '/tours/' + tour.slug);
+  requiredTours.push(path); seeds.push(path); publishedSlugs.add(decode(tour.slug));
+}
+// Pages the CMS does not render through the router but serves from its own assets.
+const fixedPaths = ['/book', '/zh/book', '/404', '/500'];
+
+async function crawlAll() {
+  const pages = new Map(); // decoded pathname -> html
+  const failures = [];
+  const queue = [];
+  const queued = new Set();
+  const enqueue = raw => {
+    let path;
+    try { path = new URL(raw, cmsOrigin).pathname; } catch { return; }
+    const route = nativeSiteRoute(path);
+    if (!route) return;
+    const key = decode(route.pathname);
+    if (queued.has(key)) return;
+    queued.add(key); queue.push(key);
+  };
+  const fetchHtml = async path => {
+    const response = await fetch(new URL(path, cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0', accept: 'text/html' }, redirect: 'manual' });
+    if (response.status !== 200) { failures.push(`${response.status} ${path}`); return null; }
+    if (!(response.headers.get('content-type') || '').includes('text/html')) { failures.push(`not html ${path}`); return null; }
+    if (response.headers.get('x-qualitour-rendered') === 'static-fallback') { failures.push(`static fallback ${path}`); return null; }
+    return response.text();
+  };
+  seeds.forEach(enqueue);
+  const worker = async () => {
+    while (queue.length) {
+      const path = queue.shift();
+      const html = await fetchHtml(path);
+      if (html === null) continue;
+      pages.set(path, html);
+      for (const match of html.matchAll(/href="([^"#]+)"/g)) enqueue(match[1].replaceAll('&amp;', '&').split('?')[0]);
+    }
+  };
+  await Promise.all(Array.from({ length: concurrency }, worker));
+  for (const path of fixedPaths) { const html = await fetchHtml(path); if (html !== null) pages.set(path, html); }
+  return { pages, failures };
 }
 
-const pages = new Map(); // canonical pathname -> html
-const failures = [];
-const queue = [];
-const queued = new Set();
-function enqueue(raw) {
-  let path;
-  try { path = new URL(raw, cmsOrigin).pathname; } catch { return; }
-  const route = nativeSiteRoute(path);
-  if (!route || queued.has(route.pathname)) return;
-  queued.add(route.pathname); queue.push(route.pathname);
+// A page of the CMS render can lag behind a publish or an unpublish (cache invalidation). The published set from
+// the CMS is the truth: a published tour without a page, or a page of a tour that is no longer published, means the
+// render is stale, so wait and crawl again before giving up.
+function findProblems({ pages, failures }) {
+  const problems = [...failures];
+  const missing = requiredTours.filter(path => !pages.has(path));
+  if (missing.length) problems.push(`${missing.length} published tours missing: ${missing.slice(0, 5).join(', ')}`);
+  const stale = [...pages.keys()].filter(path => nativeSiteRoute(path)?.kind === 'tour' && !publishedSlugs.has(decode(path.split('/').pop())));
+  if (stale.length) problems.push(`${stale.length} pages of unpublished tours: ${stale.slice(0, 5).join(', ')}`);
+  // Linked routes that answer 404 are dead links in the content, not a build failure, unless a published tour is gone.
+  const dead = problems.filter(item => item.startsWith('404 ') && !requiredTours.includes(decode(item.slice(4))));
+  return { hard: problems.filter(item => !dead.includes(item)), dead };
 }
-seeds.forEach(enqueue);
 
-async function crawl(path) {
-  const response = await fetch(cmsOrigin + path, { headers: { 'user-agent': 'qualitour-site-build/1.0', 'accept': 'text/html' }, redirect: 'manual' });
-  if (response.status !== 200) { failures.push(`${response.status} ${path}`); return; }
-  if (!(response.headers.get('content-type') || '').includes('text/html')) { failures.push(`not html ${path}`); return; }
-  if (response.headers.get('x-qualitour-rendered') === 'static-fallback') { failures.push(`static fallback ${path}`); return; }
-  const html = await response.text();
-  pages.set(path, html);
-  for (const match of html.matchAll(/href="([^"#]+)"/g)) enqueue(match[1].replaceAll('&amp;', '&').split('?')[0]);
+const attempts = Number(process.env.SITE_CRAWL_ATTEMPTS || 4), staleWaitMs = Number(process.env.SITE_STALE_WAIT_MS || 45000);
+let crawled, verdict;
+for (let attempt = 1; ; attempt++) {
+  crawled = await crawlAll();
+  verdict = findProblems(crawled);
+  if (!verdict.hard.length || attempt >= attempts) break;
+  console.log(`Crawl ${attempt} did not match the published set (${verdict.hard.length} problems); waiting ${staleWaitMs / 1000}s for the render to catch up`);
+  await sleep(staleWaitMs);
 }
-async function worker() {
-  while (queue.length) await crawl(queue.shift());
-}
-await Promise.all(Array.from({ length: concurrency }, worker));
-
-const missing = requiredTours.filter(path => !pages.has(path));
-if (missing.length) failures.push(`${missing.length} published tours missing: ${missing.slice(0, 5).join(', ')}`);
-// Linked routes that answer 404 are dead links in the content, not a build failure, unless a published tour is gone.
-const deadLinks = failures.filter(item => item.startsWith('404 ') && !requiredTours.includes(item.slice(4)));
-const hard = failures.filter(item => !deadLinks.includes(item));
-if (hard.length) { console.error('Site build failed:\n' + hard.join('\n')); process.exit(1); }
-if (!pages.has('/') || !pages.has('/zh')) { console.error('Site build failed: home pages missing'); process.exit(1); }
+const { pages } = crawled;
+const deadLinks = verdict.dead;
+if (verdict.hard.length) { console.error('Site build failed:\n' + verdict.hard.join('\n')); process.exit(1); }
+if (!pages.has('/') || !pages.has('/zh') || !pages.has('/book')) { console.error('Site build failed: home or booking pages missing'); process.exit(1); }
 
 // Assemble into a sibling directory and swap, so a failed build never touches the previous release.
 const tmp = outDir + '.partial';
@@ -79,7 +117,8 @@ await cp(baseAssets, tmp, {
   recursive: true,
   filter: source => {
     const rel = source.slice(baseAssets.length + 1);
-    if (rel.endsWith('.html')) return keepFromBase.has(rel);
+    if (rel.endsWith('.html')) return false; // every page comes from the crawl
+    if (['sitemap.xml', 'robots.txt'].includes(rel) || rel.startsWith('sitemap-')) return false;
     return !['combined-release.json', 'qualitour-release.json', 'seo-inventory.json'].includes(rel);
   },
 });
@@ -90,14 +129,26 @@ await cp(baseAssets, tmp, {
 const imageCache = resolve('.astro/site-images');
 await mkdir(imageCache, { recursive: true });
 const wanted = new Map(); // key -> {href,w,h,q}
-const refPattern = /\/_image\?[^"'\s,)<>]+/g;
+// SSR output also names images the deployed Worker prebuilt (/img/<id>-<w>.webp from prebuilt-images.json). Those
+// files do not exist in a CI checkout, so they are regenerated here from the original they were made from.
+const refPattern = /\/_image\?[^"'\s,)<>]+|\/img\/(?!s-)[^"'\s,)<>/]+-\d+\.webp/g;
 function parseRef(raw) {
-  const params = new URLSearchParams(raw.slice('/_image?'.length).replaceAll('&amp;', '&'));
-  const href = params.get('href'), w = Number(params.get('w'));
+  let href, w, h = 0, q = 80;
+  if (raw.startsWith('/img/')) {
+    const match = raw.match(/^\/img\/(.+)-(\d+)\.webp$/);
+    if (!match) return null;
+    const [, id] = match;
+    href = id.startsWith('wp-') ? 'https://' + id.slice(3).replaceAll('~', '/') : '/_emdash/api/media/file/' + id.replaceAll('~', '/');
+    w = Number(match[2]);
+  } else {
+    const params = new URLSearchParams(raw.slice('/_image?'.length).replaceAll('&amp;', '&'));
+    href = params.get('href'); w = Number(params.get('w'));
+    if (params.get('h')) h = Number(params.get('h'));
+    if (params.get('q')) q = Number(params.get('q'));
+  }
   if (!href || !Number.isSafeInteger(w) || w < 1 || w > 4096) return null;
-  const h = params.get('h') ? Number(params.get('h')) : 0, q = params.get('q') ? Number(params.get('q')) : 80;
   const name = `s-${createHash('sha1').update(href).digest('hex').slice(0, 16)}-${w}${h ? 'x' + h : ''}${q === 80 ? '' : 'q' + q}.webp`;
-  return { href, w, h, q, name };
+  return { href, w, h, q, name, fallback: raw.startsWith('/img/') ? `/_image?href=${encodeURIComponent(href)}&w=${w}&f=webp&q=80` : raw };
 }
 for (const html of pages.values()) for (const match of html.matchAll(refPattern)) {
   const ref = parseRef(match[0]);
@@ -138,16 +189,46 @@ await Promise.all(Array.from({ length: 4 }, imageWorker));
 await mkdir(join(tmp, 'img'), { recursive: true });
 for (const name of produced) await cp(join(imageCache, name), join(tmp, 'img', name));
 for (const [path, html] of pages) {
-  pages.set(path, html.replace(refPattern, raw => { const ref = parseRef(raw); return ref && produced.has(ref.name) ? '/img/' + ref.name : raw; }));
+  pages.set(path, html.replace(refPattern, raw => { const ref = parseRef(raw); return !ref ? raw : produced.has(ref.name) ? '/img/' + ref.name : ref.fallback; }));
 }
+
+// Pages the CMS serves from its own assets (/book, 404, 500) were built with a different set of hashed files than
+// the CMS client build; fetch whatever any page references and the base assets lack, following CSS url() references.
+const assetMissing = [];
+const assetSeen = new Set();
+async function ensureAsset(path) {
+  if (assetSeen.has(path)) return;
+  assetSeen.add(path);
+  const file = join(tmp, path.slice(1));
+  try { await stat(file); return; } catch {}
+  const response = await fetch(new URL(path.split('/').map(encodeURIComponent).join('/'), cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0' } });
+  if (!response.ok) { assetMissing.push(`${response.status} ${path}`); return; }
+  const bytes = Buffer.from(await response.arrayBuffer());
+  await mkdir(dirname(file), { recursive: true });
+  await writeFile(file, bytes);
+  if (path.endsWith('.js') || path.endsWith('.mjs')) for (const match of bytes.toString('utf8').matchAll(/["'](\.{1,2}\/[^"'\s]+\.m?js)["']/g))
+    await ensureAsset(decode(new URL(match[1], new URL(path, cmsOrigin)).pathname));
+  if (path.endsWith('.css')) for (const match of bytes.toString('utf8').matchAll(/url\(\s*["']?([^)"'\s]+)["']?\s*\)/g)) {
+    const ref = match[1];
+    if (ref.startsWith('data:') || /^[a-z]+:/i.test(ref) || ref.startsWith('//')) continue;
+    await ensureAsset(decode(new URL(ref, new URL(path, cmsOrigin)).pathname));
+  }
+}
+for (const html of pages.values()) for (const match of html.matchAll(/["'(](\/(?:_astro|fonts)\/[^"')\s?#]+)/g)) await ensureAsset(decode(match[1]));
+if (assetMissing.length) { console.error('Site build failed: referenced assets missing\n' + assetMissing.slice(0, 10).join('\n')); process.exit(1); }
 
 const hashes = {};
 for (const [path, html] of pages) {
-  const file = path === '/' ? 'index.html' : decodeURIComponent(path).slice(1) + '.html';
+  const file = path === '/' ? 'index.html' : path.slice(1) + (path.endsWith('.html') ? '' : '.html');
   await mkdir(dirname(join(tmp, file)), { recursive: true });
   await writeFile(join(tmp, file), html);
   hashes[path] = createHash('sha256').update(html).digest('hex').slice(0, 16);
 }
+
+// The CMS sitemap lists its own /cms-proof/ routes, so the site publishes one built from the pages it serves.
+const routed = [...pages.keys()].filter(path => nativeSiteRoute(path)).sort();
+await writeFile(join(tmp, 'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + routed.map(path => `  <url><loc>${new URL(path === '/' ? '/' : path, publicOrigin).href.replaceAll('&', '&amp;')}</loc></url>`).join('\n') + '\n</urlset>\n');
+await writeFile(join(tmp, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${publicOrigin}/sitemap.xml\n`);
 
 let files = 0, largest = 0;
 async function walk(dir) {
