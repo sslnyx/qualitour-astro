@@ -169,3 +169,56 @@ export function buildVocabulary(rows) {
   }
   return vocabulary;
 }
+
+
+/**
+ * Google reviews live in their own collection: published = shown on the site, draft or unpublished = hidden.
+ * Reviews are not translated, so there is no locale filter; the legacy shape the review components read is built
+ * from these columns by `reviewRowToLegacy`.
+ */
+const REVIEWS_COLLECTION = 'ec_google_reviews';
+export const REVIEW_COLUMNS = Object.freeze([
+  'id', 'slug', 'author_name', 'source_id', 'rating', 'text', 'reviewed_at', 'author_url', 'profile_photo',
+  'profile_photo_source', 'local_guide', 'reviewer_reviews', 'reviewer_photos', 'images', 'source',
+]);
+export async function readPublishedReviewRows(db) {
+  return db.selectFrom(REVIEWS_COLLECTION).select([...REVIEW_COLUMNS])
+    .where('status', '=', 'published').where('deleted_at', 'is', null)
+    .orderBy('reviewed_at', 'desc').orderBy('id', 'asc').execute();
+}
+
+/** Google's own wording ("a month ago"), computed when the snapshot is built. */
+export function relativeTimeDescription(reviewedAt, now = Date.now()) {
+  const days = Math.floor((now - Date.parse(reviewedAt)) / 86400000);
+  if (!Number.isFinite(days) || days < 0) return '';
+  if (days < 1) return 'today';
+  if (days < 2) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  const weeks = Math.floor(days / 7);
+  if (days < 30) return weeks === 1 ? 'a week ago' : `${weeks} weeks ago`;
+  const months = Math.floor(days / 30.4375);
+  if (months < 12) return months <= 1 ? 'a month ago' : `${months} months ago`;
+  const years = Math.floor(days / 365.25);
+  return years <= 1 ? 'a year ago' : `${years} years ago`;
+}
+
+export function reviewRowToLegacy(row, index = 0, now = Date.now()) {
+  const when = Date.parse(row.reviewed_at);
+  const numeric = String(row.source_id ?? '').match(/(\d+)$/);
+  const images = mapValue(row.images);
+  return {
+    id: numeric ? Number(numeric[1]) : 1_000_000 + index,
+    author_name: String(row.author_name ?? ''),
+    author_url: String(row.author_url ?? ''),
+    profile_photo_url: String(row.profile_photo || row.profile_photo_source || ''),
+    rating: Number(row.rating) || 0,
+    text: String(row.text ?? ''),
+    time: Number.isFinite(when) ? String(Math.floor(when / 1000)) : '0',
+    relative_time_description: relativeTimeDescription(row.reviewed_at, now),
+    local_guide: Boolean(Number(row.local_guide)),
+    reviewer_reviews: Number(row.reviewer_reviews) || 0,
+    reviewer_photos: Number(row.reviewer_photos) || 0,
+    images: Array.isArray(images) ? images : [],
+    source: String(row.source || 'google'),
+  };
+}

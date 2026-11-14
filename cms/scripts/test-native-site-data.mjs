@@ -10,7 +10,7 @@ const compatibility={schema:1,locales:{
 const taxonomyNames=['destinations','travel_styles','travel_regions','cruise_types'];
 const row=(locale,id,slug,title)=>({id:locale==='zh'?`${locale}/${slug}`:slug,slug,seo:{title:`${locale} SEO`,description:null,canonical:null,image:null,noIndex:false},data:{id,status:'published',locale,publishedAt:new Date('2026-11-12T00:00:00Z'),translationGroup:'pair-1',title,hero:{meta:{storageKey:`${locale}-hero.jpg`},width:1200,height:800},terms:{destinations:[{id:`term-${locale}`,name:'destinations',slug:locale==='zh'?'banff-zh':'banff',label:locale==='zh'?'班夫':'Banff',children:[],locale,translationGroup:'term-pair'}]}}});
 
-function harness({context={request:true},contextFor,gate,error,lookup,seoImage,paging,readEntry,snapshotStore}={}){
+function harness({context={request:true},contextFor,gate,error,lookup,seoImage,paging,readEntry,snapshotStore,reviews}={}){
   const calls=[],vocabularyReads=[];
   const entries={en:[row('en','native-en','native-en','Native EN')],zh:[row('zh','native-zh','native-zh','原生中文')]};
   if(seoImage!==undefined)entries.en[0].seo.image=seoImage;
@@ -37,6 +37,7 @@ function harness({context={request:true},contextFor,gate,error,lookup,seoImage,p
       return {vocabulary:{en:{destinations:[term('en')]},zh:{destinations:[term('zh')]}},hints:taxonomyNames.map(name=>({tags:[`emdash:taxonomy:${name}`]}))};
     },
     presentTours:optimizeTourHeroes,
+    readReviews:reviews?async()=>reviews:async()=>null,
   });
   return {api,calls,vocabularyReads,entries};
 }
@@ -56,7 +57,7 @@ test('loads every published locale without a limit and links native translations
   assert.deepEqual(catalogues.en.tours[0].tour_terms.destinationScope,['banff']);
   assert.deepEqual(catalogues.zh.terms.destinations.map(term=>term.slug),['banff-zh']);
   assert.equal(vocabularyReads.length,1,'one vocabulary read serves both locales');
-  assert.deepEqual(await api.getNativeSiteCacheHint(),{tags:['tours','emdash:taxonomy:destinations','emdash:taxonomy:travel_styles','emdash:taxonomy:travel_regions','emdash:taxonomy:cruise_types']});
+  assert.deepEqual(await api.getNativeSiteCacheHint(),{tags:['tours','google_reviews','emdash:taxonomy:destinations','emdash:taxonomy:travel_styles','emdash:taxonomy:travel_regions','emdash:taxonomy:cruise_types']});
   assert.equal(calls.length,2,'cache hint must share the same request-scoped load');
 });
 
@@ -284,4 +285,12 @@ test('the SQL entry source returns the row with its SEO, or null when it is not 
   assert.equal(await source('missing','en'),null);
   rows._emdash_seo=[];
   assert.equal(Object.hasOwn(await source('a','en'),'seo'),false,'no SEO row leaves the key off, like the loader');
+});
+
+test('Google reviews from the CMS ride along in the snapshot for both locales, and an unreadable collection leaves them out',async()=>{
+  const reviews=[{id:1,author_name:'A',rating:5,text:'Great',time:'1789000000',relative_time_description:'a month ago',profile_photo_url:'/reviews/avatars/1.webp',images:[],source:'google'}];
+  const withReviews=await harness({reviews}).api.getNativeSiteCatalogues();
+  assert.deepEqual(withReviews.en.reviews,reviews);assert.deepEqual(withReviews.zh.reviews,reviews);
+  const without=await harness().api.getNativeSiteCatalogues();
+  assert.equal('reviews' in without.en,false,'null means unreadable: nothing is stored and the API falls back to its bundled snapshot');
 });

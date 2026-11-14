@@ -192,6 +192,34 @@ for (const [path, html] of pages) {
   pages.set(path, html.replace(refPattern, raw => { const ref = parseRef(raw); return !ref ? raw : produced.has(ref.name) ? '/img/' + ref.name : ref.fallback; }));
 }
 
+// Reviews synced from Google arrive with Google-hosted avatars and photos. Host them ourselves, like the avatars
+// imported earlier: avatars (/a/ paths) become 96px webp, review photos 800px wide webp. A file that cannot be
+// fetched keeps its Google URL (slower, still correct) and is reported.
+const externalPattern = /https:\/\/lh3\.googleusercontent\.com\/[A-Za-z0-9_\-/=.%]+/g;
+const externalSeen = new Map(), externalFailed = [];
+for (const html of pages.values()) for (const match of html.matchAll(externalPattern)) externalSeen.set(match[0], null);
+await Promise.all([...externalSeen.keys()].map(async url => {
+  const avatar = /\/a\//.test(url);
+  const name = `ext-${createHash('sha1').update(url).digest('hex').slice(0, 16)}.webp`;
+  const file = join(imageCache, name);
+  try {
+    let cached = false;
+    try { cached = (await stat(file)).size > 0; } catch {}
+    if (!cached) {
+      const source = avatar ? url.replace(/=s\d+[^/]*$/, '=s96-c') : url;
+      const response = await fetch(source, { headers: { 'user-agent': 'qualitour-site-build/1.0' } });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const resize = avatar ? { width: 96, height: 96, fit: 'cover' } : { width: 800, withoutEnlargement: true };
+      await writeFile(file, await sharp(Buffer.from(await response.arrayBuffer())).rotate().resize(resize).webp({ quality: 80 }).toBuffer());
+    }
+    await cp(file, join(tmp, 'img', name));
+    externalSeen.set(url, '/img/' + name);
+  } catch (error) { externalFailed.push(`${url.slice(0, 70)} ${String(error).slice(0, 50)}`); }
+}));
+for (const [path, html] of pages) pages.set(path, html.replace(externalPattern, url => externalSeen.get(url) || url));
+if (externalSeen.size) console.log(JSON.stringify({ externalImages: externalSeen.size, externalFailed: externalFailed.length }));
+if (externalFailed.length) console.log('external images kept as Google URLs:\n' + externalFailed.slice(0, 10).join('\n'));
+
 // Pages the CMS serves from its own assets (/book, 404, 500) were built with a different set of hashed files than
 // the CMS client build; fetch whatever any page references and the base assets lack, following CSS url() references.
 const assetMissing = [];

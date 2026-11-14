@@ -23,7 +23,11 @@ export function createNativeSiteApi({getCatalogues=getNativeSiteCatalogues,suppo
   async function getAllTourSlugs(lang){return (await getAllTours(lang)).map(tour=>tour.slug);}
   const terms=async(bucket,lang)=>((await catalogue(lang)).terms[bucket]||[]).map(term=>({...term,parent:term.parent??0,count:term.count??0}));
   async function getSiteNavData(lang){const [styles,cruiseTypes,regions,destinations]=await Promise.all([terms('styles',lang),terms('cruiseTypes',lang),terms('regions',lang),terms('destinations',lang)]);return {styles,cruiseTypes,regions,destinations,transfers:[]};}
-  async function getGoogleReviews(){return clone(Array.isArray(support.reviews)?support.reviews:[]);}
+  async function getGoogleReviews(){
+    // The CMS collection is the source; the bundled snapshot only covers a build where the collection could not be read.
+    const fromCms=(await catalogue('en')).reviews;
+    return clone(Array.isArray(fromCms)?fromCms:Array.isArray(support.reviews)?support.reviews:[]);
+  }
   async function getBusinessReviews(){
     const reviews=await getGoogleReviews();if(!reviews.length)return null;
     return {name:'Qualitour - Vancouver Branch',formatted_address:'Vancouver, BC, Canada',rating:reviews.reduce((sum,row)=>sum+Number(row.rating||0),0)/reviews.length,user_ratings_total:reviews.length,reviews:reviews.filter(row=>row.rating>2)};

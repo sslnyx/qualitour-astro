@@ -5,7 +5,7 @@ import { getDb } from 'emdash/runtime';
 import { assignTourCategories, buildCategoryTerms } from './native-site-categories.mjs';
 import { optimizeTourHeroes } from './native-site-image.mjs';
 import { createKvSnapshotStore, setNativeSnapshotKv } from './native-snapshot-kv.mjs';
-import { TAXONOMY_NAMES, buildVocabulary, readAssignments, readPublishedEntryRow, readPublishedPage, readSeo, readVocabularyRows, rowToEntry, termsForEntry } from './native-site-sql.mjs';
+import { TAXONOMY_NAMES, buildVocabulary, readAssignments, readPublishedEntryRow, readPublishedPage, readSeo, readVocabularyRows, rowToEntry, termsForEntry, readPublishedReviewRows, reviewRowToLegacy } from './native-site-sql.mjs';
 
 const locales = ['en','zh'];
 // A narrowed row is about 1.5 KB, so one query per locale (192 and 65 tours today) replaces four and two.
@@ -134,6 +134,20 @@ export function createSqlVocabularySource({ getDatabase = getDb } = {}) {
   };
 }
 
+export function createSqlReviewSource({ getDatabase = getDb, now = () => Date.now() } = {}) {
+  /** The published Google reviews in the legacy shape, or null when the collection cannot be read (the caller then keeps the bundled snapshot). */
+  return async function readReviews() {
+    try {
+      const rows = await readPublishedReviewRows(await getDatabase());
+      const at = now();
+      return rows.map((row, index) => reviewRowToLegacy(row, index, at));
+    } catch (error) {
+      console.error('[native-site] Google reviews could not be read from the CMS; using the bundled snapshot', String(error?.message || error).slice(0, 120));
+      return null;
+    }
+  };
+}
+
 export function createSqlEntrySource({ getDatabase = getDb } = {}) {
   return async function readEntry(entryId, locale) {
     const db = await getDatabase();
@@ -157,6 +171,7 @@ function toLiteCatalogues(catalogues) {
     lite[locale] = {
       terms: catalogues[locale].terms,
       excluded: catalogues[locale].excluded,
+      ...(Array.isArray(catalogues[locale].reviews) ? { reviews: catalogues[locale].reviews } : {}),
       tours: catalogues[locale].tours.map(tour => {
         const card = {};
         for (const key of Object.keys(tour)) if (!LITE_DROP.has(key)) card[key] = tour[key];
@@ -183,6 +198,7 @@ export function createNativeSiteData({
   lookupMediaStorageKeys=lookupStorageKeys,
   presentTours=optimizeTourHeroes,
   readEntry=createSqlEntrySource(),
+  readReviews=createSqlReviewSource(),
   snapshotStore=createKvSnapshotStore(),
 }={}) {
   const requestLoads=new WeakMap();
@@ -196,7 +212,7 @@ export function createNativeSiteData({
    */
   const builds=new Map();
   let recent=null;
-  const hitHints=()=>mergeHints([{tags:['tours']},{tags:['tours']},...taxonomyTagHints()]);
+  const hitHints=()=>mergeHints([{tags:['tours']},{tags:['tours']},{tags:['google_reviews']},...taxonomyTagHints()]);
   const revive=({text,cacheHint})=>({catalogues:restoreEntryIds(JSON.parse(text)),cacheHint});
   const build=async()=>{
     const shared={};
@@ -232,7 +248,10 @@ export function createNativeSiteData({
       catalogues[locale]={tours:await presentTours(tours),terms,excluded};
     }
     linkPublishedTranslations(catalogues,stubs);
-    return {snapshot:toLiteCatalogues(catalogues),cacheHint:mergeHints([...collectionHints,...taxonomyHints])};
+    // Reviews are shared by both locales. null = unreadable: the API keeps its bundled snapshot instead.
+    const reviews=await readReviews();
+    if (reviews) for (const locale of locales) catalogues[locale].reviews=reviews;
+    return {snapshot:toLiteCatalogues(catalogues),cacheHint:mergeHints([...collectionHints,{tags:['google_reviews']},...taxonomyHints])};
   };
   const load=async()=>{
     // The version marker lives in KV, so a render that finds its snapshot reads no database rows at all.

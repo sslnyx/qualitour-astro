@@ -268,3 +268,16 @@ test('an invalid GitHub dispatch configuration fails before any request and neve
     assert.equal(requests, 0);
   }
 });
+
+test('Google review changes trigger a release like tours do; other collections still do not', async () => {
+  for (const [collection, expected] of [['google_reviews', 1], ['tours', 1], ['tour_classifications', 0], ['legacy_tours', 0], ['posts', 0]]) {
+    let requests = 0;
+    const handler = createPagesRebuildHandler({
+      getHookUrls: () => ({ workersHookUrl: validWorkersHookUrl }),
+      fetchImpl: async () => { requests += 1; return new Response(null, { status: 204 }); },
+      logError: assert.fail,
+    });
+    await handler({ collection });
+    assert.equal(requests, expected, collection);
+  }
+});

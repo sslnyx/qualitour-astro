@@ -39,3 +39,17 @@ test('support snapshot remains exact and review aggregation filters display only
   assert.equal(business.rating,3.5);assert.equal(business.user_ratings_total,2);assert.equal(business.reviews.length,1);
   assert.deepEqual(formatPhone('1 (778) 945-6000'),{display:'(778) 945-6000',tel:'+17789456000'});
 });
+
+test('reviews come from the CMS catalogue; the bundled snapshot only covers a catalogue without them',async()=>{
+  const live=[{id:7,author_name:'From CMS',rating:4,text:'x',time:'1',relative_time_description:'today',profile_photo_url:'',images:[],source:'google'}];
+  const bundled={...support,reviews:[{id:1,author_name:'Bundled',rating:5,text:'y',time:'1',relative_time_description:'',profile_photo_url:'',images:[],source:'google'}]};
+  const fromCms=createNativeSiteApi({getCatalogues:async()=>({...catalogues,en:{...catalogues.en,reviews:live}}),support:bundled});
+  assert.deepEqual((await fromCms.getGoogleReviews()).map(r=>r.author_name),['From CMS']);
+  assert.equal((await fromCms.getBusinessReviews()).user_ratings_total,1);
+  const fallback=createNativeSiteApi({getCatalogues:async()=>catalogues,support:bundled});
+  assert.deepEqual((await fallback.getGoogleReviews()).map(r=>r.author_name),['Bundled']);
+  const hidden=createNativeSiteApi({getCatalogues:async()=>({...catalogues,en:{...catalogues.en,reviews:[]}}),support:bundled});
+  assert.deepEqual(await hidden.getGoogleReviews(),[],'every review unpublished means none are shown, not the bundled ones');
+  const copy=await fromCms.getGoogleReviews();copy[0].author_name='changed';
+  assert.equal((await fromCms.getGoogleReviews())[0].author_name,'From CMS','callers get their own copy');
+});

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createSqlTourSource } from '../src/lib/cms/native-site-data.mjs';
-import { CARD_COLUMNS, OMITTED_COLUMNS, buildVocabulary, readAssignments, readPublishedPage, readVocabularyRows, rowToEntry, termsForEntry } from '../src/lib/cms/native-site-sql.mjs';
+import { REVIEW_COLUMNS, readPublishedReviewRows, relativeTimeDescription, reviewRowToLegacy, CARD_COLUMNS, OMITTED_COLUMNS, buildVocabulary, readAssignments, readPublishedPage, readVocabularyRows, rowToEntry, termsForEntry } from '../src/lib/cms/native-site-sql.mjs';
 import { buildCatalogue } from '../../src/lib/cms/legacy-adapter.mjs';
 
 /** Records the builder calls and answers `execute` from a scripted list of result sets. */
@@ -168,4 +168,32 @@ test('a translation shares the assignments saved under its content group, and an
   assert.deepEqual(slugs['en:en-1'], ['Canada']);
   assert.deepEqual(slugs['zh:zh-1'], ['加拿大'], 'the Chinese translation takes the group rows in its own language');
   assert.deepEqual(slugs['en:own'], ['Canada'], 'an entry and its group both pointing at the same term count once');
+});
+
+test('published reviews are read newest first, without deleted rows, from the reviews collection only',async()=>{
+  const {db,calls}=fakeDb({ec_google_reviews:()=>[{id:'r1'}]});
+  assert.deepEqual(await readPublishedReviewRows(db),[{id:'r1'}]);
+  const steps=calls[0].steps;
+  assert.equal(calls[0].table,'ec_google_reviews');
+  assert.deepEqual(steps.find(s=>s[0]==='select')[1],[...REVIEW_COLUMNS]);
+  assert.ok(steps.some(s=>s[0]==='where'&&s[1]==='status'&&s[3]==='published'));
+  assert.ok(steps.some(s=>s[0]==='where'&&s[1]==='deleted_at'&&s[2]==='is'&&s[3]===null));
+  assert.ok(steps.some(s=>s[0]==='orderBy'&&s[1]==='reviewed_at'&&s[2]==='desc'));
+});
+
+test('a review row becomes the legacy review the page components read',()=>{
+  const now=Date.parse('2026-11-14T00:00:00Z');
+  const row={id:'01X',source_id:'google-102894',author_name:'Jenny Wang',author_url:'https://g.example/u',rating:5,text:'Great',reviewed_at:'2026-10-14T00:00:00.000Z',profile_photo:'/reviews/avatars/102894.webp',profile_photo_source:'https://lh3.googleusercontent.com/a/x',local_guide:1,reviewer_reviews:6,reviewer_photos:4,images:'["https://lh3.example/p.jpg"]',source:'google'};
+  const review=reviewRowToLegacy(row,0,now);
+  assert.deepEqual(review,{id:102894,author_name:'Jenny Wang',author_url:'https://g.example/u',profile_photo_url:'/reviews/avatars/102894.webp',rating:5,text:'Great',time:String(Math.floor(Date.parse(row.reviewed_at)/1000)),relative_time_description:'a month ago',local_guide:true,reviewer_reviews:6,reviewer_photos:4,images:['https://lh3.example/p.jpg'],source:'google'});
+  assert.equal(reviewRowToLegacy({...row,profile_photo:''},0,now).profile_photo_url,'https://lh3.googleusercontent.com/a/x','a self-hosted avatar wins, the remote one is the fallback');
+  assert.equal(reviewRowToLegacy({...row,source_id:'abc',images:null,local_guide:0},3,now).id,1000003,'a review without a numeric source id still gets a stable id');
+  assert.equal(reviewRowToLegacy({...row,images:null},0,now).images.length,0);
+});
+
+test('relative time uses Google wording',()=>{
+  const now=Date.parse('2026-11-14T12:00:00Z'),ago=days=>new Date(now-days*86400000).toISOString();
+  for(const [days,text] of [[0,'today'],[1,'yesterday'],[3,'3 days ago'],[7,'a week ago'],[15,'2 weeks ago'],[31,'a month ago'],[95,'3 months ago'],[400,'a year ago'],[800,'2 years ago']])
+    assert.equal(relativeTimeDescription(ago(days),now),text,String(days));
+  assert.equal(relativeTimeDescription('not a date',now),'');
 });

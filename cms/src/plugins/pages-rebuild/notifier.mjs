@@ -1,3 +1,5 @@
+// Collections whose publish, unpublish or delete changes the public site. Tours: pages; Google reviews: the review blocks.
+const RELEASE_COLLECTIONS = new Set(['tours', 'google_reviews']);
 const REQUEST_TIMEOUT_MS = 2_000;
 const RETRY_DELAY_MS = 250;
 const MAX_ATTEMPTS = 2;
@@ -173,7 +175,7 @@ export function createPagesRebuildHandler({
 }) {
   /** @param {{ collection: string }} event */
   return async function handlePagesRebuild(event) {
-    if (event.collection !== 'tours') return;
+    if (!RELEASE_COLLECTIONS.has(event.collection)) return;
 
     try {
       await triggerPagesRebuild({
