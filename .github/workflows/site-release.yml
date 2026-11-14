@@ -46,6 +46,7 @@ jobs:
         run: |
           node scripts/test-site-worker.mjs
           node cms/scripts/test-pages-rebuild-notifier.mjs
+          node cms/scripts/test-release-status.mjs
       - name: Build the static site from the published content
         env:
           EMDASH_TOKEN: ${{ secrets.EMDASH_TOKEN }}
