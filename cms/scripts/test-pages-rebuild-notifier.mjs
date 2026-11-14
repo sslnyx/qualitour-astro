@@ -232,3 +232,39 @@ test('requests time out and the bounded retry finishes well within the hook time
   assert.equal(requests, 2);
   assert.ok(Date.now() - startedAt < 1_000);
 });
+
+test('a configured GitHub dispatch sends one authenticated workflow_dispatch and nothing from the content', async () => {
+  const requests = [];
+  const handler = createPagesRebuildHandler({
+    getHookUrls: () => ({
+      githubDispatch: { token: 'github_pat_test', repo: 'sslnyx/qualitour-astro', workflow: 'site-release.yml', ref: 'main' },
+      workersHookUrl: validWorkersHookUrl,
+    }),
+    fetchImpl: async (url, init) => {
+      requests.push({ url, init });
+      return new Response(null, { status: 204 });
+    },
+    logError: assert.fail,
+  });
+
+  await handler({ collection: 'tours', content: { title: 'Must not be sent' } });
+
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].url, 'https://api.github.com/repos/sslnyx/qualitour-astro/actions/workflows/site-release.yml/dispatches');
+  assert.equal(requests[0].init.method, 'POST');
+  assert.equal(requests[0].init.redirect, 'manual');
+  assert.equal(requests[0].init.headers.Authorization, 'Bearer github_pat_test');
+  assert.equal(requests[0].init.body, '{"ref":"main"}');
+});
+
+test('an invalid GitHub dispatch configuration fails before any request and never falls back', async () => {
+  for (const bad of [{ token: '', repo: 'a/b', workflow: 'x.yml', ref: 'main' }, { token: 't', repo: 'not a repo', workflow: 'x.yml', ref: 'main' },
+    { token: 't', repo: 'a/b', workflow: '../x.yml', ref: 'main' }, { token: 't', repo: 'a/b', workflow: 'x.yml', ref: 'main\nX: 1' }, 'string']) {
+    let requests = 0;
+    await assert.rejects(triggerPagesRebuild({
+      hookUrls: { githubDispatch: bad, workersHookUrl: validWorkersHookUrl },
+      fetchImpl: async () => { requests += 1; return new Response(null, { status: 204 }); },
+    }), /configuration is invalid/);
+    assert.equal(requests, 0);
+  }
+});

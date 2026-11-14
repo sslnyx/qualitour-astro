@@ -37,21 +37,48 @@ function parseHookUrl(value, validPath) {
   return url.href;
 }
 
-function selectHookUrl(hookUrls) {
+const GITHUB_REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const GITHUB_WORKFLOW = /^[A-Za-z0-9_.-]+\.ya?ml$/;
+const GITHUB_REF = /^[A-Za-z0-9_./-]{1,200}$/;
+
+/** GitHub Actions workflow_dispatch: the token only needs "Actions: write" on this one repository. */
+function githubTarget(config) {
+  if (!config || typeof config !== 'object' || typeof config.token !== 'string' || !config.token.trim() ||
+    !GITHUB_REPO.test(config.repo ?? '') || !GITHUB_WORKFLOW.test(config.workflow ?? '') || !GITHUB_REF.test(config.ref ?? '')) {
+    throw new Error(CONFIGURATION_ERROR);
+  }
+  return {
+    url: `https://api.github.com/repos/${config.repo}/actions/workflows/${config.workflow}/dispatches`,
+    init: {
+      headers: {
+        Authorization: `Bearer ${config.token.trim()}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'qualitour-pages-rebuild',
+      },
+      body: JSON.stringify({ ref: config.ref }),
+    },
+  };
+}
+
+function selectTarget(hookUrls) {
   if (!hookUrls || typeof hookUrls !== 'object') throw new Error(CONFIGURATION_ERROR);
 
+  if (hookUrls.githubDispatch !== undefined) return githubTarget(hookUrls.githubDispatch);
+
   if (hookUrls.workersHookUrl !== undefined) {
-    return parseHookUrl(hookUrls.workersHookUrl, WORKERS_HOOK_PATH);
+    return { url: parseHookUrl(hookUrls.workersHookUrl, WORKERS_HOOK_PATH), init: {} };
   }
 
-  return parseHookUrl(hookUrls.pagesHookUrl, PAGES_HOOK_PATH);
+  return { url: parseHookUrl(hookUrls.pagesHookUrl, PAGES_HOOK_PATH), init: {} };
 }
 
 function sleep(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-async function fetchWithTimeout(fetchImpl, url, requestTimeoutMs) {
+async function fetchWithTimeout(fetchImpl, url, requestTimeoutMs, extra = {}) {
   const controller = new AbortController();
   let timeoutId;
   const timeout = new Promise((_, reject) => {
@@ -67,6 +94,7 @@ async function fetchWithTimeout(fetchImpl, url, requestTimeoutMs) {
         method: 'POST',
         redirect: 'manual',
         signal: controller.signal,
+        ...extra,
       }),
       timeout,
     ]);
@@ -80,7 +108,8 @@ function isTransientStatus(status) {
 }
 
 /**
- * Trigger the preferred Cloudflare Workers Builds deploy hook, with a
+ * Trigger the site release: a GitHub Actions workflow_dispatch when `githubDispatch`
+ * is configured, otherwise the Cloudflare Workers Builds deploy hook, with a
  * transitional Pages deploy-hook fallback only when the Workers binding is
  * absent.
  *
@@ -101,11 +130,11 @@ export async function triggerPagesRebuild({
   requestTimeoutMs = REQUEST_TIMEOUT_MS,
   retryDelayMs = RETRY_DELAY_MS,
 }) {
-  const url = selectHookUrl(hookUrls);
+  const { url, init } = selectTarget(hookUrls);
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
     try {
-      const response = await fetchWithTimeout(fetchImpl, url, requestTimeoutMs);
+      const response = await fetchWithTimeout(fetchImpl, url, requestTimeoutMs, init);
       if (response.status >= 200 && response.status < 300) return;
 
       if (!isTransientStatus(response.status)) {

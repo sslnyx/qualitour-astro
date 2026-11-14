@@ -11,9 +11,15 @@ const HOOK_TIMEOUT_MS = 5_500;
 
 type RebuildEvent = { collection: string };
 
-function readDeployHookUrls(): { workersHookUrl: unknown; pagesHookUrl: unknown } {
+// The public site is rebuilt by the GitHub Actions workflow below. Its repository, workflow and branch are public
+// configuration; only the dispatch token (a fine-grained token limited to "Actions: write") is a secret.
+const GITHUB_DISPATCH = { repo: 'sslnyx/qualitour-astro', workflow: 'site-release.yml', ref: 'main' };
+
+function readDeployHookUrls(): { githubDispatch?: unknown; workersHookUrl: unknown; pagesHookUrl: unknown } {
   const bindings = env as Record<string, unknown>;
+  const token = bindings.GITHUB_DISPATCH_TOKEN;
   return {
+    ...(token !== undefined ? { githubDispatch: { ...GITHUB_DISPATCH, token } } : {}),
     workersHookUrl: bindings.CF_WORKERS_DEPLOY_HOOK_URL,
     pagesHookUrl: bindings.CF_PAGES_DEPLOY_HOOK_URL,
   };
@@ -37,7 +43,7 @@ export function createPlugin() {
     id: PLUGIN_ID,
     version: PLUGIN_VERSION,
     capabilities: ['content:read', 'network:request'],
-    allowedHosts: ['api.cloudflare.com'],
+    allowedHosts: ['api.cloudflare.com', 'api.github.com'],
     hooks: {
       'content:afterPublish': {
         handler: handlePublicTourChange,
