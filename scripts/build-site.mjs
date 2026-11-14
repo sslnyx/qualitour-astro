@@ -220,6 +220,31 @@ for (const [path, html] of pages) pages.set(path, html.replace(externalPattern, 
 if (externalSeen.size) console.log(JSON.stringify({ externalImages: externalSeen.size, externalFailed: externalFailed.length }));
 if (externalFailed.length) console.log('external images kept as Google URLs:\n' + externalFailed.slice(0, 10).join('\n'));
 
+// Images stored in the CMS media library (review photos) are referenced by their media path. Serve them from the
+// static assets too: no Worker request per image view, and the page keeps working if the media route is ever moved.
+// Only raster images; PDFs and other files keep their media path. A failed fetch leaves the media path (still served).
+const mediaPattern = /\/_emdash\/api\/media\/file\/[A-Za-z0-9][A-Za-z0-9._-]*\.(?:jpe?g|png|webp|gif|avif)(?![A-Za-z0-9._-])/g;
+const mediaSeen = new Map(), mediaFailed = [];
+for (const html of pages.values()) for (const match of html.matchAll(mediaPattern)) mediaSeen.set(match[0], null);
+for (const path of [...mediaSeen.keys()]) {
+  const name = `m-${createHash('sha1').update(path).digest('hex').slice(0, 16)}.webp`;
+  const file = join(imageCache, name);
+  try {
+    let cached = false;
+    try { cached = (await stat(file)).size > 0; } catch {}
+    if (!cached) {
+      const response = await fetch(cmsOrigin + path, { headers: { 'user-agent': 'qualitour-site-build/1.0' } });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      await writeFile(file, await sharp(Buffer.from(await response.arrayBuffer())).rotate().resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 85 }).toBuffer());
+    }
+    await cp(file, join(tmp, 'img', name));
+    mediaSeen.set(path, '/img/' + name);
+  } catch (error) { mediaFailed.push(`${path.slice(-40)} ${String(error).slice(0, 50)}`); }
+}
+for (const [path, html] of pages) pages.set(path, html.replace(mediaPattern, found => mediaSeen.get(found) || found));
+if (mediaSeen.size) console.log(JSON.stringify({ cmsMediaImages: mediaSeen.size, cmsMediaFailed: mediaFailed.length }));
+if (mediaFailed.length) console.log('CMS media kept as media paths:\n' + mediaFailed.slice(0, 10).join('\n'));
+
 // Pages the CMS serves from its own assets (/book, 404, 500) were built with a different set of hashed files than
 // the CMS client build; fetch whatever any page references and the base assets lack, following CSS url() references.
 const assetMissing = [];

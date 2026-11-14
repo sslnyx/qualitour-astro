@@ -21,7 +21,8 @@ export async function createCmsWriter({ origin = process.env.QUALITOUR_CMS_ORIGI
   }
   if (Date.parse(cred.expiresAt) < Date.now() + 60000) await refresh();
   async function request(method, path, body) {
-    const send = () => fetch(checked + path, { method, redirect: 'manual', signal: AbortSignal.timeout(60000), headers: { ...cred.customHeaders, Authorization: 'Bearer ' + cred.accessToken, Accept: 'application/json', 'Content-Type': 'application/json', 'X-EmDash-Request': '1', Origin: checked }, body: body === undefined ? undefined : JSON.stringify(body) });
+    const multipart = typeof FormData !== 'undefined' && body instanceof FormData; // the browser sets the multipart boundary itself
+    const send = () => fetch(checked + path, { method, redirect: 'manual', signal: AbortSignal.timeout(120000), headers: { ...cred.customHeaders, Authorization: 'Bearer ' + cred.accessToken, Accept: 'application/json', ...(multipart ? {} : { 'Content-Type': 'application/json' }), 'X-EmDash-Request': '1', Origin: checked }, body: body === undefined ? undefined : multipart ? body : JSON.stringify(body) });
     let response = await send();
     if (response.status === 401) { await refresh(); response = await send(); }
     const text = await response.text();
