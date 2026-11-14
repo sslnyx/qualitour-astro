@@ -27,7 +27,10 @@
     "build:worker-cms": "astro build --config astro.config.worker-cms.mjs",
     "build:worker": "node scripts/build-worker.mjs",
     "test:worker": "node --test scripts/test-worker-assets.mjs && python3 -m unittest scripts/test_pages_static.py",
-    "deploy:worker": "node scripts/deploy-worker.mjs"
+    "deploy:worker": "node scripts/deploy-worker.mjs",
+    "build:site": "node scripts/build-site.mjs",
+    "test:site": "node scripts/test-site-worker.mjs",
+    "deploy:site": "CLOUDFLARE_ACCOUNT_ID=ca4d347f96116e87e8f5dbd6c62f0b30 /Users/ning/bin/cf-wrangler deploy --config wrangler.site.jsonc"
   },
   "dependencies": {
     "@astrojs/check": "0.9.12",

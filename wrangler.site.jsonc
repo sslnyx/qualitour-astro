@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "qualitour-site",
+  "account_id": "ca4d347f96116e87e8f5dbd6c62f0b30",
+  "main": "./site/worker.mjs",
+  "compatibility_date": "2026-08-27",
+  "workers_dev": true,
+  "preview_urls": false,
+  "services": [
+    { "binding": "CMS", "service": "qualitour" }
+  ],
+  "vars": {
+    "CMS_ORIGIN": "https://qualitour.qualitour.workers.dev"
+  },
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".astro/site-release/assets",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": [
+      "/api/transfer",
+      "/api/transfer/*",
+      "/book/manage/*",
+      "/book/return/*",
+      "/book/receipt/*",
+      "/zh/book/manage/*",
+      "/zh/book/return/*",
+      "/zh/book/receipt/*",
+      "/_image",
+      "/_emdash/api/media/file/*",
+      "/sitemap.xml",
+      "/sitemap-*.xml"
+    ]
+  },
+  "observability": { "enabled": false }
+}
