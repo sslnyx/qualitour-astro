@@ -63,12 +63,34 @@ export function rowToEntry(row, locale, terms = {}) {
   };
 }
 
-/** One page of published rows for a locale, newest first with a stable tie-break. */
+/**
+ * The text and JSON fields only a detail page shows. In the backup they are 95% of the published bytes
+ * (itinerary alone 72%, about 6.3 of 8.9 MB across 258 tours) while a card needs none of them. The catalogue
+ * reads rows without them; a detail page re-reads its one complete row with `readPublishedEntryRow`.
+ */
+export const OMITTED_COLUMNS = Object.freeze(['overview', 'itinerary', 'itinerary_continued', 'additional_info', 'faq', 'gallery']);
+/**
+ * Everything the catalogue reads from a row. A column added to the tours collection later is not read here
+ * until it is listed (a detail page still gets it from the complete row), so a new card field needs an entry.
+ */
+export const CARD_COLUMNS = Object.freeze([
+  'id', 'slug', 'status', 'published_at', 'locale', 'translation_group', 'title', 'tour_code', 'summary', 'price',
+  'currency', 'duration', 'location', 'hero', 'brochure', 'source_key', 'source_status',
+]);
+const OMITTED_AS_NULL = Object.freeze(Object.fromEntries(OMITTED_COLUMNS.map(column => [column, null])));
+
+/**
+ * One page of published rows for a locale, newest first with a stable tie-break, without the bulky detail
+ * columns. The adapter requires those fields to be present on an imported tour and accepts an explicit null
+ * as an editor's removal, so each row carries nulls for them: the cards come out exactly as from complete rows
+ * (the catalogue drops `content` and `goodlayers_data`, the only outputs those fields feed).
+ */
 export async function readPublishedPage(db, locale, { limit, offset }) {
-  return db.selectFrom(COLLECTION).selectAll()
+  const rows = await db.selectFrom(COLLECTION).select([...CARD_COLUMNS])
     .where('status', '=', 'published').where('deleted_at', 'is', null).where('locale', '=', locale)
     .orderBy('published_at', 'desc').orderBy('id', 'asc')
     .limit(limit).offset(offset).execute();
+  return rows.map(row => ({ ...row, ...OMITTED_AS_NULL }));
 }
 
 /** Every term assignment for the collection, grouped per entry as translation-group IDs. */

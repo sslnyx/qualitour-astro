@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createSqlTourSource } from '../src/lib/cms/native-site-data.mjs';
-import { buildVocabulary, readAssignments, readPublishedPage, readVocabularyRows, rowToEntry, termsForEntry } from '../src/lib/cms/native-site-sql.mjs';
+import { CARD_COLUMNS, OMITTED_COLUMNS, buildVocabulary, readAssignments, readPublishedPage, readVocabularyRows, rowToEntry, termsForEntry } from '../src/lib/cms/native-site-sql.mjs';
+import { buildCatalogue } from '../../src/lib/cms/legacy-adapter.mjs';
 
 /** Records the builder calls and answers `execute` from a scripted list of result sets. */
 function fakeDb(results) {
@@ -55,7 +56,34 @@ test('page reads are published, not deleted, one locale, newest first with a sta
   const { db, calls } = fakeDb({ ec_tours: () => [row('a')] });
   assert.equal((await readPublishedPage(db, 'zh', { limit: 32, offset: 64 })).length, 1);
   const steps = calls[0].steps.map(step => step.join(' '));
-  assert.deepEqual(steps, ['selectAll', 'where status = published', 'where deleted_at is ', 'where locale = zh', 'orderBy published_at desc', 'orderBy id asc', 'limit 32', 'offset 64']);
+  assert.deepEqual(steps, [`select ${CARD_COLUMNS.join(',')}`, 'where status = published', 'where deleted_at is ', 'where locale = zh', 'orderBy published_at desc', 'orderBy id asc', 'limit 32', 'offset 64']);
+});
+
+test('page reads leave out the itinerary, rich text and gallery columns and hand the adapter explicit nulls for them', async () => {
+  for (const bulky of ['overview', 'itinerary', 'itinerary_continued', 'additional_info', 'faq', 'gallery']) {
+    assert.ok(OMITTED_COLUMNS.includes(bulky), `${bulky} is omitted`);
+    assert.equal(CARD_COLUMNS.includes(bulky), false, `${bulky} is not selected`);
+  }
+  for (const needed of ['id', 'slug', 'status', 'published_at', 'locale', 'translation_group', 'title', 'summary', 'price', 'currency', 'duration', 'location', 'tour_code', 'hero', 'brochure', 'source_key', 'source_status'])
+    assert.ok(CARD_COLUMNS.includes(needed), `${needed} is selected`);
+  // A fake database that honours the column list, as SQL does.
+  const full = row('a', { itinerary: '[{"title":"Day 1"}]', overview: '[{"_type":"block"}]', gallery: '[{"image":{}}]' });
+  const { db } = fakeDb({ ec_tours: call => { const columns = call.steps.find(step => step[0] === 'select')[1]; return [Object.fromEntries(Object.entries(full).filter(([key]) => columns.includes(key)))]; } });
+  const [page] = await readPublishedPage(db, 'en', { limit: 10, offset: 0 });
+  for (const bulky of OMITTED_COLUMNS) assert.equal(page[bulky], null, `${bulky} is an explicit null`);
+  assert.equal(page.title, 'Title');
+});
+
+test('a catalogue built from the narrowed rows has the same cards as one built from complete rows', () => {
+  const compat = { locales: { en: { tours: {}, terms: { categories: [], tags: [], activities: [], destinations: [], durations: [], types: [] } } } };
+  const complete = row('native-a', { overview: '[{"_type":"block","children":[{"_type":"span","text":"Hello"}]}]', itinerary: '[{"title":"Day 1","content":[]}]', gallery: '[]', additional_info: '[]', faq: '[{"title":"Q","content":[]}]' });
+  const narrowed = { ...complete, ...Object.fromEntries(OMITTED_COLUMNS.map(column => [column, null])) };
+  const lite = rows => {
+    const entries = rows.map(source => { const entry = rowToEntry(source, 'en'); return { id: entry.id, slug: entry.slug, status: 'published', locale: 'en', publishedAt: entry.data.publishedAt.toISOString(), data: { ...entry.data, id: entry.id, status: 'published', locale: 'en' } }; });
+    const catalogue = buildCatalogue(entries, compat, 'en', { allowEmpty: true });
+    return JSON.stringify({ terms: catalogue.terms, excluded: catalogue.excluded, tours: catalogue.tours.map(tour => Object.fromEntries(Object.entries(tour).filter(([key]) => key !== 'content' && key !== 'goodlayers_data'))) });
+  };
+  assert.equal(lite([narrowed]), lite([complete]));
 });
 
 test('assignments group translation-group IDs per entry', async () => {

@@ -8,7 +8,8 @@ import { createKvSnapshotStore, setNativeSnapshotKv } from './native-snapshot-kv
 import { TAXONOMY_NAMES, buildVocabulary, readAssignments, readPublishedEntryRow, readPublishedPage, readSeo, readVocabularyRows, rowToEntry, termsForEntry } from './native-site-sql.mjs';
 
 const locales = ['en','zh'];
-const PAGE_SIZE = 64;
+// A narrowed row is about 1.5 KB, so one query per locale (192 and 65 tours today) replaces four and two.
+const PAGE_SIZE = 256;
 /**
  * The itinerary/FAQ tree (goodlayers_data) is thousands of small objects per tour. Held as one JSON string it
  * costs a fraction of the Worker memory, and it is rebuilt only for a tour whose detail page actually reads it.
