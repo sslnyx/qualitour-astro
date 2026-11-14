@@ -4,7 +4,7 @@ import { env } from 'cloudflare:workers';
 import { definePlugin, type PluginContext, type PluginRoute, type RouteContext } from 'emdash';
 
 import { createPagesRebuildHandler } from './notifier.mjs';
-import { fetchReleaseRuns, renderBlocks, summarizeRuns } from './release-status.mjs';
+import { chipLabel, fetchReleaseRuns, renderBlocks, summarizeRuns } from './release-status.mjs';
 
 const PLUGIN_ID = 'qualitour-pages-rebuild';
 const PLUGIN_VERSION = '0.1.0';
@@ -72,6 +72,14 @@ const releaseStatusRoutes: Record<string, PluginRoute> = {
     permission: 'content:read' as const,
     async handler(ctx: RouteContext) {
       return { blocks: renderBlocks(await readReleaseSummary(ctx)) };
+    },
+  },
+  // Compact JSON for the custom tour editor header (the host's sidebar panels are not shown on that page).
+  'release-summary': {
+    permission: 'content:read' as const,
+    async handler(ctx: RouteContext) {
+      const summary = await readReleaseSummary(ctx);
+      return { state: summary.state, run: summary.run ?? null, ...chipLabel(summary) };
     },
   },
   // Panel on the tour and review edit screens (declared in `admin.editorPanels`).

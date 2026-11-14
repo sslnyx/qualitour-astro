@@ -167,6 +167,25 @@ export function renderBlocks(summary, { entry, now = Date.now() } = {}) {
   return blocks;
 }
 
+/**
+ * Short label for the tour editor's header. tone: 'ok' | 'busy' | 'warn' | 'error'. Empty label = show nothing.
+ * @param {any} summary
+ */
+export function chipLabel(summary) {
+  switch (summary?.state) {
+    case 'queued': return { tone: 'busy', label: '前端：排隊等待發佈', hint: WAIT_HINT };
+    case 'running': {
+      const clock = `${Math.floor(summary.elapsedSeconds / 60)}:${String(summary.elapsedSeconds % 60).padStart(2, '0')}`;
+      return summary.slow
+        ? { tone: 'warn', label: `前端：發佈較久（${clock}）`, hint: '比平常久，請先不要重複發佈；超過 15 分鐘請通知技術人員。' }
+        : { tone: 'busy', label: `前端：發佈中 ${clock}`, hint: WAIT_HINT };
+    }
+    case 'failed': return { tone: 'error', label: `前端：發佈失敗 #${summary.run ?? '—'}`, hint: '前端維持上一個版本。請不要反覆重試，通知技術人員並提供發佈編號。' };
+    case 'live': return { tone: 'ok', label: `前端已最新 · ${formatTime(summary.finishedAt)}`, hint: `最近一次發佈 #${summary.run ?? '—'}。` };
+    default: return { tone: 'warn', label: '', hint: '' };
+  }
+}
+
 /** Newest-first run list for the release workflow. Never throws: a failure is reported as `unknown`. */
 export async function fetchReleaseRuns({ token, repo, workflow, fetchImpl }) {
   if (typeof token !== 'string' || !token.trim() || !GITHUB_REPO.test(repo ?? '') || !GITHUB_WORKFLOW.test(workflow ?? '')) {

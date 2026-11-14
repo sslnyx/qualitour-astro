@@ -11,6 +11,7 @@ import { WorkspaceDialog } from './WorkspaceDialog';
 import { RecoveryPanel } from './RecoveryPanel';
 import { safeTourReturnPath, tourWorkspaceHref } from './tour-navigation';
 import { TourSettings } from './TourSettings';
+import { ReleaseChip } from './ReleaseChip';
 import type {PendingNavigation,NavigationGuardComponent} from './navigation-guard';
 
 type Section = 'basic' | 'overview' | 'itinerary' | 'media' | 'notes';
@@ -83,7 +84,7 @@ export function TourEditorPage({ id, locale, returnTo, initialSection, Navigatio
   return <section ref={root} className={`tour-workspace ${preview ? 'has-preview' : ''} ${width < 1180 ? 'is-medium' : ''} ${compact ? 'is-compact' : ''}`} data-mode={mode}>
     {NavigationGuard&&<NavigationGuard active={state.dirty||state.saving} onBlocked={onNavigationBlocked}/>}
     <header className="tw-header"><div className="tw-title"><Link className="tw-back" to="/content/$collection" params={{collection:'tours'}} search={listSearch} aria-label="返回行程列表">←</Link><div><span className="tw-eyebrow">編輯與預覽 {translations.length>1?<select aria-label="切換內容語言" value={state.item?.id||id} onChange={e=>{const pair=translations.find(t=>t.id===e.target.value);if(!pair)return;const url=tourWorkspaceHref(pair,listPath);if(state.dirty||state.saving)setLeaving(url);else navigate(url);}}>{translations.map(pair=><option key={pair.id} value={pair.id}>{pair.locale.toUpperCase()}</option>)}</select>:<span className="tw-locale">{displayLocale.toUpperCase()}</span>}</span><h1>{String(state.item?.data.title || '載入行程…')}</h1></div></div>
-      <div className="tw-actions"><span role="status" className={`tw-save-status ${state.dirty ? 'is-dirty' : ''}`}>{state.saving ? '儲存中…' : state.dirty ? changed.size ? `${changed.size} 天未儲存` : '有未儲存修改' : '已儲存'}</span>
+      <div className="tw-actions"><ReleaseChip/><span role="status" className={`tw-save-status ${state.dirty ? 'is-dirty' : ''}`}>{state.saving ? '儲存中…' : state.dirty ? changed.size ? `${changed.size} 天未儲存` : '有未儲存修改' : '已儲存'}</span>
         <button type="button" className="tw-primary" disabled={editingDisabled || !state.dirty || state.saving} onClick={() => void session.save()}>儲存草稿</button>
         <button type="button" aria-pressed={preview} onClick={() => { setPreview(v => !v); if (compact) setMode(mode === 'preview' ? 'edit' : 'preview'); }}>{preview ? '收起預覽' : '開啟預覽'}</button>
         <button type="button" disabled={!state.item||state.loading||state.saving} onClick={()=>setSettings(true)}>設定與發佈</button></div></header>

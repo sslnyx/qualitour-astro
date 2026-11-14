@@ -150,3 +150,15 @@ test('formatDuration', () => {
   assert.equal(formatDuration(75), '1 分 15 秒');
   assert.equal(formatDuration(180), '3 分 00 秒');
 });
+
+test('chipLabel: short header label per state, empty when unknown', async () => {
+  const { chipLabel } = await import('../src/plugins/pages-rebuild/release-status.mjs');
+  assert.match(chipLabel(summarizeRuns([run(12, 'in_progress', null, 75)], NOW)).label, /發佈中 1:15/);
+  assert.equal(chipLabel(summarizeRuns([run(12, 'in_progress', null, 75)], NOW)).tone, 'busy');
+  assert.equal(chipLabel(summarizeRuns([run(12, 'in_progress', null, 20 * 60)], NOW)).tone, 'warn');
+  assert.equal(chipLabel(summarizeRuns([run(13, 'queued', null, 10)], NOW)).tone, 'busy');
+  assert.match(chipLabel(summarizeRuns([run(21, 'completed', 'failure', 300, 200)], NOW)).label, /發佈失敗 #21/);
+  assert.equal(chipLabel(summarizeRuns([run(21, 'completed', 'failure', 300, 200)], NOW)).tone, 'error');
+  assert.match(chipLabel(summarizeRuns([run(20, 'completed', 'success', 400, 220)], NOW)).label, /前端已最新/);
+  assert.equal(chipLabel(summarizeRuns([], NOW)).label, '');
+});
