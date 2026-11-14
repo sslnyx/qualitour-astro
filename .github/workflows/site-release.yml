@@ -54,7 +54,14 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler deploy --config wrangler.site.jsonc
+        # The Workers-Editor token cannot read the account's workers.dev subdomain, which `wrangler deploy` does
+        # at the end. Uploading a version and deploying it to 100% needs no such read and changes no routes.
+        run: |
+          export WRANGLER_OUTPUT_FILE_PATH="$RUNNER_TEMP/wrangler-output.ndjson"
+          npx wrangler versions upload --config wrangler.site.jsonc --message "site-release run ${{ github.run_id }}"
+          version=$(node -e "const rows=require('fs').readFileSync(process.env.WRANGLER_OUTPUT_FILE_PATH,'utf8').trim().split('\n').map(line=>JSON.parse(line)); console.log(rows.find(row=>row.type==='version-upload').version_id)")
+          test -n "$version"
+          npx wrangler versions deploy "$version@100%" --config wrangler.site.jsonc --yes
       - name: Verify the live site against the release
         run: |
           pages=$(node -e "console.log(require('./.astro/site-release/assets/site-release.json').pages)")
