@@ -10,7 +10,7 @@ const compatibility={schema:1,locales:{
 const taxonomyNames=['destinations','travel_styles','travel_regions','cruise_types'];
 const row=(locale,id,slug,title)=>({id:locale==='zh'?`${locale}/${slug}`:slug,slug,seo:{title:`${locale} SEO`,description:null,canonical:null,image:null,noIndex:false},data:{id,status:'published',locale,publishedAt:new Date('2026-11-12T00:00:00Z'),translationGroup:'pair-1',title,hero:{meta:{storageKey:`${locale}-hero.jpg`},width:1200,height:800},terms:{destinations:[{id:`term-${locale}`,name:'destinations',slug:locale==='zh'?'banff-zh':'banff',label:locale==='zh'?'班夫':'Banff',children:[],locale,translationGroup:'term-pair'}]}}});
 
-function harness({context={request:true},error,lookup,seoImage,paging,readEntry,snapshotStore}={}){
+function harness({context={request:true},contextFor,gate,error,lookup,seoImage,paging,readEntry,snapshotStore}={}){
   const calls=[],vocabularyReads=[];
   const entries={en:[row('en','native-en','native-en','Native EN')],zh:[row('zh','native-zh','native-zh','原生中文')]};
   if(seoImage!==undefined)entries.en[0].seo.image=seoImage;
@@ -23,9 +23,10 @@ function harness({context={request:true},error,lookup,seoImage,paging,readEntry,
     ...(lookup?{lookupMediaStorageKeys:lookup}:{}),
     ...(readEntry?{readEntry:readEntry(entries)}:{}),
     ...(snapshotStore?{snapshotStore}:{}),
-    getContext:()=>context,
+    getContext:contextFor||(()=>context),
     readTourPages:async function*(locale){
       calls.push({locale});
+      if(gate)await gate;
       if(error)throw new Error('database failed');
       if(paging){for(const [index,entry] of entries[locale].entries()){paging.seen.push({locale,page:index});yield [entry];}return;}
       yield entries[locale];
@@ -157,6 +158,78 @@ test('a new version marker makes the old snapshot unreachable',async()=>{
   assert.equal(await run(),0);
   assert.equal(store.values.size,2);
 });
+test('requests that arrive while a catalogue is being built share that one build',async()=>{
+  const store=memoryStore();
+  let release; const gate=new Promise(resolve=>{release=resolve;});
+  let requests=0;
+  const first=harness({snapshotStore:store,gate,contextFor:()=>({request:++requests})});
+  const pending=[1,2,3,4].map(()=>first.api.getNativeSiteCatalogues());
+  await new Promise(resolve=>setTimeout(resolve,5));
+  release();
+  const results=await Promise.all(pending);
+  assert.equal(first.calls.length,2,'one read per locale, not one per request');
+  assert.equal(first.vocabularyReads.length,1);
+  assert.deepEqual(store.log.filter(entry=>entry[0]==='put').length,1,'one snapshot is stored');
+  for (const result of results) assert.deepEqual(result.en.tours.map(tour=>tour.id),results[0].en.tours.map(tour=>tour.id));
+  assert.notEqual(results[0],results[1],'each request gets its own objects');
+  assert.notEqual(results[0].en.tours[0],results[1].en.tours[0]);
+  results[0].en.tours[0].title.rendered='changed by one request';
+  assert.notEqual(results[1].en.tours[0].title.rendered,'changed by one request','one request cannot change what another renders');
+  assert.equal(results[1].en.tours[0].entryId,'native-en','every request keeps the CMS entry for its detail pages');
+});
+
+test('after a build the same isolate serves the snapshot from memory, without asking KV again',async()=>{
+  const store=memoryStore();
+  let requests=0;
+  const h=harness({snapshotStore:store,contextFor:()=>({request:++requests})});
+  await h.api.getNativeSiteCatalogues();
+  const getsAfterBuild=store.log.filter(entry=>entry[0]==='get').length;
+  const again=await h.api.getNativeSiteCatalogues();
+  assert.equal(h.calls.length,2,'no second build');
+  assert.equal(store.log.filter(entry=>entry[0]==='get').length,getsAfterBuild,'no second snapshot read');
+  assert.equal(again.en.tours[0].entryId,'native-en');
+  store.current='v2';
+  await h.api.getNativeSiteCatalogues();
+  assert.equal(h.calls.length,4,'a new version marker is not served from memory');
+});
+
+test('a failed shared build fails its waiting requests and the next request builds again',async()=>{
+  const store=memoryStore();
+  let release,fail; const gate=new Promise((resolve,reject)=>{release=resolve;fail=reject;});
+  let requests=0;
+  const h=harness({snapshotStore:store,gate,contextFor:()=>({request:++requests})});
+  const pending=[1,2,3].map(()=>h.api.getNativeSiteCatalogues().then(()=>'ok',error=>error.message));
+  await new Promise(resolve=>setTimeout(resolve,5));
+  fail(new Error('database failed'));
+  assert.deepEqual(await Promise.all(pending),['database failed','database failed','database failed']);
+  assert.equal(store.log.some(entry=>entry[0]==='put'),false,'nothing is stored from a failed build');
+  const retry=harness({snapshotStore:store,contextFor:()=>({request:++requests})});
+  assert.equal((await retry.api.getNativeSiteCatalogues()).en.tours.length,1,'a later request is not stuck on the failure');
+});
+
+test('builds for different version markers do not join each other',async()=>{
+  const store=memoryStore();
+  let release; const gate=new Promise(resolve=>{release=resolve;});
+  let requests=0;
+  const h=harness({snapshotStore:store,gate,contextFor:()=>({request:++requests})});
+  const a=h.api.getNativeSiteCatalogues();
+  await new Promise(resolve=>setTimeout(resolve,5));
+  store.current='v2';
+  const b=h.api.getNativeSiteCatalogues();
+  await new Promise(resolve=>setTimeout(resolve,5));
+  release();
+  await Promise.all([a,b]);
+  assert.equal(h.calls.length,4,'a request after a publish never receives a build that started before it');
+  assert.equal(store.values.size,2);
+});
+
+test('without a version marker every request still builds for itself',async()=>{
+  let requests=0;
+  const h=harness({snapshotStore:{async version(){return null;},async get(){assert.fail('no marker, nothing to look up');},async put(){assert.fail('no marker, nothing to store');}},contextFor:()=>({request:++requests})});
+  await Promise.all([h.api.getNativeSiteCatalogues(),h.api.getNativeSiteCatalogues()]);
+  assert.equal(h.calls.length,4,'no marker means no way to tell two builds are the same');
+});
+
 test('snapshot trouble never breaks a render',async()=>{
   const unreadable=harness({snapshotStore:{async version(){return 'v1';},async get(){return {broken:true};},async put(){}}});
   assert.equal((await unreadable.api.getNativeSiteCatalogues()).en.tours.length,1,'a malformed entry is ignored');

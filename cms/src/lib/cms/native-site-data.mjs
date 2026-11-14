@@ -186,13 +186,19 @@ export function createNativeSiteData({
   snapshotStore=createKvSnapshotStore(),
 }={}) {
   const requestLoads=new WeakMap();
-  const load=async()=>{
-    // The version marker lives in KV, so a render that finds its snapshot reads no database rows at all.
-    const version=await Promise.resolve().then(()=>snapshotStore.version()).catch(()=>null);
-    if (version) {
-      const hit=await snapshotStore.get(version);
-      if (hit?.catalogues?.en?.tours && hit.catalogues.zh?.tours) return {catalogues:restoreEntryIds(hit),cacheHint:mergeHints([{tags:['tours']},{tags:['tours']},...taxonomyTagHints()])};
-    }
+  /**
+   * The Durable Object serves every request from one isolate, so requests that miss together would each rebuild
+   * the whole catalogue (the live logs show two or three concurrent builds of the home page). A build is
+   * therefore keyed by its version marker and shared by everyone waiting on that marker; a request that sees a
+   * newer marker never joins an older build. `recent` is the last snapshot of this isolate as JSON text, so
+   * later requests need no snapshot read from KV (KV may also lag a write). Every caller parses its own copy:
+   * the page code decorates the objects it gets, and one request must not change what another renders.
+   */
+  const builds=new Map();
+  let recent=null;
+  const hitHints=()=>mergeHints([{tags:['tours']},{tags:['tours']},...taxonomyTagHints()]);
+  const revive=({text,cacheHint})=>({catalogues:restoreEntryIds(JSON.parse(text)),cacheHint});
+  const build=async()=>{
     const shared={};
     const {vocabulary:rawVocabulary,hints:taxonomyHints}=await readVocabulary();
     const vocabulary=Object.fromEntries(locales.map(locale=>[locale,Object.fromEntries(TAXONOMY_NAMES.map(name=>[name,rawVocabulary[locale]?.[name]||[]]))]));
@@ -226,10 +232,30 @@ export function createNativeSiteData({
       catalogues[locale]={tours:await presentTours(tours),terms,excluded};
     }
     linkPublishedTranslations(catalogues,stubs);
-    const snapshot=toLiteCatalogues(catalogues);
-    if (version) await snapshotStore.put(version,snapshot);
-    const hints=[...collectionHints,...taxonomyHints];
-    return {catalogues:restoreEntryIds(snapshot),cacheHint:mergeHints(hints)};
+    return {snapshot:toLiteCatalogues(catalogues),cacheHint:mergeHints([...collectionHints,...taxonomyHints])};
+  };
+  const load=async()=>{
+    // The version marker lives in KV, so a render that finds its snapshot reads no database rows at all.
+    const version=await Promise.resolve().then(()=>snapshotStore.version()).catch(()=>null);
+    if (!version) { const built=await build(); return {catalogues:restoreEntryIds(built.snapshot),cacheHint:built.cacheHint}; }
+    if (recent?.version===version) return revive(recent);
+    const hit=await snapshotStore.get(version);
+    if (hit?.catalogues?.en?.tours && hit.catalogues.zh?.tours) {
+      recent={version,text:JSON.stringify(hit),cacheHint:hitHints()};
+      return {catalogues:restoreEntryIds(hit),cacheHint:recent.cacheHint};
+    }
+    let flight=builds.get(version);
+    if (!flight) {
+      flight=(async()=>{
+        const built=await build();
+        await snapshotStore.put(version,built.snapshot);
+        return recent={version,text:JSON.stringify(built.snapshot),cacheHint:built.cacheHint};
+      })();
+      builds.set(version,flight);
+      const done=()=>{ if (builds.get(version)===flight) builds.delete(version); };
+      flight.then(done,done);
+    }
+    return revive(await flight);
   };
   const current=()=>{
     const context=getContext();
