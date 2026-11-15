@@ -3,11 +3,12 @@
 //      --command "SELECT id,locale,source_key,source_status,status,created_at,updated_at FROM ec_tours WHERE deleted_at IS NULL AND source_status IN ('draft','pending','private')" > rows.json
 // 2. node scripts/plan-wp-dates.mjs rows.json   -> apply.sql, rollback.sql, plan.json in the private backups folder
 // 3. wrangler d1 execute qualitour-cms-free-test --remote --yes --file apply.sql ; verify with verifyWpDateRepair.
+// Optional 3rd argument: another output folder (keep earlier apply/rollback files). Any tour with source_key wp-* can be planned.
 // Posts without a GMT date use the install's fixed offset (en UTC-7, zh UTC-8).
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { wordpressDates, planWpDateRepair } from '../cms/scripts/lib/tour-wp-dates.mjs';
 const backup = '/Users/ning/Local Sites/qualitour/backups/production-tours-2026-11-11';
-const out = '/Users/ning/Local Sites/qualitour/backups/wp-dates-2026-11-15';
+const out = process.argv[3] || '/Users/ning/Local Sites/qualitour/backups/wp-dates-2026-11-15';
 await mkdir(out, { recursive: true, mode: 0o700 });
 const rows = JSON.parse(await readFile(process.argv[2], 'utf8'))[0].results;
 // The two WordPress installs keep a fixed UTC offset (en UTC-7, zh UTC-8; 348/366 and 152/173 tour dates agree).
