@@ -28,9 +28,10 @@ export async function createCmsWriter({ origin = process.env.QUALITOUR_CMS_ORIGI
 }
 
 function makeRequest(checked, authHeaders, refresh) {
-  return async function request(method, path, body) {
+  return async function request(method, path, body, { contentType } = {}) {
     const multipart = typeof FormData !== 'undefined' && body instanceof FormData; // the browser sets the multipart boundary itself
-    const send = () => fetch(checked + path, { method, redirect: 'manual', signal: AbortSignal.timeout(120000), headers: { ...authHeaders(), Accept: 'application/json', ...(multipart ? {} : { 'Content-Type': 'application/json' }), 'X-EmDash-Request': '1', Origin: checked }, body: body === undefined ? undefined : multipart ? body : JSON.stringify(body) });
+    const binary = body instanceof Uint8Array; // raw upload body (signed media upload URL), sent as-is
+    const send = () => fetch(checked + path, { method, redirect: 'manual', signal: AbortSignal.timeout(120000), headers: { ...authHeaders(), Accept: 'application/json', ...(multipart ? {} : { 'Content-Type': binary ? contentType : 'application/json' }), 'X-EmDash-Request': '1', Origin: checked }, body: body === undefined ? undefined : multipart || binary ? body : JSON.stringify(body) });
     let response = await send();
     if (response.status === 401) { await refresh(); response = await send(); }
     const text = await response.text();

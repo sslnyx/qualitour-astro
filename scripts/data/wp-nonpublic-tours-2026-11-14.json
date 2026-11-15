@@ -1,0 +1,2952 @@
+{
+ "generated": "2026-11-14",
+ "source": "qualitour.ca WordPress databases (en prefix hyp_, zh separate install), read-only SQL via a temporary PHP file that was deleted right after",
+ "note": "post_type=tour, status not publish/auto-draft. No customer or order data.",
+ "counts_by_status": {
+  "en": {
+   "draft": 130,
+   "pending": 48,
+   "private": 1,
+   "publish": 192,
+   "trash": 1
+  },
+  "zh": {
+   "draft": 49,
+   "pending": 60,
+   "private": 4,
+   "publish": 64
+  }
+ },
+ "tours": [
+  {
+   "locale": "en",
+   "wp_id": 82176,
+   "status": "draft",
+   "slug": "",
+   "title": "3 National Parks with Jewels of Canadian Rockies One Day Tour",
+   "created": "2026-03-19",
+   "modified": "2026-03-19",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11089,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-viking-world-journeys-australia-egypt-england-france-french-polynesia-greece-india-indonesia-italy-jordan-monaco-myanmar-new-zealand-oman-portugal-singapor",
+   "title": "Viking Oceans Cruises - NEW! Viking World Journeys (23 Countries) 121 Days",
+   "created": "2023-07-31",
+   "modified": "2026-02-26",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 81324,
+   "status": "draft",
+   "slug": "",
+   "title": "Viking Oceans Cruises - NEW! Viking World Discoveries (27 Countries) 125 Days",
+   "created": "2026-02-26",
+   "modified": "2026-02-26",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 9769,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-main-moselle-france-germany-czech-republic-luxembourg-12-days",
+   "title": "Viking Rivers Cruises - Christmas on the Main & Moselle (France, Luxembourg, Germany, Czech Republic) 12 Days",
+   "created": "2023-07-18",
+   "modified": "2026-01-13",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11124,
+   "status": "draft",
+   "slug": "viking-expeditions-cruises-new-longitudinal-world-cruise-iv-antarctica-argentina-canada-chile-ecuador-mexico-panama-peru-united-states-62-days",
+   "title": "Viking Expeditions Cruises - NEW! Longitudinal World Cruise IV (9 Countries) 62 Days",
+   "created": "2023-07-31",
+   "modified": "2026-01-13",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11138,
+   "status": "draft",
+   "slug": "viking-expeditions-cruises-new-canada-greenland-explorer-canada-greenland-15-days",
+   "title": "Viking Expeditions Cruises - NEW! Canada & Greenland Explorer (Canada, Greenland) 15 Days",
+   "created": "2023-07-31",
+   "modified": "2026-01-13",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11137,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-47",
+   "title": "Viking Expeditions Cruises - NEW! Canada & the Northwest Passage (Greenland, Canada) 27 Days",
+   "created": "2023-07-31",
+   "modified": "2026-01-13",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4649,
+   "status": "draft",
+   "slug": "fraser-valley-bald-eagle-festival-wildlife-watching",
+   "title": "Fraser Valley Bald Eagle Festival & Wildlife Watching",
+   "created": "2020-10-15",
+   "modified": "2025-12-23",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 19444,
+   "status": "draft",
+   "slug": "kenya-10-days-9-nights-discovering-kenyas-wildlife-in-style-a-untamed-africa-safari-journey-all-rates-are-listed-in-usd",
+   "title": "Kenya  10 Days/9 Nights Discovering Kenya's Wildlife in Style: A Untamed Africa Safari Journey (All rates are listed in USD.)",
+   "created": "2024-12-17",
+   "modified": "2025-12-23",
+   "group": "africa-safaris"
+  },
+  {
+   "locale": "en",
+   "wp_id": 5926,
+   "status": "draft",
+   "slug": "okanagan-vineyards-exploration-wine-tasting",
+   "title": "Okanagan Vineyards Exploration & Wine Tasting",
+   "created": "2020-10-20",
+   "modified": "2025-12-02",
+   "group": "other"
+  },
+  {
+   "locale": "en",
+   "wp_id": 5838,
+   "status": "draft",
+   "slug": "fraser-valley-fall-foliage-nature-photography",
+   "title": "Fraser Valley Fall Foliage & Nature Photography",
+   "created": "2020-10-18",
+   "modified": "2025-12-02",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 36670,
+   "status": "draft",
+   "slug": "fraser-valley-wildlife-watching-one-day-tour",
+   "title": "Fraser Valley Wildlife Watching One-Day Tour",
+   "created": "2025-10-21",
+   "modified": "2025-12-02",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11115,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-37",
+   "title": "Viking Expeditions Cruises - Antarctic Adventure (Antarctica, Argentina, Chile) 15 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11119,
+   "status": "draft",
+   "slug": "viking-expeditions-cruises-new-canada-the-atlantic-coastline-canada-united-states-16-days",
+   "title": "Viking Expeditions Cruises - NEW! Canada & the Atlantic Coastline (Canada, United States) 16 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11118,
+   "status": "draft",
+   "slug": "viking-expeditions-cruises-undiscovered-great-lakes-canada-united-states-8-days",
+   "title": "Viking Expeditions Cruises - Undiscovered Great Lakes (Canada, United States) 8 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11117,
+   "status": "draft",
+   "slug": "viking-expeditions-cruises-great-lakes-explorer-canada-united-states-8-days",
+   "title": "Viking Expeditions Cruises - Great Lakes Explorer (Canada, United States) 8 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11123,
+   "status": "draft",
+   "slug": "viking-expeditions-cruises-new-longitudinal-world-cruise-iii-antarctica-argentina-canada-chile-ecuador-falkland-islands-mexico-panama-peru-united-states-70-days",
+   "title": "Viking Expeditions Cruises - NEW! Longitudinal World Cruise III (10 Countries) 70 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11122,
+   "status": "draft",
+   "slug": "viking-expeditions-cruises-new-longitudinal-world-cruise-ii-antarctica-argentina-canada-chile-ecuador-panama-peru-united-states-71-days",
+   "title": "Viking Expeditions Cruises - NEW! Longitudinal World Cruise II (8 Countries) 71 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11121,
+   "status": "draft",
+   "slug": "viking-expeditions-cruises-new-longitudinal-world-cruise-i-antarctica-argentina-canada-chile-ecuador-panama-peru-united-states-65-days",
+   "title": "Viking Expeditions Cruises - NEW! Longitudinal World Cruise I (8 Countries) 65 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11127,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-41",
+   "title": "Viking Expeditions Cruises - Patagonian Shores & Chilean Fjords (Argentina, Chile, United States) 14 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11126,
+   "status": "draft",
+   "slug": "viking-expeditions-cruises-chilean-fjords-patagonia-explorer-argentina-chile-15-days",
+   "title": "Viking Expeditions Cruises - Chilean Fjords & Patagonia Explorer (Argentina, Chile) 15 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11129,
+   "status": "draft",
+   "slug": "viking-expeditions-cruises-new-patagonia-fjords-panama-canal-argentina-chile-ecuador-mexico-panama-peru-united-states-32-days",
+   "title": "Viking Expeditions Cruises - NEW! Patagonia, Fjords & Panama Canal (Argentina, Chile, Ecuador, Mexico, Panama, Peru, United States) 32 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11136,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-45",
+   "title": "Viking Expeditions Cruises - NEW! Panama Canal, Fjords & Patagonia (Argentina, Chile, Ecuador, Mexico, Panama, Peru, United States) 31 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11135,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-46",
+   "title": "Viking Expeditions Cruises - NEW! Canada to Cape Horn Grand Explorer (Argentina, Canada, Chile, Ecuador, Mexico, Panama, Peru, United States) 46 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11032,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-in-search-of-the-northern-lights-norway-the-netherlands-united-kingdom-13-days",
+   "title": "Viking Oceans Cruises - In Search of the Northern Lights (Norway, The Netherlands, United Kingdom) 13 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11031,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-10",
+   "title": "Viking Oceans Cruises - Amazon & Caribbean Adventure (7 Countries) 13 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11030,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-south-america-the-chilean-fjords-argentina-chile-falkland-islands-malvinas-uruguay-18-days",
+   "title": "Viking Oceans Cruises - South America & the Chilean Fjords (Argentina, Chile, Falkland Islands (Malvinas), Uruguay) 18 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11029,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-australia-new-zealand-australia-new-zealand-15-days",
+   "title": "Viking Oceans Cruises - Australia & New Zealand (Australia, New Zealand) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11037,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-11",
+   "title": "Viking Oceans Cruises - Alaska & the Inside Passage (Canada, United States) 11 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11035,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-journey-to-antiquities-greece-italy-8-days",
+   "title": "Viking Oceans Cruises - Journey to Antiquities (Greece, Italy) 8 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11041,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-mediterranean-odyssey-croatia-france-greece-italy-monaco-spain-13-days",
+   "title": "Viking Oceans Cruises - Mediterranean Odyssey (Croatia, France, Greece, Italy, Monaco, Spain) 13 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11040,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-12",
+   "title": "Viking Oceans Cruises - Empires of the Mediterranean (Croatia, Greece, Italy, Montenegro, Slovenia) 10 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11039,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-cities-of-antiquity-the-holy-land-greece-israel-italy-15-days",
+   "title": "Viking Oceans Cruises - Cities of Antiquity & the Holy Land (Greece, Israel, Italy) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11038,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-panama-canal-central-america-belize-costa-rica-honduras-jamaica-mexico-panama-united-states-15-days",
+   "title": "Viking Oceans Cruises - Panama Canal & Central America (Belize, Costa Rica, Honduras, Jamaica, Mexico, Panama, United States) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11045,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-classic-panama-canal-passage-belize-costa-rica-honduras-mexico-panama-united-states-11-days",
+   "title": "Viking Oceans Cruises - Classic Panama Canal Passage (Belize, Costa Rica, Honduras, Mexico, Panama, United States) 11 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11044,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-west-indies-panama-canal-passage-colombia-costa-rica-curacao-mexico-nicaragua-panama-puerto-rico-united-states-18-days",
+   "title": "Viking Oceans Cruises - NEW! West Indies & Panama Canal Passage (8 Countries) 18 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11043,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-panama-canal-the-pacific-coast-colombia-costa-rica-mexico-nicaragua-panama-united-states-18-days",
+   "title": "Viking Oceans Cruises - Panama Canal & the Pacific Coast (Colombia, Costa Rica, Mexico, Nicaragua, Panama, United States) 18 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11042,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-13",
+   "title": "Viking Oceans Cruises - Panama Canal & Coastal Holiday (Colombia, Costa Rica, Mexico, Nicaragua, Panama, United States) 18 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11049,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-west-indies-explorer-antigua-barbuda-barbados-british-virgin-islands-puerto-rico-st-kitts-and-nevis-st-lucia-st-martin-st-thomas-us-virgin-islands-11-days",
+   "title": "Viking Oceans Cruises - West Indies Explorer (9 Countries) 11 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11048,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-pacific-coast-explorer-canada-united-states-9-days",
+   "title": "Viking Oceans Cruises - Pacific Coast Explorer (Canada, United States) 9 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11047,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-hawaiian-islands-sojourn-mexico-united-states-17-days",
+   "title": "Viking Oceans Cruises - Hawaiian Islands Sojourn (Mexico, United States) 17 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11046,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-grand-hawaii-polynesia-french-polynesia-united-states-33-days",
+   "title": "Viking Oceans Cruises - Grand Hawaii & Polynesia (French Polynesia, United States) 33 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11053,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-14",
+   "title": "Viking Oceans Cruises - Eastern Seaboard Explorer (Canada, United States) 13 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11052,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-canada-new-england-scenic-shores-canada-united-states-15-days",
+   "title": "Viking Oceans Cruises - Canada & New England Scenic Shores (Canada, United States) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11051,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-15",
+   "title": "Viking Oceans Cruises - Greek Odyssey (Greece, Turkey) 11 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11056,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-mediterranean-italian-sojourn-croatia-france-italy-monaco-spain-15-days",
+   "title": "Viking Oceans Cruises - Mediterranean & Italian Sojourn (Croatia, France, Italy, Monaco, Spain) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11055,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-16",
+   "title": "Viking Oceans Cruises - Italy, the Adriatic & Greece (Croatia, Greece, Italy, Montenegro) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11054,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-ancient-adriatic-treasures-greece-turkey-15-days",
+   "title": "Viking Oceans Cruises - Ancient Adriatic Treasures (Greece, Turkey) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11061,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-mediterranean-antiquities-france-greece-italy-monaco-spain-turkey-15-days",
+   "title": "Viking Oceans Cruises - Mediterranean Antiquities (France, Greece, Italy, Monaco, Spain, Turkey) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11060,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-ancient-mediterranean-antiquities-greece-turkey-15-days",
+   "title": "Viking Oceans Cruises - Ancient Mediterranean Antiquities (Greece, Turkey) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11059,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-malta-morocco-the-mediterranean-algeria-france-italy-malta-morocco-spain-tunisia-16-days",
+   "title": "Viking Oceans Cruises - NEW! Malta, Morocco & the Mediterranean (Algeria, France, Italy, Malta, Morocco, Spain, Tunisia) 16 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11058,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-mediterraneans-iconic-shores-croatia-france-greece-italy-monaco-montenegro-spain-turkey-29-days",
+   "title": "Viking Oceans Cruises - Mediterranean’s Iconic Shores (Croatia, France, Greece, Italy, Monaco, Montenegro, Spain, Turkey) 29 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11066,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-iceland-british-isles-iberia-england-iceland-ireland-portugal-spain-15-days",
+   "title": "Viking Oceans Cruises - Iceland, British Isles & Iberia (England, Iceland, Ireland, Portugal, Spain) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11065,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-trade-routes-of-the-middle-ages-belgium-england-france-norway-portugal-spain-the-netherlands-15-days",
+   "title": "Viking Oceans Cruises - Trade Routes of the Middle Ages (Belgium, England, France, Norway, Portugal, Spain, The Netherlands) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11064,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-in-the-wake-of-the-vikings-canada-faroe-islands-greenland-iceland-norway-united-kingdom-15-days",
+   "title": "Viking Oceans Cruises - In the Wake of the Vikings (Canada, Faroe Islands, Greenland, Iceland, Norway, United Kingdom) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11063,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-iberian-explorer-spain-united-kingdom-8-days",
+   "title": "Viking Oceans Cruises - Iberian Explorer (Spain, United Kingdom) 8 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11062,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-17",
+   "title": "Viking Oceans Cruises - Viking Shores & Fjords (Denmark, Norway, The Netherlands) 8 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11070,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-grand-fjords-iconic-viking-shores-canada-denmark-greenland-iceland-norway-svalbard-the-netherlands-united-states-36-days",
+   "title": "Viking Oceans Cruises - NEW! Grand Fjords & Iconic Viking Shores (8 Countries) 36 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11069,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-scandinavia-the-british-isles-denmark-estonia-finland-germany-ireland-norway-poland-russia-scotland-sweden-united-kingdom-wales-29-days",
+   "title": "Viking Oceans Cruises - Scandinavia & the British Isles (12 Countries) 29 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11074,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-19",
+   "title": "Viking Oceans Cruises - Viking Homelands & Majestic Iceland (Denmark, Estonia, Finland, Germany, Norway, Poland, Russia, Sweden) 27 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11073,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-british-isles-iceland-explorer-england-faroe-islands-iceland-ireland-norway-scotland-united-kingdom-wales-27-days",
+   "title": "Viking Oceans Cruises - NEW! British Isles & Iceland Explorer (8 Countries) 27 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11072,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-atlantic-mediterranean-odyssey-croatia-france-greece-italy-monaco-portugal-spain-united-states-27-days",
+   "title": "Viking Oceans Cruises - Atlantic & Mediterranean Odyssey (Croatia, France, Greece, Italy, Monaco, Portugal, Spain, United States) 27 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11071,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-20",
+   "title": "Viking Oceans Cruises - Iconic Mediterranean Treasures (France, Greece, Italy, Monaco, Spain, Turkey) 22 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11078,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-mediterranean-adriatic-sojourn-croatia-france-greece-italy-monaco-montenegro-spain-22-days",
+   "title": "Viking Oceans Cruises - Mediterranean & Adriatic Sojourn (Croatia, France, Greece, Italy, Monaco, Montenegro, Spain) 22 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11077,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-21",
+   "title": "Viking Oceans Cruises - Adriatic & Mediterranean Sojourn (Croatia, Greece, Italy, Montenegro, Turkey) 22 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11076,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-22",
+   "title": "Viking Oceans Cruises - Passage to India (Egypt, Greece, India, Israel, Jordan, Oman) 21 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11075,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-across-the-bay-of-bengal-india-malaysia-singapore-sri-lanka-thailand-16-days",
+   "title": "Viking Oceans Cruises - Across the Bay of Bengal (India, Malaysia, Singapore, Sri Lanka, Thailand) 16 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11082,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-komodo-the-australian-coast-australia-indonesia-17-days",
+   "title": "Viking Oceans Cruises - Komodo & the Australian Coast (Australia, Indonesia) 17 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11081,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-bangkok-bali-beyond-indonesia-malaysia-singapore-thailand-13-days",
+   "title": "Viking Oceans Cruises - Bangkok, Bali & Beyond (Indonesia, Malaysia, Singapore, Thailand) 13 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11080,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-23",
+   "title": "Viking Oceans Cruises - Southeast Asia & Hong Kong (Cambodia, China, Thailand, Vietnam) 15 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11079,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-far-eastern-horizons-china-japan-15-days",
+   "title": "Viking Oceans Cruises - Far Eastern Horizons (China, Japan) 15 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11086,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-24",
+   "title": "Viking Oceans Cruises - North Pacific Passage (Canada, Japan, United States) 23 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11085,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-grand-australia-circumnavigation-australia-indonesia-32-days",
+   "title": "Viking Oceans Cruises - NEW! Grand Australia Circumnavigation (Australia, Indonesia) 32 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11084,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-25",
+   "title": "Viking Oceans Cruises - NEW! Viking World Voyage I (44 Countries) 180 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11083,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-26",
+   "title": "Viking Oceans Cruises - NEW! Viking World Voyage II (39 Countries) 163 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11088,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-27",
+   "title": "Viking Oceans Cruises - NEW! The Mediterranean & South Atlantic (France, Italy, Monaco, Spain) 29 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11087,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-28",
+   "title": "Viking Oceans Cruises - NEW! Atlantic Crossing & Mediterranean (France, Italy, Monaco, Portugal, Spain, St. Martin, United States) 22 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11095,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-caribbean-mediterranean-odyssey-croatia-france-greece-italy-monaco-portugal-puerto-rico-spain-st-martin-26-days",
+   "title": "Viking Oceans Cruises - Caribbean & Mediterranean Odyssey (9 Countries) 26 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11094,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-mediterranean-explorer-crossing-france-italy-monaco-portugal-spain-24-days",
+   "title": "Viking Oceans Cruises - Mediterranean Explorer & Crossing (France, Italy, Monaco, Portugal, Spain) 24 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11093,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-west-indies-the-iberian-peninsula-morocco-portugal-puerto-rico-spain-st-martin-13-days",
+   "title": "Viking Oceans Cruises - NEW! West Indies & the Iberian Peninsula (Morocco, Portugal, Puerto Rico, Spain, St. Martin) 13 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11092,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-west-indies-the-mediterranean-croatia-france-greece-italy-monaco-morocco-portugal-puerto-rico-spain-st-martin-25-days",
+   "title": "Viking Oceans Cruises - NEW! West Indies & the Mediterranean (10 Countries) 25 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11091,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-mediterranean-to-caribbean-sojourn-france-italy-monaco-morocco-portugal-puerto-rico-spain-st-martin-22-days",
+   "title": "Viking Oceans Cruises - NEW! Mediterranean to Caribbean Sojourn (8 Countries) 22 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11099,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-western-mediterranean-explorer-france-italy-monaco-portugal-spain-13-days",
+   "title": "Viking Oceans Cruises - Western Mediterranean Explorer (France, Italy, Monaco, Portugal, Spain) 13 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11098,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-voyage-of-marco-polo-egypt-greece-india-israel-jordan-malaysia-oman-singapore-sri-lanka-thailand-36-days",
+   "title": "Viking Oceans Cruises - Voyage of Marco Polo (10 Countries) 36 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11097,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-29",
+   "title": "Viking Oceans Cruises - Southeast Asia Horizons (Cambodia, China, Japan, Thailand, Vietnam) 29 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11096,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-southeast-asia-cambodia-china-indonesia-malaysia-singapore-thailand-vietnam-27-days",
+   "title": "Viking Oceans Cruises - Southeast Asia (Cambodia, China, Indonesia, Malaysia, Singapore, Thailand, Vietnam) 27 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11103,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-south-pacific-sojourn-australia-indonesia-malaysia-singapore-thailand-29-days",
+   "title": "Viking Oceans Cruises - South Pacific Sojourn (Australia, Indonesia, Malaysia, Singapore, Thailand) 29 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11102,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-30",
+   "title": "Viking Oceans Cruises - NEW! Australia, New Zealand & Indonesia (Australia, New Zealand) 31 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11101,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-31",
+   "title": "Viking Oceans Cruises - Far East & Alaska (Canada, China, Japan, United States) 37 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11100,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-australia-asia-alaska-australia-cambodia-canada-china-indonesia-japan-malaysia-singapore-thailand-united-states-vietnam-79-days",
+   "title": "Viking Oceans Cruises - Australia, Asia & Alaska (11 Countries) 79 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11107,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-32",
+   "title": "Viking Oceans Cruises - Grand Pacific Explorer (12 Countries) 93 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11106,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-southern-atlantic-crossing-argentina-brazil-morocco-senegal-spain-uruguay-22-days",
+   "title": "Viking Oceans Cruises - Southern Atlantic Crossing (Argentina, Brazil, Morocco, Senegal, Spain, Uruguay) 22 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11105,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-33",
+   "title": "Viking Oceans Cruises - Atlantic Crossing (Portugal, Spain, St. Martin, United States) 15 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11104,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-atlantic-mediterranean-horizons-france-italy-monaco-portugal-spain-st-martin-united-states-21-days",
+   "title": "Viking Oceans Cruises - NEW! Atlantic & Mediterranean Horizons (France, Italy, Monaco, Portugal, Spain, St. Martin, United States) 21 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11112,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-atlantic-ocean-passage-portugal-spain-st-martin-united-states-14-days",
+   "title": "Viking Oceans Cruises - NEW! Atlantic Ocean Passage (Portugal, Spain, St. Martin, United States) 14 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11111,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-34",
+   "title": "Viking Oceans Cruises - West Indies to Spain (Portugal, Puerto Rico, Spain, St. Martin) 14 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11110,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-35",
+   "title": "Viking Oceans Cruises - West Indies to Iberia (Morocco, Portugal, Puerto Rico, Spain, St. Martin) 15 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11109,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-mid-atlantic-crossing-bermuda-portugal-united-states-12-days",
+   "title": "Viking Oceans Cruises - Mid-Atlantic Crossing (Bermuda, Portugal, United States) 12 Days",
+   "created": "2023-07-31",
+   "modified": "2025-11-19",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11022,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-british-isles-explorer-england-ireland-norway-scotland-united-kingdom-wales-15-days",
+   "title": "Viking Oceans Cruises - British Isles Explorer (England, Ireland, Norway, Scotland, United Kingdom, Wales) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-10",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11028,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-into-the-midnight-sun-england-norway-scotland-united-kingdom-15-days",
+   "title": "Viking Oceans Cruises - Into the Midnight Sun (England, Norway, Scotland, United Kingdom) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-10",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11027,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-iconic-iceland-greenland-canada-canada-greenland-iceland-united-states-15-days",
+   "title": "Viking Oceans Cruises - Iconic Iceland, Greenland & Canada (Canada, Greenland, Iceland, United States) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-10",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11026,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-new-iceland-norways-arctic-explorer-faroe-islands-iceland-norway-15-days",
+   "title": "Viking Oceans Cruises - NEW! Iceland & Norway’s Arctic Explorer (Faroe Islands, Iceland, Norway) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-10",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11025,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-icelands-majestic-landscapes-faroe-islands-iceland-norway-13-days",
+   "title": "Viking Oceans Cruises - Iceland’s Majestic Landscapes (Faroe Islands, Iceland, Norway) 13 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-10",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11033,
+   "status": "draft",
+   "slug": "viking-oceans-cruises-icelands-natural-beauty-iceland-8-days",
+   "title": "Viking Oceans Cruises - Iceland’s Natural Beauty (Iceland) 8 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-10",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 9788,
+   "status": "draft",
+   "slug": "testing-page-viking-river-cruises-grand-european-tour-the-netherlands-germany-austria-hungary-15-days",
+   "title": "TEST PAGE - Viking Oceans Cruises - NEW! Iceland & Norway’s Arctic Explorer (Faroe Islands, Iceland, Norway) 15 Days",
+   "created": "2023-07-18",
+   "modified": "2025-11-10",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11021,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-9",
+   "title": "Viking Oceans Cruises - Viking Homelands (Denmark, Estonia, Finland, Germany, Norway, Poland, Russia, Sweden) 15 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-10",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 9696,
+   "status": "draft",
+   "slug": "viking-river-cruises-rhine-getaway-netherlands-france-germany-switzerland-8-days-2",
+   "title": "Viking Rivers Cruises - NEW! Treasures of the Rhine (France, Germany, Switzerland, The Netherlands) 10 Days",
+   "created": "2023-07-13",
+   "modified": "2025-11-10",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 9742,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-seine-france-8-days",
+   "title": "Viking Rivers Cruises - NEW! Christmas on the Seine (France) 8 Days",
+   "created": "2023-07-17",
+   "modified": "2025-11-10",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 11020,
+   "status": "draft",
+   "slug": "viking-river-cruises-christmas-on-the-rhine-moselle-france-germany-switzerland-12-days-8",
+   "title": "Viking Rivers Cruises - Heart of the Delta (United States) 12 Days",
+   "created": "2023-07-30",
+   "modified": "2025-11-10",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6574,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-first-passage-to-the-west-classic-4-days-vancouver-to-banff",
+   "title": "Rocky Mountaineer Train - First Passage to the West Classic 4 Days (Vancouver to Banff)",
+   "created": "2020-12-28",
+   "modified": "2025-10-17",
+   "group": "rocky-mountaineer"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6610,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-first-passage-to-the-west-classic-4-days-banff-to-vancouver",
+   "title": "Rocky Mountaineer Train - First Passage to the West Classic 4 Days (Banff to Vancouver)",
+   "created": "2020-12-29",
+   "modified": "2025-10-17",
+   "group": "rocky-mountaineer"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6633,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-journey-through-the-clouds-classic-4-days-vancouver-to-jasper",
+   "title": "Rocky Mountaineer Train - Journey Through the Clouds Classic 6 Days (Vancouver to Jasper)",
+   "created": "2020-12-29",
+   "modified": "2025-10-17",
+   "group": "rocky-mountaineer"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6690,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-jorney-through-the-clouds-2-day-rail-jasper-to-vancouver",
+   "title": "Rocky Mountaineer Train - Jorney Through the Clouds 2-Day Rail (Jasper to Vancouver)",
+   "created": "2020-12-30",
+   "modified": "2025-10-17",
+   "group": "rocky-mountaineer"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6680,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-journey-through-the-clouds-2-day-rail-vancouver-to-jasper",
+   "title": "Rocky Mountaineer Train - Journey Through the Clouds 2-Day Rail (Vancouver to Jasper)",
+   "created": "2020-12-30",
+   "modified": "2025-10-17",
+   "group": "rocky-mountaineer"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6621,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-journey-through-the-clouds-classic-4-days-jasper-to-vancouver",
+   "title": "Rocky Mountaineer Train - Journey Through the Clouds Classic 6 Days (Jasper to Vancouver)",
+   "created": "2020-12-29",
+   "modified": "2025-10-17",
+   "group": "rocky-mountaineer"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6819,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-first-passage-to-the-west-2-day-rail-vancouver-to-banff",
+   "title": "Rocky Mountaineer Train - First Passage to the West 2-Day Rail (Vancouver to Banff)",
+   "created": "2021-01-07",
+   "modified": "2025-10-17",
+   "group": "rocky-mountaineer"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6836,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-first-passage-to-the-west-2-day-rail-banff-to-vancouver",
+   "title": "Rocky Mountaineer Train – First Passage to the West 2-Day Rail (Banff to Vancouver)",
+   "created": "2021-01-07",
+   "modified": "2025-10-17",
+   "group": "rocky-mountaineer"
+  },
+  {
+   "locale": "en",
+   "wp_id": 9839,
+   "status": "draft",
+   "slug": "mauritius-stunning-volcanic-scenery-and-coastal-delights",
+   "title": "Mauritius Stunning Volcanic Scenery and Coastal Delights",
+   "created": "2023-08-14",
+   "modified": "2025-10-17",
+   "group": "africa-safaris"
+  },
+  {
+   "locale": "en",
+   "wp_id": 9811,
+   "status": "draft",
+   "slug": "kenya-tanzania-12-days-11-nights-passion-wild-leisure-vacation",
+   "title": "Kenya & Tanzania 12 Days/11 Nights Passion Wild Leisure Vacation",
+   "created": "2023-08-14",
+   "modified": "2025-10-17",
+   "group": "africa-safaris"
+  },
+  {
+   "locale": "en",
+   "wp_id": 9813,
+   "status": "draft",
+   "slug": "kenya-tanzania-13-days-12-nights-passion-wild-leisure-vacation",
+   "title": "Kenya & Tanzania 13 Days/12 Nights Passion Wild Leisure Vacation",
+   "created": "2023-08-14",
+   "modified": "2025-10-17",
+   "group": "africa-safaris"
+  },
+  {
+   "locale": "en",
+   "wp_id": 9837,
+   "status": "draft",
+   "slug": "kenya-8-days-7-nights-passion-wild-leisure-vacation",
+   "title": "Kenya 8 Days/7 Nights Passion Wild Leisure Vacation",
+   "created": "2023-08-14",
+   "modified": "2025-10-17",
+   "group": "africa-safaris"
+  },
+  {
+   "locale": "en",
+   "wp_id": 21471,
+   "status": "draft",
+   "slug": "columbia-icefield-adventure-admission-ticket",
+   "title": "Columbia Icefield Adventure Admission Ticket",
+   "created": "2025-04-25",
+   "modified": "2025-10-17",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "en",
+   "wp_id": 21429,
+   "status": "draft",
+   "slug": "banff-gondola-admission-ticket",
+   "title": "Banff Gondola Admission Ticket",
+   "created": "2025-05-30",
+   "modified": "2025-05-30",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "en",
+   "wp_id": 9582,
+   "status": "draft",
+   "slug": "sun-peaks-snowmobile-tours",
+   "title": "Sun Peaks Snowmobile Tours",
+   "created": "2023-06-22",
+   "modified": "2025-04-25",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "en",
+   "wp_id": 19072,
+   "status": "draft",
+   "slug": "",
+   "title": "Transfer",
+   "created": "2024-10-29",
+   "modified": "2024-10-29",
+   "group": "other"
+  },
+  {
+   "locale": "en",
+   "wp_id": 17299,
+   "status": "draft",
+   "slug": "4-day-spectacular-canadian-rockies-2024",
+   "title": "4- DAY SPECTACULAR CANADIAN ROCKIES 2024",
+   "created": "2024-05-28",
+   "modified": "2024-05-28",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "en",
+   "wp_id": 17296,
+   "status": "draft",
+   "slug": "4-day-majestic-canadian-rockies-2024",
+   "title": "4- DAY MAJESTIC CANADIAN ROCKIES 2024",
+   "created": "2024-05-28",
+   "modified": "2024-05-28",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "en",
+   "wp_id": 16921,
+   "status": "draft",
+   "slug": "4-day-splendid-canadian-rockies-2024",
+   "title": "4- DAY SPLENDID CANADIAN ROCKIES 2024",
+   "created": "2024-05-28",
+   "modified": "2024-05-28",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6393,
+   "status": "draft",
+   "slug": "us-east-coast-new-york-philadelphia-washington-d-c-niagara-falls-7-days",
+   "title": "US East Coast New York-Philadelphia-Washington D.C.-Niagara Falls 7 Days",
+   "created": "2020-12-09",
+   "modified": "2020-12-09",
+   "group": "other"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6369,
+   "status": "draft",
+   "slug": "us-east-coast-new-york-philadelphia-washington-dc-niagara-falls-6-days",
+   "title": "US East Coast New York-Philadelphia-Washington D.C.-Niagara Falls 6 Days",
+   "created": "2020-12-08",
+   "modified": "2020-12-09",
+   "group": "other"
+  },
+  {
+   "locale": "en",
+   "wp_id": 79401,
+   "status": "pending",
+   "slug": "viking-oceans-cruises-ancient-mediterranean-shores-spain-malta-greece-turkey-italy-12-days",
+   "title": "Viking Oceans Cruises - Ancient Mediterranean Shores (Spain, Malta, Greece, Turkey, Italy) 12 Days",
+   "created": "2026-01-29",
+   "modified": "2026-02-25",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 49908,
+   "status": "pending",
+   "slug": "viking-oceans-cruises-new-mediterranean-getaway-spain-malta-greece-5-days",
+   "title": "Viking Oceans Cruises - NEW! Mediterranean Getaway (Spain, Malta, Greece) 5 Days",
+   "created": "2026-01-09",
+   "modified": "2026-02-25",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6925,
+   "status": "pending",
+   "slug": "sea-to-sky-gondola-admission-ticket",
+   "title": "Sea to Sky Gondola Admission Ticket",
+   "created": "2021-01-12",
+   "modified": "2025-09-04",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6403,
+   "status": "pending",
+   "slug": "capilano-suspension-bridge-park-admission-ticket",
+   "title": "Malahat SkyWalk Admission Ticket",
+   "created": "2020-12-09",
+   "modified": "2025-09-04",
+   "group": "other"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6666,
+   "status": "pending",
+   "slug": "vancouver-48-hour-hop-on-hop-off-classic-pass",
+   "title": "Vancouver 48-Hour Hop-On Hop-Off Classic Pass",
+   "created": "2020-12-30",
+   "modified": "2023-03-21",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6992,
+   "status": "pending",
+   "slug": "vancouver-whale-watching-tour-half-day",
+   "title": "Vancouver Whale Watching Tour - Half-Day",
+   "created": "2021-01-14",
+   "modified": "2023-03-21",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7381,
+   "status": "pending",
+   "slug": "3-course-lobster-dinner-at-coast",
+   "title": "3-Course Lobster Dinner at Coast",
+   "created": "2021-03-25",
+   "modified": "2023-03-21",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6862,
+   "status": "pending",
+   "slug": "vancouver-classic-panorama-seaplane-tour",
+   "title": "Vancouver Classic Panorama Seaplane Tour",
+   "created": "2021-01-11",
+   "modified": "2023-01-17",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 6897,
+   "status": "pending",
+   "slug": "vancouver-extended-panorama-seaplane-tour",
+   "title": "Vancouver Extended Panorama Seaplane Tour",
+   "created": "2021-01-11",
+   "modified": "2023-01-17",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7535,
+   "status": "pending",
+   "slug": "whitehorse-summer-aurora-viewing-classic-4-days-with-roundtrip-flights-from-vancouver",
+   "title": "Whitehorse Summer Aurora Viewing Classic 4 Days (with roundtrip flights from Vancouver)",
+   "created": "2021-07-27",
+   "modified": "2022-11-08",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 8493,
+   "status": "pending",
+   "slug": "whitehorse-summer-aurora-viewing-classic-3-days-with-roundtrip-flights-from-vancouver",
+   "title": "Whitehorse Summer Aurora Viewing Classic 3 Days (with roundtrip flights from Vancouver)",
+   "created": "2022-09-02",
+   "modified": "2022-11-08",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7211,
+   "status": "pending",
+   "slug": "whitehorse-snowmobiling-tour-half-day",
+   "title": "Whitehorse Snowmobiling Tour - Half-Day",
+   "created": "2021-02-04",
+   "modified": "2022-07-22",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7235,
+   "status": "pending",
+   "slug": "whitehorse-snowshoeing-tour-half-day",
+   "title": "Whitehorse Snowshoeing Tour - Half-Day",
+   "created": "2021-02-08",
+   "modified": "2022-07-22",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7245,
+   "status": "pending",
+   "slug": "whitehorse-ice-fishing-snowshoeing-tour-half-day",
+   "title": "Whitehorse Ice Fishing & Snowshoeing Tour - Half-Day",
+   "created": "2021-02-08",
+   "modified": "2022-07-22",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7282,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-tour-evening",
+   "title": "Whitehorse Aurora Viewing Tour (Evening)",
+   "created": "2021-02-09",
+   "modified": "2022-07-22",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7197,
+   "status": "pending",
+   "slug": "whitehorse-dog-sledding-tour-half-day",
+   "title": "Whitehorse Dog Sledding Tour - Half-Day",
+   "created": "2021-02-03",
+   "modified": "2022-02-17",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7259,
+   "status": "pending",
+   "slug": "whitehorse-kluane-snowshoe-icefishing-tour-full-day",
+   "title": "Whitehorse Kluane Snowshoe & Icefishing Tour - Full-Day",
+   "created": "2021-02-08",
+   "modified": "2022-01-28",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7276,
+   "status": "pending",
+   "slug": "whitehorse-wildlife-hot-springs-tour-half-day",
+   "title": "Whitehorse Wildlife & Hot Springs Tour - Half-Day",
+   "created": "2021-02-09",
+   "modified": "2021-12-23",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7140,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-4-days",
+   "title": "Whitehorse Aurora Viewing 4 Days",
+   "created": "2021-02-02",
+   "modified": "2021-11-12",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7153,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-3-days",
+   "title": "Whitehorse Aurora Viewing 3 Days",
+   "created": "2021-02-03",
+   "modified": "2021-11-12",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7162,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-wildlife-hot-springs-4-days",
+   "title": "Whitehorse Aurora Viewing + Wildlife & Hot Springs 4 Days",
+   "created": "2021-02-03",
+   "modified": "2021-11-12",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7181,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-winter-activities-5-days",
+   "title": "Whitehorse Aurora Viewing + Winter Activities 5 Days",
+   "created": "2021-02-03",
+   "modified": "2021-11-12",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7204,
+   "status": "pending",
+   "slug": "whitehorse-dog-sledding-tour-full-day",
+   "title": "Whitehorse Dog Sledding Tour - Full-Day",
+   "created": "2021-02-04",
+   "modified": "2021-11-12",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7216,
+   "status": "pending",
+   "slug": "whitehorse-snowmobiling-tour-full-day",
+   "title": "Whitehorse Snowmobiling Tour - Full-Day",
+   "created": "2021-02-04",
+   "modified": "2021-11-12",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7448,
+   "status": "pending",
+   "slug": "3-course-steak-dinner-at-blackblue",
+   "title": "3-Course Steak Dinner at Black+Blue",
+   "created": "2021-04-06",
+   "modified": "2021-11-04",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 7508,
+   "status": "pending",
+   "slug": "granville-island-market-foodie-tour",
+   "title": "Granville Island Market Foodie Tour",
+   "created": "2021-05-04",
+   "modified": "2021-11-04",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 5858,
+   "status": "pending",
+   "slug": "fraser-valley-chestnut-picking-wildlife-watching",
+   "title": "Fraser Valley Chestnut Picking & Wildlife Watching",
+   "created": "2020-10-19",
+   "modified": "2021-11-04",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 5964,
+   "status": "pending",
+   "slug": "fraser-valley-family-camping-salmon-viewing",
+   "title": "Fraser Valley Family Camping & Salmon Viewing",
+   "created": "2020-10-21",
+   "modified": "2021-11-04",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 5984,
+   "status": "pending",
+   "slug": "fraser-canyon-jade-hunting-salmon-viewing",
+   "title": "Fraser Canyon Jade Hunting & Salmon Viewing",
+   "created": "2020-10-21",
+   "modified": "2021-02-16",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4647,
+   "status": "pending",
+   "slug": "test",
+   "title": "Test Venice, Rome and Milan - 9 Days 8 Nights",
+   "created": "2017-01-11",
+   "modified": "2020-10-18",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4605,
+   "status": "pending",
+   "slug": "america-grand-canyon-golden-gate-bridge-las-vegas",
+   "title": "America - Grand canyon, Golden Gate",
+   "created": "2017-01-10",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4623,
+   "status": "pending",
+   "slug": "norway-heaven-on-earth-aurora-chaser-night-tour",
+   "title": "Norway - Heaven on Earth Aurora",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4639,
+   "status": "pending",
+   "slug": "india-mumbai-new-delhi",
+   "title": "India - Mumbai, New Delhi",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4637,
+   "status": "pending",
+   "slug": "brazil-rio-de-janeiro",
+   "title": "Brazil - Rio de Janeiro",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4635,
+   "status": "pending",
+   "slug": "thailand-4-days-in-phuket",
+   "title": "Thailand - 4 Days in Phuket",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4627,
+   "status": "pending",
+   "slug": "alcatraz-tour-plus-muir-woods-golden-gate-and-sausalito-day-trip",
+   "title": "Alcatraz Tour plus Muir Woods",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4621,
+   "status": "pending",
+   "slug": "china-suzhou-and-zhouzhuang-water-village",
+   "title": "China - Suzhou and Zhouzhuang",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4607,
+   "status": "pending",
+   "slug": "5-day-johannesburg-victoria-falls-and-chobe-national-park-tour",
+   "title": "5-Day Johannesburg - Victoria Falls",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4632,
+   "status": "pending",
+   "slug": "south-africa-cape-town",
+   "title": "South Africa - Cape Town",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4634,
+   "status": "pending",
+   "slug": "glories-of-turkey-tour-a-cultural-historical-journey",
+   "title": "Glories of Turkey Tour: A Cultural & Historical Journey",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4641,
+   "status": "pending",
+   "slug": "austria-6-days-in-vienna-hallstatt-salzburg",
+   "title": "Austria - 6 Days in Vienna, Hallstatt",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4642,
+   "status": "pending",
+   "slug": "pais-eiffel-tower-notre-dame-cathedral-champs-elysees-arc-of-triumph-day-tour",
+   "title": "Pais - Eiffel Tower, Notre Dame Cath..",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4643,
+   "status": "pending",
+   "slug": "two-capitals-tour-of-7-days-and-6-nights-from-moscow",
+   "title": "Two Capitals Tour of 7 days and 6 nights From Moscow",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4644,
+   "status": "pending",
+   "slug": "molokini-and-turtle-arches-snorkeling-trip",
+   "title": "Molokini and Turtle Arches Snorkeling Trip",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4640,
+   "status": "pending",
+   "slug": "argentina-great-diving-trip",
+   "title": "Argentina - Great Diving Trip",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4645,
+   "status": "pending",
+   "slug": "5-day-oahu-tour-honolulu-pearl-harbor-diamond-head-lookout",
+   "title": "5-Day Oahu Tour: Honolulu, Pearl Harbor, & Diamond Head",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4646,
+   "status": "pending",
+   "slug": "enquiry-form-only-paris-6-days",
+   "title": "Enquiry Form Only - Paris - 6 Days",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 4648,
+   "status": "pending",
+   "slug": "dubai-all-stunning-places",
+   "title": "Dubai - All Stunning Places",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "en",
+   "wp_id": 9838,
+   "status": "private",
+   "slug": "kenya-10-days-9-nights-discovering-kenyas-wildlife-in-style-a-10-day-luxury-safari-journey",
+   "title": "Kenya  10 Days/9 Nights Discovering Kenya's Wildlife in Style: A 10-Day Luxury Safari Journey",
+   "created": "2023-07-27",
+   "modified": "2024-12-12",
+   "group": "africa-safaris"
+  },
+  {
+   "locale": "en",
+   "wp_id": 9690,
+   "status": "trash",
+   "slug": "viking-river-cruises-rhine-getaway-netherlands-france-germany-switzerland-8-days__trashed",
+   "title": "Viking Rivers Cruises - Rhine Getaway (Switzerland, Germany, France, The Netherlands) 8 Days",
+   "created": "2023-05-12",
+   "modified": "2025-11-10",
+   "group": "viking-cruises"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 18276,
+   "status": "draft",
+   "slug": "極光之約・阿拉斯加：費爾班克斯-5天4晚-美景遊美",
+   "title": "極光之約・阿拉斯加：費爾班克斯 5天4晚 美景遊(美金計價)",
+   "created": "2025-12-23",
+   "modified": "2026-04-22",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9464,
+   "status": "draft",
+   "slug": "台灣七日六夜魅力之旅：日月潭、台南、高雄、墾",
+   "title": "台灣七日六夜魅力之旅：日月潭、台南、高雄、墾丁、花蓮(美金計價)",
+   "created": "2025-06-20",
+   "modified": "2026-04-22",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 15659,
+   "status": "draft",
+   "slug": "韓國精緻包團-首爾精華遊-5天4晚-美金計價",
+   "title": "韓國精緻包團 首爾精華遊 5天4晚 (美金計價)",
+   "created": "2025-10-20",
+   "modified": "2026-04-22",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 15678,
+   "status": "draft",
+   "slug": "菲沙河谷野生動物遷徙觀賞1日遊",
+   "title": "菲沙河谷野生動物遷徙觀賞1日遊",
+   "created": "2025-10-20",
+   "modified": "2025-12-23",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4649,
+   "status": "draft",
+   "slug": "fraser-valley-bald-eagle-festival-wildlife-watching",
+   "title": "菲沙河谷白頭鷹遷徙野生動物觀賞1日遊",
+   "created": "2020-10-15",
+   "modified": "2025-12-23",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 5838,
+   "status": "draft",
+   "slug": "fraser-valley-fall-foliage-nature-photography",
+   "title": "金秋菲沙河谷田園風光自然攝影1日遊",
+   "created": "2020-10-18",
+   "modified": "2025-12-23",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 5926,
+   "status": "draft",
+   "slug": "okanagan-vineyards-exploration-wine-tasting",
+   "title": "金秋奧肯拿根葡萄園探索品酒之旅2日遊",
+   "created": "2020-10-20",
+   "modified": "2025-12-23",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9083,
+   "status": "draft",
+   "slug": "土耳其-伊斯坦布爾安卡拉卡帕多奇亞孔亞棉花堡",
+   "title": "土耳其 伊斯坦布爾+安卡拉+卡帕多奇亞+孔亞+棉花堡+庫薩達斯+伊茲密爾+恰納卡萊 12天11晚遊(美金計價)",
+   "created": "2025-02-04",
+   "modified": "2025-12-23",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8813,
+   "status": "draft",
+   "slug": "肯尼亞激情狂野、極致探險之旅10日遊",
+   "title": "肯尼亞激情狂野、極致探險之旅10日遊(美金計價)",
+   "created": "2024-11-29",
+   "modified": "2025-12-23",
+   "group": "africa-safaris"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8827,
+   "status": "draft",
+   "slug": "肯尼亞-慢節奏、沉浸式度假休閒-8天7晚-2",
+   "title": "肯尼亞精緻包團, 慢節奏、沉浸式度假休閒 8天7晚(美金計價)",
+   "created": "2024-12-12",
+   "modified": "2025-12-23",
+   "group": "africa-safaris"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8833,
+   "status": "draft",
+   "slug": "肯尼亞坦桑尼亞精緻包團-慢節奏、沉浸式度假休",
+   "title": "肯尼亞&坦桑尼亞精緻包團, 慢節奏、沉浸式度假休閒 11天10晚(美金計價)",
+   "created": "2024-12-12",
+   "modified": "2025-12-23",
+   "group": "africa-safaris"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9092,
+   "status": "draft",
+   "slug": "海洋三省-新蘇格蘭、愛德華王子島、新布倫斯瑞克",
+   "title": "海洋三省 (新蘇格蘭、愛德華王子島、新布倫斯瑞克) 雙飛全景5日遊 (提早30天報名可享買2送1/買3送1)",
+   "created": "2025-02-14",
+   "modified": "2025-12-23",
+   "group": "atlantic-maritime"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9155,
+   "status": "draft",
+   "slug": "海洋三省-新蘇格蘭、愛德華王子島、新布倫斯瑞-2",
+   "title": "海洋三省 (新蘇格蘭、愛德華王子島、新布倫斯瑞克) 經典3日遊 (提早30天報名可享買2送1/買3送1)",
+   "created": "2025-02-16",
+   "modified": "2025-12-23",
+   "group": "atlantic-maritime"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9321,
+   "status": "draft",
+   "slug": "columbia-icefield-adventure-哥倫比亞冰川巨型雪車及玻璃橋",
+   "title": "Columbia Icefield Adventure 哥倫比亞冰川巨型雪車及玻璃橋",
+   "created": "2025-04-24",
+   "modified": "2025-10-17",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7038,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-journey-through-the-clouds-2-day-rail-vancouver-to-jasper",
+   "title": "洛磯山登山者號觀景列車奢華體驗 - 溫哥華至賈斯珀2日遊",
+   "created": "2021-02-22",
+   "modified": "2025-10-17",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7049,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-jorney-through-the-clouds-2-day-rail-jasper-to-vancouver",
+   "title": "洛磯山登山者號觀景列車奢華體驗 - 賈斯珀至溫哥華2日遊",
+   "created": "2021-02-23",
+   "modified": "2025-10-17",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6982,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-first-passage-to-the-west-classic-4-days-banff-to-vancouver",
+   "title": "洛磯山登山者號觀景列車奢華體驗 - 班夫至溫哥華經典4日遊",
+   "created": "2021-02-19",
+   "modified": "2025-10-17",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7058,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-first-passage-to-the-west-2-day-rail-vancouver-to-banff",
+   "title": "洛磯山登山者號觀景列車奢華體驗 - 溫哥華至班夫經典4日遊",
+   "created": "2021-02-24",
+   "modified": "2025-10-17",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6934,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-first-passage-to-the-west-classic-4-days-vancouver-to-banff",
+   "title": "洛磯山登山者號觀景列車奢華體驗 - 溫哥華至班夫2日遊",
+   "created": "2021-02-11",
+   "modified": "2025-10-17",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7071,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-first-passage-to-the-west-2-day-rail-banff-to-vancouver",
+   "title": "洛磯山登山者號觀景列車奢華體驗 - 班夫至溫哥華2日遊",
+   "created": "2021-02-24",
+   "modified": "2025-10-17",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9100,
+   "status": "draft",
+   "slug": "加拿大海洋三省雙飛全景7日遊-提早30天報名可享買2",
+   "title": "加拿大海洋三省雙飛全景7日遊 ( 提早30天報名可享買2送1/買3送1)",
+   "created": "2025-02-14",
+   "modified": "2025-10-17",
+   "group": "atlantic-maritime"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9124,
+   "status": "draft",
+   "slug": "穿越征服紐芬蘭全景8日遊-提早30天報名可享買2送1-買3",
+   "title": "穿越征服紐芬蘭全景哈利法克斯進、聖瓊斯出8日遊( 提早30天報名可享買2送1/買3送1)",
+   "created": "2025-02-16",
+   "modified": "2025-09-15",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9132,
+   "status": "draft",
+   "slug": "穿越征服紐芬蘭全景聖瓊斯進、哈利法克斯出8日遊",
+   "title": "穿越征服紐芬蘭全景聖瓊斯進、哈利法克斯出8日遊( 提早30天報名可享買2送1/買3送1)",
+   "created": "2025-02-16",
+   "modified": "2025-09-15",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9141,
+   "status": "draft",
+   "slug": "穿越征服紐芬蘭超值鹿湖進、聖瓊斯出6日遊-提早30",
+   "title": "穿越征服紐芬蘭超值鹿湖進、聖瓊斯出6日遊( 提早30天報名可享買2送1/買3送1)",
+   "created": "2025-02-16",
+   "modified": "2025-09-15",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9149,
+   "status": "draft",
+   "slug": "穿越征服紐芬蘭超值聖瓊斯進、鹿湖出6日遊-提早30",
+   "title": "穿越征服紐芬蘭超值聖瓊斯進、鹿湖出6日遊( 提早30天報名可享買2送1/買3送1)",
+   "created": "2025-02-16",
+   "modified": "2025-09-15",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7363,
+   "status": "draft",
+   "slug": "okanagan-fruit-picking-wine-tasting",
+   "title": "【精品小團】奧肯拿根湖區夏日摘果樂+酒莊品酒3日遊",
+   "created": "2021-06-23",
+   "modified": "2025-09-08",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8038,
+   "status": "draft",
+   "slug": "whitehorse-winter-aurora-viewing-lodge-classic-3-days-with-roundtrip-flights-from-vancouver",
+   "title": "【極光體驗】白馬市小木屋或入住酒店北極光-經典 (冬季) 3日遊（包溫哥華出發來回機票）",
+   "created": "2022-11-01",
+   "modified": "2025-04-30",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7006,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-journey-through-the-clouds-classic-4-days-jasper-to-vancouver",
+   "title": "洛磯山登山者號觀景列車奢華體驗 - 賈斯珀至溫哥華經典4日遊",
+   "created": "2021-02-22",
+   "modified": "2025-04-30",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7022,
+   "status": "draft",
+   "slug": "rocky-mountaineer-train-journey-through-the-clouds-classic-4-days-vancouver-to-jasper",
+   "title": "洛磯山登山者號觀景列車奢華體驗 - 溫哥華至賈斯珀經典4日遊",
+   "created": "2021-02-22",
+   "modified": "2025-04-30",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8846,
+   "status": "draft",
+   "slug": "冬季洛磯山-4天尊貴之旅-2024-10-15-2025-04-29",
+   "title": "冬季洛磯山 4天尊貴之旅",
+   "created": "2024-12-18",
+   "modified": "2025-04-30",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8862,
+   "status": "draft",
+   "slug": "冬季洛磯山-4天皇御之旅-2024-10-15-2025-04-29",
+   "title": "冬季洛磯山 4天皇御之旅",
+   "created": "2024-12-18",
+   "modified": "2025-04-30",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9251,
+   "status": "draft",
+   "slug": "",
+   "title": "Butchard Gardens 寶翠/布查特花園門票",
+   "created": "2025-04-11",
+   "modified": "2025-04-11",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7699,
+   "status": "draft",
+   "slug": "atlantic-canada-nova-scotia-pei-new-brunswick-newfoundland-10-days",
+   "title": "大西洋四省 (新蘇格蘭、愛德華王子島、新布倫斯瑞克、紐芬蘭) 全景10日遊,    ( 提早45天報名可享買2送1/買3送1)",
+   "created": "2022-04-12",
+   "modified": "2025-02-14",
+   "group": "atlantic-maritime"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8297,
+   "status": "draft",
+   "slug": "（加東）海洋省-10天-經典-精選遊",
+   "title": "（加東）海洋省 10天 經典 精選遊",
+   "created": "2024-04-08",
+   "modified": "2025-02-14",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7673,
+   "status": "draft",
+   "slug": "atlantic-canada-nova-scotia-newfoundland-7-days",
+   "title": "加拿大海洋三省雙飛全景豪華7日遊 ( 提早45天報名可享買2送1/買3送1)",
+   "created": "2022-04-11",
+   "modified": "2025-02-14",
+   "group": "atlantic-maritime"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7629,
+   "status": "draft",
+   "slug": "maritimes-nova-scotia-pei-new-brunswick-5-days",
+   "title": "海洋三省 (新蘇格蘭、愛德華王子島、新布倫斯瑞克) 深度5日遊, (提早45天報名可享買2送1/買3送1)",
+   "created": "2022-03-30",
+   "modified": "2025-02-14",
+   "group": "atlantic-maritime"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9088,
+   "status": "draft",
+   "slug": "",
+   "title": "土耳其-伊斯坦布尔-安卡拉-卡帕多奇亚-孔亚-安塔利亚-棉花堡-希林斯-恰纳卡菜 (冬季) 12天10晚游",
+   "created": "2022-10-26",
+   "modified": "2025-02-04",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8650,
+   "status": "draft",
+   "slug": "洛磯雙堡奢華5天，-2024",
+   "title": "洛磯雙堡奢華5天， 2024",
+   "created": "2024-05-10",
+   "modified": "2024-05-27",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8625,
+   "status": "draft",
+   "slug": "洛磯山-班芙強斯頓峽谷一日遊-2",
+   "title": "洛磯山 班芙強斯頓峽谷一日遊",
+   "created": "2024-05-01",
+   "modified": "2024-05-21",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8623,
+   "status": "draft",
+   "slug": "洛磯山-經典全景四日遊",
+   "title": "洛磯山 經典全景四日遊",
+   "created": "2024-05-01",
+   "modified": "2024-05-21",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8621,
+   "status": "draft",
+   "slug": "洛磯山-經典全景五日遊",
+   "title": "洛磯山 經典全景五日遊",
+   "created": "2024-05-01",
+   "modified": "2024-05-21",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8658,
+   "status": "draft",
+   "slug": "超值洛磯5天，-2024-2",
+   "title": "超值洛磯5天， 2024",
+   "created": "2024-05-10",
+   "modified": "2024-05-21",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8663,
+   "status": "draft",
+   "slug": "洛磯山飛越雙堡-3日",
+   "title": "洛磯山飛越雙堡-3日",
+   "created": "2024-05-14",
+   "modified": "2024-05-21",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8662,
+   "status": "draft",
+   "slug": "洛磯山登山者號列車5日遊，-2024",
+   "title": "落磯山登山者號列車5日遊， 2024",
+   "created": "2024-05-21",
+   "modified": "2024-05-21",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8672,
+   "status": "draft",
+   "slug": "維多利亞-1日遊",
+   "title": "維多利亞-1日遊",
+   "created": "2024-05-21",
+   "modified": "2024-05-21",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8667,
+   "status": "draft",
+   "slug": "維多利亞-2日遊",
+   "title": "維多利亞-2日遊",
+   "created": "2024-05-21",
+   "modified": "2024-05-21",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8365,
+   "status": "draft",
+   "slug": "",
+   "title": "DRAFT",
+   "created": "2024-04-18",
+   "modified": "2024-04-18",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8360,
+   "status": "draft",
+   "slug": "",
+   "title": "DRAFT",
+   "created": "2024-04-18",
+   "modified": "2024-04-18",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7930,
+   "status": "draft",
+   "slug": "whitehorse-winter-aurora-viewing-classic-3-days-with-roundtrip-flights-from-vancouver",
+   "title": "【極光體驗】白馬市北極光-經典 (冬季) 3日遊（包溫哥華出發來回機票）",
+   "created": "2022-09-16",
+   "modified": "2023-12-21",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 18899,
+   "status": "pending",
+   "slug": "卑詩玉米節，農場體驗及藍莓採摘一日遊",
+   "title": "卑詩玉米節，農場體驗及藍莓採摘一日遊",
+   "created": "2026-07-14",
+   "modified": "2026-08-07",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6790,
+   "status": "pending",
+   "slug": "sea-to-sky-gondola-admission-ticket",
+   "title": "Sea To Sky Gondola 海天纜車門票",
+   "created": "2021-01-26",
+   "modified": "2025-09-02",
+   "group": "rockies-bc-attractions"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7431,
+   "status": "pending",
+   "slug": "malahat-skywalk-admission-ticket",
+   "title": "Malahat 馬拉哈特天空步道門票",
+   "created": "2021-09-28",
+   "modified": "2025-09-02",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7902,
+   "status": "pending",
+   "slug": "yellowknife-winter-aurora-viewing-classic-3-days",
+   "title": "【極光體驗】黃刀鎮北極光-經典 (冬季) 3日遊",
+   "created": "2022-08-30",
+   "modified": "2025-06-04",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 9412,
+   "status": "pending",
+   "slug": "【極光體驗】黃刀鎮北極光-經典-冬季-3日遊",
+   "title": "【極光體驗】黃刀鎮北極光-經典 (冬季) 3日遊",
+   "created": "2025-04-30",
+   "modified": "2025-06-04",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7922,
+   "status": "pending",
+   "slug": "whitehorse-winter-aurora-viewing-classic-4-days-with-roundtrip-flights-from-vancouver",
+   "title": "【極光體驗】白馬市北極光-經典 (冬季) 4日遊（包溫哥華出發來回機票）",
+   "created": "2022-09-15",
+   "modified": "2023-12-21",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6780,
+   "status": "pending",
+   "slug": "vancouver-48-hour-hop-on-hop-off-classic-pass",
+   "title": "溫哥華48小時隨上隨下觀光巴士套票",
+   "created": "2021-01-26",
+   "modified": "2023-03-29",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6801,
+   "status": "pending",
+   "slug": "vancouver-whale-watching-tour-half-day",
+   "title": "溫哥華出海觀鯨半日遊",
+   "created": "2021-01-27",
+   "modified": "2023-03-29",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7316,
+   "status": "pending",
+   "slug": "3-course-lobster-dinner-at-coast",
+   "title": "溫哥華 Coast 海鮮餐廳 - 加拿大特色龍蝦三道菜晚餐",
+   "created": "2021-03-26",
+   "modified": "2023-02-25",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7796,
+   "status": "pending",
+   "slug": "turkey-11-days",
+   "title": "土耳其-伊斯坦布尔-安卡拉-卡帕多奇亚-孔亚-安塔利亚-棉花堡-希林斯-恰纳卡菜11天",
+   "created": "2022-07-15",
+   "modified": "2022-10-26",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7837,
+   "status": "pending",
+   "slug": "whitehorse-summer-aurora-viewing-classic-4-days-with-roundtrip-flights-from-vancouver",
+   "title": "【極光體驗】白馬市北極光-經典 (夏秋季) 4日遊（包溫哥華出發來回機票）",
+   "created": "2022-08-15",
+   "modified": "2022-10-18",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7912,
+   "status": "pending",
+   "slug": "whitehorse-summer-aurora-viewing-classic-3-days-with-roundtrip-flights-from-vancouver",
+   "title": "【極光體驗】白馬市北極光-經典 (夏秋季) 3日遊（包溫哥華出發來回機票）",
+   "created": "2022-09-02",
+   "modified": "2022-10-18",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7528,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-classic-4-days-with-roundtrip-flight-from-vancouver",
+   "title": "【極光體驗】白馬市北極光-經典4日遊（包溫哥華出發來回機票）",
+   "created": "2021-11-10",
+   "modified": "2022-08-15",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6816,
+   "status": "pending",
+   "slug": "vancouver-classic-panorama-seaplane-tour",
+   "title": "溫哥華水上飛機經典全景遊",
+   "created": "2021-01-27",
+   "modified": "2022-08-15",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6826,
+   "status": "pending",
+   "slug": "vancouver-extended-panorama-seaplane-tour",
+   "title": "溫哥華水上飛機深度全景遊",
+   "created": "2021-01-27",
+   "modified": "2022-08-15",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7549,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-classic-3-days-with-roundtrip-flight-from-vancouver",
+   "title": "【極光體驗】白馬市北極光-經典3日遊（包溫哥華出發來回機票）",
+   "created": "2021-11-15",
+   "modified": "2022-08-15",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7116,
+   "status": "pending",
+   "slug": "whitehorse-snowmobiling-tour-half-day",
+   "title": "白馬市雪地摩托半日遊",
+   "created": "2021-03-01",
+   "modified": "2022-08-15",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7079,
+   "status": "pending",
+   "slug": "whitehorse-dog-sledding-tour-half-day",
+   "title": "白馬市狗拉雪橇半日遊",
+   "created": "2021-03-01",
+   "modified": "2022-08-15",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7135,
+   "status": "pending",
+   "slug": "whitehorse-snowshoeing-tour-half-day",
+   "title": "白馬市雪鞋漫步半日遊",
+   "created": "2021-03-02",
+   "modified": "2022-08-15",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7146,
+   "status": "pending",
+   "slug": "whitehorse-ice-fishing-snowshoeing-tour-half-day",
+   "title": "白馬市冰上捕魚-雪鞋漫步半日遊",
+   "created": "2021-03-02",
+   "modified": "2022-08-15",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7201,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-tour",
+   "title": "【極光體驗】白馬市北極光觀賞遊",
+   "created": "2021-03-08",
+   "modified": "2022-08-15",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7189,
+   "status": "pending",
+   "slug": "whitehorse-wildlife-hot-springs-tour-half-day",
+   "title": "白馬市育空野生動物保護區-塔基尼溫泉半日遊",
+   "created": "2021-03-05",
+   "modified": "2022-01-28",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7503,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-dog-sledding-carcross-4-days-vancouver-air",
+   "title": "【極光體驗】白馬市北極光-狗拉雪橇-Carcross小鎮-探索4日遊（包溫哥華出發來回機票）",
+   "created": "2021-11-08",
+   "modified": "2021-11-10",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7104,
+   "status": "pending",
+   "slug": "whitehorse-dog-sledding-tour-full-day",
+   "title": "【極光體驗】白馬市狗拉雪橇1日遊",
+   "created": "2021-03-01",
+   "modified": "2021-11-10",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7126,
+   "status": "pending",
+   "slug": "whitehorse-snowmobiling-tour-full-day",
+   "title": "【極光體驗】白馬市雪地摩托1日遊",
+   "created": "2021-03-01",
+   "modified": "2021-11-10",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7158,
+   "status": "pending",
+   "slug": "whitehorse-kluane-snowshoe-icefishing-tour-full-day",
+   "title": "【極光體驗】白馬市克魯瓦尼國家公園雪鞋漫步-冰上捕魚1日遊",
+   "created": "2021-03-02",
+   "modified": "2021-11-10",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7217,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-4-days",
+   "title": "【極光體驗】白馬市北極光觀賞4日遊",
+   "created": "2021-03-09",
+   "modified": "2021-11-10",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7244,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-3-days",
+   "title": "【極光體驗】白馬市北極光觀賞3日遊",
+   "created": "2021-03-12",
+   "modified": "2021-11-10",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7256,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-wildlife-hot-springs-4-days",
+   "title": "【極光體驗】白馬市北極光觀賞-育空野生動物保護區-塔基尼溫泉4日遊",
+   "created": "2021-03-15",
+   "modified": "2021-11-10",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7281,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-winter-activities-5-days",
+   "title": "【極光體驗】白馬市北極光觀賞-冬日特色活動5日遊",
+   "created": "2021-03-16",
+   "modified": "2021-11-10",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 7382,
+   "status": "pending",
+   "slug": "whitehorse-aurora-viewing-summer-4-days",
+   "title": "【極光體驗】白馬市北極光觀賞4日遊(夏季)",
+   "created": "2021-07-27",
+   "modified": "2021-11-10",
+   "group": "whitehorse-yellowknife-aurora"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 5858,
+   "status": "pending",
+   "slug": "fraser-valley-chestnut-picking-wildlife-watching",
+   "title": "菲沙河谷戶外拾板栗田園風光生態觀賞",
+   "created": "2020-10-19",
+   "modified": "2021-11-04",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 5964,
+   "status": "pending",
+   "slug": "fraser-valley-family-camping-salmon-viewing",
+   "title": "菲沙河谷親子露營、觀賞三文魚洄游",
+   "created": "2020-10-21",
+   "modified": "2021-11-04",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 5984,
+   "status": "pending",
+   "slug": "fraser-canyon-jade-hunting-salmon-viewing",
+   "title": "菲沙河峽谷野外尋玉石導賞三文魚洄游觀賞",
+   "created": "2020-10-21",
+   "modified": "2021-11-04",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6423,
+   "status": "pending",
+   "slug": "okanagan-big-white-private-ski-lesson-wine-tasting",
+   "title": "奧肯拿根 (大白山) 粉雪天堂私教滑雪、品酒之旅",
+   "created": "2020-11-16",
+   "modified": "2021-11-04",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6477,
+   "status": "pending",
+   "slug": "okanagan-apex-private-ski-lesson-wine-tasting",
+   "title": "奧肯拿根（Apex Mountain Resort）粉雪天堂私教滑雪、品酒之旅",
+   "created": "2020-11-23",
+   "modified": "2021-11-04",
+   "group": "vancouver-fraser-valley-tickets"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6563,
+   "status": "pending",
+   "slug": "us-east-coast-new-york-philadelphia-washington-dc-niagara-falls-6-days",
+   "title": "美國東岸-紐約-費城-華府-尼亞加拉瀑布6日遊【精品小團】",
+   "created": "2020-11-30",
+   "modified": "2021-11-04",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6592,
+   "status": "pending",
+   "slug": "us-east-coast-new-york-philadelphia-washington-dc-niagara-falls-7-days",
+   "title": "美國東岸-紐約-費城-華府-尼亞加拉瀑布7日遊【精品小團】",
+   "created": "2020-12-01",
+   "modified": "2021-11-04",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6616,
+   "status": "pending",
+   "slug": "new-york-instagrammable-1-day",
+   "title": "紐約網紅打卡一日遊【精品小團】",
+   "created": "2020-12-02",
+   "modified": "2021-11-04",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6636,
+   "status": "pending",
+   "slug": "us-east-coast-new-york-philadelphia-washington-dc-5-days",
+   "title": "美國東岸-紐約-費城-華府-5日遊",
+   "created": "2020-12-02",
+   "modified": "2021-11-04",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 6665,
+   "status": "pending",
+   "slug": "us-east-coast-new-york-philadelphia-washington-dc-4-days",
+   "title": "美國東岸-紐約-費城-華府-4日遊",
+   "created": "2020-12-03",
+   "modified": "2021-11-04",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4605,
+   "status": "pending",
+   "slug": "america-grand-canyon-golden-gate-bridge-las-vegas",
+   "title": "America - Grand canyon, Golden Gate",
+   "created": "2017-01-10",
+   "modified": "2021-06-24",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4647,
+   "status": "pending",
+   "slug": "test",
+   "title": "Test Venice, Rome and Milan - 9 Days 8 Nights",
+   "created": "2017-01-11",
+   "modified": "2020-10-18",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4623,
+   "status": "pending",
+   "slug": "norway-heaven-on-earth-aurora-chaser-night-tour",
+   "title": "Norway - Heaven on Earth Aurora",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4639,
+   "status": "pending",
+   "slug": "india-mumbai-new-delhi",
+   "title": "India - Mumbai, New Delhi",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4637,
+   "status": "pending",
+   "slug": "brazil-rio-de-janeiro",
+   "title": "Brazil - Rio de Janeiro",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4635,
+   "status": "pending",
+   "slug": "thailand-4-days-in-phuket",
+   "title": "Thailand - 4 Days in Phuket",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4627,
+   "status": "pending",
+   "slug": "alcatraz-tour-plus-muir-woods-golden-gate-and-sausalito-day-trip",
+   "title": "Alcatraz Tour plus Muir Woods",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4621,
+   "status": "pending",
+   "slug": "china-suzhou-and-zhouzhuang-water-village",
+   "title": "China - Suzhou and Zhouzhuang",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4607,
+   "status": "pending",
+   "slug": "5-day-johannesburg-victoria-falls-and-chobe-national-park-tour",
+   "title": "5-Day Johannesburg - Victoria Falls",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4632,
+   "status": "pending",
+   "slug": "south-africa-cape-town",
+   "title": "South Africa - Cape Town",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4634,
+   "status": "pending",
+   "slug": "glories-of-turkey-tour-a-cultural-historical-journey",
+   "title": "Glories of Turkey Tour: A Cultural & Historical Journey",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4641,
+   "status": "pending",
+   "slug": "austria-6-days-in-vienna-hallstatt-salzburg",
+   "title": "Austria - 6 Days in Vienna, Hallstatt",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4642,
+   "status": "pending",
+   "slug": "pais-eiffel-tower-notre-dame-cathedral-champs-elysees-arc-of-triumph-day-tour",
+   "title": "Pais - Eiffel Tower, Notre Dame Cath..",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4643,
+   "status": "pending",
+   "slug": "two-capitals-tour-of-7-days-and-6-nights-from-moscow",
+   "title": "Two Capitals Tour of 7 days and 6 nights From Moscow",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4644,
+   "status": "pending",
+   "slug": "molokini-and-turtle-arches-snorkeling-trip",
+   "title": "Molokini and Turtle Arches Snorkeling Trip",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4640,
+   "status": "pending",
+   "slug": "argentina-great-diving-trip",
+   "title": "Argentina - Great Diving Trip",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4645,
+   "status": "pending",
+   "slug": "5-day-oahu-tour-honolulu-pearl-harbor-diamond-head-lookout",
+   "title": "5-Day Oahu Tour: Honolulu, Pearl Harbor, & Diamond Head",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4646,
+   "status": "pending",
+   "slug": "enquiry-form-only-paris-6-days",
+   "title": "Enquiry Form Only - Paris - 6 Days",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 4648,
+   "status": "pending",
+   "slug": "dubai-all-stunning-places",
+   "title": "Dubai - All Stunning Places",
+   "created": "2017-01-11",
+   "modified": "2020-10-12",
+   "group": "theme-demo-or-test"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8001,
+   "status": "private",
+   "slug": "turkey-11-days-winter",
+   "title": "土耳其-伊斯坦布尔-安卡拉-卡帕多奇亚-孔亚-安塔利亚-棉花堡-希林斯-恰纳卡菜 (冬季) 12天10晚游",
+   "created": "2022-10-26",
+   "modified": "2025-02-04",
+   "group": "other"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8126,
+   "status": "private",
+   "slug": "肯尼亞、坦桑尼亞-慢節奏、沉浸式度假休閒-13天12晚",
+   "title": "肯尼亞,、坦桑尼亞 慢節奏、沉浸式度假休閒 13天12晚",
+   "created": "2023-09-08",
+   "modified": "2024-12-12",
+   "group": "africa-safaris"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8124,
+   "status": "private",
+   "slug": "肯尼亞、坦桑尼亞-慢節奏、沉浸式度假休閒-12天11晚",
+   "title": "肯尼亞,、坦桑尼亞 慢節奏、沉浸式度假休閒 12天11晚",
+   "created": "2023-09-08",
+   "modified": "2024-12-12",
+   "group": "africa-safaris"
+  },
+  {
+   "locale": "zh",
+   "wp_id": 8127,
+   "status": "private",
+   "slug": "肯尼亞-慢節奏、沉浸式度假休閒-8天7晚",
+   "title": "肯尼亞, 慢節奏、沉浸式度假休閒 8天7晚",
+   "created": "2023-09-08",
+   "modified": "2024-12-12",
+   "group": "africa-safaris"
+  }
+ ]
+}
