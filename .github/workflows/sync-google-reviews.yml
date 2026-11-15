@@ -46,6 +46,7 @@ jobs:
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           EMDASH_WRITE_TOKEN: ${{ secrets.EMDASH_WRITE_TOKEN }}
         run: |
+          set -o pipefail
           flags=""
           if [ "${{ inputs.dry_run }}" = "true" ]; then flags="--dry-run"; fi
           node scripts/sync-google-reviews.mjs $flags | tee "$RUNNER_TEMP/sync.json"
