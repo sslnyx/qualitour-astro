@@ -36,6 +36,12 @@ const children = kind === 'destination' ? destinations.filter((dest) => dest.par
 // Travel regions appear only inside destination pages, taken from the tours shown here.
 const regions = kind === 'destination'
   ? [...new Map(tours.flatMap((tour) => tour.tour_terms?.regions || []).map((region) => [region.slug, region])).values()]
+      .map((region) => ({
+        ...region,
+        // How many of the tours listed here carry this region.
+        shown: tours.filter((tour) => (tour.tour_terms?.regions || []).some((r) => r.slug === region.slug)).length,
+      }))
+      .sort((a, b) => b.shown - a.shown || decodeHtml(a.name).localeCompare(decodeHtml(b.name)))
   : [];
 // Cruise types belong to the Cruises style only; each is a hash filter, so the page stays cacheable by path.
 const showCruiseTypes = kind === 'style' && term.slug === 'cruises' && cruiseTypes.length > 0;
@@ -97,11 +103,14 @@ const label = kind === 'style' ? (zh ? '旅遊方式' : 'Travel Style') : (zh ? 
           {regions.length > 0 && (
             <div>
               <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">{zh ? '旅遊區域／路線' : 'Travel regions & routes'}</h2>
-              <ul class="flex flex-wrap gap-2">
+              <div class="flex flex-wrap gap-2" id="region-chips">
+                <a href="#region-all" data-region-chip="" class="px-3.5 py-1.5 text-sm bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-full transition-colors">{zh ? '全部' : 'All'}</a>
                 {regions.map((region) => (
-                  <li class="px-3 py-1 text-sm bg-orange-50 text-orange-700 rounded-full">{decodeHtml(region.name)}</li>
+                  <a href={`#region-${region.slug}`} data-region-chip={region.slug} class="px-3.5 py-1.5 text-sm bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-full transition-colors">
+                    {decodeHtml(region.name)}<span class="ml-1 text-xs opacity-60">({region.shown})</span>
+                  </a>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
           {showCruiseTypes && (
@@ -131,7 +140,10 @@ const label = kind === 'style' ? (zh ? '旅遊方式' : 'Travel Style') : (zh ? 
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {tours.map((tour) => (
-            <div data-cruise-types={(tour.tour_terms?.cruiseTypes || []).map((type) => type.slug).join(' ')}>
+            <div
+              data-cruise-types={(tour.tour_terms?.cruiseTypes || []).map((type) => type.slug).join(' ')}
+              data-regions={(tour.tour_terms?.regions || []).map((region) => region.slug).join(' ')}
+            >
               <TourCardOptimized tour={tour} lang={lang} />
             </div>
           ))}
@@ -170,6 +182,40 @@ const label = kind === 'style' ? (zh ? '旅遊方式' : 'Travel Style') : (zh ? 
           var active = (chip.getAttribute('data-cruise-chip') || '') === wanted;
           chip.classList.toggle('bg-orange-500', active);
           chip.classList.toggle('text-white', active);
+          chip.setAttribute('aria-current', active ? 'true' : 'false');
+        });
+        if (count) count.textContent = String(shown);
+      }
+      window.addEventListener('hashchange', apply);
+      apply();
+    })();
+  </script>
+)}
+
+{regions.length > 0 && (
+  <script is:inline>
+    (function () {
+      // The region tags filter the tours already on this page. A tag is a #region-<slug> link, so the page stays
+      // one cacheable static file; "All" (or no hash) shows everything.
+      var cards = document.querySelectorAll('[data-regions]');
+      var chips = document.querySelectorAll('[data-region-chip]');
+      var count = document.getElementById('category-count');
+      function apply() {
+        var raw = decodeURIComponent(location.hash.replace(/^#/, ''));
+        var wanted = raw.indexOf('region-') === 0 ? raw.slice(7) : '';
+        if (wanted === 'all') wanted = '';
+        var shown = 0;
+        cards.forEach(function (card) {
+          var show = !wanted || card.getAttribute('data-regions').split(' ').indexOf(wanted) !== -1;
+          card.hidden = !show;
+          if (show) shown++;
+        });
+        chips.forEach(function (chip) {
+          var active = (chip.getAttribute('data-region-chip') || '') === wanted;
+          chip.classList.toggle('bg-orange-500', active);
+          chip.classList.toggle('text-white', active);
+          chip.classList.toggle('bg-orange-50', !active);
+          chip.classList.toggle('text-orange-700', !active);
           chip.setAttribute('aria-current', active ? 'true' : 'false');
         });
         if (count) count.textContent = String(shown);
