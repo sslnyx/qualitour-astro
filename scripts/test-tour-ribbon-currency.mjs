@@ -76,3 +76,12 @@ test('a frozen CAD label is hidden and an edited USD currency is shown', () => {
   assert.equal(meta(catalogueFor(key, { currency: 'CAD' }).tours[0])['tourmaster-tour-currency'], '');
   assert.equal(meta(catalogueFor(key, { currency: 'USD' }).tours[0])['tourmaster-tour-currency'], 'USD');
 });
+
+test('the stored currency code is kept for page descriptions while the label hides CAD', () => {
+  const key = Object.entries(compat.locales.en.tours).find(([, e]) => /^cad$/i.test(e.tour.tour_meta?.['tourmaster-tour-currency'] ?? ''))?.[0];
+  const imported = catalogueFor(key, { currency: 'CAD' }).tours[0]; // the CMS row still says CAD, as the frozen baseline does
+  assert.equal(meta(imported)['tourmaster-tour-currency'], '');
+  assert.equal(meta(imported).currency_code, 'CAD');
+  assert.equal(meta(buildCatalogue([nativeEntry({ currency: 'USD' })], emptyCompat, 'en').tours[0]).currency_code, 'USD');
+  assert.equal(meta(buildCatalogue([nativeEntry({ currency: '' })], emptyCompat, 'en').tours[0]).currency_code, '');
+});

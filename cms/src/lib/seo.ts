@@ -146,7 +146,8 @@ export function tourMetadata(tour: WPTour): { title: string; description: string
   const points = Array.from(titleText);
   const shortTitle = points.length > 100 ? points.slice(0, 62).join('') + '…' + points.slice(-35).join('') : titleText;
   const price = tour.tour_meta?.['tour-price-text'] || tour.tour_meta?.price;
-  const currency = tour.tour_meta?.['tourmaster-tour-currency'];
+  // The stored code (CAD or USD) keeps same-titled tours' descriptions distinct; the on-page label only shows USD.
+  const currency = (tour.tour_meta as Record<string, unknown> | undefined)?.currency_code as string | undefined || tour.tour_meta?.['tourmaster-tour-currency'];
   const identity = shortTitle + (price && currency ? ` (${price} ${currency})` : '');
   const description = limitCodePoints(identity + (summary && summary !== titleText ? `. ${summary}` : ''), 160);
 
