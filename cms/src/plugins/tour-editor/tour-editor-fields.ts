@@ -1,5 +1,5 @@
 import { readDays, type TourData, type DayRef, type DayBlock } from './tour-editor-model.ts';
-export const editableFields = ['title','tour_code','summary','price','currency','duration','location','overview','itinerary','itinerary_continued','hero','gallery','brochure','additional_info','faq'] as const;
+export const editableFields = ['title','tour_code','summary','price','currency','ribbon','duration','location','overview','itinerary','itinerary_continued','hero','gallery','brochure','additional_info','faq'] as const;
 const allowed = new Set<string>(editableFields);
 const equal = (a: unknown,b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 export function buildTourSave(base:TourData,changed:TourData):{data:TourData}{

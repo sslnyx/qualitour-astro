@@ -16,8 +16,8 @@ export function RichField({ label, value, disabled, onChange }: { label: string;
 }
 
 export function BasicSection({ data, readOnly, setField }: Props) {
-  const fields = [['title','行程名稱'],['tour_code','團號'],['price','價格說明'],['currency','幣別'],['duration','天數'],['location','地點說明']];
-  return <div className="tw-section-content"><h2>基本資料</h2><p className="tw-section-description">快速更新旅客最先看到的行程資訊。</p><div className="tw-field-grid">{fields.map(([field,label]) => <label className={`tw-field ${field === 'title' ? 'tw-span-full' : ''}`} key={field}><span>{label}</span><input value={text(data[field])} disabled={readOnly} onChange={e => setField(field,e.target.value)} /></label>)}</div><label className="tw-field"><span>簡介</span><textarea rows={4} value={text(data.summary)} disabled={readOnly} onChange={e => setField('summary',e.target.value)} /></label></div>;
+  const fields = [['title','行程名稱'],['tour_code','團號'],['price','價格說明'],['currency','幣別（只有美金計價才選 USD）'],['ribbon','卡片標籤（如 Best Seller、日期或季節）'],['duration','天數'],['location','地點說明']];
+  return <div className="tw-section-content"><h2>基本資料</h2><p className="tw-section-description">快速更新旅客最先看到的行程資訊。</p><div className="tw-field-grid">{fields.map(([field,label]) => <label className={`tw-field ${field === 'title' ? 'tw-span-full' : ''}`} key={field}><span>{label}</span>{field === 'currency' ? <select value={/^usd$/i.test(text(data[field]).trim()) ? 'USD' : ''} disabled={readOnly} onChange={e => setField(field,e.target.value)}><option value="">不標示（預設）</option><option value="USD">USD 美金</option></select> : <input value={text(data[field])} disabled={readOnly} onChange={e => setField(field,e.target.value)} />}</label>)}</div><label className="tw-field"><span>簡介</span><textarea rows={4} value={text(data.summary)} disabled={readOnly} onChange={e => setField('summary',e.target.value)} /></label></div>;
 }
 
 export function OverviewSection({ data, readOnly, setField }: Props) {

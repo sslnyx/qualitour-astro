@@ -149,8 +149,8 @@ function nativeTour(entry, source, taxonomyOverride) {
   }
   for (const field of ['hero','brochure']) if (data[field] && !mediaUrl(data[field])) throw new Error(`Invalid CMS media ${field} for native entry ${id}`);
   const tourMeta = {};
-  for (const [field, aliases] of Object.entries({price:['price','price_text','tour-price-text'],currency:['currency','tourmaster-tour-currency'],duration:['duration','duration_text'],location:['location'],tour_code:['tour_code','tour-code']})) {
-    for (const alias of aliases) tourMeta[alias] = text(data[field]);
+  for (const [field, aliases] of Object.entries({price:['price','price_text','tour-price-text'],currency:['currency','tourmaster-tour-currency'],duration:['duration','duration_text'],location:['location'],tour_code:['tour_code','tour-code'],ribbon:['ribbon']})) {
+    for (const alias of aliases) tourMeta[alias] = field === 'currency' ? currencyLabel(data[field]) : text(data[field]);
   }
   const brochure = mediaUrl(data.brochure);
   if (Object.hasOwn(data,'brochure')) tourMeta.brochure = brochure ? { ID:0,id:0,url:brochure,title:text(data.brochure?.filename)||'brochure.pdf',filename:text(data.brochure?.filename)||'brochure.pdf',mime_type:'application/pdf' } : false;
@@ -183,8 +183,14 @@ export function sortCatalogueTours(tours, sortDates) {
  * an import.
  */
 export function claimsImport(data) {
+  // Tours that were never public on WordPress (draft, pending, private) have no frozen public snapshot to compare
+  // with; once an editor publishes one it renders like any native tour, from its CMS fields alone.
+  if (NEVER_PUBLIC.has(data?.source_status)) return false;
   return ['source_key','source_status'].some(field => typeof data?.[field] === 'string');
 }
+const NEVER_PUBLIC = new Set(['draft','pending','private']);
+/** The site shows a currency only when a tour is priced in USD; no label at all means the default (CAD). */
+export const currencyLabel = value => (/^\s*usd\s*$/i.test(String(value ?? '')) ? 'USD' : '');
 export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = new Map(), allowEmpty = false } = {}) {
   const source = compat.locales[locale]; if (!source) throw new Error('Missing locale compatibility manifest');
   const seen = new Set(), slugs = new Set(), excluded = [], tours = [], sortDates = new Map();
@@ -226,6 +232,8 @@ export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = ne
     for (const [field, aliases] of Object.entries({price:['price','price_text','tour-price-text'],currency:['currency','tourmaster-tour-currency'],duration:['duration','duration_text'],location:['location'],tour_code:['tour_code','tour-code']})) {
       if (changed(field)) for (const alias of aliases) tour.tour_meta[alias] = text(data[field]);
     }
+    if (Object.hasOwn(baseline,'ribbon') && changed('ribbon')) tour.tour_meta.ribbon = text(data.ribbon);
+    for (const alias of ['currency','tourmaster-tour-currency']) if (Object.hasOwn(tour.tour_meta,alias)) tour.tour_meta[alias] = currencyLabel(tour.tour_meta[alias]);
     if (changed('price')) for (const alias of ['has_discount','tourmaster-tour-discount','tour-price-discount-text']) delete tour.tour_meta[alias];
     for(const field of ['hero','brochure']) if(data[field] && !mediaUrl(data[field])) throw new Error(`Invalid CMS media ${field} for ${key}`);
     if (Object.hasOwn(data,'hero')) tour.featured_image_url = mediaUrl(data.hero) || '';

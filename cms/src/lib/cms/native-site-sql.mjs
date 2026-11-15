@@ -75,7 +75,7 @@ export const OMITTED_COLUMNS = Object.freeze(['overview', 'itinerary', 'itinerar
  */
 export const CARD_COLUMNS = Object.freeze([
   'id', 'slug', 'status', 'published_at', 'locale', 'translation_group', 'title', 'tour_code', 'summary', 'price',
-  'currency', 'duration', 'location', 'hero', 'brochure', 'source_key', 'source_status',
+  'currency', 'duration', 'location', 'hero', 'brochure', 'source_key', 'source_status', 'ribbon',
 ]);
 const OMITTED_AS_NULL = Object.freeze(Object.fromEntries(OMITTED_COLUMNS.map(column => [column, null])));
 

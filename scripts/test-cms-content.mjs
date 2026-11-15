@@ -131,7 +131,7 @@ test('native published tours use stable string identities, safe defaults, live t
   assert.equal(tour.title.rendered,'New &amp; Native');
   assert.equal(tour.excerpt.rendered,'');
   assert.equal(tour.content.rendered,'');
-  assert.equal(tour.tour_meta.currency,'CAD');
+  assert.equal(tour.tour_meta.currency,''); // only a USD price is labelled; CAD is the unlabelled default
   assert.deepEqual(tour.nativeSeo,{title:'Native SEO',description:'Native description',image:'/_emdash/api/media/file/01SHARE.png',canonical:'https://qualitour.ca/tours/new-native-tour',noIndex:true});
   assert.deepEqual(tour.tour_terms.destinations,[{id:'term-banff',slug:'banff',name:'Banff'}]);
   assert.equal(result.terms.destinations.find(term=>term.slug==='banff').count,1);

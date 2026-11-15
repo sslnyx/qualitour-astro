@@ -35,7 +35,7 @@ function normalizeEntry(entry, locale) {
 }
 function projectedId(entry) {
   const source = entry.data.source_key;
-  if (typeof source === 'string') {
+  if (typeof source === 'string' && claimsImport(entry.data)) {
     const match = source.match(/^wp-(?:en|zh)-([1-9]\d*)$/);
     if (match) return Number(match[1]);
   }

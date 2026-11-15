@@ -51,7 +51,7 @@ export function TourEditorPage({ id, locale, returnTo, initialSection, Navigatio
   const row = rows.find(r => dayId(r.ref) === selected) || rows[0];
   const index = row ? rows.indexOf(row) : -1;
   const changed = new Set(changedDayIds(state.base, state.draft));
-  const sectionFields:Record<Section,string[]>={basic:['title','tour_code','summary','price','currency','duration','location'],overview:['overview'],itinerary:['itinerary','itinerary_continued'],media:['hero','gallery','brochure'],notes:['additional_info','faq']};
+  const sectionFields:Record<Section,string[]>={basic:['title','tour_code','summary','price','currency','ribbon','duration','location'],overview:['overview'],itinerary:['itinerary','itinerary_continued'],media:['hero','gallery','brochure'],notes:['additional_info','faq']};
   const sectionDirty=(name:Section)=>sectionFields[name].some(field=>JSON.stringify(state.base[field])!==JSON.stringify(state.draft[field]));
   const compact = width < 900;
   const editingDisabled=state.readOnly||state.operating||state.comparing||!!state.comparison;
