@@ -114,7 +114,11 @@ export type BookingQuote = {
   departureLocal: string;
   departureUtc: number;
   passengers: number;
+  /** Total the guest pays: base + fuel surcharge + GST. */
   amountMinor: number;
+  baseMinor: number;
+  fuelMinor: number;
+  taxMinor: number;
   currency: "cad";
   expiresAt: number;
 };
@@ -147,6 +151,10 @@ export type GuestBooking = {
   departureLabel: string;
   passengers: number;
   amountMinor: number;
+  /** Absent on bookings made before the fuel surcharge was added. */
+  baseMinor?: number;
+  fuelMinor?: number;
+  taxMinor?: number;
   currency: "cad";
   status: "pending" | "confirmed" | "cancelled";
   paymentState: "unpaid" | "pending" | "paid" | "review";
@@ -165,6 +173,9 @@ export type BookingReceipt = {
   departureLabel: string;
   passengers: number;
   amountMinor: number;
+  baseMinor?: number;
+  fuelMinor?: number;
+  taxMinor?: number;
   currency: "cad";
   confirmedAt: number;
   sandbox: true;

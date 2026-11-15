@@ -1225,3 +1225,10 @@
 .qb-unavailable p {
   margin: 8px 0 20px;
 }
+
+.qb-price-lines{display:grid;gap:6px;margin:12px 0 0;font-size:.9rem}
+.qb-price-lines>div{display:flex;justify-content:space-between;gap:16px}
+.qb-price-lines dt{color:var(--qt-muted,#5b6470)}
+.qb-price-lines dd{margin:0;font-variant-numeric:tabular-nums}
+.qb-price-lines .qb-price-total{border-top:1px solid var(--qt-line,#d9dee5);padding-top:6px;font-weight:650}
+.qb-price-lines .qb-price-total dt{color:inherit}

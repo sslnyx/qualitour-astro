@@ -1,3 +1,4 @@
+import PriceLines from "./PriceLines";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { BookingViewProps } from "../../lib/booking/types";
 import type {
@@ -587,6 +588,7 @@ export function BookingView(p: BookingViewProps) {
                     <dt>{t("整車總額", "Whole-vehicle total")}</dt>
                     <dd>{money(b.amountMinor)}</dd>
                   </div>
+                  <PriceLines lang={p.lang} price={b} inline />
                   <div>
                     <dt>{t("付款狀態", "Payment status")}</dt>
                     <dd>
@@ -1254,8 +1256,12 @@ export function BookingView(p: BookingViewProps) {
                 <>
                   <p className="qb-quote-amount">{money(quote.amountMinor)}</p>
                   <p className="qb-note">
-                    {t("每輛整車測試總額", "Test total for one whole vehicle")}
+                    {t(
+                      "每輛整車測試總額（含燃油附加費與 GST）",
+                      "Test total for one whole vehicle (includes fuel surcharge and GST)",
+                    )}
                   </p>
+                  <PriceLines lang={p.lang} price={quote} />
                   <dl>
                     {selectedPickup ? (
                       <div>

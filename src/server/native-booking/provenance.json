@@ -1,23 +1,25 @@
 {
   "sourceRepository": "qualitour-ops",
-  "baseCommit": "f01c4b7",
+  "baseCommit": "a290071",
   "buildCommand": "npm exec -- wrangler deploy --config wrangler.website.bundle.json --dry-run --minify --outdir .private/website-booking-staging/same-worker-bundle",
-  "bundleSha256": "8693edcfda4d14172100b8689d24907c16fd4d9b36e382d65bc171a3045887e9",
+  "bundleSha256": "80f45694e79d6b9b2d0f856f180347c4076810c8c6e0b6224aff5fc8e1820ebe",
   "sourceHashes": {
     "src/booking/website-worker.ts": "767ab966f462c42ea936a4576b9090774d8dbd654b3c1dcc1975a5ee3a4017fe",
     "src/booking/catalog.ts": "d94acc0ba677fc83f34c88aa5864062a58753162723ac2d2e22562844784f610",
-    "src/booking/contracts.ts": "da16d0317ebd79c7e7c3c559f700304ef815db2aa264698c5d55439937723f88",
+    "src/booking/contracts.ts": "e2068b511c173fa6c1726cc9207a9305007ab0c2dbe2959a4e6a1f374856602e",
     "src/booking/routes.ts": "610256642a8c10a52a354cf900dc1285c1907e5da2d88efad27a2333f44daaec",
-    "src/booking/payments.ts": "eb00c011fcc626ad79533702033a779883c9dcfda18bb58615803995c1354f1a",
+    "src/booking/payments.ts": "81549e66728dd42a29c0b38022e1a4bec02672a0a2096156be73ddb81259831d",
     "src/booking/guest.ts": "19ce5cbdf4f7b8d800fd0703e4c0faf6799e79161c6b913f2ac5ddd9a1979085",
-    "src/booking/reservations.ts": "1191c3c34f39a5dfce90b33325fa89bcb504feedcae0d33d8d4db55cfe1bcd68",
+    "src/booking/reservations.ts": "f9c7d516695596ce46e66dc0876ce9996b9ed2835fb7127f75cb277dd17cb465",
     "src/booking/maintenance.ts": "a03e5c00c4280aabafa9eb35acfc888a257e66f45e86c598319f921fb70bba07",
-    "src/zaui/bridge.ts": "474ed76e8c1efab1fad896d50a334d9dcd1885bed3f1e52fe1a43036efb1c7ff"
+    "src/zaui/bridge.ts": "474ed76e8c1efab1fad896d50a334d9dcd1885bed3f1e52fe1a43036efb1c7ff",
+    "src/booking/pricing.ts": "f5bc022c058eda4bfcfb8bbdf303887fdfccfc6b61986ccd1f5f2fcf5b190492",
+    "src/booking/recovery.ts": "f7e9f57a000f5fdc453c4812e56737cf267a60dc280ecbf0018be4d04d0a9e16"
   },
   "customerOnly": true,
   "origin": "https://qualitour.qualitour.workers.dev",
   "binding": "TRANSFER_DB",
   "stripeBinding": "TRANSFER_SANDBOX_KEY",
   "livePayments": false,
-  "sourceCommit": "f01c4b72e63681468fe6f417e1336700c8dd1fd8"
+  "sourceCommit": "a2900716063a5f0e9e673a88aa9ddca50053af4e"
 }

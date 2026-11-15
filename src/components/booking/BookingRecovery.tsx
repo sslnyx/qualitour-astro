@@ -1,3 +1,4 @@
+import PriceLines from "./PriceLines";
 import type { GuestBooking, BookingReceipt } from "../../lib/booking/contracts";
 import { formatDepartureLabel } from "../../lib/booking/format";
 export function BookingRecovery(p: {
@@ -137,6 +138,12 @@ export function ReceiptView(p: {
               currency: r.currency,
               currencyDisplay: "code",
             }).format(r.amountMinor / 100)}
+          </dd>
+        </div>
+        <div>
+          <dt>{t("收費明細", "Charge breakdown")}</dt>
+          <dd>
+            <PriceLines lang={p.lang} price={r} currency={r.currency} />
           </dd>
         </div>
         <div>
