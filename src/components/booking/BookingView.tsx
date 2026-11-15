@@ -290,6 +290,20 @@ export function BookingView(p: BookingViewProps) {
     selectedDropoff = quote?.dropoffOptions?.find(
       (option) => option.id === customer.dropoffLocationId,
     );
+  // A fixed pickup point (airport terminal, cruise terminal, pier, station) needs no street address; a city or area
+  // pickup does, so the driver knows where to come. Routes with no pickup choice keep asking.
+  const fixedPoint =
+    /airport|terminal|cruise|pier|station|機場|航廈|碼頭|郵輪|車站/i;
+  const askPickupAddress = !(
+    quote?.pickupOptions?.length &&
+    (selectedPickup
+      ? fixedPoint.test(selectedPickup.nameEn) ||
+        fixedPoint.test(selectedPickup.nameZh)
+      : quote.pickupOptions.every(
+          (option) =>
+            fixedPoint.test(option.nameEn) || fixedPoint.test(option.nameZh),
+        ))
+  );
   const matches = Boolean(
       quote &&
       quote.routeId === routeId &&
@@ -1115,7 +1129,14 @@ export function BookingView(p: BookingViewProps) {
                   style={{ marginTop: 22 }}
                   onSubmit={(e) => {
                     e.preventDefault();
-                    if (!p.busy && ack) p.onReserve(customer);
+                    if (!p.busy && ack)
+                      p.onReserve({
+                        ...customer,
+                        flightNumber: "",
+                        pickupAddress: askPickupAddress
+                          ? customer.pickupAddress
+                          : "",
+                      });
                   }}
                 >
                   <h2 ref={contactHeading} tabIndex={-1}>
@@ -1128,7 +1149,7 @@ export function BookingView(p: BookingViewProps) {
                     )}
                   </p>
                   <fieldset className="qb-fields" disabled={p.busy}>
-                    {quote.pickupOptions?.length ? (
+                    {quote.pickupOptions && quote.pickupOptions.length > 1 ? (
                       <label className="qt-field qb-full">
                         <span>
                           {t(
@@ -1154,7 +1175,7 @@ export function BookingView(p: BookingViewProps) {
                         </select>
                       </label>
                     ) : null}
-                    {quote.dropoffOptions?.length ? (
+                    {quote.dropoffOptions && quote.dropoffOptions.length > 1 ? (
                       <label className="qt-field qb-full">
                         <span>
                           {t(
@@ -1183,20 +1204,12 @@ export function BookingView(p: BookingViewProps) {
                     {field("name", t("姓名", "Full name"), "text", true, 100)}
                     {field("email", t("電郵", "Email"), "email", true, 254)}
                     {field("phone", t("電話", "Phone"), "tel", true, 40)}
-                    {field(
-                      "flightNumber",
-                      t("航班（選填）", "Flight number (optional)"),
-                      "text",
-                      false,
-                      40,
-                    )}
-                    {field(
-                      "pickupAddress",
-                      t(
-                        "詳細上車地址／航廈說明",
-                        "Detailed pickup address / terminal notes",
-                      ),
-                    )}
+                    {askPickupAddress
+                      ? field(
+                          "pickupAddress",
+                          t("詳細上車地址", "Detailed pickup address"),
+                        )
+                      : null}
                     {field(
                       "dropoffAddress",
                       t("詳細下車地址", "Detailed drop-off address"),
