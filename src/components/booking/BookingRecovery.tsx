@@ -30,31 +30,56 @@ export function BookingRecovery(p: {
         </p>
       )}
       <ul className="qb-recent-list">
-        {p.bookings.map((b) => (
-          <li key={b.id}>
-            <a
-              href={
-                "/book/manage/" + encodeURIComponent(b.id) + "?lang=" + p.lang
-              }
-            >
-              <strong>{b.reference}</strong>
-              <span>{p.lang === "zh" ? b.routeNameZh : b.routeNameEn}</span>
-            </a>
-            <span>{formatDepartureLabel(b.departureLabel, p.lang)}</span>
-            <span className="qb-note">
-              {b.paymentNotification
-                ? t(
-                    "付款已確認 · 可查看收據",
-                    "Payment confirmed · receipt available",
-                  )
-                : b.paymentState === "review"
-                  ? t("付款需要核對", "Payment needs review")
-                  : b.status === "cancelled"
-                    ? t("已取消", "Cancelled")
-                    : t("待付款／核對", "Awaiting payment / verification")}
-            </span>
-          </li>
-        ))}
+        {p.bookings.map((b) => {
+          const state = b.paymentNotification
+            ? "paid"
+            : b.paymentState === "review"
+              ? "review"
+              : b.status === "cancelled"
+                ? "cancelled"
+                : "pending";
+          const label = {
+            paid: t("付款已確認", "Payment confirmed"),
+            review: t("付款需要核對", "Payment needs review"),
+            cancelled: t("已取消", "Cancelled"),
+            pending: t("待付款／核對", "Awaiting payment / verification"),
+          }[state];
+          const manage =
+            "/book/manage/" + encodeURIComponent(b.id) + "?lang=" + p.lang;
+          return (
+            <li key={b.id} className="qb-recent-item">
+              <div className="qb-recent-head">
+                <strong>{b.reference}</strong>
+                <span className={"qb-status qb-status--" + state}>{label}</span>
+              </div>
+              <span className="qb-recent-route">
+                {p.lang === "zh" ? b.routeNameZh : b.routeNameEn}
+              </span>
+              <span className="qb-note">
+                {formatDepartureLabel(b.departureLabel, p.lang)}
+              </span>
+              <div className="qb-recent-actions">
+                <a className="qb-recent-open" href={manage}>
+                  {t("查看預訂", "View booking")}{" "}
+                  <span aria-hidden="true">→</span>
+                </a>
+                {b.paymentNotification ? (
+                  <a
+                    className="qb-recent-receipt"
+                    href={
+                      "/book/receipt/" +
+                      encodeURIComponent(b.id) +
+                      "?lang=" +
+                      p.lang
+                    }
+                  >
+                    {t("查看收據", "View receipt")}
+                  </a>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
       </ul>
       <button
         type="button"

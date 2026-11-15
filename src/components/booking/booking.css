@@ -524,17 +524,85 @@
   display: grid;
   gap: 1rem;
 }
-.qb-recent-list li {
-  border-bottom: 1px solid var(--line, #d8e2df);
-  padding-bottom: 1rem;
+.qb-recent-item {
+  position: relative;
+  border: 1px solid var(--line, #d8e2df);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
   display: grid;
-  gap: 0.35rem;
+  gap: 0.4rem;
   overflow-wrap: anywhere;
+  background: #fff;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
-.qb-recent-list a {
+.qb-recent-item:hover,
+.qb-recent-item:focus-within {
+  border-color: #f7941e;
+  box-shadow: 0 4px 16px rgba(247, 148, 30, 0.15);
+}
+.qb-recent-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+.qb-recent-route {
+  font-weight: 600;
+}
+.qb-status {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #eef1f3;
+  color: #45515c;
+}
+.qb-status--paid {
+  background: #e3f4ea;
+  color: #1d6b3f;
+}
+.qb-status--pending {
+  background: #fff1d6;
+  color: #8a5a00;
+}
+.qb-status--review {
+  background: #fde8e8;
+  color: #9b2222;
+}
+.qb-recent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1.2rem;
+  margin-top: 0.3rem;
+}
+.qb-recent-open {
+  color: #c2570c;
+  font-weight: 650;
+  text-decoration: none;
+}
+/* The whole card opens the booking; the receipt link stays separately clickable above it. */
+.qb-recent-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+}
+.qb-recent-open:focus-visible {
+  outline: none;
+}
+.qb-recent-item:focus-within {
+  outline: 2px solid #f7941e;
+  outline-offset: 2px;
+}
+.qb-recent-receipt {
+  position: relative;
+  z-index: 1;
   color: inherit;
-  display: grid;
-  gap: 0.3rem;
+  text-decoration: underline;
 }
 .qb-receipt {
   max-width: 780px;
