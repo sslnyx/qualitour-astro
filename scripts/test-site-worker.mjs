@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import worker, { isForwardedPath, toCmsRequest, toPublicResponse } from '../site/worker.mjs';
+import worker, { isBookingPagePath, isForwardedPath, toCmsRequest, toPublicResponse } from '../site/worker.mjs';
 
 const cms = 'https://qualitour.qualitour.workers.dev';
 const pub = 'https://qualitour-site.qualitour.workers.dev';
 
 test('only the CMS-owned paths are forwarded; every page is a static asset', () => {
-  for (const path of ['/api/transfer', '/api/transfer/availability', '/book/manage/abc', '/zh/book/return/abc', '/_image', '/_emdash/api/media/file/a.jpg'])
+  for (const path of ['/api/transfer', '/api/transfer/availability', '/_image', '/_emdash/api/media/file/a.jpg'])
     assert.equal(isForwardedPath(path), true, path);
   for (const path of ['/', '/zh', '/tours', '/tours/x', '/tours/style/cruises', '/book', '/zh/book', '/_emdash/admin', '/_emdash/api/auth/me', '/img/a-600.webp', '/_astro/a.js', '/api/other', '/apix', '/native-proof/x', '/sitemap.xml', '/robots.txt'])
     assert.equal(isForwardedPath(path), false, path);
@@ -43,4 +43,19 @@ test('the Worker serves pages from assets and forwards CMS paths over the bindin
   await worker.fetch(new Request(pub + '/tours'), env);
   await worker.fetch(new Request(pub + '/api/transfer/catalog', { headers: { Origin: pub } }), env);
   assert.deepEqual(seen, [['asset', '/tours'], ['cms', cms + '/api/transfer/catalog', cms]]);
+});
+
+const id = '44e59043-295c-416a-b400-3b94f86a77ce';
+test('booking pages are served from the Worker\'s own /book asset, never from the CMS', async () => {
+  for (const path of ['/book/manage/' + id, '/book/return/' + id, '/book/receipt/' + id, '/zh/book/manage/' + id]) assert.equal(isBookingPagePath(path), true, path);
+  for (const path of ['/book', '/zh/book', '/book/manage/abc', '/book/manage/' + id + '/x', '/book/other/' + id]) assert.equal(isBookingPagePath(path), false, path);
+  const seen = [];
+  const env = { CMS_ORIGIN: cms, ASSETS: { fetch: r => { seen.push(new URL(r.url).pathname); return new Response('book page', { headers: { 'Cache-Control': 'public, max-age=3600' } }); } }, CMS: { fetch: () => { throw new Error('must not reach the CMS'); } } };
+  const response = await worker.fetch(new Request(pub + '/book/return/' + id + '?lang=en'), env);
+  assert.equal(await response.text(), 'book page');
+  assert.equal(response.headers.get('Cache-Control'), 'no-store');
+  assert.equal(response.headers.get('X-Robots-Tag'), 'noindex');
+  await worker.fetch(new Request(pub + '/zh/book/manage/' + id), env);
+  assert.deepEqual(seen, ['/book', '/zh/book']);
+  assert.equal((await worker.fetch(new Request(pub + '/book/manage/' + id, { method: 'POST' }), env)).status, 405);
 });
