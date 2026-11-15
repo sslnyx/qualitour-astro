@@ -1,16 +1,16 @@
 {
   "sourceRepository": "qualitour-ops",
-  "baseCommit": "3c9b21f",
+  "baseCommit": "4ae84e0",
   "buildCommand": "npm exec -- wrangler deploy --config wrangler.website.bundle.json --dry-run --minify --outdir .private/website-booking-staging/same-worker-bundle",
-  "bundleSha256": "55f0fe67910242ff0ff11a75867cfbc042fa0fe4bea04148b12e4b0b57093dc4",
+  "bundleSha256": "b3b72106e6bc827631e8624423b2d02c650986b221054bf14174c483c1a905aa",
   "sourceHashes": {
     "src/booking/website-worker.ts": "85928118e5fe38f76bb5b7d1b5038b43058ad481bd2e64028db0b9417ec4b035",
     "src/booking/catalog.ts": "d94acc0ba677fc83f34c88aa5864062a58753162723ac2d2e22562844784f610",
-    "src/booking/contracts.ts": "e2068b511c173fa6c1726cc9207a9305007ab0c2dbe2959a4e6a1f374856602e",
+    "src/booking/contracts.ts": "4c82145a68fe3ca8f76963978bb2d93c2862bd398095c82d5c5a3ce408050bb1",
     "src/booking/routes.ts": "bd5eba45d7c9c33dc7b74029c1028f2da4a8f31a367893f25958badddd8b6f49",
     "src/booking/payments.ts": "81549e66728dd42a29c0b38022e1a4bec02672a0a2096156be73ddb81259831d",
     "src/booking/guest.ts": "19ce5cbdf4f7b8d800fd0703e4c0faf6799e79161c6b913f2ac5ddd9a1979085",
-    "src/booking/reservations.ts": "f9c7d516695596ce46e66dc0876ce9996b9ed2835fb7127f75cb277dd17cb465",
+    "src/booking/reservations.ts": "19700aa1aa53f9e49fb1dff4d70f0082bddd328ae0c616258539f19d0f73240e",
     "src/booking/maintenance.ts": "a03e5c00c4280aabafa9eb35acfc888a257e66f45e86c598319f921fb70bba07",
     "src/zaui/bridge.ts": "474ed76e8c1efab1fad896d50a334d9dcd1885bed3f1e52fe1a43036efb1c7ff",
     "src/booking/pricing.ts": "f5bc022c058eda4bfcfb8bbdf303887fdfccfc6b61986ccd1f5f2fcf5b190492",
@@ -21,5 +21,5 @@
   "binding": "TRANSFER_DB",
   "stripeBinding": "TRANSFER_SANDBOX_KEY",
   "livePayments": false,
-  "sourceCommit": "3c9b21fafbd10b9090e5c2322cd9488e3c38814f"
+  "sourceCommit": "4ae84e030046ac6d74d5087bd4602d136e31e101"
 }

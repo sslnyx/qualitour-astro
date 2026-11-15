@@ -25,6 +25,22 @@ const VANCOUVER_FORMATTER = new Intl.DateTimeFormat("en-CA", {
 export const MIN_BOOKING_LEAD_MINUTES = 60;
 export const MAX_BOOKING_HORIZON_DAYS = 366;
 
+export function leadLabel(minutes: number, lang: "zh" | "en") {
+  if (minutes % 1440 === 0) {
+    const days = minutes / 1440;
+    return lang === "zh"
+      ? `${days * 24} 小時（${days} 天）`
+      : `${days * 24} hours`;
+  }
+  if (minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return lang === "zh"
+      ? `${hours} 小時`
+      : `${hours} hour${hours === 1 ? "" : "s"}`;
+  }
+  return lang === "zh" ? `${minutes} 分鐘` : `${minutes} minutes`;
+}
+
 export type ServiceLocalNow = {
   date: string;
   time: string;
@@ -153,7 +169,9 @@ export function serviceTimeOptions(
     return [];
   const start = timeMinutes(rules.startTime),
     end = timeMinutes(rules.endTime),
-    cutoff = localNow.epochMs + MIN_BOOKING_LEAD_MINUTES * 60_000,
+    cutoff =
+      localNow.epochMs +
+      (rules.minLeadMinutes ?? MIN_BOOKING_LEAD_MINUTES) * 60_000,
     horizon = localNow.epochMs + MAX_BOOKING_HORIZON_DAYS * 86_400_000;
   if (
     start === null ||
@@ -1096,8 +1114,8 @@ export function BookingView(p: BookingViewProps) {
                   <p className="qb-note">
                     {route?.serviceRules
                       ? t(
-                          "所有時間以溫哥華當地時間為準。下一步核對價格與車位；取得報價不會保留車位。",
-                          "All times are local to Vancouver. We check price and vehicle availability in the next step; a quote does not hold a vehicle.",
+                          `此路線需提前 ${leadLabel(route.serviceRules.minLeadMinutes ?? MIN_BOOKING_LEAD_MINUTES, "zh")}預訂。所有時間以溫哥華當地時間為準。下一步核對價格與車位；取得報價不會保留車位。`,
+                          `This route must be booked at least ${leadLabel(route.serviceRules.minLeadMinutes ?? MIN_BOOKING_LEAD_MINUTES, "en")} ahead. All times are local to Vancouver. We check price and vehicle availability in the next step; a quote does not hold a vehicle.`,
                         )
                       : t(
                           "目前測試設定：提前至少1小時、最多366天。取得報價時不會保留車位。",

@@ -12,6 +12,10 @@ const messages: Record<string, [string, string]> = {
     "請輸入有效的溫哥華當地時間。",
     "Please enter a valid Vancouver local date and time.",
   ],
+  LEAD_TIME_NOT_MET: [
+    "這條路線需要更早預訂，請選擇較晚的日期或時間。",
+    "This route needs more notice. Please choose a later date or time.",
+  ],
   DEPARTURE_OUT_OF_RANGE: [
     "目前測試接受提前1小時至366天的預訂。",
     "Test bookings must be 1 hour to 366 days ahead.",

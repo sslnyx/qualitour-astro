@@ -7,6 +7,8 @@ export type RouteServiceRules = {
   startTime: string;
   endTime: string;
   intervalMinutes: number;
+  /** Earliest departure, in minutes from now. Absent means the platform minimum (60). */
+  minLeadMinutes?: number;
   pickupOptions: RouteLocation[];
   dropoffOptions: RouteLocation[];
 };
