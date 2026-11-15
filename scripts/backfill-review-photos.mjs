@@ -3,28 +3,14 @@
 // Idempotent: a review whose photos are already CMS media is skipped. A photo that cannot be fetched keeps its Google
 // URL and is reported (the site build still hosts it as a fallback while the URL works). Usage:
 //   node scripts/backfill-review-photos.mjs [--dry-run]
-import sharp from 'sharp';
 import { createCmsWriter } from './lib/cms-write.mjs';
+import { mirrorToMedia } from './lib/media-mirror.mjs';
+export { mirrorToMedia };
 
 const dryRun = process.argv.includes('--dry-run');
 const GOOGLE = /^https:\/\/lh3\.googleusercontent\.com\//;
 const sleep = ms => new Promise(done => setTimeout(done, ms));
 const cms = await createCmsWriter();
-
-/** Download one Google image, store it as webp (max 1600 px wide) in the CMS media library, return its public path. */
-export async function mirrorToMedia(cms, url, filename) {
-  const response = await fetch(url, { headers: { 'user-agent': 'qualitour-reviews-sync/1.0' } });
-  if (!response.ok) throw new Error('HTTP ' + response.status);
-  const image = sharp(Buffer.from(await response.arrayBuffer())).rotate();
-  const { data, info } = await image.resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 85 }).toBuffer({ resolveWithObject: true });
-  const form = new FormData();
-  form.append('file', new File([data], filename, { type: 'image/webp' }));
-  form.append('alt', ''); form.append('width', String(info.width)); form.append('height', String(info.height)); form.append('deduplicate', 'true');
-  const created = await cms.request('POST', '/_emdash/api/media', form);
-  const key = created?.item?.storageKey;
-  if (!key) throw new Error('upload answered without a storage key');
-  return `/_emdash/api/media/file/${key}`;
-}
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const items = [];
