@@ -43,7 +43,8 @@ const localePrefix = getLocalePrefix(lang);
 const metadata = tourMetadata(tour);
 const displayTour = tour.optimizedPhotos ? tour : await optimizeTourPresentation(tour);
 const price = tour.tour_meta?.['tour-price-text'] || tour.tour_meta?.price;
-const currency = tour.tour_meta?.['tourmaster-tour-currency'];
+// The stored code (CAD or USD), not the on-page label (which hides CAD), tells same-titled tours apart.
+const currency = (tour.tour_meta as Record<string, unknown> | undefined)?.currency_code as string | undefined || tour.tour_meta?.['tourmaster-tour-currency'];
 if (duplicateTitle && price && currency) metadata.title = metadata.title.replace(' | Qualitour', ` (${price} ${currency}) | Qualitour`);
 const seo = applyNativeTourSeo(metadata, tour.nativeSeo);
 const origin = Astro.site?.origin || 'https://qualitour.ca';

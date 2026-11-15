@@ -18,6 +18,8 @@ import sharp from 'sharp';
 import { dirname, join, resolve } from 'node:path';
 import { nativeSiteRoute } from '../cms/src/lib/cms/native-site-policy.mjs';
 import { syncCmsSnapshot } from '../src/lib/cms/content-server.mjs';
+import { refPattern } from './lib/image-ref-pattern.mjs';
+import { findBrokenIslandProps } from './lib/island-props.mjs';
 
 const cmsOrigin = process.env.QUALITOUR_CMS_ORIGIN || 'https://qualitour.qualitour.workers.dev';
 const baseAssets = resolve(process.env.SITE_BASE_ASSETS || '.astro/worker-release/assets');
@@ -131,7 +133,6 @@ await mkdir(imageCache, { recursive: true });
 const wanted = new Map(); // key -> {href,w,h,q}
 // SSR output also names images the deployed Worker prebuilt (/img/<id>-<w>.webp from prebuilt-images.json). Those
 // files do not exist in a CI checkout, so they are regenerated here from the original they were made from.
-const refPattern = /\/_image\?[^"'\s,)<>]+|\/img\/(?!s-)[^"'\s,)<>/]+-\d+\.webp/g;
 function parseRef(raw) {
   let href, w, h = 0, q = 80;
   if (raw.startsWith('/img/')) {
@@ -244,6 +245,10 @@ for (const path of [...mediaSeen.keys()]) {
 for (const [path, html] of pages) pages.set(path, html.replace(mediaPattern, found => mediaSeen.get(found) || found));
 if (mediaSeen.size) console.log(JSON.stringify({ cmsMediaImages: mediaSeen.size, cmsMediaFailed: mediaFailed.length }));
 if (mediaFailed.length) console.log('CMS media kept as media paths:\n' + mediaFailed.slice(0, 10).join('\n'));
+
+// Gate: no page may carry an island whose props are not valid JSON (the component would never hydrate).
+const brokenIslands = [...pages].flatMap(([path, html]) => findBrokenIslandProps(path, html));
+if (brokenIslands.length) throw new Error(`${brokenIslands.length} island(s) with invalid props; first: ${brokenIslands.slice(0, 5).join(' | ')}`);
 
 // Pages the CMS serves from its own assets (/book, 404, 500) were built with a different set of hashed files than
 // the CMS client build; fetch whatever any page references and the base assets lack, following CSS url() references.
