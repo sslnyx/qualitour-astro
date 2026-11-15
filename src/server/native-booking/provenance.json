@@ -1,10 +1,10 @@
 {
   "sourceRepository": "qualitour-ops",
-  "baseCommit": "f8095c3",
+  "baseCommit": "d59cd51",
   "buildCommand": "npm exec -- wrangler deploy --config wrangler.website.bundle.json --dry-run --minify --outdir .private/website-booking-staging/same-worker-bundle",
-  "bundleSha256": "d398a55291be3d758ce00d9dfa4215bfda595e001294fe07b7238ab5c87e2c84",
+  "bundleSha256": "2485ea5a96d04e000dc56f586f868fe165f9a318e762d6165068b56c3ec40159",
   "sourceHashes": {
-    "src/booking/website-worker.ts": "816f1221eb363a24209c17a9ce68b4ed09609b6f369ad80022993533bbd0d807",
+    "src/booking/website-worker.ts": "7ce43d17fb8c4d94a3ebd9fa046db44a22b6581d44415f7152f37b32d786a40e",
     "src/booking/catalog.ts": "d94acc0ba677fc83f34c88aa5864062a58753162723ac2d2e22562844784f610",
     "src/booking/contracts.ts": "e2068b511c173fa6c1726cc9207a9305007ab0c2dbe2959a4e6a1f374856602e",
     "src/booking/routes.ts": "610256642a8c10a52a354cf900dc1285c1907e5da2d88efad27a2333f44daaec",
@@ -21,5 +21,5 @@
   "binding": "TRANSFER_DB",
   "stripeBinding": "TRANSFER_SANDBOX_KEY",
   "livePayments": false,
-  "sourceCommit": "f8095c3b9ad8dd965cebaf3dd78f956781e21f50"
+  "sourceCommit": "d59cd510761591a8ae03f030d5135cbc952e613e"
 }
