@@ -1,0 +1,53 @@
+name: Sync Google reviews
+run-name: Google reviews sync · ${{ github.event_name }}
+
+# Weekly: new Google reviews (SerpApi) -> CMS `google_reviews`, published. The CMS pages-rebuild plugin then starts a
+# site release by itself. Existing reviews are never changed. Normally one SerpApi search per run (250/month free plan).
+# Lives on main (GitHub only runs schedules from the default branch) and uses the code of SITE_SOURCE_REF.
+on:
+  schedule:
+    - cron: '17 15 * * 1' # Mondays 15:17 UTC (07:17 Vancouver)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'List new reviews without writing to the CMS'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qualitour-google-reviews-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      QUALITOUR_CMS_ORIGIN: https://qualitour.qualitour.workers.dev
+      SITE_SOURCE_REF: ${{ vars.SITE_SOURCE_REF || 'codex/emdash-native-site-20261112' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SITE_SOURCE_REF }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Test the sync
+        run: node scripts/test-sync-google-reviews.mjs
+      - name: Sync new reviews into the CMS
+        env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          EMDASH_WRITE_TOKEN: ${{ secrets.EMDASH_WRITE_TOKEN }}
+        run: |
+          flags=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then flags="--dry-run"; fi
+          node scripts/sync-google-reviews.mjs $flags | tee "$RUNNER_TEMP/sync.json"
+          echo "### Google reviews sync" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"; cat "$RUNNER_TEMP/sync.json" >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
