@@ -49,6 +49,7 @@ jobs:
           node cms/scripts/test-release-status.mjs
           node scripts/test-tour-ribbon-currency.mjs
           node scripts/test-island-props.mjs
+          node scripts/test-remote-images.mjs
       - name: Build the static site from the published content
         env:
           EMDASH_TOKEN: ${{ secrets.EMDASH_TOKEN }}

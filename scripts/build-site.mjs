@@ -20,8 +20,12 @@ import { nativeSiteRoute } from '../cms/src/lib/cms/native-site-policy.mjs';
 import { syncCmsSnapshot } from '../src/lib/cms/content-server.mjs';
 import { refPattern } from './lib/image-ref-pattern.mjs';
 import { findBrokenIslandProps } from './lib/island-props.mjs';
+import { remoteImagePattern } from './lib/remote-images.mjs';
 
 const cmsOrigin = process.env.QUALITOUR_CMS_ORIGIN || 'https://qualitour.qualitour.workers.dev';
+// Copies in the CMS media library of images that tour content takes from the old WordPress site and partner sites.
+const remoteImageMap = await readFile(new URL('../src/data/remote-image-map.json', import.meta.url), 'utf8').then(JSON.parse, () => ({}));
+const mirroredPath = href => remoteImageMap[href] ?? (() => { try { return remoteImageMap[new URL(href).href]; } catch { return undefined; } })();
 const baseAssets = resolve(process.env.SITE_BASE_ASSETS || '.astro/worker-release/assets');
 const outDir = resolve(process.env.SITE_OUT_DIR || '.astro/site-release/assets');
 const concurrency = Number(process.env.SITE_CRAWL_CONCURRENCY || 6);
@@ -160,8 +164,9 @@ for (const ref of wanted.values()) byOriginal.set(ref.href, [...(byOriginal.get(
 const produced = new Set(), imageFailures = [];
 async function original(href) {
   if (href.startsWith('/_astro/')) return readFile(join(tmp, decodeURIComponent(href).slice(1)));
-  const url = href.startsWith('/') ? cmsOrigin + href : href;
-  if (!href.startsWith('/') && !/^https:\/\/(?:www\.)?qualitour\.ca\//.test(href)) throw new Error('foreign host');
+  const mirrored = mirroredPath(href);
+  const url = mirrored ? cmsOrigin + mirrored : href.startsWith('/') ? cmsOrigin + href : href;
+  if (!mirrored && !href.startsWith('/') && !/^https:\/\/(?:www\.)?qualitour\.ca\//.test(href)) throw new Error('foreign host');
   const response = await fetch(url, { headers: { 'user-agent': 'qualitour-site-build/1.0' } });
   if (!response.ok) throw new Error('HTTP ' + response.status);
   return Buffer.from(await response.arrayBuffer());
@@ -196,6 +201,14 @@ for (const [path, html] of pages) {
 // Reviews synced from Google arrive with Google-hosted avatars and photos. Host them ourselves, like the avatars
 // imported earlier: avatars (/a/ paths) become 96px webp, review photos 800px wide webp. A file that cannot be
 // fetched keeps its Google URL (slower, still correct) and is reported.
+// Old-site and partner image addresses become the CMS copies (the media pass below then makes them static files).
+// Gate: no image of the old WordPress site may remain on a public page, so that site can be switched off.
+const unmirrored = new Set();
+for (const [path, html] of pages) pages.set(path, html.replace(remoteImagePattern, url => mirroredPath(url) ?? (unmirrored.add(url), url)));
+const oldSiteLeft = [...unmirrored].filter(url => /^https?:\/\/(?:www\.)?qualitour\.ca\//.test(url));
+if (oldSiteLeft.length) throw new Error(`${oldSiteLeft.length} old-site image(s) have no CMS copy (run scripts/mirror-remote-images.mjs); first: ${oldSiteLeft.slice(0, 3).join(' | ')}`);
+if (unmirrored.size) console.log(`partner images without a CMS copy (left as they are): ${unmirrored.size}\n` + [...unmirrored].slice(0, 5).join('\n'));
+
 const externalPattern = /https:\/\/lh3\.googleusercontent\.com\/[A-Za-z0-9_\-/=.%]+/g;
 const externalSeen = new Map(), externalFailed = [];
 for (const html of pages.values()) for (const match of html.matchAll(externalPattern)) externalSeen.set(match[0], null);
