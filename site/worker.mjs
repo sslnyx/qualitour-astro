@@ -12,7 +12,7 @@ const FORWARDED = [/^\/api\/transfer(?:\/|$)/, /^\/_image$/, /^\/_emdash\/api\/m
 // A guest's booking pages (manage, return from Stripe, receipt) are the booking page itself; the page reads the booking
 // id from its address. Serving /book from this Worker's own assets keeps the page and its scripts from the same release
 // (the CMS Worker's copy can be newer or older than the last site release).
-const BOOKING_PAGE = /^\/(zh\/)?book\/(?:manage|return|receipt)\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
+const BOOKING_PAGE = /^\/(zh\/)?book\/(?:manage|return|receipt|claim)\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 export function isBookingPagePath(pathname) {
   return BOOKING_PAGE.test(pathname);
 }

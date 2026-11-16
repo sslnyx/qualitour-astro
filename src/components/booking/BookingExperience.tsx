@@ -29,7 +29,7 @@ function bookingPath(lang: "en" | "zh", suffix = "") {
 function currentBookingRoute() {
   if (typeof window === "undefined") return {};
   const match = window.location.pathname.match(
-    /^\/(?:zh\/)?book\/(manage|return|receipt)\/([a-zA-Z0-9-]{1,128})$/,
+    /^\/(?:zh\/)?book\/(manage|return|receipt|claim)\/([a-zA-Z0-9-]{1,128})$/,
   );
   return match ? { view: match[1], id: match[2] } : {};
 }
@@ -93,6 +93,36 @@ export default function BookingExperience({
     setLocationReady(true);
     document.documentElement.lang = nextLang === "zh" ? "zh-Hant" : "en";
   }, [pageLang]);
+
+  // A booking a staff member made for the customer opens from a private link, /book/claim/<id>#t=<secret>. The
+  // secret is in the fragment so it never reaches a server log; it is sent once to set the booking cookie, then the
+  // address is replaced by the ordinary booking page and the secret leaves the browser history.
+  const [claimFailed, setClaimFailed] = useState(false);
+  useEffect(() => {
+    if (routeState.view !== "claim" || !routeState.id) return;
+    const token = /^#t=([a-f0-9]{64})$/.exec(window.location.hash)?.[1];
+    if (!token) {
+      setClaimFailed(true);
+      return;
+    }
+    let active = true;
+    bookingApi<{ id: string }>("claim", { orderId: routeState.id, token })
+      .then((result) => {
+        if (!active) return;
+        window.history.replaceState(
+          null,
+          "",
+          bookingPath(lang, `/manage/${encodeURIComponent(result.id)}`),
+        );
+        setRouteState({ view: "manage", id: result.id });
+      })
+      .catch(() => {
+        if (active) setClaimFailed(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [routeState.view, routeState.id, lang]);
 
   const recover = useCallback(async () => {
     setRecoveryLoading(true);
@@ -270,6 +300,28 @@ export default function BookingExperience({
       setBusy(false);
     }
   }
+
+  if (routeState.view === "claim")
+    return (
+      <section className="qb-customer qt-card" role="status">
+        <h2>
+          {claimFailed
+            ? lang === "zh"
+              ? "這個連結已失效"
+              : "This link is no longer valid"
+            : lang === "zh"
+              ? "正在開啟您的預訂…"
+              : "Opening your booking…"}
+        </h2>
+        {claimFailed ? (
+          <p>
+            {lang === "zh"
+              ? "請聯絡 Qualitour，我們會為您重新發送專屬連結。"
+              : "Please contact Qualitour and we will send you a new link."}
+          </p>
+        ) : null}
+      </section>
+    );
 
   if (unavailable)
     return (

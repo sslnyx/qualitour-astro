@@ -47,7 +47,7 @@ test('the Worker serves pages from assets and forwards CMS paths over the bindin
 
 const id = '44e59043-295c-416a-b400-3b94f86a77ce';
 test('booking pages are served from the Worker\'s own /book asset, never from the CMS', async () => {
-  for (const path of ['/book/manage/' + id, '/book/return/' + id, '/book/receipt/' + id, '/zh/book/manage/' + id]) assert.equal(isBookingPagePath(path), true, path);
+  for (const path of ['/book/manage/' + id, '/book/return/' + id, '/book/receipt/' + id, '/book/claim/' + id, '/zh/book/manage/' + id]) assert.equal(isBookingPagePath(path), true, path);
   for (const path of ['/book', '/zh/book', '/book/manage/abc', '/book/manage/' + id + '/x', '/book/other/' + id]) assert.equal(isBookingPagePath(path), false, path);
   const seen = [];
   const env = { CMS_ORIGIN: cms, ASSETS: { fetch: r => { seen.push(new URL(r.url).pathname); return new Response('book page', { headers: { 'Cache-Control': 'public, max-age=3600' } }); } }, CMS: { fetch: () => { throw new Error('must not reach the CMS'); } } };
