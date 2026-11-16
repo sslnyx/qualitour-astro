@@ -23,9 +23,11 @@
       "/book/manage/*",
       "/book/return/*",
       "/book/receipt/*",
+      "/book/claim/*",
       "/zh/book/manage/*",
       "/zh/book/return/*",
       "/zh/book/receipt/*",
+      "/zh/book/claim/*",
       "/_image",
       "/_emdash/api/media/file/*"
     ]

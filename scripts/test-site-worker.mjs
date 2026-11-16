@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import worker, { isBookingPagePath, isForwardedPath, toCmsRequest, toPublicResponse } from '../site/worker.mjs';
 
 const cms = 'https://qualitour.qualitour.workers.dev';
@@ -43,6 +44,15 @@ test('the Worker serves pages from assets and forwards CMS paths over the bindin
   await worker.fetch(new Request(pub + '/tours'), env);
   await worker.fetch(new Request(pub + '/api/transfer/catalog', { headers: { Origin: pub } }), env);
   assert.deepEqual(seen, [['asset', '/tours'], ['cms', cms + '/api/transfer/catalog', cms]]);
+});
+
+test('every booking page the Worker serves is also routed to the Worker first (else the static 404 answers)', () => {
+  const config = JSON.parse(readFileSync(new URL('../wrangler.site.jsonc', import.meta.url), 'utf8'));
+  const id = '44e59043-295c-416a-b400-3b94f86a77ce';
+  for (const action of ['manage', 'return', 'receipt', 'claim']) for (const prefix of ['', '/zh']) {
+    assert.equal(isBookingPagePath(prefix + '/book/' + action + '/' + id), true);
+    assert.ok(config.assets.run_worker_first.includes(prefix + '/book/' + action + '/*'), prefix + '/book/' + action);
+  }
 });
 
 const id = '44e59043-295c-416a-b400-3b94f86a77ce';
