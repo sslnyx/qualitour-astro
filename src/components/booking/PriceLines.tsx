@@ -5,6 +5,9 @@ type Price = {
   baseMinor?: number;
   fuelMinor?: number;
   taxMinor?: number;
+  discountMinor?: number;
+  couponCode?: string;
+  complimentary?: boolean;
 };
 
 /**
@@ -24,6 +27,7 @@ export default function PriceLines({
   inline?: boolean;
 }) {
   const { amountMinor, baseMinor, fuelMinor, taxMinor } = price;
+  const discount = price.discountMinor ?? 0;
   if (
     baseMinor === undefined ||
     fuelMinor === undefined ||
@@ -38,15 +42,33 @@ export default function PriceLines({
       currencyDisplay: "code",
     }).format(minor / 100);
   const t = (zh: string, en: string) => (lang === "zh" ? zh : en);
+  const discountLabel = (indent: string) =>
+    price.complimentary
+      ? indent + t("免費安排", "Complimentary")
+      : indent +
+        (price.couponCode
+          ? t(`優惠碼 ${price.couponCode}`, `Promo code ${price.couponCode}`)
+          : t("優惠", "Discount"));
   if (inline)
     return (
       <>
         <div>
           <dt>{t("　標價", "　Base price")}</dt>
-          <dd>{money(baseMinor)}</dd>
+          <dd>{money(baseMinor + discount)}</dd>
         </div>
+        {discount > 0 ? (
+          <div>
+            <dt>{discountLabel("　")}</dt>
+            <dd>{"−" + money(discount)}</dd>
+          </div>
+        ) : null}
         <div>
-          <dt>{t(`　燃油附加費（${FUEL_PERCENT}%）`, `　Fuel surcharge (${FUEL_PERCENT}%)`)}</dt>
+          <dt>
+            {t(
+              `　燃油附加費（${FUEL_PERCENT}%）`,
+              `　Fuel surcharge (${FUEL_PERCENT}%)`,
+            )}
+          </dt>
           <dd>{money(fuelMinor)}</dd>
         </div>
         <div>
@@ -59,10 +81,21 @@ export default function PriceLines({
     <dl className="qb-price-lines">
       <div>
         <dt>{t("標價", "Base price")}</dt>
-        <dd>{money(baseMinor)}</dd>
+        <dd>{money(baseMinor + discount)}</dd>
       </div>
+      {discount > 0 ? (
+        <div>
+          <dt>{discountLabel("")}</dt>
+          <dd>{"−" + money(discount)}</dd>
+        </div>
+      ) : null}
       <div>
-        <dt>{t(`燃油附加費（${FUEL_PERCENT}%）`, `Fuel surcharge (${FUEL_PERCENT}%)`)}</dt>
+        <dt>
+          {t(
+            `燃油附加費（${FUEL_PERCENT}%）`,
+            `Fuel surcharge (${FUEL_PERCENT}%)`,
+          )}
+        </dt>
         <dd>{money(fuelMinor)}</dd>
       </div>
       <div>

@@ -214,6 +214,7 @@ export function BookingView(p: BookingViewProps) {
     [serviceDate, setServiceDate] = useState(""),
     [serviceTime, setServiceTime] = useState(""),
     [passengers, setPassengers] = useState(1),
+    [coupon, setCoupon] = useState(""),
     [ack, setAck] = useState(false),
     [editingTrip, setEditingTrip] = useState(true),
     [timePeriod, setTimePeriod] = useState("morning"),
@@ -327,7 +328,8 @@ export function BookingView(p: BookingViewProps) {
       quote.routeId === routeId &&
       quote.rateId === rateId &&
       quote.departureLocal === departure &&
-      quote.passengers === passengers,
+      quote.passengers === passengers &&
+      (quote.couponCode ?? "") === coupon.trim().toUpperCase(),
     ),
     quoteValid = matches && quote!.expiresAt > tick / 1000;
   const calendarDateEnabled = useMemo(() => {
@@ -624,13 +626,15 @@ export function BookingView(p: BookingViewProps) {
                   <div>
                     <dt>{t("付款狀態", "Payment status")}</dt>
                     <dd>
-                      {b.paymentState === "paid"
-                        ? t("已核實測試收款", "Test payment verified")
-                        : b.paymentState === "review"
-                          ? t("需要人工檢查", "Needs review")
-                          : b.paymentState === "pending"
-                            ? t("正在核實", "Checking payment")
-                            : t("未付款", "Unpaid")}
+                      {b.paymentState === "paid" && b.amountMinor === 0
+                        ? t("無需付款", "No payment required")
+                        : b.paymentState === "paid"
+                          ? t("已核實測試收款", "Test payment verified")
+                          : b.paymentState === "review"
+                            ? t("需要人工檢查", "Needs review")
+                            : b.paymentState === "pending"
+                              ? t("正在核實", "Checking payment")
+                              : t("未付款", "Unpaid")}
                     </dd>
                   </div>
                 </dl>
@@ -785,6 +789,7 @@ export function BookingView(p: BookingViewProps) {
                         rateId,
                         departureLocal: departure,
                         passengers,
+                        ...(coupon.trim() ? { couponCode: coupon.trim() } : {}),
                       });
                   }}
                 >
@@ -1110,6 +1115,22 @@ export function BookingView(p: BookingViewProps) {
                         </span>
                       )}
                     </div>
+                    <label className="qt-field qb-full qb-coupon">
+                      <span>
+                        {t("優惠碼（選填）", "Promo code (optional)")}
+                      </span>
+                      <input
+                        value={coupon}
+                        maxLength={32}
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        onChange={(e) => {
+                          setCoupon(e.target.value);
+                          setAck(false);
+                        }}
+                      />
+                    </label>
                   </fieldset>
                   <p className="qb-note">
                     {route?.serviceRules

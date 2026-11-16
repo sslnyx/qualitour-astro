@@ -1,5 +1,9 @@
 import { ApiError } from "./api";
 const messages: Record<string, [string, string]> = {
+  COUPON_INVALID: [
+    "這個優惠碼無法使用（可能不正確、已過期、已用完或不適用於這條路線）。請檢查後重試，或清空優惠碼。",
+    "This promo code can't be used (it may be wrong, expired, used up or not valid for this route). Check it and try again, or clear the field.",
+  ],
   RECEIPT_NOT_READY: [
     "付款尚未核實，暫時無法提供收據。請返回預訂重新核對。",
     "Payment is not verified yet. Please return to your booking and refresh its status.",

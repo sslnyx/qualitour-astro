@@ -77,6 +77,8 @@ export type QuoteInput = {
   rateId: string;
   departureLocal: string;
   passengers: number;
+  /** Optional promo code. */
+  couponCode?: string;
 };
 export type AvailabilityInput = {
   routeId: string;
@@ -121,6 +123,10 @@ export type BookingQuote = {
   baseMinor: number;
   fuelMinor: number;
   taxMinor: number;
+  /** Taken off the route price before surcharge and GST; base + discount is the list price. */
+  discountMinor?: number;
+  couponCode?: string;
+  complimentary?: boolean;
   currency: "cad";
   expiresAt: number;
 };
@@ -157,6 +163,10 @@ export type GuestBooking = {
   baseMinor?: number;
   fuelMinor?: number;
   taxMinor?: number;
+  /** Taken off the route price before surcharge and GST; base + discount is the list price. */
+  discountMinor?: number;
+  couponCode?: string;
+  complimentary?: boolean;
   currency: "cad";
   status: "pending" | "confirmed" | "cancelled";
   paymentState: "unpaid" | "pending" | "paid" | "review";
@@ -178,6 +188,10 @@ export type BookingReceipt = {
   baseMinor?: number;
   fuelMinor?: number;
   taxMinor?: number;
+  /** Taken off the route price before surcharge and GST; base + discount is the list price. */
+  discountMinor?: number;
+  couponCode?: string;
+  complimentary?: boolean;
   currency: "cad";
   confirmedAt: number;
   sandbox: true;
