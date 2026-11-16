@@ -173,19 +173,19 @@ const serviceLinks = [
     },
 ];
 
-// Popular destinations. Pin the ones you want, in order, by listing their destination slugs here; anything
-// pinned that does not exist is skipped, and the list is topped up with the countries that have the most
-// published tours. Leave it empty to use tour counts only.
-const POPULAR_DESTINATION_SLUGS: string[] = [];
-const POPULAR_DESTINATION_LIMIT = 8;
-const countries = destinations.filter((dest) => dest.level === 2);
-const pinnedPopular = POPULAR_DESTINATION_SLUGS.flatMap((slug) => countries.filter((dest) => dest.slug === slug));
-const hotDestinations = [
-    ...pinnedPopular,
-    ...countries.filter((dest) => !pinnedPopular.includes(dest)).sort((a, b) => b.count - a.count),
-]
-    .slice(0, POPULAR_DESTINATION_LIMIT)
-    .map((dest) => ({ label: getDestName(dest.name), value: dest.slug, icon: "place" }));
+// Popular destinations: a fixed list, in this order, because "popular" here is a business choice (the aurora
+// tours and the Maritimes), not what a tour count would pick. `href` is relative to the language prefix and
+// points at an existing category page; an entry with only one of `zh`/`en` is shown in that language only.
+// Maritimes: the English Canada page does not carry the Atlantic region tag yet, so it is Chinese-only for now.
+const POPULAR_DESTINATIONS: { zh?: string; en?: string; href: string }[] = [
+    { zh: "黃刀鎮 極光團", en: "Yellowknife Aurora Tours", href: "/tours/destination/geo-ca-nt" },
+    { zh: "白馬市 極光團", en: "Whitehorse Aurora Tours", href: "/tours/destination/geo-ca-yt" },
+    { zh: "加拿大海洋三省", href: "/tours/destination/geo-ca#region-area-atlantic-canada" },
+];
+const hotDestinations = POPULAR_DESTINATIONS.flatMap((entry) => {
+    const label = lang === "zh" ? entry.zh : entry.en;
+    return label ? [{ label, href: `${localePrefix}${entry.href}`, icon: "place" }] : [];
+});
 
 // Parent destinations
 const parentDestinations = destinations.filter((d) => d.parent === 0);
@@ -478,7 +478,7 @@ const navData = JSON.stringify({
                                                 </span>
                                                 {hotDestinations.map((dest) => (
                                                     <a
-                                                        href={`${localePrefix}/tours/destination/${dest.value}`}
+                                                        href={dest.href}
                                                         class="px-3.5 py-1.5 rounded-full bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100 hover:text-red-800 transition-colors"
                                                     >
                                                         {dest.label}
@@ -889,7 +889,7 @@ const navData = JSON.stringify({
                                     {
                                         hotDestinations.slice(0, 6).map((dest) => (
                                             <a
-                                                href={`${localePrefix}/tours/destination/${dest.value}`}
+                                                href={dest.href}
                                                 class="flex items-center gap-3 p-2 rounded-xl hover:bg-white transition-all group"
                                             >
                                                 <span class="w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 flex items-center justify-center">
