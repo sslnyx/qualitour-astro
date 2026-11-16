@@ -1,6 +1,77 @@
+import { useState } from "react";
 import PriceLines from "./PriceLines";
+import { bookingApi } from "../../lib/booking/api";
 import type { GuestBooking, BookingReceipt } from "../../lib/booking/contracts";
 import { formatDepartureLabel } from "../../lib/booking/format";
+/** "I lost my link": email the private link to the address the booking was made with (the answer never says whether it matched). */
+function FindBookingForm({ lang }: { lang: "zh" | "en" }) {
+  const t = (zh: string, en: string) => (lang === "zh" ? zh : en);
+  const [reference, setReference] = useState(""),
+    [email, setEmail] = useState(""),
+    [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  return (
+    <form
+      className="qb-find"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setState("sending");
+        bookingApi("find", { reference: reference.trim(), email: email.trim() })
+          .then(() => setState("sent"))
+          .catch(() => setState("error"));
+      }}
+    >
+      <h3>{t("用電郵找回預訂", "Find a booking by email")}</h3>
+      <p className="qb-note">
+        {t(
+          "輸入預訂編號和預訂時用的電郵，我們會把專屬連結寄到那個電郵。",
+          "Enter your booking reference and the email you booked with, and we will email a private link to that address.",
+        )}
+      </p>
+      <label className="qt-field">
+        <span>{t("預訂編號（QTS-…）", "Booking reference (QTS-…)")}</span>
+        <input
+          required
+          maxLength={40}
+          autoComplete="off"
+          value={reference}
+          onChange={(e) => setReference(e.target.value)}
+        />
+      </label>
+      <label className="qt-field">
+        <span>{t("電郵", "Email")}</span>
+        <input
+          required
+          type="email"
+          maxLength={254}
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </label>
+      <button className="qt-btn" disabled={state === "sending"}>
+        {state === "sending"
+          ? t("傳送中…", "Sending…")
+          : t("寄給我連結", "Email me the link")}
+      </button>
+      {state === "sent" && (
+        <p role="status" className="qb-note">
+          {t(
+            "如果資料相符，連結已寄出，幾分鐘內會收到。沒收到請檢查垃圾郵件，或聯絡我們。",
+            "If the details match, the link is on its way and should arrive within a few minutes. Check your spam folder, or contact us.",
+          )}
+        </p>
+      )}
+      {state === "error" && (
+        <p role="alert" className="qb-note">
+          {t(
+            "暫時無法處理，請稍後再試。",
+            "We couldn't process that right now. Please try again shortly.",
+          )}
+        </p>
+      )}
+    </form>
+  );
+}
 export function BookingRecovery(p: {
   bookings: GuestBooking[];
   lang: "zh" | "en";
@@ -90,6 +161,7 @@ export function BookingRecovery(p: {
       >
         {t("重新找回預訂", "Refresh bookings")}
       </button>
+      <FindBookingForm lang={p.lang} />
     </section>
   );
 }

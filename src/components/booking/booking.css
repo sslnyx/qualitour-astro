@@ -1300,3 +1300,15 @@
 .qb-price-lines dd{margin:0;font-variant-numeric:tabular-nums}
 .qb-price-lines .qb-price-total{border-top:1px solid var(--qt-line,#d9dee5);padding-top:6px;font-weight:650}
 .qb-price-lines .qb-price-total dt{color:inherit}
+
+.qb-find {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--qb-border, #e5e7eb);
+}
+.qb-find h3 {
+  margin: 0;
+  font-size: 1rem;
+}
