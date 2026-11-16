@@ -147,7 +147,7 @@ export const TAXONOMY_NAMES = ['destinations', 'travel_styles', 'travel_regions'
 /** Every term of the four tour taxonomies, in the order EmDash lists them (sort_order, then label). */
 export async function readVocabularyRows(db) {
   return db.selectFrom('taxonomies')
-    .select(['id', 'name', 'slug', 'label', 'parent_id', 'locale', 'translation_group'])
+    .select(['id', 'name', 'slug', 'label', 'parent_id', 'locale', 'translation_group', 'data'])
     .where('name', 'in', TAXONOMY_NAMES).orderBy('sort_order', 'asc').orderBy('label', 'asc').execute();
 }
 
@@ -157,6 +157,20 @@ export async function readVocabularyRows(db) {
  * Slugs are shared across languages, so each parent is re-linked to the same-locale term with the parent's slug,
  * and becomes a root only when that language has no such term.
  */
+/**
+ * Public page text of a term, kept in the term's `data` JSON as `intro` (paragraphs, blank-line separated) and
+ * `promo` (one short offer line). `data.description` is NOT public: it holds editors' notes about the term.
+ */
+export function termPublicText(data) {
+  let parsed;
+  try { parsed = typeof data === 'string' ? JSON.parse(data) : data; } catch { return {}; }
+  const text = value => typeof value === 'string' && value.trim() ? value.trim().slice(0, 4000) : undefined;
+  const result = {};
+  if (text(parsed?.intro)) result.intro = text(parsed.intro);
+  if (text(parsed?.promo)) result.promo = text(parsed.promo);
+  return result;
+}
+
 export function buildVocabulary(rows) {
   const byId = new Map(rows.map(row => [row.id, row]));
   const inLocale = new Map(rows.map(row => [`${row.locale}|${row.name}|${row.slug}`, row]));
@@ -164,7 +178,7 @@ export function buildVocabulary(rows) {
   for (const row of rows) {
     const parent = row.parent_id ? byId.get(row.parent_id) : undefined;
     const localParent = parent ? inLocale.get(`${row.locale}|${row.name}|${parent.slug}`) : undefined;
-    const term = { id: row.id, name: row.name, slug: row.slug, label: row.label, parentId: localParent?.id ?? null, locale: row.locale, translationGroup: row.translation_group || null };
+    const term = { id: row.id, name: row.name, slug: row.slug, label: row.label, parentId: localParent?.id ?? null, locale: row.locale, translationGroup: row.translation_group || null, ...termPublicText(row.data) };
     ((vocabulary[row.locale] ||= Object.fromEntries(TAXONOMY_NAMES.map(name => [name, []])))[row.name] ||= []).push(term);
   }
   return vocabulary;

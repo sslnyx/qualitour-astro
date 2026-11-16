@@ -20,4 +20,4 @@ const members = allTours.filter((tour) => (tour.tour_terms?.destinationScope || 
 const tours = await optimizeTourImages(members, { concurrency: 20 });
 ---
 
-<TourCategoryPage kind="destination" term={term} tours={tours} destinations={navData.destinations} cruiseTypes={navData.cruiseTypes} alternates={alternates} lang={lang} />
+<TourCategoryPage kind="destination" term={term} tours={tours} destinations={navData.destinations} cruiseTypes={navData.cruiseTypes} regionTerms={navData.regions} alternates={alternates} lang={lang} />

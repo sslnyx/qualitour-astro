@@ -17,10 +17,12 @@ interface Props {
   tours: WPTour[];
   destinations: CategoryTerm[];
   cruiseTypes: CategoryTerm[];
+  /** Travel regions with their public text, for the intro shown when a region tag is selected. */
+  regionTerms?: CategoryTerm[];
   alternates: Alternate[];
   lang: Locale;
 }
-const { kind, term, tours, destinations, cruiseTypes, alternates, lang } = Astro.props;
+const { kind, term, tours, destinations, cruiseTypes, regionTerms = [], alternates, lang } = Astro.props;
 const localePrefix = getLocalePrefix(lang);
 const zh = lang === 'zh';
 const name = decodeHtml(term.name);
@@ -43,6 +45,14 @@ const regions = kind === 'destination'
       }))
       .sort((a, b) => b.shown - a.shown || decodeHtml(a.name).localeCompare(decodeHtml(b.name)))
   : [];
+// Public text written for a category: blank-line separated paragraphs plus one offer line, shown above the tours.
+const paragraphs = (text?: string) => (text || '').split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
+const introParagraphs = paragraphs(term.intro);
+// A region with its own text shows it while that region's tag is selected (the tours stay on this page).
+const regionIntros = regions.flatMap((region) => {
+  const found = regionTerms.find((item) => item.slug === region.slug);
+  return found && (found.intro || found.promo) ? [{ slug: region.slug, name: decodeHtml(region.name), paragraphs: paragraphs(found.intro), promo: found.promo }] : [];
+});
 // Cruise types belong to the Cruises style only; each is a hash filter, so the page stays cacheable by path.
 const showCruiseTypes = kind === 'style' && term.slug === 'cruises' && cruiseTypes.length > 0;
 
@@ -85,6 +95,20 @@ const label = kind === 'style' ? (zh ? '旅遊方式' : 'Travel Style') : (zh ? 
       </div>
     </section>
 
+    {(introParagraphs.length > 0 || term.promo) && (
+      <section class="py-8 bg-white border-b border-gray-100" id="category-intro">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+          {introParagraphs.map((text) => <p class="text-gray-600 leading-relaxed">{text}</p>)}
+          {term.promo && (
+            <p class="flex items-start gap-3 px-5 py-4 rounded-2xl bg-orange-50 border border-orange-200 text-orange-800">
+              <span class="material-icons text-orange-500 mt-0.5">local_offer</span>
+              <span class="font-medium">{term.promo}</span>
+            </p>
+          )}
+        </div>
+      </section>
+    )}
+
     {(children.length > 0 || regions.length > 0 || showCruiseTypes) && (
       <section class="py-8 bg-white border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
@@ -111,6 +135,17 @@ const label = kind === 'style' ? (zh ? '旅遊方式' : 'Travel Style') : (zh ? 
                   </a>
                 ))}
               </div>
+              {regionIntros.map((region) => (
+                <div class="hidden mt-4 space-y-3" data-region-intro={region.slug}>
+                  {region.paragraphs.map((text) => <p class="text-gray-600 leading-relaxed">{text}</p>)}
+                  {region.promo && (
+                    <p class="flex items-start gap-3 px-5 py-4 rounded-2xl bg-orange-50 border border-orange-200 text-orange-800">
+                      <span class="material-icons text-orange-500 mt-0.5">local_offer</span>
+                      <span class="font-medium">{region.promo}</span>
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
           {showCruiseTypes && (
@@ -219,6 +254,9 @@ const label = kind === 'style' ? (zh ? '旅遊方式' : 'Travel Style') : (zh ? 
           chip.setAttribute('aria-current', active ? 'true' : 'false');
         });
         if (count) count.textContent = String(shown);
+        document.querySelectorAll('[data-region-intro]').forEach(function (box) {
+          box.classList.toggle('hidden', box.getAttribute('data-region-intro') !== wanted);
+        });
       }
       window.addEventListener('hashchange', apply);
       apply();

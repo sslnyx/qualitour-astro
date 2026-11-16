@@ -197,3 +197,13 @@ test('relative time uses Google wording',()=>{
     assert.equal(relativeTimeDescription(ago(days),now),text,String(days));
   assert.equal(relativeTimeDescription('not a date',now),'');
 });
+
+test('termPublicText reads intro and promo from the term data and never the editors\' description', async () => {
+  const { termPublicText } = await import('../src/lib/cms/native-site-sql.mjs');
+  assert.deepEqual(termPublicText('{"description":"城市 / city。","intro":" Hello \\n\\nWorld ","promo":"5% off"}'), { intro: 'Hello \n\nWorld', promo: '5% off' });
+  assert.deepEqual(termPublicText('{"description":"國家 / country。"}'), {});
+  assert.deepEqual(termPublicText('not json'), {});
+  assert.deepEqual(termPublicText(null), {});
+  assert.deepEqual(termPublicText({ intro: '', promo: 5 }), {});
+  assert.equal(termPublicText({ intro: 'x'.repeat(9000) }).intro.length, 4000);
+});

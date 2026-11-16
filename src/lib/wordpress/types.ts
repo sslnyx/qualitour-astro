@@ -149,6 +149,9 @@ export interface CategoryTerm {
     level?: number;
     /** Published tours in this category (destinations include descendants). */
     count: number;
+    /** Public page text, edited with the term: blank-line separated paragraphs, and one short offer line. */
+    intro?: string;
+    promo?: string;
 }
 
 export interface WPTourActivity {

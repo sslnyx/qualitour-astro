@@ -57,3 +57,14 @@ test('invalid assignment lists fail loudly instead of publishing partial categor
   assert.throws(() => build([entry(1, { destinations: 'banff' })]), /Invalid destinations assignment list/);
   assert.throws(() => build([entry(1, { destinations: [{ id: '', slug: '', label: '' }] })]), /Invalid assigned CMS taxonomy term/);
 });
+
+test('a term\'s public intro and promo reach the public lists, and nothing else does', () => {
+  const withText = { ...vocabulary, destinations: vocabulary.destinations.map(t => t.id === 'jp' ? { ...t, intro: 'Japan intro.', promo: '5% off' } : t), travel_regions: vocabulary.travel_regions.map(t => t.id === 'r1' ? { ...t, intro: 'Rockies intro.' } : t) };
+  const catalogue = { tours: [{ id: 'e1', tour_terms: {} }], terms: {} };
+  const result = applyNativeCategories({ catalogue, entries: [entry(1, { destinations: [{ id: 'jp' }], travel_regions: [{ id: 'r1' }] })], vocabulary: withText, locale: 'en', tourIdFor: e => e.id });
+  const japan = result.terms.destinations.find(t => t.slug === 'geo-jp');
+  assert.equal(japan.intro, 'Japan intro.');
+  assert.equal(japan.promo, '5% off');
+  assert.equal(result.terms.regions.find(t => t.slug === 'area-canadian-rockies').intro, 'Rockies intro.');
+  assert.equal(result.terms.destinations.find(t => t.slug === 'geo-continent-as').intro, undefined);
+});

@@ -17,6 +17,12 @@ function publicTerm(term) {
   return { id, slug, name };
 }
 
+/** The public page text a term carries (see termPublicText), or nothing. */
+const publicText = term => ({
+  ...(string(term?.intro) ? { intro: string(term.intro) } : {}),
+  ...(string(term?.promo) ? { promo: string(term.promo) } : {}),
+});
+
 function indexVocabulary(rows) {
   const byId = new Map(), bySlug = new Map();
   for (const term of Array.isArray(rows) ? rows : []) {
@@ -109,14 +115,15 @@ export function buildCategoryTerms({ tours, vocabulary, locale }) {
     destinations.push({
       id: string(term.id), slug, name: termLabel(term), parent: parent ? string(parent.id) : 0,
       parentSlug: parent ? string(parent.slug) : null, level: destinationPath(term, index.destinations).length, count,
+      ...publicText(term),
     });
   }
   destinations.sort(byLabel(locale));
-  const flat = bucket => [...used[bucket].values()].map(row => ({ ...row, parent: 0, count: counts[bucket].get(row.slug) || 0 }));
+  const flat = bucket => [...used[bucket].values()].map(row => ({ ...row, parent: 0, count: counts[bucket].get(row.slug) || 0, ...publicText(index[bucket].bySlug.get(row.slug)) }));
   // Styles keep the editor's vocabulary order (a deliberate menu order), not alphabetical.
   const styles = (vocabulary?.travel_styles || []).flatMap(term => {
     const slug = string(term?.slug);
-    return slug && counts.styles.has(slug) ? [{ id: string(term.id), slug, name: termLabel(term), parent: 0, count: counts.styles.get(slug) }] : [];
+    return slug && counts.styles.has(slug) ? [{ id: string(term.id), slug, name: termLabel(term), parent: 0, count: counts.styles.get(slug), ...publicText(term) }] : [];
   });
   return {
     styles,
