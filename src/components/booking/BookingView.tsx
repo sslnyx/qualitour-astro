@@ -626,15 +626,17 @@ export function BookingView(p: BookingViewProps) {
                   <div>
                     <dt>{t("付款狀態", "Payment status")}</dt>
                     <dd>
-                      {b.paymentState === "paid" && b.amountMinor === 0
-                        ? t("無需付款", "No payment required")
-                        : b.paymentState === "paid"
-                          ? t("已核實測試收款", "Test payment verified")
-                          : b.paymentState === "review"
-                            ? t("需要人工檢查", "Needs review")
-                            : b.paymentState === "pending"
-                              ? t("正在核實", "Checking payment")
-                              : t("未付款", "Unpaid")}
+                      {b.paymentState === "refunded"
+                        ? t("已退款", "Refunded")
+                        : b.paymentState === "paid" && b.amountMinor === 0
+                          ? t("無需付款", "No payment required")
+                          : b.paymentState === "paid"
+                            ? t("已核實測試收款", "Test payment verified")
+                            : b.paymentState === "review"
+                              ? t("需要人工檢查", "Needs review")
+                              : b.paymentState === "pending"
+                                ? t("正在核實", "Checking payment")
+                                : t("未付款", "Unpaid")}
                     </dd>
                   </div>
                 </dl>
@@ -651,7 +653,20 @@ export function BookingView(p: BookingViewProps) {
                         )}
                   </p>
                 )}
-                {b.paymentNotification && (
+                {b.status === "cancelled" && b.paymentNotification && (
+                  <p role="status" className="qb-note">
+                    {b.paymentState === "refunded"
+                      ? t(
+                          "這筆預訂已取消，款項已全額退回。退款到帳時間依發卡銀行而定。",
+                          "This booking was cancelled and fully refunded. Your bank decides when the refund shows on your statement.",
+                        )
+                      : t(
+                          "這筆預訂已取消。如有退款事宜，我們會另行與你聯絡。",
+                          "This booking was cancelled. If a refund applies, we will contact you.",
+                        )}
+                  </p>
+                )}
+                {b.status !== "cancelled" && b.paymentNotification && (
                   <p role="status" className="qb-note">
                     {t(
                       "付款已確認。收據已保存，可隨時在此瀏覽器重看。",
@@ -660,7 +675,7 @@ export function BookingView(p: BookingViewProps) {
                   </p>
                 )}
                 <div className="qb-public-actions">
-                  {b.paymentNotification && (
+                  {b.paymentNotification && b.status !== "cancelled" && (
                     <button
                       className="qt-btn qt-btn--primary"
                       onClick={p.onReceipt}

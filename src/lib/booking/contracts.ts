@@ -169,7 +169,7 @@ export type GuestBooking = {
   complimentary?: boolean;
   currency: "cad";
   status: "pending" | "confirmed" | "cancelled";
-  paymentState: "unpaid" | "pending" | "paid" | "review";
+  paymentState: "unpaid" | "pending" | "paid" | "review" | "refunded";
   holdUntil: number;
   sandbox: true;
   canPay: boolean;

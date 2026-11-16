@@ -1,16 +1,16 @@
 {
   "sourceRepository": "qualitour-ops",
-  "baseCommit": "eec8ad7",
+  "baseCommit": "5c64eb0",
   "buildCommand": "npm exec -- wrangler deploy --config wrangler.website.bundle.json --dry-run --minify --outdir .private/website-booking-staging/same-worker-bundle",
-  "bundleSha256": "62b738ceb3b25b1e0ea7602ce0c4dafa105586a967c342ffdd1cedf685eeec95",
+  "bundleSha256": "11bdb9904d957fa16d8162d1e2df10e6370a81ad94e3d9e2863a50a8c6d8cc3d",
   "sourceHashes": {
     "src/booking/website-worker.ts": "6e7b08ccd5967902333d9a04c1e7b653313b2e401967cd6c935acd940b8954d3",
     "src/booking/catalog.ts": "d94acc0ba677fc83f34c88aa5864062a58753162723ac2d2e22562844784f610",
-    "src/booking/contracts.ts": "4d928ea3c7708bebdce46ef5880a092b28518e23e25584bf97e649c859a30beb",
-    "src/booking/routes.ts": "12faf5838663593d1db2753bc2ea8678438a7f4219c0698984679d135042c155",
-    "src/booking/payments.ts": "81549e66728dd42a29c0b38022e1a4bec02672a0a2096156be73ddb81259831d",
+    "src/booking/contracts.ts": "7585ab8bd94d7244a0cb4faa699ac9a01d1ee88eb5f48d31e509defd75f36620",
+    "src/booking/routes.ts": "77e8618018839332eea7b23261185566093eac3f791214fbbd09b9b32ff8004e",
+    "src/booking/payments.ts": "e9eaffb668bf30b2e70e42ee7b2209fbc798473ffea2395d5fe9a78865205f08",
     "src/booking/guest.ts": "19ce5cbdf4f7b8d800fd0703e4c0faf6799e79161c6b913f2ac5ddd9a1979085",
-    "src/booking/reservations.ts": "2d14142a06b00f5a88863a90570074cb164d4d634b5ffb0fcd4e2ce8dea3106e",
+    "src/booking/reservations.ts": "752725c7eeec331d810c4287016861d30a157c848157b8fb712541ce0581a234",
     "src/booking/maintenance.ts": "a03e5c00c4280aabafa9eb35acfc888a257e66f45e86c598319f921fb70bba07",
     "src/zaui/bridge.ts": "474ed76e8c1efab1fad896d50a334d9dcd1885bed3f1e52fe1a43036efb1c7ff",
     "src/booking/pricing.ts": "081af83ea23fa59c007c170eac172ed61a75cb7e926de9e7dcb76e83ce34d4e3",
@@ -22,5 +22,5 @@
   "binding": "TRANSFER_DB",
   "stripeBinding": "TRANSFER_SANDBOX_KEY",
   "livePayments": false,
-  "sourceCommit": "eec8ad7b86dd8011c80b21915cc399aa313f6281"
+  "sourceCommit": "5c64eb044e73720efdfafab387b519262fa655e1"
 }

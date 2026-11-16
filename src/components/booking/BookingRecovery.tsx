@@ -31,13 +31,14 @@ export function BookingRecovery(p: {
       )}
       <ul className="qb-recent-list">
         {p.bookings.map((b) => {
-          const state = b.paymentNotification
-            ? "paid"
-            : b.paymentState === "review"
-              ? "review"
-              : b.status === "cancelled"
-                ? "cancelled"
-                : "pending";
+          const state =
+            b.status === "cancelled"
+              ? "cancelled"
+              : b.paymentNotification
+                ? "paid"
+                : b.paymentState === "review"
+                  ? "review"
+                  : "pending";
           const label = {
             paid: t("付款已確認", "Payment confirmed"),
             review: t("付款需要核對", "Payment needs review"),
