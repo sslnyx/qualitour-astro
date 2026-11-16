@@ -61,7 +61,7 @@ export default function TransferRouteCard({
           <button
             type="button"
             onClick={() => setIsReversed((value) => !value)}
-            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-[#f7941e] hover:text-white rounded-full transition-all duration-300 z-10"
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-gray-100 text-gray-700 hover:bg-[#f7941e] hover:text-white rounded-full transition-all duration-300 z-10"
             title={t.swapDirection}
           >
             <span className="material-icons text-lg">swap_vert</span>
