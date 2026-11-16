@@ -5,7 +5,7 @@ import { getDb } from 'emdash/runtime';
 import { assignTourCategories, buildCategoryTerms } from './native-site-categories.mjs';
 import { optimizeTourHeroes } from './native-site-image.mjs';
 import { createKvSnapshotStore, setNativeSnapshotKv } from './native-snapshot-kv.mjs';
-import { TAXONOMY_NAMES, buildVocabulary, readAssignments, readPublishedEntryRow, readPublishedPage, readSeo, readVocabularyRows, rowToEntry, termsForEntry, readPublishedReviewRows, reviewRowToLegacy } from './native-site-sql.mjs';
+import { TAXONOMY_NAMES, buildVocabulary, readAssignments, readPublishedEntryRow, readPublishedPage, readSeo, readTermPublicText, readVocabularyRows, rowToEntry, termsForEntry, readPublishedReviewRows, reviewRowToLegacy } from './native-site-sql.mjs';
 
 const locales = ['en','zh'];
 // A narrowed row is about 1.5 KB, so one query per locale (192 and 65 tours today) replaces four and two.
@@ -129,7 +129,8 @@ export function createSqlTourSource({ getDatabase = getDb, pageSize = PAGE_SIZE 
 const taxonomyTagHints = () => TAXONOMY_NAMES.map(name => ({ tags: [`emdash:taxonomy:${name}`] }));
 export function createSqlVocabularySource({ getDatabase = getDb } = {}) {
   return async function readVocabulary() {
-    const vocabulary = buildVocabulary(await readVocabularyRows(await getDatabase()));
+    const db = await getDatabase();
+    const vocabulary = buildVocabulary(await readVocabularyRows(db), await readTermPublicText(db));
     return { vocabulary, hints: taxonomyTagHints() };
   };
 }
