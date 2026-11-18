@@ -5,7 +5,7 @@
  * Submits to WordPress Contact Form 7.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { submitTourInquiryForm, type TourInquiryFormData, type CF7Response } from '../../lib/contact-form';
 
 interface TourInquiryFormProps {
@@ -24,12 +24,13 @@ const translations = {
     en: {
         inquiringAbout: "Inquiring about:",
         tourCode: "Tour Code:",
-        fullName: "Full Name*",
-        email: "Email*",
-        phone: "Phone Number*",
-        travelDate: "Travel Date*",
-        travelers: "Travelers*",
+        fullName: "Full Name",
+        email: "Email address",
+        phone: "Phone number",
+        travelDate: "Travel date",
+        travelers: "Travelers",
         message: "Message (Optional)",
+        required: "Required",
         sendInquiry: "Send Inquiry",
         sending: "Sending...",
         errors: {
@@ -43,20 +44,21 @@ const translations = {
         }
     },
     zh: {
-        inquiringAbout: "咨詢項目：",
+        inquiringAbout: "查詢項目：",
         tourCode: "團號：",
-        fullName: "姓名*",
-        email: "電子郵箱*",
-        phone: "電話號碼*",
-        travelDate: "出發日期*",
-        travelers: "人數*",
-        message: "留言 (選填)",
-        sendInquiry: "發送咨詢",
+        fullName: "姓名",
+        email: "電郵地址",
+        phone: "電話號碼",
+        travelDate: "出發日期",
+        travelers: "旅客人數",
+        message: "留言（選填）",
+        required: "必填",
+        sendInquiry: "提交查詢",
         sending: "發送中...",
         errors: {
             nameRequired: "請輸入姓名",
-            emailRequired: "請輸入電子郵箱",
-            emailInvalid: "請輸入有效的電子郵箱地址",
+            emailRequired: "請輸入電郵地址",
+            emailInvalid: "請輸入有效的電郵地址",
             phoneRequired: "請輸入電話號碼",
             dateRequired: "請選擇出發日期",
             travelersRequired: "至少需要1名旅客",
@@ -77,6 +79,7 @@ export default function TourInquiryForm({
     lang = 'en',
 }: TourInquiryFormProps) {
     const t = translations[lang as keyof typeof translations] || translations.en;
+    const formId = useId();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -157,7 +160,7 @@ export default function TourInquiryForm({
                 if (response.message.includes("One or more fields have an error")) {
                     response.message = "內容輸入有誤，請檢查後重試。";
                 } else if (response.message.includes("Thank you for your message")) {
-                    response.message = "感謝您的咨詢，我們將儘快聯絡您。";
+                    response.message = "感謝您的查詢，我們將儘快聯絡您。";
                 }
             }
 
@@ -194,7 +197,18 @@ export default function TourInquiryForm({
                         'your-message': 'message',
                     };
                     const fieldName = fieldMap[field.field] || field.field;
-                    serverErrors[fieldName] = field.message;
+                    if (lang === 'zh') {
+                        const chineseErrors: Record<string, string> = {
+                            name: t.errors.nameRequired,
+                            email: t.errors.emailInvalid,
+                            phone: t.errors.phoneRequired,
+                            travelDate: t.errors.dateRequired,
+                            numTravelers: t.errors.travelersRequired,
+                        };
+                        serverErrors[fieldName] = chineseErrors[fieldName] || '內容輸入有誤，請檢查後重試。';
+                    } else {
+                        serverErrors[fieldName] = field.message;
+                    }
                 }
                 setErrors(serverErrors);
             }
@@ -224,7 +238,7 @@ export default function TourInquiryForm({
     const labelClasses = compact ? "text-xs font-medium text-gray-700 mb-0.5" : "text-sm font-medium text-gray-700 mb-1";
 
     return (
-        <form onSubmit={handleSubmit} className={`flex flex-col ${compact ? 'gap-2.5' : 'gap-4'} ${className || ''}`}>
+        <form method="post" noValidate onSubmit={handleSubmit} className={`flex flex-col ${compact ? 'gap-2.5' : 'gap-4'} ${className || ''}`}>
             {/* Tour info */}
             {!hideTourInfo && (
                 <div className={`bg-orange-50 rounded-lg ${compact ? 'p-2' : 'p-3'} border border-orange-100`}>
@@ -242,7 +256,7 @@ export default function TourInquiryForm({
                         ? 'bg-green-50 text-green-800 border border-green-200'
                         : 'bg-red-50 text-red-800 border border-red-200'
                         }`}
-                >
+                    role={result.status === 'mail_sent' ? 'status' : 'alert'} aria-live="polite">
                     <div className="flex items-center gap-2">
                         <span className="material-icons text-lg">
                             {result.status === 'mail_sent' ? 'check_circle' : 'error'}
@@ -253,78 +267,86 @@ export default function TourInquiryForm({
             )}
 
             <div className="flex flex-col gap-1">
+                <label htmlFor={`${formId}-name`} className={labelClasses}>{t.fullName} <span className="text-red-700">({t.required})</span></label>
                 <input
+                    id={`${formId}-name`}
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder={t.fullName}
+                    placeholder={t.fullName} required aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? `${formId}-name-error` : undefined}
                     className={`${inputClasses} ${errors.name ? inputErrorClasses : ''}`}
                     disabled={isSubmitting}
                 />
-                {errors.name && <span className={errorTextClasses}>{errors.name}</span>}
+                {errors.name && <span id={`${formId}-name-error`} role="alert" className={errorTextClasses}>{errors.name}</span>}
             </div>
 
             <div className="flex flex-col gap-1">
+                <label htmlFor={`${formId}-email`} className={labelClasses}>{t.email} <span className="text-red-700">({t.required})</span></label>
                 <input
+                    id={`${formId}-email`}
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder={t.email}
+                    placeholder={t.email} required aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? `${formId}-email-error` : undefined}
                     className={`${inputClasses} ${errors.email ? inputErrorClasses : ''}`}
                     disabled={isSubmitting}
                 />
-                {errors.email && <span className={errorTextClasses}>{errors.email}</span>}
+                {errors.email && <span id={`${formId}-email-error`} role="alert" className={errorTextClasses}>{errors.email}</span>}
             </div>
 
             <div className="flex flex-col gap-1">
+                <label htmlFor={`${formId}-phone`} className={labelClasses}>{t.phone} <span className="text-red-700">({t.required})</span></label>
                 <input
+                    id={`${formId}-phone`}
                     type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder={t.phone}
+                    placeholder={t.phone} required aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? `${formId}-phone-error` : undefined}
                     className={`${inputClasses} ${errors.phone ? inputErrorClasses : ''}`}
                     disabled={isSubmitting}
                 />
-                {errors.phone && <span className={errorTextClasses}>{errors.phone}</span>}
+                {errors.phone && <span id={`${formId}-phone-error`} role="alert" className={errorTextClasses}>{errors.phone}</span>}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-3">
                 <div className="flex flex-col gap-1">
-                    <label className={labelClasses}>{t.travelDate}</label>
+                    <label htmlFor={`${formId}-travel-date`} className={labelClasses}>{t.travelDate} <span className="text-red-700">({t.required})</span></label>
                     <input
                         type="date"
-                        name="travelDate"
+                        id={`${formId}-travel-date`} name="travelDate"
                         value={formData.travelDate}
                         onChange={handleChange}
                         onClick={(e) => (e.target as any).showPicker?.()}
                         min={today}
-                        className={`${inputClasses} ${errors.travelDate ? inputErrorClasses : ''}`}
+                        required aria-invalid={Boolean(errors.travelDate)} aria-describedby={errors.travelDate ? `${formId}-travel-date-error` : undefined} className={`${inputClasses} ${errors.travelDate ? inputErrorClasses : ''}`}
                         disabled={isSubmitting}
                     />
-                    {errors.travelDate && <span className={errorTextClasses}>{errors.travelDate}</span>}
+                    {errors.travelDate && <span id={`${formId}-travel-date-error`} role="alert" className={errorTextClasses}>{errors.travelDate}</span>}
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <label className={labelClasses}>{t.travelers}</label>
+                    <label htmlFor={`${formId}-travelers`} className={labelClasses}>{t.travelers} <span className="text-red-700">({t.required})</span></label>
                     <input
                         type="number"
-                        name="numTravelers"
+                        id={`${formId}-travelers`} name="numTravelers"
                         value={formData.numTravelers}
                         onChange={handleChange}
                         min={1}
                         max={50}
-                        className={`${inputClasses} ${errors.numTravelers ? inputErrorClasses : ''}`}
+                        required aria-invalid={Boolean(errors.numTravelers)} aria-describedby={errors.numTravelers ? `${formId}-travelers-error` : undefined} className={`${inputClasses} ${errors.numTravelers ? inputErrorClasses : ''}`}
                         disabled={isSubmitting}
                     />
-                    {errors.numTravelers && <span className={errorTextClasses}>{errors.numTravelers}</span>}
+                    {errors.numTravelers && <span id={`${formId}-travelers-error`} role="alert" className={errorTextClasses}>{errors.numTravelers}</span>}
                 </div>
             </div>
 
             <div className="flex flex-col gap-1">
+                <label htmlFor={`${formId}-message`} className={labelClasses}>{t.message}</label>
                 <textarea
+                    id={`${formId}-message`}
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
@@ -337,17 +359,17 @@ export default function TourInquiryForm({
 
             <button
                 type="submit"
-                className={`w-full ${compact ? 'px-4 py-2.5' : 'px-6 py-4'} bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold ${compact ? 'rounded-lg text-sm' : 'rounded-xl'} hover:shadow-lg hover:shadow-orange-200/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+                className={`w-full ${compact ? 'px-4 py-2.5' : 'px-6 py-4'} bg-[#a8410b] text-white font-bold ${compact ? 'rounded-lg text-sm' : 'rounded-xl'} hover:bg-[#883608] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a8410b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
                 disabled={isSubmitting}
             >
                 {isSubmitting ? (
                     <>
-                        <span className="material-icons animate-spin text-lg">refresh</span>
+                        <span className="material-icons animate-spin text-lg" aria-hidden="true">refresh</span>
                         {t.sending}
                     </>
                 ) : (
                     <>
-                        <span className="material-icons text-lg">send</span>
+                        <span className="material-icons text-lg" aria-hidden="true">send</span>
                         {t.sendInquiry}
                     </>
                 )}

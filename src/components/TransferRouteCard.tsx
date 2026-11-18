@@ -50,7 +50,7 @@ export default function TransferRouteCard({
     perVehicle: lang === "zh" ? "每車" : "per vehicle",
     details: lang === "zh" ? "詳情" : "Details",
     seater: lang === "zh" ? "座" : "-seater",
-    swapDirection: lang === "zh" ? "切換方向" : "Swap direction",
+    swapDirection: lang === "zh" ? "交換接送方向" : "Swap transfer direction",
   };
 
   return (
@@ -62,9 +62,10 @@ export default function TransferRouteCard({
             type="button"
             onClick={() => setIsReversed((value) => !value)}
             className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-gray-100 text-gray-700 hover:bg-[#f7941e] hover:text-white rounded-full transition-all duration-300 z-10"
+            aria-label={t.swapDirection}
             title={t.swapDirection}
           >
-            <span className="material-icons text-lg">swap_vert</span>
+            <span className="material-icons text-lg" aria-hidden="true">swap_vert</span>
           </button>
         )}
         <div className="w-14 h-14 bg-gradient-to-br from-[#f7941e]/10 to-orange-50 rounded-xl flex items-center justify-center mb-4">
@@ -84,7 +85,7 @@ export default function TransferRouteCard({
         <div className="mb-4">
           {Number.isFinite(lowestPrice) ? (
             <>
-              <div className="flex items-baseline gap-1">
+              <div className="flex flex-wrap items-baseline gap-1">
                 <span className="text-sm text-gray-500">{t.from}</span>
                 <span className="text-3xl font-bold text-gray-900">
                   {formatPrice(lowestPrice)}

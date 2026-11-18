@@ -9,6 +9,7 @@ import { tourMetadata } from '../../../lib/seo';
 import { confirmedTourAlternates, tourStructuredData, type Alternate } from '../../../lib/seo-pages';
 import type { WPTour, GoogleReview } from '../../../lib/wordpress/types';
 import { optimizeTourPresentation, optimizeTourPresentations } from '../../../lib/wordpress/image';
+import { tourHeroImageSizes } from '../../../lib/wordpress/image-source';
 
 export const prerender = true;
 
@@ -59,7 +60,7 @@ if (alternates.length) {
 ---
 
 <Layout {...seo.metadata} canonical={seo.canonical} noindex={seo.noindex} heroImage={displayTour.optimizedHero?.src} heroImageSrcSet={displayTour.optimizedHero?.srcSet}
-  heroImageSizes={displayTour.optimizedHero?.sizes} lang={lang} tourTranslations={safeTranslations}
+  heroImageSizes={displayTour.optimizedHero?.srcSet ? tourHeroImageSizes : undefined} lang={lang} tourTranslations={safeTranslations}
   alternates={alternates} structuredData={tourStructuredData(tour, origin, base, lang, seo.canonical)}>
   <TourPage tour={displayTour} lang={lang} localePrefix={localePrefix} reviews={reviews} />
 </Layout>

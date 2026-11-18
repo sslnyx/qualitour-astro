@@ -48,7 +48,7 @@ export default function TourReviewsSection({ reviews, tourTitle, lang }: TourRev
                 </div>
 
                 {/* Reviews Grid */}
-                <SimpleReviewsGrid reviews={reviews} initialCount={6} showLoadMore={false} />
+                <SimpleReviewsGrid reviews={reviews} initialCount={6} showLoadMore={false} lang={lang} />
 
                 {/* View All Link */}
                 <div className="text-center mt-10">

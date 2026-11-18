@@ -1,7 +1,7 @@
 /**
  * MobileInquiryCTA - Fixed bottom bar for mobile tour detail pages.
  *
- * Shows the tour price + a "Book Now" button that opens the shared
+ * Shows the tour price + an enquiry button that opens the shared
  * TourInquiryModal.  Hidden on lg+ screens where the sidebar form
  * is already visible.
  */
@@ -22,7 +22,7 @@ export default function MobileInquiryCTA({ tour, tourCode, lang }: MobileInquiry
     const price = tour.tour_meta?.["tour-price-text"] || tour.tour_meta?.price;
     const currency = tour.tour_meta?.["tourmaster-tour-currency"] || "";
 
-    const btnLabel = lang === "zh" ? "立即預訂" : "Book Now";
+    const btnLabel = lang === "zh" ? "查詢行程" : "Enquire about this tour";
     const fromLabel = lang === "zh" ? "起" : "From";
 
     return (
@@ -49,9 +49,9 @@ export default function MobileInquiryCTA({ tour, tourCode, lang }: MobileInquiry
                     {/* CTA Button */}
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-full shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                        className="flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-[#a8410b] text-white font-bold rounded-full shadow-lg shadow-orange-500/25 hover:bg-[#883608] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a8410b] transition-colors"
                     >
-                        <span className="material-icons text-lg">event_available</span>
+                        <span className="material-icons text-lg" aria-hidden="true">event_available</span>
                         {btnLabel}
                     </button>
                 </div>

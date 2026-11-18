@@ -193,6 +193,18 @@ class PagesStaticFinalizerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "compatibility"):
                 load_finalizer().read_catalogue(fixture.snapshot_path, fixture.compatibility_path)
 
+    def test_catalogue_accepts_native_cms_ids_alongside_legacy_numeric_ids(self):
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = BuildFixture(temp).create()
+            snapshot = json.loads(fixture.snapshot_path.read_text())
+            legacy, native = snapshot["locales"]["zh"]["tours"]
+            native["id"] = "01M7QE78X2HYY9YQZHNQ1WN0YX"
+            native["date"] = legacy["date"]
+            fixture.snapshot_path.write_text(json.dumps(snapshot))
+            finalizer = load_finalizer()
+            _, _, tours = finalizer.read_catalogue(fixture.snapshot_path, fixture.compatibility_path)
+            self.assertEqual(finalizer.expected_latest(tours["zh"]), [legacy["id"], native["id"]])
+
     def test_catalogue_rejects_duplicate_ids_and_decoded_slugs(self):
         mutations = {
             "ID": lambda tours: tours.append({**tours[0], "slug": "different-slug"}),

@@ -120,7 +120,8 @@ def read_catalogue(path, compatibility_path=COMPATIBILITY, cms_origin=CMS_ORIGIN
         for tour in rows:
             tour_id = tour.get("id")
             slug = safe_slug(tour.get("slug"))
-            if not isinstance(tour_id, int) or tour.get("status") != "publish":
+            valid_id = type(tour_id) is int or (isinstance(tour_id, str) and bool(tour_id.strip()))
+            if not valid_id or tour.get("status") != "publish":
                 raise ValueError(f"Invalid public tour in {language} catalogue")
             if tour_id in ids:
                 raise ValueError(f"Duplicate tour ID in {language} catalogue: {tour_id}")
@@ -139,7 +140,12 @@ def read_catalogue(path, compatibility_path=COMPATIBILITY, cms_origin=CMS_ORIGIN
 def expected_latest(tours):
     def key(tour):
         stamp = datetime.fromisoformat(tour["date"].replace("Z", "+00:00")).timestamp()
-        return stamp, tour["id"]
+        # Match the numeric-aware ID comparison used by the public catalogue adapter.
+        id_key = tuple(
+            (0, int(part)) if part.isascii() and part.isdecimal() else (1, part.casefold())
+            for part in re.findall(r"[0-9]+|[^0-9]+", str(tour["id"]))
+        )
+        return stamp, id_key
 
     return [tour["id"] for tour in sorted(tours, key=key, reverse=True)[:6]]
 

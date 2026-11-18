@@ -7,7 +7,7 @@ import { getLocalePrefix, type Locale } from "../i18n/config";
  * Supports both desktop (sticky sidebar) and mobile (slide-in drawer) views.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
 import type { CategoryTerm } from '../lib/wordpress/types';
 import { decodeHtml } from '../lib/utils';
 
@@ -35,6 +35,10 @@ interface FilterContentProps {
     toggleSection: (section: string) => void;
     hasActiveFilters: boolean;
     isMobile?: boolean;
+}
+
+interface DrawerEventDetail {
+    trigger?: HTMLElement;
 }
 
 function getFiltersFromUrl(): FilterState {
@@ -91,6 +95,7 @@ function FilterContent({
                     </span>
                     <input
                         type="text"
+                        aria-label={t.searchPlaceholder}
                         placeholder={t.searchPlaceholder}
                         value={filters.q}
                         onChange={(e) => updateFilter('q', e.target.value)}
@@ -100,6 +105,7 @@ function FilterContent({
                         <button
                             onClick={() => updateFilter('q', null)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            aria-label={t.clearSearch}
                         >
                             <span className="material-icons text-lg">close</span>
                         </button>
@@ -127,6 +133,7 @@ function FilterContent({
                                 <button
                                     onClick={() => updateFilter('q', null)}
                                     className="text-gray-400 hover:text-gray-600"
+                                    aria-label={t.clearSearch}
                                 >
                                     ×
                                 </button>
@@ -139,6 +146,7 @@ function FilterContent({
                                 <button
                                     onClick={() => updateFilter('style', null)}
                                     className="text-gray-400 hover:text-gray-600"
+                                    aria-label={`${t.clearFilter}: ${decodeHtml(styles.find((t) => t.slug === filters.style)?.name || filters.style)}`}
                                 >
                                     ×
                                 </button>
@@ -153,6 +161,9 @@ function FilterContent({
                                 <button
                                     onClick={() => updateFilter('destination', null)}
                                     className="text-gray-400 hover:text-gray-600"
+                                    aria-label={`${t.clearFilter}: ${decodeHtml(topLevelDestinations.find((d) => d.slug === filters.destination)?.name ||
+                                        [...destinationChildren.values()].flat().find(d => d.slug === filters.destination)?.name ||
+                                        filters.destination)}`}
                                 >
                                     ×
                                 </button>
@@ -309,6 +320,9 @@ export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
     const [filters, setFilters] = useState<FilterState>(getFiltersFromUrl);
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
     const [mobileOpen, setMobileOpen] = useState(false);
+    const drawerRef = useRef<HTMLDivElement>(null);
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
+    const restoreFocusRef = useRef<HTMLElement | null>(null);
 
     const { topLevel: topLevelDestinations, parentMap: destinationChildren } = useMemo(
         () => buildDestinationTree(destinations),
@@ -322,28 +336,51 @@ export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
         };
         handleUrlChange();
         window.addEventListener('popstate', handleUrlChange);
-        return () => window.removeEventListener('popstate', handleUrlChange);
+        window.addEventListener('urlchange', handleUrlChange);
+        return () => {
+            window.removeEventListener('popstate', handleUrlChange);
+            window.removeEventListener('urlchange', handleUrlChange);
+        };
     }, []);
 
-    // Listen for mobile filter toggle events
-    useEffect(() => {
-        const handleToggle = () => {
-            setMobileOpen(prev => !prev);
-        };
+    const closeMobileFilters = () => {
+        setMobileOpen(false);
+    };
 
-        // Wire up the mobile filter toggle button from ToursGrid
-        const toggleBtn = document.getElementById('mobile-filter-toggle');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', handleToggle);
+    const handleDrawerKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "Escape") {
+            event.preventDefault();
+            closeMobileFilters();
+            return;
         }
 
-        // Also listen for custom event
-        window.addEventListener('toggle-mobile-filters', handleToggle);
+        if (event.key !== "Tab") return;
 
+        const focusable = drawerRef.current?.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable?.length) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+    };
+
+    // Listen for the mobile filter toggle emitted by the results island.
+    useEffect(() => {
+        const handleToggle = (event: Event) => {
+            const detail = (event as CustomEvent<DrawerEventDetail>).detail;
+            restoreFocusRef.current = detail?.trigger || (document.activeElement as HTMLElement | null);
+            setMobileOpen(true);
+        };
+        window.addEventListener('toggle-mobile-filters', handleToggle);
         return () => {
-            if (toggleBtn) {
-                toggleBtn.removeEventListener('click', handleToggle);
-            }
             window.removeEventListener('toggle-mobile-filters', handleToggle);
         };
     }, []);
@@ -359,6 +396,25 @@ export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
             document.body.style.overflow = '';
         };
     }, [mobileOpen]);
+
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent('mobile-filter-state', { detail: { open: mobileOpen } }));
+        if (mobileOpen) {
+            closeButtonRef.current?.focus();
+        } else {
+            if (restoreFocusRef.current?.getClientRects().length) restoreFocusRef.current.focus();
+            restoreFocusRef.current = null;
+        }
+    }, [mobileOpen]);
+
+    useEffect(() => {
+        const desktop = window.matchMedia('(min-width: 64rem)');
+        const closeOnDesktop = (event: MediaQueryListEvent) => {
+            if (event.matches) setMobileOpen(false);
+        };
+        desktop.addEventListener('change', closeOnDesktop);
+        return () => desktop.removeEventListener('change', closeOnDesktop);
+    }, []);
 
     const updateFilter = (key: keyof FilterState, value: string | null) => {
         const localePrefix = getLocalePrefix(lang as Locale);
@@ -409,14 +465,16 @@ export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
     const activeFilterCount = (filters.style ? 1 : 0) + (filters.destination ? 1 : 0) + (filters.q ? 1 : 0);
 
     const t = {
-        filters: lang === 'zh' ? '筛选' : 'Filters',
-        searchPlaceholder: lang === 'zh' ? '搜索行程...' : 'Search tours...',
-        activeFilters: lang === 'zh' ? '已选筛选条件' : 'Active Filters',
-        clearAll: lang === 'zh' ? '清除所有' : 'Clear All',
+        filters: lang === 'zh' ? '篩選' : 'Filters',
+        searchPlaceholder: lang === 'zh' ? '搜尋行程...' : 'Search tours...',
+        activeFilters: lang === 'zh' ? '已選篩選條件' : 'Active Filters',
+        clearAll: lang === 'zh' ? '清除全部' : 'Clear All',
+        clearSearch: lang === 'zh' ? '清除搜尋' : 'Clear search',
+        clearFilter: lang === 'zh' ? '移除篩選' : 'Remove filter',
         travelStyle: lang === 'zh' ? '旅遊方式' : 'Travel Style',
         destinations: lang === 'zh' ? '目的地' : 'Destinations',
-        applyFilters: lang === 'zh' ? '应用筛选' : 'Apply Filters',
-        close: lang === 'zh' ? '关闭' : 'Close',
+        applyFilters: lang === 'zh' ? '套用篩選' : 'Apply Filters',
+        close: lang === 'zh' ? '關閉' : 'Close',
     };
 
     const contentProps = {
@@ -437,37 +495,46 @@ export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
             {/* Desktop Sidebar */}
             <aside className="tour-filter-sidebar w-72 flex-shrink-0 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24 hidden lg:block">
                 <h2 className="font-bold text-lg text-gray-900 mb-6 flex items-center gap-2">
-                    <span className="material-icons text-[#f7941e]">filter_list</span>
+                    <span className="material-icons text-[#f7941e]" aria-hidden="true">filter_list</span>
                     {t.filters}
                 </h2>
                 <FilterContent {...contentProps} />
             </aside>
 
             {/* Mobile Drawer */}
-            <div className={`lg:hidden fixed inset-0 z-50 ${mobileOpen ? 'visible' : 'invisible'}`}>
+            {mobileOpen && (
+            <div className="lg:hidden fixed inset-0 z-50">
                 {/* Backdrop */}
                 <div
-                    className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${mobileOpen ? 'opacity-100' : 'opacity-0'}`}
-                    onClick={() => setMobileOpen(false)}
+                    className="absolute inset-0 bg-black/50"
+                    onClick={closeMobileFilters}
+                    aria-hidden="true"
                 />
 
                 {/* Drawer Panel */}
                 <div
-                    className={`absolute left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                    ref={drawerRef}
+                    id="tour-filter-drawer"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="tour-filter-heading"
+                    onKeyDown={handleDrawerKeyDown}
+                    className="absolute left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white shadow-2xl flex flex-col"
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                        <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2">
-                            <span className="material-icons text-[#f7941e]">filter_list</span>
+                        <h2 id="tour-filter-heading" className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                            <span className="material-icons text-[#f7941e]" aria-hidden="true">filter_list</span>
                             {t.filters}
                             {activeFilterCount > 0 && (
-                                <span className="bg-[#f7941e] text-white text-xs px-2 py-0.5 rounded-full">
+                                <span className="bg-[#f7941e] text-white text-xs px-2 py-0.5 rounded-full" aria-hidden="true">
                                     {activeFilterCount}
                                 </span>
                             )}
                         </h2>
                         <button
-                            onClick={() => setMobileOpen(false)}
+                            ref={closeButtonRef}
+                            onClick={closeMobileFilters}
                             className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-xl transition-colors"
                             aria-label={t.close}
                         >
@@ -483,7 +550,7 @@ export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
                     {/* Footer with Apply Button */}
                     <div className="p-4 border-t border-gray-100 bg-white">
                         <button
-                            onClick={() => setMobileOpen(false)}
+                            onClick={closeMobileFilters}
                             className="w-full py-3 bg-gradient-to-r from-[#f7941e] to-[#ffb347] text-white font-semibold rounded-xl shadow-lg shadow-orange-200 hover:shadow-xl transition-all"
                         >
                             {t.applyFilters}
@@ -491,6 +558,7 @@ export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
                     </div>
                 </div>
             </div>
+            )}
 
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar {

@@ -408,6 +408,43 @@ function extractPriceNumber(caption: string): string | null {
         </div>
     </PageHero>
 
+    <!-- Popular Routes -->
+    <section id="routes" class="py-12 sm:py-16 lg:py-20 bg-gray-50 scroll-mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8 sm:mb-12">
+                <span
+                    class="text-[#f7941e] font-bold tracking-widest uppercase text-sm mb-2 block"
+                    >{t.popularRoutes}</span
+                >
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                    {t.routesDesc}
+                </h2>
+            </div>
+
+            {
+                transferRoutes.length > 0 ? (
+                    <TransferRoutesGrid
+                        routes={transferRoutes}
+                        lang={lang}
+                        localePrefix={localePrefix}
+                        client:load
+                    />
+                ) : (
+                    <div class="text-center py-12 text-gray-500">
+                        <span class="material-icons text-4xl mb-4">
+                            sync_problem
+                        </span>
+                        <p>
+                            {lang === "zh"
+                                ? "無法載入路線資訊"
+                                : "Unable to load routes"}
+                        </p>
+                    </div>
+                )
+            }
+        </div>
+    </section>
+
     <!-- Why Choose Us -->
     <section class="py-20 bg-white relative overflow-hidden">
         <div
@@ -552,43 +589,6 @@ function extractPriceNumber(caption: string): string | null {
                     ))
                 }
             </div>
-        </div>
-    </section>
-
-    <!-- Popular Routes -->
-    <section id="routes" class="py-20 bg-white scroll-mt-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <span
-                    class="text-[#f7941e] font-bold tracking-widest uppercase text-sm mb-2 block"
-                    >{t.popularRoutes}</span
-                >
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                    {t.routesDesc}
-                </h2>
-            </div>
-
-            {
-                transferRoutes.length > 0 ? (
-                    <TransferRoutesGrid
-                        routes={transferRoutes}
-                        lang={lang}
-                        localePrefix={localePrefix}
-                        client:load
-                    />
-                ) : (
-                    <div class="text-center py-12 text-gray-500">
-                        <span class="material-icons text-4xl mb-4">
-                            sync_problem
-                        </span>
-                        <p>
-                            {lang === "zh"
-                                ? "無法載入路線資訊"
-                                : "Unable to load routes"}
-                        </p>
-                    </div>
-                )
-            }
         </div>
     </section>
 

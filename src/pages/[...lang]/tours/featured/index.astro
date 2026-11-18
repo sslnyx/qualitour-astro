@@ -47,7 +47,7 @@ const displayTours = await optimizeTourImages(rawDisplayTours, { concurrency: 12
   description={lang === 'zh' ? '探索精選行程，查看路線、出發資訊與價格，聯絡我們安排旅程。' : 'Explore selected tours, compare itineraries and departure information, and contact Qualitour to plan your journey.'}
   lang={lang}
 >
-  <main class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50">
     {/* Page Header */}
     <section class="relative bg-gradient-to-r from-gray-900 to-gray-800 py-16 md:py-24 overflow-hidden">
       {/* Decorative elements */}
@@ -176,5 +176,5 @@ const displayTours = await optimizeTourImages(rawDisplayTours, { concurrency: 12
         </a>
       </div>
     </section>
-  </main>
+  </div>
 </Layout>

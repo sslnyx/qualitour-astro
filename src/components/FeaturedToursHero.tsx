@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import type { WPTour } from "../lib/wordpress/types";
 import TourInquiryModal from "./TourInquiryModal";
-import { getCfTransformUrl, wpUrl } from "../lib/wp-url";
-import { getTourImageUrl } from "../lib/wordpress/image-source";
+import { getCfTransformUrl } from "../lib/wp-url";
+import { getTourImageUrl, tourHeroImageSizes } from "../lib/wordpress/image-source";
 import { applyImageFallback } from '../lib/image-delivery.mjs';
 
 interface FeaturedToursHeroProps {
@@ -19,6 +19,7 @@ export default function FeaturedToursHero({
 }: FeaturedToursHeroProps) {
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, duration: 40 });
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTour, setSelectedTour] = useState<WPTour | null>(null);
 
@@ -27,28 +28,27 @@ export default function FeaturedToursHero({
         setSelectedIndex(emblaApi.selectedScrollSnap());
     }, [emblaApi]);
 
-    // Custom Autoplay
     useEffect(() => {
         if (!emblaApi) return;
         onSelect();
         emblaApi.on("select", onSelect);
-
-        const interval = setInterval(() => {
-            if (emblaApi.canScrollNext()) {
-                emblaApi.scrollNext();
-            } else {
-                emblaApi.scrollTo(0);
-            }
-        }, 5000); // 5 seconds per slide
-
-        return () => {
-            clearInterval(interval);
-            emblaApi.off("select", onSelect);
-        };
+        return () => { emblaApi.off("select", onSelect); };
     }, [emblaApi, onSelect]);
 
+    useEffect(() => {
+        if (!emblaApi || !isPlaying || isModalOpen) return;
+        const interval = window.setInterval(() => {
+            if (emblaApi.canScrollNext()) emblaApi.scrollNext();
+            else emblaApi.scrollTo(0);
+        }, 5000);
+        return () => window.clearInterval(interval);
+    }, [emblaApi, isPlaying, isModalOpen]);
+
     const scrollTo = useCallback(
-        (index: number) => emblaApi && emblaApi.scrollTo(index),
+        (index: number) => {
+            setIsPlaying(false);
+            emblaApi?.scrollTo(index);
+        },
         [emblaApi]
     );
 
@@ -62,21 +62,27 @@ export default function FeaturedToursHero({
 
     if (!tours || tours.length === 0) return null;
 
+    const isChinese = lang === "zh";
+    const rotationLabel = isPlaying
+        ? (isChinese ? "暫停輪播" : "Pause slideshow")
+        : (isChinese ? "播放輪播" : "Play slideshow");
+
     return (
-        <div className="relative min-h-[85vh] bg-gray-900 group">
+        <section
+            aria-label={isChinese ? "精選行程輪播" : "Featured tours slideshow"}
+            className="bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800"
+            onFocusCapture={(event) => {
+                if (!event.target.closest("[data-carousel-rotation]")) setIsPlaying(false);
+            }}
+        >
             {/* Embla Viewport */}
-            <div className="overflow-hidden h-full absolute inset-0" ref={emblaRef}>
-                <div className="flex h-full">
+            <div className="overflow-hidden" ref={emblaRef}>
+                <div className="flex touch-pan-y">
                     {tours.map((tour, index) => {
-                        let imageUrl = tour.optimizedHero?.src || tour.optimizedImageUrl || getTourImageUrl(tour) || "";
-                        if (imageUrl) {
-                            imageUrl = getCfTransformUrl(wpUrl(imageUrl), {
-                                width: 1920,
-                                height: 1080,
-                                format: "webp",
-                                quality: 80
-                            });
-                        }
+                        const source = getTourImageUrl(tour);
+                        const imageUrl = tour.optimizedHero?.src || (source
+                            ? getCfTransformUrl(source, { width: 1280, format: "webp", quality: 80 })
+                            : undefined);
                         const price = tour.tour_meta?.["tour-price-text"];
                         const location = tour.tour_meta?.location;
                         const duration = tour.tour_meta?.duration_text;
@@ -84,47 +90,27 @@ export default function FeaturedToursHero({
                         return (
                             <div
                                 key={tour.id}
-                                className="relative flex-[0_0_100%] h-full min-w-0"
+                                inert={index !== selectedIndex}
+                                className="flex flex-[0_0_100%] min-w-0"
                             >
-                                {/* Background Image */}
-                                <div className="absolute inset-0">
-                                    <img
-                                        src={imageUrl}
-                                        srcSet={tour.optimizedHero?.srcSet || undefined}
-                                        sizes={tour.optimizedHero?.sizes}
-                                        width={tour.optimizedHero?.width}
-                                        height={tour.optimizedHero?.height}
-                                        alt={cleanTitle(tour.title.rendered)}
-                                        className="w-full h-full object-cover"
-                                        loading={index === 0 ? "eager" : "lazy"}
-                                        fetchPriority={index === 0 ? 'high' : 'low'}
-                                        decoding="async"
-                                        onError={(e) => applyImageFallback(e.currentTarget, 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&h=1080&fit=crop&q=80')}
-                                    />
-                                    {/* Hero Gradient Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-90" />
-                                    <div className="absolute inset-0 bg-gradient-to-r from-gray-900/80 via-transparent to-transparent" />
-                                </div>
-
-                                {/* Content Container */}
-                                <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-end pb-24 md:items-center md:pb-0">
-                                    <div className="max-w-3xl animate-fade-in-up">
+                                <div className={`mx-auto grid w-full max-w-7xl content-start items-center gap-6 px-4 pt-7 pb-4 sm:px-6 lg:content-center lg:gap-12 lg:px-8 lg:pt-10 lg:pb-6 ${imageUrl ? "lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]" : ""}`}>
+                                    <div className="min-w-0 max-w-3xl">
                                         {/* Badge */}
-                                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500/20 backdrop-blur-md rounded-full text-orange-400 text-sm font-bold tracking-widest mb-6 border border-orange-500/20">
-                                            <span className="material-icons text-sm">star</span>
+                                        <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-400/30 bg-orange-400/10 px-3 py-1.5 text-xs font-bold tracking-wide text-orange-200 sm:mb-4">
+                                            <span className="material-icons text-sm" aria-hidden="true">star</span>
                                             {lang === "zh" ? "精選行程" : "FEATURED TOUR"}
                                         </span>
 
                                         {/* Title */}
-                                        <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
+                                        <h2 className="break-words text-2xl leading-tight font-bold text-white sm:text-3xl lg:text-4xl">
                                             {cleanTitle(tour.title.rendered)}
                                         </h2>
 
                                         {/* Meta Info */}
-                                        <div className="flex flex-wrap gap-6 text-white/90 mb-8 text-lg font-medium">
+                                        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm font-medium text-gray-200 empty:hidden sm:text-base">
                                             {location && (
                                                 <div className="flex items-center gap-2">
-                                                    <span className="material-icons text-orange-500">
+                                                    <span className="material-icons text-orange-400" aria-hidden="true">
                                                         place
                                                     </span>
                                                     {location}
@@ -132,7 +118,7 @@ export default function FeaturedToursHero({
                                             )}
                                             {duration && (
                                                 <div className="flex items-center gap-2">
-                                                    <span className="material-icons text-orange-500">
+                                                    <span className="material-icons text-orange-400" aria-hidden="true">
                                                         schedule
                                                     </span>
                                                     {duration}
@@ -140,7 +126,7 @@ export default function FeaturedToursHero({
                                             )}
                                             {price && (
                                                 <div className="flex items-center gap-2">
-                                                    <span className="material-icons text-orange-500">
+                                                    <span className="material-icons text-orange-400" aria-hidden="true">
                                                         sell
                                                     </span>
                                                     {price}
@@ -149,27 +135,45 @@ export default function FeaturedToursHero({
                                         </div>
 
                                         {/* Buttons */}
-                                        <div className="flex flex-wrap gap-4">
+                                        <div className="mt-4 flex flex-wrap gap-2 sm:mt-6 sm:gap-3">
                                             <button
+                                                type="button"
                                                 onClick={() => {
                                                     setSelectedTour(tour);
                                                     setIsModalOpen(true);
                                                 }}
-                                                className="inline-flex items-center gap-3 px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-full transition-all duration-300 shadow-lg shadow-orange-500/30 hover:scale-105 hover:shadow-orange-500/50"
+                                                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#a8410b] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#883608] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:px-6 sm:text-base"
                                             >
-                                                {lang === "zh" ? "立即預訂" : "Book Now"}
-                                                <span className="material-icons text-lg">
+                                                {isChinese ? "查詢行程" : "Enquire about this tour"}
+                                                <span className="material-icons text-lg" aria-hidden="true">
                                                     arrow_forward
                                                 </span>
                                             </button>
                                             <a
                                                 href={`${localePrefix}/tours/${tour.slug}`}
-                                                className="inline-flex items-center gap-3 px-8 py-4 bg-white/10 backdrop-blur-md text-white font-bold rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300"
+                                                className="inline-flex min-h-11 items-center rounded-full border border-white/40 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:px-6 sm:text-base"
                                             >
                                                 {lang === "zh" ? "查看詳情" : "View Details"}
                                             </a>
                                         </div>
                                     </div>
+                                    {imageUrl && (
+                                        <div className="flex min-w-0 justify-center">
+                                            <img
+                                                src={imageUrl}
+                                                srcSet={tour.optimizedHero?.srcSet || undefined}
+                                                sizes={tour.optimizedHero?.srcSet ? tourHeroImageSizes : undefined}
+                                                width={tour.optimizedHero?.width}
+                                                height={tour.optimizedHero?.height}
+                                                alt={cleanTitle(tour.title.rendered)}
+                                                className="tour-hero-cover rounded-xl"
+                                                loading={index === 0 ? "eager" : "lazy"}
+                                                fetchPriority={index === 0 ? "high" : "low"}
+                                                decoding="async"
+                                                onError={(event) => applyImageFallback(event.currentTarget, "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1280&fit=max&q=80")}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );
@@ -177,40 +181,49 @@ export default function FeaturedToursHero({
                 </div>
             </div>
 
-            {/* Navigation Dots */}
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
-                {tours.map((_, index) => (
+            {tours.length > 1 && (
+                <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-1 px-4 pb-5 sm:gap-2">
                     <button
-                        key={index}
-                        className={`w-3 h-3 rounded-full transition-all duration-500 ${index === selectedIndex
-                            ? "bg-orange-500 w-8"
-                            : "bg-white/30 hover:bg-white/50"
-                            }`}
-                        onClick={() => scrollTo(index)}
-                        aria-label={`Go to slide ${index + 1}`}
-                    />
-                ))}
-            </div>
-
-            {/* Navigation Arrows (Desktop) */}
-            <button
-                onClick={() => emblaApi && emblaApi.scrollPrev()}
-                className="hidden md:flex absolute top-1/2 left-8 transform -translate-y-1/2 w-14 h-14 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 rounded-full items-center justify-center text-white transition-all duration-300 hover:scale-110 group/nav"
-                aria-label="Previous slide"
-            >
-                <span className="material-icons text-3xl opacity-70 group-hover/nav:opacity-100">
-                    chevron_left
-                </span>
-            </button>
-            <button
-                onClick={() => emblaApi && emblaApi.scrollNext()}
-                className="hidden md:flex absolute top-1/2 right-8 transform -translate-y-1/2 w-14 h-14 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 rounded-full items-center justify-center text-white transition-all duration-300 hover:scale-110 group/nav"
-                aria-label="Next slide"
-            >
-                <span className="material-icons text-3xl opacity-70 group-hover/nav:opacity-100">
-                    chevron_right
-                </span>
-            </button>
+                        type="button"
+                        onClick={() => emblaApi?.scrollPrev()}
+                        className="grid size-10 shrink-0 place-items-center rounded-full border border-white/30 text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white"
+                        aria-label={isChinese ? "上一張" : "Previous slide"}
+                    >
+                        <span className="material-icons" aria-hidden="true">chevron_left</span>
+                    </button>
+                    <div className="flex">
+                        {tours.map((_, index) => (
+                            <button
+                                key={index}
+                                type="button"
+                                className="grid h-11 w-6 place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-white sm:w-8"
+                                onClick={() => scrollTo(index)}
+                                aria-label={isChinese ? `切換至第 ${index + 1} 張` : `Go to slide ${index + 1}`}
+                                aria-current={index === selectedIndex ? "true" : undefined}
+                            >
+                                <span aria-hidden="true" className={`h-2.5 rounded-full ${index === selectedIndex ? "w-5 bg-orange-400" : "w-2.5 bg-white/70"}`} />
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => emblaApi?.scrollNext()}
+                        className="grid size-10 shrink-0 place-items-center rounded-full border border-white/30 text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white"
+                        aria-label={isChinese ? "下一張" : "Next slide"}
+                    >
+                        <span className="material-icons" aria-hidden="true">chevron_right</span>
+                    </button>
+                    <button
+                        type="button"
+                        data-carousel-rotation
+                        className="grid size-10 shrink-0 place-items-center rounded-full border border-white/30 text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white"
+                        aria-label={rotationLabel}
+                        onClick={() => setIsPlaying((playing) => !playing)}
+                    >
+                        <span className="material-icons" aria-hidden="true">{isPlaying ? "pause" : "play_arrow"}</span>
+                    </button>
+                </div>
+            )}
 
             {/* Inquiry Modal */}
             <TourInquiryModal
@@ -219,6 +232,6 @@ export default function FeaturedToursHero({
                 tour={selectedTour}
                 lang={lang}
             />
-        </div>
+        </section>
     );
 }

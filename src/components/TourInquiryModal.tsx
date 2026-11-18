@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { WPTour } from "../lib/wordpress/types";
 import TourInquiryForm from "./forms/TourInquiryForm";
 
@@ -18,12 +18,26 @@ export default function TourInquiryModal({
     lang,
 }: TourInquiryModalProps) {
     const [isSuccess, setIsSuccess] = useState(false);
+    const dialogRef = useRef<HTMLDialogElement>(null);
+    const closeRef = useRef<HTMLButtonElement>(null);
+    const titleId = useId();
 
-    // Reset success state when modal opens/closes or tour changes
     useEffect(() => {
-        if (isOpen) {
-            setIsSuccess(false);
-        }
+        const dialog = dialogRef.current;
+        if (!isOpen || !tour || !dialog) return;
+
+        setIsSuccess(false);
+        const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        const previousOverflow = document.body.style.overflow;
+        dialog.showModal();
+        document.body.style.overflow = "hidden";
+        closeRef.current?.focus();
+
+        return () => {
+            if (dialog.open) dialog.close();
+            document.body.style.overflow = previousOverflow;
+            trigger?.focus({ preventScroll: true });
+        };
     }, [isOpen, tour]);
 
     if (!isOpen || !tour) return null;
@@ -46,56 +60,52 @@ export default function TourInquiryModal({
     const currency = tour.tour_meta?.["tourmaster-tour-currency"] || "";
 
     const t = {
-        title: lang === "zh" ? "發送咨詢" : "Send Inquiry",
-        inquiringAbout: lang === "zh" ? "咨詢項目：" : "Inquiring about:",
-        success: lang === "zh" ? "發送成功！我們會儘快聯繫您。" : "Sent successfully! We will contact you shortly.",
-        bestPrice: lang === "zh" ? "最優價格" : "Best Price",
-        support: lang === "zh" ? "24/7 支持" : "24/7 Support",
-        secure: lang === "zh" ? "安全支付" : "Secure",
+        title: lang === "zh" ? "查詢行程" : "Enquire about this tour",
+        inquiringAbout: lang === "zh" ? "正在查詢：" : "Inquiring about:",
+        success: lang === "zh" ? "已送出查詢，我們會儘快聯絡您。" : "Sent successfully! We will contact you shortly.",
         startFrom: lang === "zh" ? "起價" : "Starting from",
         perPerson: lang === "zh" ? "每人" : "per person",
         close: lang === "zh" ? "關閉" : "Close",
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-                onClick={onClose}
-            />
-
-            {/* Modal Content */}
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up">
+        <dialog
+            ref={dialogRef}
+            aria-labelledby={titleId}
+            className="fixed inset-0 m-auto w-[calc(100%_-_2rem)] max-w-lg overflow-hidden rounded-2xl bg-white p-0 shadow-2xl backdrop:bg-black/60"
+            onCancel={(event) => {
+                event.preventDefault();
+                onClose();
+            }}
+            onClick={(event) => {
+                if (event.target === event.currentTarget) onClose();
+            }}
+        >
+            <div className="relative flex max-h-[90dvh] flex-col">
                 {/* Header / Price Strip */}
-                <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-6 text-white shrink-0">
-                    <div className="flex justify-between items-start">
-                        {price && (
-                            <div>
-                                <p className="text-sm opacity-90 mb-1">{t.startFrom}</p>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-bold">{price}</span>
-                                    <span className="text-sm opacity-90">{currency}</span>
-                                </div>
-                            </div>
-                        )}
-                        {!price && (
-                            <div>
-                                <h2 className="text-xl font-bold">{t.title}</h2>
-                            </div>
-                        )}
-                        {price && <p className="text-sm opacity-90 self-end mb-1">{t.perPerson}</p>}
-                    </div>
+                <div className="shrink-0 bg-gray-900 p-4 pr-16 text-white sm:p-6 sm:pr-16">
+                    <h2 id={titleId} className="text-xl font-bold">{t.title}</h2>
+                    {price && (
+                        <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-sm text-gray-200">
+                            {t.startFrom}
+                            <strong className="text-2xl text-orange-200">{price}</strong>
+                            {currency && <span>{currency}</span>}
+                            <span>{t.perPerson}</span>
+                        </p>
+                    )}
                     <button
+                        ref={closeRef}
+                        type="button"
+                        aria-label={t.close}
                         onClick={onClose}
-                        className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+                        className="absolute top-2 right-2 grid size-11 place-items-center rounded-full text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white"
                     >
-                        <span className="material-icons">close</span>
+                        <span className="material-icons" aria-hidden="true">close</span>
                     </button>
                 </div>
 
                 {/* Scrollable Form Area */}
-                <div className="p-6 overflow-y-auto">
+                <div className="min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
                     {isSuccess ? (
                         <div className="text-center py-12">
                             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -114,7 +124,7 @@ export default function TourInquiryModal({
                             {/* Inquiring About Box */}
                             <div className="bg-orange-50 rounded-xl p-4 border border-orange-100 mb-6">
                                 <span className="text-sm text-gray-500 block mb-1">{t.inquiringAbout}</span>
-                                <h3 className="font-bold text-gray-900 line-clamp-2">{tourTitle}</h3>
+                                <h3 className="break-words font-bold text-gray-900">{tourTitle}</h3>
                             </div>
 
                             {/* Shared Inquiry Form */}
@@ -131,24 +141,7 @@ export default function TourInquiryModal({
                     )}
                 </div>
 
-                {/* Footer Trust Badges */}
-                <div className="bg-gray-50 p-4 border-t border-gray-100 shrink-0">
-                    <div className="flex justify-between items-center text-sm text-gray-600 px-2">
-                        <div className="flex items-center gap-1.5">
-                            <span className="material-icons text-green-500 text-lg">verified</span>
-                            {t.bestPrice}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <span className="material-icons text-green-500 text-lg">support_agent</span>
-                            {t.support}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <span className="material-icons text-green-500 text-lg">lock</span>
-                            {t.secure}
-                        </div>
-                    </div>
-                </div>
             </div>
-        </div>
+        </dialog>
     );
 }

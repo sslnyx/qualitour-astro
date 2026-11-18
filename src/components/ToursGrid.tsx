@@ -39,6 +39,7 @@ export function ToursGrid({ tours, lang }: ToursGridProps) {
     const [filters, setFilters] = useState<FilterState>(getFiltersFromUrl);
     const [currentPage, setCurrentPage] = useState(1);
     const gridRef = useRef<HTMLDivElement>(null);
+    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
     // Listen for URL changes (popstate) and update filters
     useEffect(() => {
@@ -59,6 +60,14 @@ export function ToursGrid({ tours, lang }: ToursGridProps) {
             window.removeEventListener('popstate', handleUrlChange);
             window.removeEventListener('urlchange', handleUrlChange);
         };
+    }, []);
+
+    useEffect(() => {
+        const handleFilterState = (event: Event) => {
+            setMobileFiltersOpen(Boolean((event as CustomEvent<{ open?: boolean }>).detail?.open));
+        };
+        window.addEventListener('mobile-filter-state', handleFilterState);
+        return () => window.removeEventListener('mobile-filter-state', handleFilterState);
     }, []);
 
     // Filter tours based on current filters
@@ -151,39 +160,69 @@ export function ToursGrid({ tours, lang }: ToursGridProps) {
     const localePrefix = getLocalePrefix(lang as Locale);
 
     const t = {
-        showing: lang === 'zh' ? '显示' : 'Showing',
+        showing: lang === 'zh' ? '顯示' : 'Showing',
         of: lang === 'zh' ? '共' : 'of',
-        tours: lang === 'zh' ? '个行程' : 'tours',
-        filters: lang === 'zh' ? '筛选' : 'Filters',
-        previous: lang === 'zh' ? '上一页' : 'Previous',
-        next: lang === 'zh' ? '下一页' : 'Next',
-        noTours: lang === 'zh' ? '未找到相关行程' : 'No tours found',
-        noToursDesc: lang === 'zh' ? '尝试调整您的筛选条件或搜索关键词' : 'Try adjusting your filters or search criteria',
-        viewAll: lang === 'zh' ? '查看所有行程' : 'View All Tours'
+        tours: lang === 'zh' ? '個行程' : 'tours',
+        filters: lang === 'zh' ? '篩選' : 'Filters',
+        previous: lang === 'zh' ? '上一頁' : 'Previous',
+        next: lang === 'zh' ? '下一頁' : 'Next',
+        noTours: lang === 'zh' ? '未找到相關行程' : 'No tours found',
+        noToursDesc: lang === 'zh' ? '嘗試調整篩選條件或搜尋關鍵字' : 'Try adjusting your filters or search criteria',
+        viewAll: lang === 'zh' ? '查看所有行程' : 'View All Tours',
+        searchingFor: lang === 'zh' ? '正在搜尋' : 'Searching for',
+        clearSearch: lang === 'zh' ? '清除搜尋' : 'Clear search'
+    };
+
+    const clearSearch = () => {
+        const params = new URLSearchParams(window.location.search);
+        params.delete('q');
+        const queryString = params.toString();
+        window.history.pushState({}, '', queryString ? `${localePrefix}/tours?${queryString}` : `${localePrefix}/tours`);
+        window.dispatchEvent(new Event('urlchange'));
     };
 
     return (
-        <div className="flex-1" ref={gridRef}>
+        <div className="min-w-0 flex-1" ref={gridRef}>
             {/* Results Count & Active Filters */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <p className="text-gray-600">
-                    {t.showing} <span className="font-semibold text-gray-900">{startIndex + 1}-{Math.min(endIndex, filteredTours.length)}</span> {t.of} <span className="font-semibold text-gray-900">{filteredTours.length}</span> {t.tours}
+                    {t.showing} <span className="font-semibold text-gray-900">{filteredTours.length ? `${startIndex + 1}-${Math.min(endIndex, filteredTours.length)}` : '0'}</span> {t.of} <span className="font-semibold text-gray-900">{filteredTours.length}</span> {t.tours}
                 </p>
 
                 {/* Mobile Filter Button */}
                 <button
                     id="mobile-filter-toggle"
                     className="lg:hidden flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    aria-haspopup="dialog"
+                    aria-controls="tour-filter-drawer"
+                    aria-expanded={mobileFiltersOpen}
+                    onClick={(event) => window.dispatchEvent(new CustomEvent("toggle-mobile-filters", { detail: { trigger: event.currentTarget } }))}
                 >
-                    <span className="material-icons text-lg">filter_list</span>
+                    <span className="material-icons text-lg" aria-hidden="true">filter_list</span>
                     {t.filters}
                     {hasActiveFilters && (
                         <span className="bg-[#f7941e] text-white text-xs px-2 py-0.5 rounded-full">
-                            {(filters.style ? 1 : 0) + (filters.destination ? 1 : 0)}
+                        {(filters.style ? 1 : 0) + (filters.destination ? 1 : 0) + (filters.q ? 1 : 0)}
                         </span>
                     )}
                 </button>
             </div>
+
+            {filters.q && (
+                <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-gray-700" aria-live="polite">
+                    <span>{t.searchingFor}</span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 font-medium text-gray-900">
+                        “{filters.q}”
+                    </span>
+                    <button
+                        type="button"
+                        onClick={clearSearch}
+                        className="text-sm font-medium text-orange-600 hover:text-orange-700 underline underline-offset-2"
+                    >
+                        {t.clearSearch}
+                    </button>
+                </div>
+            )}
 
             {/* Tour Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8 mb-12">
@@ -194,30 +233,32 @@ export function ToursGrid({ tours, lang }: ToursGridProps) {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 py-8">
+                <div className="flex justify-center items-center gap-1 py-8 sm:gap-2">
                     {/* Previous Button */}
                     <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        aria-label={t.previous}
+                        className="flex min-h-11 min-w-8 shrink-0 items-center justify-center gap-1 px-1.5 sm:px-4 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
-                        <span className="material-icons text-sm">chevron_left</span>
+                        <span className="material-icons text-sm" aria-hidden="true">chevron_left</span>
                         <span className="hidden sm:inline">{t.previous}</span>
                     </button>
 
                     {/* Page Numbers */}
-                    <div className="flex gap-1">
+                    <div className="flex min-w-0 flex-wrap justify-center gap-0.5 sm:gap-1">
                         {getPageNumbers().map((page, index) => (
                             page === '...' ? (
-                                <span key={`ellipsis-${index}`} className="px-3 py-2 text-gray-400">
+                                <span key={`ellipsis-${index}`} aria-hidden="true" className="px-0.5 py-2 text-gray-500 sm:px-3">
                                     ...
                                 </span>
                             ) : (
                                 <button
                                     key={page}
                                     onClick={() => handlePageChange(page as number)}
-                                    className={`px-4 py-2 rounded-lg border transition-colors ${currentPage === page
-                                        ? 'bg-orange-500 text-white border-orange-500'
+                                    aria-current={currentPage === page ? "page" : undefined}
+                                    className={`min-h-11 min-w-8 px-1.5 sm:px-4 rounded-lg border transition-colors ${currentPage === page
+                                        ? 'bg-orange-800 text-white border-orange-800'
                                         : 'border-gray-200 text-gray-700 hover:bg-gray-50'
                                         }`}
                                 >
@@ -231,10 +272,11 @@ export function ToursGrid({ tours, lang }: ToursGridProps) {
                     <button
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        aria-label={t.next}
+                        className="flex min-h-11 min-w-8 shrink-0 items-center justify-center gap-1 px-1.5 sm:px-4 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                         <span className="hidden sm:inline">{t.next}</span>
-                        <span className="material-icons text-sm">chevron_right</span>
+                        <span className="material-icons text-sm" aria-hidden="true">chevron_right</span>
                     </button>
                 </div>
             )}

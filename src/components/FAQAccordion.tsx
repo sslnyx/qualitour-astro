@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 interface FAQItem {
     question: string;
@@ -172,59 +172,59 @@ Note: Some tours may have specific cancellation policies. Please check the indiv
     zh: [
         {
             id: 'booking',
-            title: '预订与预约',
+            title: '預訂與預約',
             icon: 'calendar_today',
             faqs: [
                 {
-                    question: '如何预订行程？',
-                    answer: `预订 Qualitour 行程有以下几种方式：
-• 在办公时间内拨打 (778) 945-6000 与我们联系
-• 发送电子邮件至 info@qualitour.ca，说明您的行程偏好
-• 访问您感兴趣的行程页面，点击“立即预订”按钮提交咨询
-• 填写网站上的联系表格，注明您的旅行日期和团队人数
+                    question: '如何預訂行程？',
+                    answer: `預訂 Qualitour 行程有以下幾種方式：
+• 在辦公時間內撥打 (778) 945-6000 與我們聯繫
+• 發送電子郵件至 info@qualitour.ca，說明您的行程偏好
+• 訪問您感興趣的行程頁面，點擊“立即預訂”按鈕提交諮詢
+• 填寫網站上的聯繫表格，註明您的旅行日期和團隊人數
 
-我们的团队将在 24-48 小时内回复，确认名额、提供报价并指导您完成预订流程。`
+我們的團隊將在 24-48 小時內回覆，確認名額、提供報價並指導您完成預訂流程。`
                 },
                 {
-                    question: '我可以预订团队行程吗？',
-                    answer: '是的！我们受理各种规模的团队预订。对于 10 人以上的团队，我们建议您直接联系我们，以获得优惠价格和定制行程。团队咨询请发送邮件至 info@qualitour.ca。'
+                    question: '我可以預訂團隊行程嗎？',
+                    answer: '是的！我們受理各種規模的團隊預訂。對於 10 人以上的團隊，我們建議您直接聯繫我們，以獲得優惠價格和定製行程。團隊諮詢請發送郵件至 info@qualitour.ca。'
                 },
                 {
-                    question: '我需要打印预订确认单吗？',
-                    answer: '虽然不强制要求打印确认单，但我们建议在行程当天准备好预订确认的电子版或打印版。您可以在移动设备上出示预订确认邮件。'
+                    question: '我需要打印預訂確認單嗎？',
+                    answer: '雖然不強制要求打印確認單，但我們建議在行程當天準備好預訂確認的電子版或打印版。您可以在移動設備上出示預訂確認郵件。'
                 },
                 {
-                    question: '确认后我可以修改预订吗？',
-                    answer: '是的，修改视名额情况以及距离行程日期的时间而定。如果您需要更改预订，请尽快与我们联系。行程前 15 天内进行的修改可能会产生额外费用。'
+                    question: '確認後我可以修改預訂嗎？',
+                    answer: '是的，修改視名額情況以及距離行程日期的時間而定。如果您需要更改預訂，請儘快與我們聯繫。行程前 15 天內進行的修改可能會產生額外費用。'
                 },
             ]
         },
         {
             id: 'cancellation',
-            title: '取消与退款',
+            title: '取消與退款',
             icon: 'credit_card',
             faqs: [
                 {
-                    question: '你们的取消政策是什么？',
-                    answer: `我们的标准取消政策如下：
-• 提前 45 天或以上取消：每人收取 100 美元手续费
+                    question: '你們的取消政策是什麼？',
+                    answer: `我們的標準取消政策如下：
+• 提前 45 天或以上取消：每人收取 100 美元手續費
 • 提前 15-45 天取消：退款 50%
-• 15 天内取消：不予退款
-• 未按时参加者（No-shows）：不予退款
+• 15 天內取消：不予退款
+• 未按時參加者（No-shows）：不予退款
 
-注：部分行程可能有特定的取消政策。请查看具体行程页面了解详情。`
+注：部分行程可能有特定的取消政策。請查看具體行程頁面瞭解詳情。`
                 },
                 {
-                    question: "如果我没有按时参加行程会怎样？",
-                    answer: '未按时参加（No-shows）定义为未在预定时间到达指定上车点的旅客。在这种情况下，您的预订将被取消，且不予退款。请确保至少在预定出发时间前 15 分米到达。'
+                    question: "如果我沒有按時參加行程會怎樣？",
+                    answer: '未按時參加（No-shows）定義爲未在預定時間到達指定上車點的旅客。在這種情況下，您的預訂將被取消，且不予退款。請確保至少在預定出發時間前 15 分米到達。'
                 },
                 {
-                    question: '如果行程因天气原因取消怎么办？',
-                    answer: '如果行程因恶劣天气或不可预见的情况必须取消，我们最迟会在行程前一天晚上通过电子邮件或短信通知您。在这种情况下，您可以选择全额退款或重新安排行程。'
+                    question: '如果行程因天氣原因取消怎麼辦？',
+                    answer: '如果行程因惡劣天氣或不可預見的情況必須取消，我們最遲會在行程前一天晚上通過電子郵件或短信通知您。在這種情況下，您可以選擇全額退款或重新安排行程。'
                 },
                 {
-                    question: '收到退款需要多长时间？',
-                    answer: '退款通常在批准后 5-10 个工作日内处理。退款将退还至预订时使用的原始付款方式。信用卡退款可能需要额外的 3-5 个工作日才能显示在您的账单上。'
+                    question: '收到退款需要多長時間？',
+                    answer: '退款通常在批准後 5-10 個工作日內處理。退款將退還至預訂時使用的原始付款方式。信用卡退款可能需要額外的 3-5 個工作日才能顯示在您的賬單上。'
                 },
             ]
         },
@@ -234,92 +234,92 @@ Note: Some tours may have specific cancellation policies. Please check the indiv
             icon: 'flight',
             faqs: [
                 {
-                    question: '行程有哪些年龄限制？',
-                    answer: '18 岁以下的未成年人必须由成年人陪同。婴儿（2 岁以下）可以由成人抱坐，并与成人共用现有寝具，无需额外费用。部分探险行程可能由特定的年龄要求，请查看具体行程详情。'
+                    question: '行程有哪些年齡限制？',
+                    answer: '18 歲以下的未成年人必須由成年人陪同。嬰兒（2 歲以下）可以由成人抱坐，並與成人共用現有寢具，無需額外費用。部分探險行程可能由特定的年齡要求，請查看具體行程詳情。'
                 },
                 {
-                    question: '参加行程需要带什么？',
-                    answer: `我们建议携带：
-• 有效身份证件或护照
-• 舒适的步行鞋
-• 适合天气的衣物
-• 照相机
-• 足够的现金用于用餐、饮料、纪念品和小费
-• 任何必要的药物
-• 防晒霜和太阳镜（户外行程）`
+                    question: '參加行程需要帶什麼？',
+                    answer: `我們建議攜帶：
+• 有效身份證件或護照
+• 舒適的步行鞋
+• 適合天氣的衣物
+• 照相機
+• 足夠的現金用於用餐、飲料、紀念品和小費
+• 任何必要的藥物
+• 防曬霜和太陽鏡（戶外行程）`
                 },
                 {
-                    question: '包含旅游保险吗？',
-                    answer: '行程价格不包含旅游保险。我们强烈建议您在出发前购买全面的旅游保险，涵盖行程取消、医疗急救和行李丢失等项。'
+                    question: '包含旅遊保險嗎？',
+                    answer: '行程價格不包含旅遊保險。我們強烈建議您在出發前購買全面的旅遊保險，涵蓋行程取消、醫療急救和行李丟失等項。'
                 },
                 {
-                    question: '国际旅行需要哪些文件？',
-                    answer: '对于国际行程，您需要持有有效期在回程日期后至少 6 个月的有效护照。部分目的地可能需要签证。我们建议您在旅行前尽早检查目的地国家的入境要求。'
+                    question: '國際旅行需要哪些文件？',
+                    answer: '對於國際行程，您需要持有有效期在回程日期後至少 6 個月的有效護照。部分目的地可能需要簽證。我們建議您在旅行前儘早檢查目的地國家的入境要求。'
                 },
             ]
         },
         {
             id: 'accessibility',
-            title: '无障碍与特殊需求',
+            title: '無障礙與特殊需求',
             icon: 'accessible',
             faqs: [
                 {
-                    question: '你们的行程支持轮椅通行吗？',
-                    answer: "无障碍程度因行程而异。我们的许多行程涉及大量步行，可能不适合轮椅使用者或行动不便的人士。请在预订前联系我们讨论您的具体需求，我们将帮助您寻找合适的行程。"
+                    question: '你們的行程支持輪椅通行嗎？',
+                    answer: "無障礙程度因行程而異。我們的許多行程涉及大量步行，可能不適合輪椅使用者或行動不便的人士。請在預訂前聯繫我們討論您的具體需求，我們將幫助您尋找合適的行程。"
                 },
                 {
-                    question: '你们能满足特殊饮食需求吗？',
-                    answer: '是的，如有提前通知，我们可以满足大多数饮食限制。请在预订时告知我们您的任何饮食要求（素食、纯素、清真、犹太洁食、过敏等），以便我们做出适当安排。'
+                    question: '你們能滿足特殊飲食需求嗎？',
+                    answer: '是的，如有提前通知，我們可以滿足大多數飲食限制。請在預訂時告知我們您的任何飲食要求（素食、純素、清真、猶太潔食、過敏等），以便我們做出適當安排。'
                 },
                 {
-                    question: '你们为身障旅客提供行程吗？',
-                    answer: '我们致力于让旅行惠及每一个人。虽然部分行程由体力要求，但我们提供替代方案，并可以帮助您规划符合您需求的旅行。请直接与我们联系讨论。'
+                    question: '你們爲身障旅客提供行程嗎？',
+                    answer: '我們致力於讓旅行惠及每一個人。雖然部分行程由體力要求，但我們提供替代方案，並可以幫助您規劃符合您需求的旅行。請直接與我們聯繫討論。'
                 },
             ]
         },
         {
             id: 'payment',
-            title: '付款与价格',
+            title: '付款與價格',
             icon: 'payments',
             faqs: [
                 {
-                    question: '你们接受哪些付款方式？',
-                    answer: '我们接受所有主流信用卡（Visa、MasterCard、American Express）、PayPal 以及在线预订的银行转账。对于线下交易，我们也接受现金（加元和美元）。'
+                    question: '你們接受哪些付款方式？',
+                    answer: '我們接受所有主流信用卡（Visa、MasterCard、American Express）、PayPal 以及在線預訂的銀行轉賬。對於線下交易，我們也接受現金（加元和美元）。'
                 },
                 {
-                    question: '价格以哪种货币标示？',
-                    answer: '除非另有说明，我们的价格以美元 (USD) 标示。对于加拿大的行程，价格也可能以加元 (CAD) 显示。货币将在每个行程页面上明确注明。'
+                    question: '價格以哪種貨幣標示？',
+                    answer: '除非另有說明，我們的價格以美元 (USD) 標示。對於加拿大的行程，價格也可能以加元 (CAD) 顯示。貨幣將在每個行程頁面上明確註明。'
                 },
                 {
-                    question: '是否有任何隐藏费用？',
-                    answer: '所有强制性费用均已包含在显示的行程价格中。但是请注意，可选活动、行程中未注明的餐费、导游/司机的小费、个人开支和旅游保险均不包含在内。'
+                    question: '是否有任何隱藏費用？',
+                    answer: '所有強制性費用均已包含在顯示的行程價格中。但是請注意，可選活動、行程中未註明的餐費、導遊/司機的小費、個人開支和旅遊保險均不包含在內。'
                 },
                 {
-                    question: '我在行程中需要携带现金吗？',
-                    answer: '是的，我们建议携带足够的现金用于用餐、饮料、纪念品和小费。许多便利店、当地餐馆和小摊贩不接受信用卡。在行程目的地，ATM 并不总是随处可见。'
+                    question: '我在行程中需要攜帶現金嗎？',
+                    answer: '是的，我們建議攜帶足夠的現金用於用餐、飲料、紀念品和小費。許多便利店、當地餐館和小攤販不接受信用卡。在行程目的地，ATM 並不總是隨處可見。'
                 },
             ]
         },
         {
             id: 'accommodation',
-            title: '住宿与交通',
+            title: '住宿與交通',
             icon: 'hotel',
             faqs: [
                 {
-                    question: '多日行程中房间如何分配？',
-                    answer: '对于多日行程，房间分配通常为：2 人共用 1 间双人间。对于人数为奇数的团队，3 人将共用一个三人间。可根据要求提供单人间补差价，需支付额外费用。'
+                    question: '多日行程中房間如何分配？',
+                    answer: '對於多日行程，房間分配通常爲：2 人共用 1 間雙人間。對於人數爲奇數的團隊，3 人將共用一個三人間。可根據要求提供單人間補差價，需支付額外費用。'
                 },
                 {
-                    question: '使用哪种交通工具？',
-                    answer: '我们根据团队规模使用舒适的空调大巴或面包车。所有车辆均定期保养，并由经验丰富的专业人员驾驶。对于部分行程，我们还可能使用船只、缆车或行程中注明的当地交通工具。'
+                    question: '使用哪種交通工具？',
+                    answer: '我們根據團隊規模使用舒適的空調大巴或麪包車。所有車輛均定期保養，並由經驗豐富的專業人員駕駛。對於部分行程，我們還可能使用船隻、纜車或行程中註明的當地交通工具。'
                 },
                 {
-                    question: '包含酒店接送吗？',
-                    answer: '许多行程都包含酒店接送，特别是在主要城市。接送地点和时间将在您的预订确认邮件中。对于部分行程，您可能需要到中央出发点集合——这将在行程说明中明确标出。'
+                    question: '包含酒店接送嗎？',
+                    answer: '許多行程都包含酒店接送，特別是在主要城市。接送地點和時間將在您的預訂確認郵件中。對於部分行程，您可能需要到中央出發點集合——這將在行程說明中明確標出。'
                 },
                 {
-                    question: '行程会发生变化吗？',
-                    answer: '是的，由于交通状况、天气或其他不可预见的情况，停留的顺序和时长可能会有所调整。我们的导游始终会竭尽全力确保您获得最佳体验，同时将您的安全放在首位。'
+                    question: '行程會發生變化嗎？',
+                    answer: '是的，由於交通狀況、天氣或其他不可預見的情況，停留的順序和時長可能會有所調整。我們的導遊始終會竭盡全力確保您獲得最佳體驗，同時將您的安全放在首位。'
                 },
             ]
         },
@@ -338,6 +338,7 @@ function FAQAccordionItem({
     isOpen: boolean;
     onToggle: () => void;
 }) {
+    const answerId = useId();
     // Helper to render text with clickable links (emails and phones)
     const renderAnswer = (text: string) => {
         // Regex for email and phone numbers
@@ -371,17 +372,22 @@ function FAQAccordionItem({
     return (
         <div className="border-b border-gray-100 last:border-b-0">
             <button
+                type="button"
+                aria-expanded={isOpen}
+                aria-controls={answerId}
                 onClick={onToggle}
-                className="w-full py-5 px-4 flex items-center justify-between text-left transition-colors hover:bg-orange-50/50 focus:outline-none rounded-xl group"
+                className="w-full py-5 px-4 flex items-center justify-between text-left transition-colors hover:bg-orange-50/50 focus-visible:outline-2 focus-visible:outline-orange-700 rounded-xl group"
             >
                 <span className="text-lg font-medium text-gray-900 pr-8 group-hover:text-[#f7941e] transition-colors">{question}</span>
                 <span className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[#f7941e] to-[#ff6b35] flex items-center justify-center text-white shadow-lg shadow-orange-200/50 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-                    <span className="material-icons text-xl">expand_more</span>
+                    <span className="material-icons text-xl" aria-hidden="true">expand_more</span>
                 </span>
             </button>
-            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="px-4 pb-6 text-gray-600 whitespace-pre-line leading-relaxed">
-                    {renderAnswer(answer)}
+            <div id={answerId} inert={!isOpen} className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                <div className="min-h-0 overflow-hidden">
+                    <div className="max-w-[75ch] px-4 pb-6 text-gray-600 whitespace-pre-line leading-relaxed">
+                        {renderAnswer(answer)}
+                    </div>
                 </div>
             </div>
         </div>

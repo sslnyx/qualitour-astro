@@ -29,6 +29,19 @@
 
 @import "tailwindcss";
 
+.tour-hero-cover {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: clamp(16rem, 55svh, 33rem);
+    object-fit: contain;
+}
+
+.tour-hero-cover:not([width]),
+.tour-hero-cover:not([height]) {
+    aspect-ratio: auto 4 / 3;
+}
+
 /* Keep streamed content from moving the page when a scrollbar first appears. */
 html {
     scrollbar-gutter: stable;

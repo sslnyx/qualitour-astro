@@ -32,19 +32,19 @@ const totalReviews = placeDetails?.user_ratings_total || reviews.length;
 // Translations
 const t = {
     badge: currentLang === 'zh' ? '客戶評價' : 'Customer Reviews',
-    title: currentLang === 'zh' ? '聽聽我們滿意的旅客怎麼說' : 'Hear From Our Happy Travelers',
-    subtitle: currentLang === 'zh' ? 'Qualitour旅客分享的真實體驗' : 'Authentic experiences shared by travelers who explored the world with Qualitour.',
+    titleLead: currentLang === 'zh' ? '聽聽' : 'Hear From Our ',
+    titleHighlight: currentLang === 'zh' ? '旅客' : 'Happy Travelers',
+    titleEnd: currentLang === 'zh' ? '怎麼說' : '',
+    subtitle: currentLang === 'zh' ? 'Qualitour 旅客分享的真實體驗。' : 'Authentic experiences shared by travelers who explored the world with Qualitour.',
     avgRating: currentLang === 'zh' ? '平均評分' : 'Average Rating',
-    googleReviews: currentLang === 'zh' ? 'Google評論' : 'Google Reviews',
-    fiveStarReviews: currentLang === 'zh' ? '五星評論' : '5-Star Reviews',
-    reviews: currentLang === 'zh' ? '條評論' : 'reviews',
+    googleReviews: currentLang === 'zh' ? 'Google 評論' : 'Google Reviews',
     allReviews: currentLang === 'zh' ? '所有評論' : 'All Reviews',
     browseReviews: currentLang === 'zh' ? '瀏覽旅客的真實體驗' : 'Browse through authentic experiences shared by our travelers',
     noReviews: currentLang === 'zh' ? '暫無評論' : 'No Reviews Yet',
-    beFirst: currentLang === 'zh' ? '成為第一個留下評論的人！' : 'Be the first to leave a review!',
+    beFirst: currentLang === 'zh' ? '歡迎留下第一則評論。' : 'Be the first to leave a review!',
     shareExperience: currentLang === 'zh' ? '分享您的體驗' : 'Share Your Experience',
-    feedbackMatters: currentLang === 'zh' ? '您的回饋對我們意義重大！幫助其他旅客發現Qualitour。' : 'Your feedback means the world to us! Help other travelers discover Qualitour.',
-    leaveReview: currentLang === 'zh' ? '留下Google評論' : 'Leave a Google Review',
+    feedbackMatters: currentLang === 'zh' ? '分享你的旅程，讓其他旅客更了解 Qualitour。' : 'Your feedback means the world to us! Help other travelers discover Qualitour.',
+    leaveReview: currentLang === 'zh' ? '留下 Google 評論' : 'Leave a Google Review',
     contactUs: currentLang === 'zh' ? '聯絡我們' : 'Contact Us',
 };
 ---
@@ -56,7 +56,7 @@ const t = {
         : "Read authentic reviews from our happy customers. See why travelers trust Qualitour for their tour experiences."} 
     lang={currentLang}
 >
-    <main class="flex-grow">
+    <div>
         <!-- Hero Section -->
         <section class="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
             <!-- Background pattern -->
@@ -75,18 +75,18 @@ const t = {
 
                 <!-- Title -->
                 <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
-                    Hear From Our <span class="text-[#f7941e]">Happy Travelers</span>
+                    {t.titleLead}<span class="text-[#f7941e]">{t.titleHighlight}</span>{t.titleEnd}
                 </h1>
                 
                 <p class="text-xl text-white/80 max-w-2xl mx-auto mb-12">
-                    Authentic experiences shared by travelers who explored the world with Qualitour.
+                    {t.subtitle}
                 </p>
 
                 <!-- Stats Cards -->
                 <div class="flex flex-wrap justify-center gap-4 md:gap-8">
                     <!-- Overall Rating Card -->
                     <div class="bg-white/10 backdrop-blur-md rounded-2xl px-10 py-8 border border-white/20 text-center flex flex-col items-center justify-center">
-                        <div class="flex items-center justify-center gap-1.5 mb-2">
+                        <div class="flex items-center justify-center gap-1.5 mb-2" aria-hidden="true">
                             {Array.from({ length: 5 }).map((_, i) => (
                                 <svg
                                     class="w-7 h-7 text-amber-400"
@@ -97,7 +97,7 @@ const t = {
                                 </svg>
                             ))}
                         </div>
-                        <div class="text-white/70 text-sm font-medium tracking-wide">Average Rating</div>
+                        <div class="text-white/70 text-sm font-medium tracking-wide">{t.avgRating}</div>
                     </div>
 
                     <!-- Total Reviews Card -->
@@ -111,7 +111,7 @@ const t = {
                             </svg>
                         </div>
                         <div class="text-4xl font-bold text-white">{totalReviews.toLocaleString()}</div>
-                        <div class="text-white/70 text-sm">Google Reviews</div>
+                        <div class="text-white/70 text-sm">{t.googleReviews}</div>
                     </div>
 
                 </div>
@@ -127,23 +127,23 @@ const t = {
                         <div class="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
                             <span class="material-icons text-gray-400 text-4xl">rate_review</span>
                         </div>
-                        <h2 class="text-2xl font-bold text-gray-900 mb-2">No Reviews Yet</h2>
-                        <p class="text-gray-500">Be the first to leave a review!</p>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">{t.noReviews}</h2>
+                        <p class="text-gray-500">{t.beFirst}</p>
                     </div>
                 ) : (
                     <>
                         <!-- Section Header -->
                         <div class="text-center mb-12">
                             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                                All Reviews
+                                {t.allReviews}
                             </h2>
                             <p class="text-lg text-gray-500 max-w-2xl mx-auto">
-                                Browse through authentic experiences shared by our travelers
+                                {t.browseReviews}
                             </p>
                         </div>
 
                         <!-- Reviews Grid Component -->
-                        <SimpleReviewsGrid reviews={reviews} initialCount={12} showLoadMore={true} client:load />
+                        <SimpleReviewsGrid reviews={reviews} initialCount={12} lang={currentLang} client:load />
                     </>
                 )}
             </div>
@@ -160,10 +160,10 @@ const t = {
                         <span class="material-icons text-white text-4xl">edit_note</span>
                     </div>
                     <h2 class="text-3xl md:text-5xl font-bold text-white mb-6">
-                        Share Your Experience
+                        {t.shareExperience}
                     </h2>
                     <p class="text-xl text-white/90 mb-10">
-                        Your feedback means the world to us! Help other travelers discover Qualitour.
+                        {t.feedbackMatters}
                     </p>
                     <div class="flex flex-wrap justify-center gap-4">
                         <a
@@ -178,18 +178,18 @@ const t = {
                                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                             </svg>
-                            Leave a Google Review
+                            {t.leaveReview}
                         </a>
                         <a
                             href={`${localePrefix}/contact`}
                             class="inline-flex items-center gap-2 px-8 py-3 bg-[#f7941e] hover:bg-[#e8850f] text-white font-medium rounded-full transition-colors"
                         >
                             <span class="material-icons">mail</span>
-                            Contact Us
+                            {t.contactUs}
                         </a>
                     </div>
                 </div>
             </div>
         </section>
-    </main>
+    </div>
 </Layout>

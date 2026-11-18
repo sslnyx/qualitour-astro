@@ -7,6 +7,7 @@ interface SimpleReviewsGridProps {
     reviews: GoogleReview[];
     initialCount?: number;
     showLoadMore?: boolean;
+    lang?: string;
 }
 
 // Star rating component
@@ -69,7 +70,7 @@ function Avatar({ src, name }: { src?: string; name: string }) {
 }
 
 // Individual review card with expand/collapse
-function ReviewCard({ review }: { review: GoogleReview }) {
+function ReviewCard({ review, lang }: { review: GoogleReview; lang: string }) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [lightboxData, setLightboxData] = useState<{ images: string[]; index: number } | null>(null);
 
@@ -77,6 +78,7 @@ function ReviewCard({ review }: { review: GoogleReview }) {
     const shouldTruncate = text.length > 200;
     const displayText = shouldTruncate && !isExpanded ? text.slice(0, 200) + '...' : text;
     const hasPhotos = review.images && review.images.length > 0;
+    const isChinese = lang === 'zh';
 
     const openLightbox = (index: number) => {
         if (review.images) {
@@ -117,7 +119,7 @@ function ReviewCard({ review }: { review: GoogleReview }) {
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="text-[#f7941e] text-sm font-medium mt-2 hover:underline focus:outline-none"
                     >
-                        {isExpanded ? 'Show less' : 'Read more'}
+                        {isExpanded ? (isChinese ? '收起' : 'Show less') : (isChinese ? '閱讀全文' : 'Read more')}
                     </button>
                 )}
 
@@ -132,7 +134,7 @@ function ReviewCard({ review }: { review: GoogleReview }) {
                             >
                                 <img
                                     src={getCfTransformUrl(wpUrl(img), { width: 400, height: 400, format: 'webp' })}
-                                    alt={`Review photo ${idx + 1}`}
+                                    alt={isChinese ? `評論照片 ${idx + 1}` : `Review photo ${idx + 1}`}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
                                     referrerPolicy="no-referrer"
@@ -156,7 +158,9 @@ function ReviewCard({ review }: { review: GoogleReview }) {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span>{review.images!.length} photo{review.images!.length > 1 ? 's' : ''}</span>
+                        <span>{isChinese
+                            ? `${review.images!.length} 張照片`
+                            : `${review.images!.length} photo${review.images!.length > 1 ? 's' : ''}`}</span>
                     </div>
                 )}
 
@@ -165,7 +169,7 @@ function ReviewCard({ review }: { review: GoogleReview }) {
                     <svg className="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    <span>Verified Google Review</span>
+                    <span>{isChinese ? '已驗證的 Google 評論' : 'Verified Google Review'}</span>
                 </div>
             </div>
 
@@ -175,6 +179,7 @@ function ReviewCard({ review }: { review: GoogleReview }) {
                     images={lightboxData.images}
                     authorName={review.author_name}
                     initialIndex={lightboxData.index}
+                    lang={lang}
                     onClose={() => setLightboxData(null)}
                 />
             )}
@@ -187,6 +192,7 @@ export default function SimpleReviewsGrid({
     reviews,
     initialCount = 6,
     showLoadMore = true,
+    lang = 'en',
 }: SimpleReviewsGridProps) {
     const [visibleCount, setVisibleCount] = useState(initialCount);
 
@@ -196,7 +202,7 @@ export default function SimpleReviewsGrid({
                 <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                <p>No reviews available yet.</p>
+                <p>{lang === 'zh' ? '暫無評論。' : 'No reviews available yet.'}</p>
             </div>
         );
     }
@@ -209,7 +215,7 @@ export default function SimpleReviewsGrid({
             {/* Reviews Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {visibleReviews.map((review, index) => (
-                    <ReviewCard key={review.time || index} review={review} />
+                    <ReviewCard key={review.time || index} review={review} lang={lang} />
                 ))}
             </div>
 
@@ -220,7 +226,7 @@ export default function SimpleReviewsGrid({
                         onClick={() => setVisibleCount((prev) => prev + 6)}
                         className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-full transition-colors"
                     >
-                        <span>Load More Reviews</span>
+                        <span>{lang === 'zh' ? '載入更多評論' : 'Load More Reviews'}</span>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>

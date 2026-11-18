@@ -76,7 +76,7 @@ export default function ReviewsSlider({ reviews, totalReviews, lang = 'en' }: Re
     if (!reviews || reviews.length === 0) {
         return (
             <div className="text-center text-gray-500 py-12">
-                <p>{lang === 'zh' ? '暂无评论' : 'No reviews available'}</p>
+                <p>{lang === 'zh' ? '暫無評論' : 'No reviews available'}</p>
             </div>
         );
     }
@@ -167,7 +167,7 @@ export default function ReviewsSlider({ reviews, totalReviews, lang = 'en' }: Re
                 <button
                     onClick={scrollPrev}
                     className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors z-10 hidden md:flex"
-                    aria-label="Previous reviews"
+                    aria-label={lang === 'zh' ? '上一則評論' : 'Previous reviews'}
                 >
                     <span className="material-icons text-gray-600">chevron_left</span>
                 </button>
@@ -175,14 +175,14 @@ export default function ReviewsSlider({ reviews, totalReviews, lang = 'en' }: Re
                 <button
                     onClick={scrollNext}
                     className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors z-10 hidden md:flex"
-                    aria-label="Next reviews"
+                    aria-label={lang === 'zh' ? '下一則評論' : 'Next reviews'}
                 >
                     <span className="material-icons text-gray-600">chevron_right</span>
                 </button>
             </div>
 
             {/* Dots Indicator */}
-            <div className="flex justify-center gap-2 mt-8">
+            <div className="flex flex-wrap justify-center gap-2 mt-8">
                 {reviews.map((_, index) => (
                     <button
                         key={index}
@@ -191,24 +191,26 @@ export default function ReviewsSlider({ reviews, totalReviews, lang = 'en' }: Re
                             ? 'bg-orange-500 w-8'
                             : 'bg-gray-300 hover:bg-gray-400'
                             }`}
-                        aria-label={`Go to slide ${index + 1}`}
+                        aria-label={lang === 'zh' ? `前往第 ${index + 1} 則評論` : `Go to slide ${index + 1}`}
                     />
                 ))}
             </div>
 
             {/* Google Badge */}
             <div className="text-center mt-8">
-                <div className="inline-flex items-center gap-3 px-6 py-3 bg-white rounded-full shadow-sm border border-gray-200">
-                    <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                    <span className="font-semibold text-gray-900">{lang === 'zh' ? '谷歌评论' : 'Google Reviews'}</span>
-                    <div className="flex gap-0.5 text-orange-400">
+                <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 sm:px-6 py-3 bg-white rounded-2xl sm:rounded-full shadow-sm border border-gray-200">
+                    <span className="inline-flex items-center gap-2 font-semibold text-gray-900">
+                        <img src="https://www.google.com/favicon.ico" alt="" className="w-5 h-5 shrink-0" />
+                        {lang === 'zh' ? 'Google 評論' : 'Google Reviews'}
+                    </span>
+                    <div className="flex gap-0.5 text-orange-400" aria-hidden="true">
                         {Array.from({ length: 5 }).map((_, i) => (
                             <span key={i} className="material-icons text-sm">star</span>
                         ))}
                     </div>
                     <span className="text-gray-600 text-sm">
                         {lang === 'zh'
-                            ? `基于 ${totalCount}+ 条评论`
+                            ? `根據 ${totalCount}+ 則評論`
                             : `Based on ${totalCount}+ reviews`
                         }
                     </span>
@@ -221,6 +223,7 @@ export default function ReviewsSlider({ reviews, totalReviews, lang = 'en' }: Re
                     images={lightboxImages}
                     authorName={lightboxAuthor}
                     initialIndex={lightboxIndex}
+                    lang={lang}
                     onClose={() => setLightboxOpen(false)}
                 />
             )}

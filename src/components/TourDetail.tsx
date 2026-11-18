@@ -585,10 +585,12 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                     <div hidden={activeTab !== 'photos'} data-tour-panel="photos" className="animate-fadeIn">
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {photos.map((photo, index) => (
-                                <div
+                                <button
+                                    type="button"
                                     key={index}
-                                    className="relative aspect-[4/3] rounded-xl overflow-hidden group cursor-pointer"
+                                    className="relative aspect-[4/3] rounded-xl overflow-hidden group cursor-pointer border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
                                     onClick={() => setLightboxIndex(index)}
+                                    aria-label={`Open photo ${index + 1} of ${photos.length}`}
                                 >
                                     <img
                                         src={tour.optimizedPhotos?.[photo]?.thumbnail || getCfTransformUrl(photo, { width: 600, height: 450, format: 'webp' })}
@@ -601,7 +603,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                             zoom_in
                                         </span>
                                     </div>
-                                </div>
+                                </button>
                             ))}
                         </div>
 
@@ -612,6 +614,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                 imageDimensions={photos.map((photo: string) => tour.optimizedPhotos?.[photo])}
                                 authorName={tour.title?.rendered || 'Tour'}
                                 initialIndex={lightboxIndex}
+                                lang={lang}
                                 onClose={() => setLightboxIndex(null)}
                             />
                         )}

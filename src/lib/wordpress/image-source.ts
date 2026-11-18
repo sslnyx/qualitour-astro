@@ -1,6 +1,9 @@
 import type { WPTour, WPTourFeaturedImage } from "./types";
 import { wpUrl } from "../wp-url";
 
+/** Shared by the split hero image and its preload. */
+export const tourHeroImageSizes = '(min-width: 1280px) 640px, (min-width: 1024px) 52vw, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)';
+
 function extractUrl(value: unknown): string | null {
     if (typeof value === "string" && value.trim()) return value;
     if (typeof value === "object" && value !== null && "url" in value) {
