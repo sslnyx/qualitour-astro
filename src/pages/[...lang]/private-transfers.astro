@@ -390,17 +390,17 @@ function extractPriceNumber(caption: string): string | null {
         subtitle={t.subheading}
         badge={{ icon: "airport_shuttle", text: t.heroTagline }}
     >
-        <div class="flex flex-wrap justify-center gap-4 mt-10">
+        <div class="mt-6 flex flex-wrap justify-center gap-2 sm:mt-10 sm:gap-4">
             <a
                 href="#routes"
-                class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] text-white font-bold rounded-full hover:shadow-2xl hover:shadow-orange-500/30 hover:scale-105 transition-all duration-300"
+                class="inline-flex min-h-11 items-center gap-2 rounded-full bg-gradient-to-r from-[#f7941e] to-[#ff6b35] px-4 py-2 text-sm font-bold text-white transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/30 sm:px-8 sm:py-4 sm:text-base"
             >
                 <span class="material-icons">route</span>
                 {t.popularRoutes}
             </a>
             <a
                 href={`${localePrefix}/contact`}
-                class="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300"
+                class="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold text-white backdrop-blur-sm transition-all duration-300 hover:bg-white/20 sm:px-8 sm:py-4 sm:text-base"
             >
                 <span class="material-icons">mail</span>
                 {t.getInTouch}
