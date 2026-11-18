@@ -45,14 +45,16 @@ test('the homepage carousel starts automatically and honors reduced motion', asy
   assert.match(hero, /!isPlaying \|\| isModalOpen \|\| isPointerOver/);
 });
 
-test('homepage card posters use the full image in a 3:2 frame', async () => {
-  const card = await source('src/components/TourCardOptimized.astro');
-  assert.match(card, /isPreview \? "aspect-\[3\/2\]"/);
-  assert.match(card, /previewSource = isPreview \? getTourImageUrl\(tour\)/);
-  assert.match(card, /optimizeImageUrl\(previewSource, 960\)/);
-  assert.match(card, /src=\{previewImage\}[\s\S]*?class="h-full w-full object-contain"/);
-  assert.match(card, /!isPreview && ribbon/);
-  assert.match(card, /isPreview && ribbon/);
+test('the homepage uses the same cover card as the tour categories', async () => {
+  const [home, category, card] = await Promise.all([
+    source('src/components/HomeTourGroups.astro'),
+    source('src/components/TourCategoryPage.astro'),
+    source('src/components/TourCardOptimized.astro'),
+  ]);
+  assert.match(home, /<TourCardOptimized tour=\{tour\} lang=\{lang\} headingTag="h4"\s*\/>/);
+  assert.match(category, /<TourCardOptimized tour=\{tour\} lang=\{lang\}\s*\/>/);
+  assert.match(card, /object-cover/);
+  assert.doesNotMatch(card, /object-contain/);
 });
 
 test('tour enquiry opens a named native dialog and synchronizes native dismissal', async () => {

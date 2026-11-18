@@ -11,13 +11,12 @@ import CdnImage from "./CdnImage.astro";
 import type { WPTour } from "../lib/wordpress/types";
 import { extractTourImageUrl } from "../lib/wp-url";
 import { getLocalePrefix, type Locale } from "../i18n/config";
-import { getTourImageUrl } from "../lib/wordpress/image-source";
-import { optimizeImageUrl } from "../lib/wordpress/image";
 
 interface Props {
     tour: WPTour;
     lang?: string;
-    style?: "grid" | "compact" | "featured" | "preview";
+    style?: "grid" | "compact" | "featured";
+    headingTag?: "h3" | "h4";
     showExcerpt?: boolean;
     excerptWords?: number;
 }
@@ -26,6 +25,7 @@ const {
     tour,
     lang = "en",
     style = "grid",
+    headingTag: Title = "h3",
     showExcerpt = false,
     excerptWords = 14,
 } = Astro.props;
@@ -47,6 +47,10 @@ function getExcerptWords(html: string, wordCount: number): string {
     return words.join(" ") + (words.length >= wordCount ? "..." : "");
 }
 
+function getImageUrl(tour: WPTour): string | null {
+    return extractTourImageUrl(tour.featured_image_url);
+}
+
 function getDurationText(tour: WPTour): string | null {
     if (tour.tour_meta?.duration_text) {
         return tour.tour_meta.duration_text;
@@ -63,6 +67,7 @@ function getDurationText(tour: WPTour): string | null {
 }
 
 // Computed values
+const imageUrl = tour.optimizedImageUrl || getImageUrl(tour);
 const localePrefix = getLocalePrefix(lang as Locale);
 const cleanedTitle = cleanTitle(tour.title.rendered);
 const durationText = getDurationText(tour);
@@ -73,15 +78,8 @@ const hasDiscount =
     tour.tour_meta?.["tourmaster-tour-discount"] === "true" && discountPrice;
 const ribbon = tour.tour_meta?.ribbon;
 
-const isPreview = style === "preview";
-const previewSource = isPreview ? getTourImageUrl(tour) : null;
-const previewImage = previewSource ? await optimizeImageUrl(previewSource, 960) : null;
-const imageUrl = isPreview ? null : tour.optimizedImageUrl || extractTourImageUrl(tour.featured_image_url);
 const isCompact = style === "compact";
 const isFeatured = style === "featured";
-const Title = isPreview ? "h4" : "h3";
-const previewPrice = hasDiscount || price;
-const currency = tour.tour_meta?.["tourmaster-tour-currency"];
 
 // Image dimensions for optimization
 const imageWidth = isFeatured ? 600 : isCompact ? 400 : 500;
@@ -92,16 +90,14 @@ const imageHeight = isCompact
 
 <a
     href={`${localePrefix}/tours/${tour.slug}`}
-    class:list={['group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100', isPreview ? 'flex flex-col focus-visible:outline-2 focus-visible:outline-[#a8410b]' : 'block']}
+    class="group block bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100"
 >
     <!-- Image -->
     <div
-        class={`relative overflow-hidden bg-gray-100 ${isPreview ? "aspect-[3/2]" : isCompact ? "aspect-[16/9]" : "aspect-[4/3]"}`}
+        class={`relative overflow-hidden bg-gray-100 ${isCompact ? "aspect-[16/9]" : "aspect-[4/3]"}`}
     >
         {
-            previewImage ? (
-                <img src={previewImage} alt={cleanedTitle} loading="lazy" decoding="async" class="h-full w-full object-contain" />
-            ) : imageUrl ? (
+            imageUrl ? (
                 <CdnImage
                     src={imageUrl}
                     alt={cleanedTitle}
@@ -124,7 +120,7 @@ const imageHeight = isCompact
 
         <!-- Discount Badge -->
         {
-            !isPreview && hasDiscount && (
+            hasDiscount && (
                 <div class="absolute top-4 right-4 z-10">
                     <div class="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
                         ${discountPrice}
@@ -138,7 +134,7 @@ const imageHeight = isCompact
 
         <!-- Price Badge (when no discount) -->
         {
-            !isPreview && price && !hasDiscount && (
+            price && !hasDiscount && (
                 <div class="absolute bottom-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full shadow-md">
                     <span class="text-sm text-gray-500">
                         {lang === "zh" ? "起價 " : "From "}
@@ -150,7 +146,7 @@ const imageHeight = isCompact
 
         <!-- Ribbon -->
         {
-            !isPreview && ribbon && (
+            ribbon && (
                 <div class="absolute top-4 left-4">
                     <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-3 py-1 text-xs font-bold rounded-full shadow-md">
                         {ribbon}
@@ -161,13 +157,10 @@ const imageHeight = isCompact
     </div>
 
     <!-- Content -->
-    <div class:list={[isPreview ? 'flex min-w-0 flex-1 flex-col p-4 md:p-5' : isFeatured ? 'p-5 p-6' : 'p-5']}>
-        {isPreview && ribbon && (
-            <span class="mb-2 w-fit max-w-full break-words rounded-full bg-orange-50 px-2.5 py-1 text-xs font-semibold text-[#8a3309]">{ribbon}</span>
-        )}
+    <div class={`p-5 ${isFeatured ? "p-6" : ""}`}>
         <!-- Title -->
         <Title
-            class:list={['font-semibold text-gray-900 mb-2 group-hover:text-orange-500 transition-colors', isPreview ? 'break-words line-clamp-3 text-base md:line-clamp-2 md:text-lg' : 'line-clamp-2 text-lg']}
+            class="font-semibold text-gray-900 mb-2 group-hover:text-orange-500 transition-colors line-clamp-2 text-lg"
         >
             {cleanedTitle}
         </Title>
@@ -175,7 +168,7 @@ const imageHeight = isCompact
         <!-- Duration -->
         {
             durationText && (
-                <div class:list={['flex items-center text-gray-500 mb-2', isPreview ? 'gap-1.5 text-xs sm:text-sm' : 'gap-2 text-sm']}>
+                <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
                     <span class="material-icons text-base text-orange-400">
                         schedule
                     </span>
@@ -186,7 +179,7 @@ const imageHeight = isCompact
 
         <!-- Destination badges -->
         {
-            !isPreview && tour.tour_terms?.destinations &&
+            tour.tour_terms?.destinations &&
                 tour.tour_terms.destinations.length > 0 && (
                     <div class="flex flex-wrap gap-1 mb-2">
                         {tour.tour_terms.destinations
@@ -199,15 +192,6 @@ const imageHeight = isCompact
                     </div>
                 )
         }
-
-        {isPreview && previewPrice && (
-            <div class="mt-auto flex flex-wrap items-baseline gap-x-1 break-words pt-1 text-xs text-gray-600 sm:text-sm">
-                <span>{lang === "zh" ? "起價" : "From"}</span>
-                {hasDiscount && price && <span class="line-through">${price}</span>}
-                <span class="font-bold text-[#a8410b]">${previewPrice}</span>
-                {currency && <span>{currency}</span>}
-            </div>
-        )}
 
         <!-- Excerpt (optional) -->
         {
