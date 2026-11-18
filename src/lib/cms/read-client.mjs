@@ -40,6 +40,7 @@ function isCiEnvironment() {
 export function createCmsReader({ origin = CMS_ORIGIN, token = process.env.EMDASH_TOKEN, fetchImpl = fetch,
   credentialPath = join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'emdash', 'auth.json'),
   allowCli = !isCiEnvironment(),
+  retryRead = (_path, read) => read(),
 } = {}) {
   const checkedOrigin = resolveCmsOrigin(origin);
   let refreshPromise;
@@ -75,12 +76,22 @@ export function createCmsReader({ origin = CMS_ORIGIN, token = process.env.EMDAS
   }
   async function get(url) {
     for (let attempt = 0; attempt < 2; attempt++) {
-      const response = await fetchImpl(url, { method: 'GET', redirect: 'manual', signal: AbortSignal.timeout(60000), headers: { ...await headers(attempt > 0), Accept: 'application/json', 'X-EmDash-Request': '1', Origin: checkedOrigin } });
-      if (response.status === 401 && !token && attempt === 0) { await response.body?.cancel(); continue; }
-      if (!response.ok) { await response.body?.cancel(); throw new Error(`CMS catalogue HTTP ${response.status}`); }
-      const payload = await response.json().catch(()=>{throw new Error('Invalid CMS catalogue JSON');});
-      if (payload.success !== true || !payload.data) throw new Error('Invalid CMS catalogue response');
-      return payload.data;
+      const requestHeaders = { ...await headers(attempt > 0), Accept: 'application/json', 'X-EmDash-Request': '1', Origin: checkedOrigin };
+      const data = await retryRead(url.pathname, async () => {
+        const response = await fetchImpl(url, { method: 'GET', redirect: 'manual', signal: AbortSignal.timeout(60000), headers: requestHeaders });
+        if (!response.ok) {
+          await response.body?.cancel();
+          if (response.status === 401 && !token && attempt === 0) return null;
+          throw new Error(`CMS catalogue HTTP ${response.status}`);
+        }
+        const payload = await response.json().catch(error => {
+          if (error instanceof SyntaxError) throw new Error('Invalid CMS catalogue JSON');
+          throw error;
+        });
+        if (payload.success !== true || !payload.data) throw new Error('Invalid CMS catalogue response');
+        return payload.data;
+      });
+      if (data !== null) return data;
     }
     throw new Error('CMS authentication failed');
   }

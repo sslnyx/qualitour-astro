@@ -1,10 +1,42 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
+import { readForRelease } from './lib/release-read.mjs';
 import worker, { isBookingPagePath, isForwardedPath, toCmsRequest, toPublicResponse } from '../site/worker.mjs';
 
 const cms = 'https://qualitour.qualitour.workers.dev';
 const pub = 'https://qualitour-site.qualitour.workers.dev';
+
+test('release reads retry a connection reset before headers or while streaming the body', async () => {
+  let attempts = 0;
+  const reset = () => Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' });
+  const html = await readForRelease('/zh/tours', async () => {
+    attempts++;
+    if (attempts === 1) throw new TypeError('fetch failed', { cause: reset() });
+    if (attempts === 2) {
+      const body = new ReadableStream({ start(controller) { controller.error(new TypeError('terminated', { cause: reset() })); } });
+      return new Response(body).text();
+    }
+    return new Response('<html></html>').text();
+  }, [0, 0]);
+  assert.equal(html, '<html></html>');
+  assert.equal(attempts, 3);
+});
+
+test('release reads preserve permanent failures and stop retrying after their budget', async () => {
+  let attempts = 0;
+  await assert.rejects(readForRelease('/zh', () => {
+    attempts++;
+    throw new Error('CMS catalogue HTTP 401');
+  }, [0]), /401/);
+  assert.equal(attempts, 1);
+  attempts = 0;
+  await assert.rejects(readForRelease('/zh', () => {
+    attempts++;
+    throw new TypeError('terminated', { cause: { code: 'UND_ERR_SOCKET' } });
+  }, [0]), /\/zh.*2 attempts/);
+  assert.equal(attempts, 2);
+});
 
 test('only the CMS-owned paths are forwarded; every page is a static asset', () => {
   for (const path of ['/api/transfer', '/api/transfer/availability', '/_image', '/_emdash/api/media/file/a.jpg'])

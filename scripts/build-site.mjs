@@ -18,9 +18,11 @@ import sharp from 'sharp';
 import { dirname, join, resolve } from 'node:path';
 import { nativeSiteRoute } from '../cms/src/lib/cms/native-site-policy.mjs';
 import { syncCmsSnapshot } from '../src/lib/cms/content-server.mjs';
+import { createCmsReader } from '../src/lib/cms/read-client.mjs';
 import { refPattern } from './lib/image-ref-pattern.mjs';
 import { findBrokenIslandProps } from './lib/island-props.mjs';
 import { remoteImagePattern } from './lib/remote-images.mjs';
+import { readForRelease } from './lib/release-read.mjs';
 
 const cmsOrigin = process.env.QUALITOUR_CMS_ORIGIN || 'https://qualitour.qualitour.workers.dev';
 // Copies in the CMS media library of images that tour content takes from the old WordPress site and partner sites.
@@ -35,7 +37,7 @@ const publicOrigin = process.env.SITE_PUBLIC_ORIGIN || cmsOrigin;
 // SITE_USE_SNAPSHOT=1 reuses the snapshot already on disk.
 const snapshot = process.env.SITE_USE_SNAPSHOT
   ? JSON.parse(await readFile('.astro/cms-content/public-catalogue.json', 'utf8'))
-  : await syncCmsSnapshot();
+  : await syncCmsSnapshot({ reader: createCmsReader({ retryRead: readForRelease }) });
 if (snapshot.origin !== cmsOrigin) throw new Error(`Snapshot origin ${snapshot.origin} differs from ${cmsOrigin}`);
 const decode = path => { try { return decodeURIComponent(path); } catch { return path; } };
 const sleep = ms => new Promise(done => setTimeout(done, ms));
@@ -65,13 +67,13 @@ async function crawlAll() {
     if (queued.has(key)) return;
     queued.add(key); queue.push(key);
   };
-  const fetchHtml = async path => {
-    const response = await fetch(new URL(path, cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0', accept: 'text/html', ...(process.env.SITE_BUILD_KEY ? { 'x-qualitour-site-build': process.env.SITE_BUILD_KEY } : {}) }, redirect: 'manual' });
+  const fetchHtml = path => readForRelease(path, async () => {
+    const response = await fetch(new URL(path, cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0', accept: 'text/html', ...(process.env.SITE_BUILD_KEY ? { 'x-qualitour-site-build': process.env.SITE_BUILD_KEY } : {}) }, redirect: 'manual', signal: AbortSignal.timeout(45000) });
     if (response.status !== 200) { failures.push(`${response.status} ${path}`); return null; }
     if (!(response.headers.get('content-type') || '').includes('text/html')) { failures.push(`not html ${path}`); return null; }
     if (response.headers.get('x-qualitour-rendered') === 'static-fallback') { failures.push(`static fallback ${path}`); return null; }
     return response.text();
-  };
+  });
   seeds.forEach(enqueue);
   const worker = async () => {
     while (queue.length) {
@@ -272,9 +274,12 @@ async function ensureAsset(path) {
   assetSeen.add(path);
   const file = join(tmp, path.slice(1));
   try { await stat(file); return; } catch {}
-  const response = await fetch(new URL(path.split('/').map(encodeURIComponent).join('/'), cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0' } });
-  if (!response.ok) { assetMissing.push(`${response.status} ${path}`); return; }
-  const bytes = Buffer.from(await response.arrayBuffer());
+  const bytes = await readForRelease(path, async () => {
+    const response = await fetch(new URL(path.split('/').map(encodeURIComponent).join('/'), cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0' }, signal: AbortSignal.timeout(45000) });
+    if (!response.ok) { assetMissing.push(`${response.status} ${path}`); return null; }
+    return Buffer.from(await response.arrayBuffer());
+  });
+  if (bytes === null) return;
   await mkdir(dirname(file), { recursive: true });
   await writeFile(file, bytes);
   if (path.endsWith('.js') || path.endsWith('.mjs')) for (const match of bytes.toString('utf8').matchAll(/["'](\.{1,2}\/[^"'\s]+\.m?js)["']/g))

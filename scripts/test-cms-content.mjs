@@ -84,6 +84,23 @@ test('reader refuses redirects, partial lists, duplicate pages and concurrent ca
 test('authentication errors never include credentials or response bodies', async () => {
   await assert.rejects(createCmsReader({token:'TEST-SECRET',fetchImpl:async()=>new Response('TEST-SECRET',{status:401})}).listPublished('en'),error=>!error.message.includes('TEST-SECRET')&&/401/.test(error.message));
 });
+test('release retry can recover a failed catalogue body without repeating successful reads', async () => {
+  const { readForRelease } = await import('./lib/release-read.mjs');
+  let reads = 0;
+  const reader = createCmsReader({
+    token: 'TEST-SECRET',
+    retryRead: (path, read) => readForRelease(path, read, [0]),
+    fetchImpl: async () => {
+      if (++reads === 1) {
+        const error = new TypeError('terminated', { cause: { code: 'ECONNRESET' } });
+        return new Response(new ReadableStream({ start(controller) { controller.error(error); } }));
+      }
+      return ok({ total: 0, items: [] });
+    },
+  });
+  assert.deepEqual(await reader.listPublished('en'), []);
+  assert.equal(reads, 3);
+});
 test('CI requires EMDASH_TOKEN even when CLI fallback is explicitly requested', async () => {
   const previous = process.env.CI;
   process.env.CI = '1';
