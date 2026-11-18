@@ -30,7 +30,7 @@ test("the mobile tour filters behave as a keyboard modal", async () => {
   assert.match(filters, /aria-modal="true"/);
   assert.match(filters, /onKeyDown=\{handleDrawerKeyDown\}/);
   assert.match(filters, /event\.key === "Escape"/);
-  assert.match(filters, /restoreFocusRef\.current\.focus\(\)/);
+  assert.match(filters, /restoreFocusRef\.current\.focus\(\{ preventScroll: true \}\)/);
   assert.match(filters, /mobileOpen && \(/);
   assert.match(filters, /window\.addEventListener\('urlchange', handleUrlChange\)/);
   assert.match(grid, /new CustomEvent\("toggle-mobile-filters"/);
@@ -44,6 +44,17 @@ test("tour search terms remain visible and removable in results", async () => {
   assert.match(source, /clearSearch/);
   assert.match(source, /filters\.q && \(/);
   assert.match(source, /t\.clearSearch/);
+});
+
+test("tour filters open a separate destination picker instead of scrolling a nested list", async () => {
+  const source = await read("src/components/TourFilterSidebarClient.tsx");
+  assert.match(source, /<TourDestinationPicker\b/);
+  assert.match(source, /<select\b[^>]*id=\{styleId\}/);
+  assert.doesNotMatch(source, /max-h-48.*max-h-64|Apply Filters|套用篩選/);
+  const picker = await read("src/components/TourDestinationPicker.tsx");
+  assert.match(picker, /aria-expanded=\{open\}/);
+  assert.match(picker, /searchDestination/);
+  assert.match(picker, /options\.slice\(0, visibleCount\)/);
 });
 
 test("Chinese browse controls use Traditional Chinese", async () => {
