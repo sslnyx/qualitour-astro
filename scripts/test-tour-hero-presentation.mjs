@@ -4,19 +4,30 @@ import test from 'node:test';
 
 const source = (path) => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
-test('featured and detail heroes contain artwork without a cropped derivative', async () => {
-  const [detail, featured, css] = await Promise.all([
+test('tour detail preserves the original poster without a cropped derivative', async () => {
+  const [detail, css] = await Promise.all([
     source('src/components/TourPage.astro'),
-    source('src/components/FeaturedToursHero.tsx'),
     source('src/styles/global.css'),
   ]);
-  for (const hero of [detail, featured]) {
-    assert.match(hero, /tour-hero-cover/);
-    assert.doesNotMatch(hero, /\bobject-cover\b/);
-    assert.doesNotMatch(hero, /width:\s*1920,\s*height:\s*1080/);
-  }
-  assert.doesNotMatch(featured, /tour\.optimizedImageUrl/);
+  assert.match(detail, /tour-hero-cover/);
+  assert.doesNotMatch(detail, /\bobject-cover\b/);
+  assert.doesNotMatch(detail, /width:\s*1920,\s*height:\s*1080/);
   assert.match(css, /\.tour-hero-cover\s*\{[^}]*object-fit:\s*contain/);
+});
+
+test('the homepage renders separate full-bleed backgrounds over the shared hero height', async () => {
+  const [home, featured, pageHero, css] = await Promise.all([
+    source('src/pages/[...lang]/index.astro'),
+    source('src/components/FeaturedToursHero.tsx'),
+    source('src/components/PageHero.astro'),
+    source('src/styles/global.css'),
+  ]);
+  assert.match(home, /home-hero-backgrounds\.json/);
+  assert.match(home, /heroImage=\{heroTours\[0\]\?\.homeHeroBackground\?\.src\}/);
+  assert.match(featured, /src=\{background\.src\}[\s\S]*?object-cover/);
+  assert.doesNotMatch(featured, /tour\.optimizedHero|featured_image_url|tour-hero-cover/);
+  assert.match(pageHero, /class="page-hero /);
+  assert.match(css, /--site-hero-min-height:\s*60vh/);
 });
 
 test('the detail hero displays the cover without a separate image action', async () => {

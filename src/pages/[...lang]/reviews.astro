@@ -58,7 +58,7 @@ const t = {
 >
     <div>
         <!-- Hero Section -->
-        <section class="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
+        <section class="page-hero relative flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
             <!-- Background pattern -->
             <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,#fff_1px,transparent_1px)] [background-size:24px_24px]"></div>
             
@@ -66,7 +66,7 @@ const t = {
             <div class="absolute top-0 right-0 w-96 h-96 bg-[#f7941e]/20 rounded-full blur-3xl"></div>
             <div class="absolute bottom-0 left-0 w-96 h-96 bg-[#ff6b35]/20 rounded-full blur-3xl"></div>
             
-            <div class="relative z-10 container mx-auto px-4 text-center py-20">
+            <div class="relative z-10 container mx-auto px-4 text-center py-9 sm:py-12">
                 <!-- Badge -->
                 <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-8 border border-white/20">
                     <span class="material-icons text-[#f7941e]">star</span>
@@ -78,18 +78,18 @@ const t = {
                     {t.titleLead}<span class="text-[#f7941e]">{t.titleHighlight}</span>{t.titleEnd}
                 </h1>
                 
-                <p class="text-xl text-white/80 max-w-2xl mx-auto mb-12">
+                <p class="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-6 sm:mb-10">
                     {t.subtitle}
                 </p>
 
                 <!-- Stats Cards -->
-                <div class="flex flex-wrap justify-center gap-4 md:gap-8">
+                <div class="mx-auto grid max-w-lg grid-cols-2 gap-2 sm:gap-6">
                     <!-- Overall Rating Card -->
-                    <div class="bg-white/10 backdrop-blur-md rounded-2xl px-10 py-8 border border-white/20 text-center flex flex-col items-center justify-center">
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl px-2 py-4 sm:p-7 border border-white/20 text-center flex flex-col items-center justify-center">
                         <div class="flex items-center justify-center gap-1.5 mb-2" aria-hidden="true">
                             {Array.from({ length: 5 }).map((_, i) => (
                                 <svg
-                                    class="w-7 h-7 text-amber-400"
+                                    class="size-4 sm:size-7 text-amber-400"
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
                                 >
@@ -101,7 +101,7 @@ const t = {
                     </div>
 
                     <!-- Total Reviews Card -->
-                    <div class="bg-white/10 backdrop-blur-md rounded-2xl px-8 py-6 border border-white/20 text-center">
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl px-2 py-4 sm:p-7 border border-white/20 text-center">
                         <div class="flex items-center justify-center mb-2">
                             <svg class="w-8 h-8 text-[#f7941e]" viewBox="0 0 24 24" fill="none">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />

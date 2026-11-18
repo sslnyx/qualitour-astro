@@ -29,12 +29,36 @@
 
 @import "tailwindcss";
 
+:root {
+    --site-hero-min-height: 60vh;
+}
+
+.page-hero {
+    min-height: var(--site-hero-min-height);
+}
+
+.home-hero-shade {
+    background: linear-gradient(0deg, rgb(8 14 25 / 98%), rgb(8 14 25 / 84%) 27%, rgb(8 14 25 / 48%) 63%, rgb(8 14 25 / 16%));
+}
+
 .tour-hero-cover {
     display: block;
     width: 100%;
     height: auto;
-    max-height: clamp(16rem, 55svh, 33rem);
+    max-height: min(31vh, 21rem);
     object-fit: contain;
+}
+
+@media (min-width: 64rem) {
+    .home-hero-shade {
+        background:
+            linear-gradient(90deg, rgb(8 14 25 / 95%), rgb(8 14 25 / 76%) 36%, rgb(8 14 25 / 28%) 68%, rgb(8 14 25 / 12%)),
+            linear-gradient(0deg, rgb(8 14 25 / 72%), transparent 22%);
+    }
+
+    .tour-hero-cover {
+        max-height: min(calc(var(--site-hero-min-height) - 5rem), 33rem);
+    }
 }
 
 .tour-hero-cover:not([width]),

@@ -2,12 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import type { WPTour } from "../lib/wordpress/types";
 import TourInquiryModal from "./TourInquiryModal";
-import { getCfTransformUrl } from "../lib/wp-url";
-import { getTourImageUrl, tourHeroImageSizes } from "../lib/wordpress/image-source";
-import { applyImageFallback } from '../lib/image-delivery.mjs';
+
+export type HomeHeroBackground = { src: string; focus: number };
 
 interface FeaturedToursHeroProps {
-    tours: WPTour[];
+    tours: (WPTour & { homeHeroBackground?: HomeHeroBackground })[];
     lang: string;
     localePrefix: string;
 }
@@ -83,7 +82,7 @@ export default function FeaturedToursHero({
     return (
         <section
             aria-label={isChinese ? "精選行程輪播" : "Featured tours slideshow"}
-            className="bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800"
+            className="page-hero relative isolate bg-gray-950"
             onPointerEnter={(event) => {
                 if (event.pointerType === "mouse") setIsPointerOver(true);
             }}
@@ -96,10 +95,7 @@ export default function FeaturedToursHero({
             <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex touch-pan-y">
                     {tours.map((tour, index) => {
-                        const source = getTourImageUrl(tour);
-                        const imageUrl = tour.optimizedHero?.src || (source
-                            ? getCfTransformUrl(source, { width: 1280, format: "webp", quality: 80 })
-                            : undefined);
+                        const background = tour.homeHeroBackground;
                         const price = tour.tour_meta?.["tour-price-text"];
                         const location = tour.tour_meta?.location;
                         const duration = tour.tour_meta?.duration_text;
@@ -108,10 +104,27 @@ export default function FeaturedToursHero({
                             <div
                                 key={tour.id}
                                 inert={index !== selectedIndex}
-                                className="flex flex-[0_0_100%] min-w-0"
+                                className="page-hero relative isolate flex min-w-0 flex-[0_0_100%] items-end bg-gradient-to-br from-gray-900 to-slate-950 lg:items-center"
                             >
-                                <div className={`mx-auto grid w-full max-w-7xl content-start items-center gap-6 px-4 pt-7 pb-4 sm:px-6 lg:content-center lg:gap-12 lg:px-8 lg:pt-10 lg:pb-6 ${imageUrl ? "lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]" : ""}`}>
-                                    <div className="min-w-0 max-w-3xl">
+                                {background && (
+                                    <img
+                                        src={background.src}
+                                        alt=""
+                                        className="absolute inset-0 -z-20 size-full object-cover"
+                                        style={{ objectPosition: `${background.focus}% 50%` }}
+                                        loading={index === 0 ? "eager" : "lazy"}
+                                        fetchPriority={index === 0 ? "high" : "low"}
+                                        decoding="async"
+                                    />
+                                )}
+                                <div className="home-hero-shade pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
+                                {background && (
+                                    <span className="absolute top-3 right-4 rounded-md bg-gray-950/80 px-2 py-1 text-xs text-white sm:right-6">
+                                        {isChinese ? "行程示意圖" : "Illustrative image"}
+                                    </span>
+                                )}
+                                <div className="mx-auto w-full max-w-7xl px-4 pt-12 pb-20 sm:px-6 lg:px-8 lg:py-20">
+                                    <div className="min-w-0 max-w-xl lg:max-w-[43rem]">
                                         {/* Badge */}
                                         <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-400/30 bg-orange-400/10 px-3 py-1.5 text-xs font-bold tracking-wide text-orange-200 sm:mb-4">
                                             <span className="material-icons text-sm" aria-hidden="true">star</span>
@@ -175,23 +188,6 @@ export default function FeaturedToursHero({
                                             </a>
                                         </div>
                                     </div>
-                                    {imageUrl && (
-                                        <div className="flex min-w-0 justify-center">
-                                            <img
-                                                src={imageUrl}
-                                                srcSet={tour.optimizedHero?.srcSet || undefined}
-                                                sizes={tour.optimizedHero?.srcSet ? tourHeroImageSizes : undefined}
-                                                width={tour.optimizedHero?.width}
-                                                height={tour.optimizedHero?.height}
-                                                alt={cleanTitle(tour.title.rendered)}
-                                                className="tour-hero-cover rounded-xl"
-                                                loading={index === 0 ? "eager" : "lazy"}
-                                                fetchPriority={index === 0 ? "high" : "low"}
-                                                decoding="async"
-                                                onError={(event) => applyImageFallback(event.currentTarget, "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1280&fit=max&q=80")}
-                                            />
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         );
@@ -200,7 +196,7 @@ export default function FeaturedToursHero({
             </div>
 
             {tours.length > 1 && (
-                <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-1 px-4 pb-5 sm:gap-2">
+                <div className="absolute inset-x-0 bottom-0 z-10 mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-1 px-4 pb-4 sm:gap-2">
                     <button
                         type="button"
                         onClick={() => {

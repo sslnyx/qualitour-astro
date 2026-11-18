@@ -12,7 +12,8 @@ import heroBackground from "../../assets/hero-background.webp";
 import HomeTourGroups from "../../components/HomeTourGroups.astro";
 import ReviewsSlider from "../../components/ReviewsSlider";
 import TransferRoutesGrid from "../../components/TransferRoutesGrid";
-import FeaturedToursHero from "../../components/FeaturedToursHero";
+import FeaturedToursHero, { type HomeHeroBackground } from "../../components/FeaturedToursHero";
+import homeHeroBackgrounds from "../../data/home-hero-backgrounds.json";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -26,9 +27,6 @@ const { lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || "en";
 const localePrefix = getLocalePrefix(lang as Locale);
 
-import { optimizeTourImages, optimizeResponsiveImage, getTourImageUrl } from "../../lib/wordpress/image";
-import { tourHeroImageSizes } from "../../lib/wordpress/image-source";
-
 // Fetch data at build time
 const [rawTours, catalogue, reviews, transferRoutes] = await Promise.all([
   getTours({ per_page: 6, orderby: 'date', order: 'desc' }, lang),
@@ -41,11 +39,9 @@ const [rawTours, catalogue, reviews, transferRoutes] = await Promise.all([
 const featuredTransfers = transferRoutes.slice(0, 3);
 
 // Keep the latest six published tours for the hero, with a shorter featured preview below it.
-const featuredTours = await optimizeTourImages(rawTours.slice(0, 6));
-const heroTours = await Promise.all(featuredTours.map(async tour => {
-  const source = getTourImageUrl(tour);
-  return { ...tour, optimizedHero: tour.optimizedHero || (source ? await optimizeResponsiveImage(source) : undefined) };
-}));
+const featuredTours = rawTours.slice(0, 6);
+const backgrounds: Record<string, HomeHeroBackground | undefined> = homeHeroBackgrounds;
+const heroTours = featuredTours.map(tour => ({ ...tour, homeHeroBackground: backgrounds[String(tour.id)] }));
 
 // Filter reviews for 5 stars, prioritize those with photos, and limit to 15
 const displayedReviews = reviews
@@ -144,9 +140,7 @@ const whyUsItems = [
     : "Discover authentic Canadian tours, private ski shuttles to Whistler, and expert China visa services. Book your unforgettable journey with Qualitour today."}
   lang={lang}
   image={heroBackground.src}
-  heroImage={heroTours[0]?.optimizedHero?.src}
-  heroImageSrcSet={heroTours[0]?.optimizedHero?.srcSet}
-  heroImageSizes={heroTours[0]?.optimizedHero?.srcSet ? tourHeroImageSizes : undefined}
+  heroImage={heroTours[0]?.homeHeroBackground?.src}
 >
   <h1 class="sr-only">
     {lang === "zh" ? "Qualitour 旅遊行程與溫哥華私人接送" : "Qualitour tours and Vancouver private transfers"}

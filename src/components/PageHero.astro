@@ -20,7 +20,6 @@ interface Props {
         icon: string;
         text: string;
     };
-    height?: string;
     align?: "left" | "center" | "right";
 }
 
@@ -29,13 +28,12 @@ const {
     title,
     subtitle,
     badge,
-    height = "min-h-[60vh]",
     align = "center",
 } = Astro.props;
 ---
 
 <section
-    class={`relative ${height} flex items-center justify-center overflow-hidden`}
+    class="page-hero relative flex items-center justify-center overflow-hidden"
 >
     <!-- Background Image -->
     <div class="absolute inset-0">
@@ -84,7 +82,7 @@ const {
     >
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-10 sm:py-12">
         <div
             class:list={[
                 align === "center" && "text-center max-w-4xl mx-auto",
