@@ -6,7 +6,7 @@
  * is already visible.
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { WPTour } from "../lib/wordpress/types";
 import TourInquiryModal from "./TourInquiryModal";
 
@@ -18,6 +18,7 @@ interface MobileInquiryCTAProps {
 
 export default function MobileInquiryCTA({ tour, tourCode, lang }: MobileInquiryCTAProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const triggerRef = useRef<HTMLAnchorElement>(null);
 
     const price = tour.tour_meta?.["tour-price-text"] || tour.tour_meta?.price;
     const currency = tour.tour_meta?.["tourmaster-tour-currency"] || "";
@@ -46,14 +47,19 @@ export default function MobileInquiryCTA({ tour, tourCode, lang }: MobileInquiry
                         <div className="flex-1" />
                     )}
 
-                    {/* CTA Button */}
-                    <button
-                        onClick={() => setIsModalOpen(true)}
+                    <a
+                        href="#tour-enquiry"
+                        ref={triggerRef}
+                        onClick={(event) => {
+                            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                            event.preventDefault();
+                            setIsModalOpen(true);
+                        }}
                         className="flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-[#a8410b] text-white font-bold rounded-full shadow-lg shadow-orange-500/25 hover:bg-[#883608] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a8410b] transition-colors"
                     >
                         <span className="material-icons text-lg" aria-hidden="true">event_available</span>
                         {btnLabel}
-                    </button>
+                    </a>
                 </div>
             </div>
 
@@ -64,6 +70,7 @@ export default function MobileInquiryCTA({ tour, tourCode, lang }: MobileInquiry
                 tour={tour}
                 tourCode={tourCode}
                 lang={lang}
+                returnFocusTo={triggerRef.current}
             />
         </>
     );

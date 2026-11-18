@@ -8,7 +8,7 @@ import { collectTourPhotoSources } from '../lib/image-delivery.mjs';
  * Supports i18n for English and Chinese.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { WPTour } from '../lib/wordpress/types';
 import { wpUrl, processHtmlContent as normalizeHtmlContent, getCfTransformUrl } from '../lib/wp-url';
 import PhotoLightbox from './PhotoLightbox';
@@ -62,7 +62,8 @@ const translations = {
 export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const [expandedDay, setExpandedDay] = useState<number | null>(null);
-    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+    const [lightbox, setLightbox] = useState<{ index: number; trigger: HTMLButtonElement } | null>(null);
+    const closeLightbox = useCallback(() => setLightbox(null), []);
 
     const processHtmlContent = (html: string) => renderInlineImages(normalizeHtmlContent(html), tour.optimizedInlineImages, wpUrl);
 
@@ -589,7 +590,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                     type="button"
                                     key={index}
                                     className="relative aspect-[4/3] rounded-xl overflow-hidden group cursor-pointer border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
-                                    onClick={() => setLightboxIndex(index)}
+                                    onClick={(event) => setLightbox({ index, trigger: event.currentTarget })}
                                     aria-label={`Open photo ${index + 1} of ${photos.length}`}
                                 >
                                     <img
@@ -608,14 +609,15 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                         </div>
 
                         {/* Photo Lightbox */}
-                        {lightboxIndex !== null && (
+                        {lightbox && (
                             <PhotoLightbox
                                 images={fullPhotos}
                                 imageDimensions={photos.map((photo: string) => tour.optimizedPhotos?.[photo])}
                                 authorName={tour.title?.rendered || 'Tour'}
-                                initialIndex={lightboxIndex}
+                                initialIndex={lightbox.index}
                                 lang={lang}
-                                onClose={() => setLightboxIndex(null)}
+                                onClose={closeLightbox}
+                                returnFocusTo={lightbox.trigger}
                             />
                         )}
                     </div>

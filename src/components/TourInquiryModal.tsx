@@ -8,6 +8,7 @@ interface TourInquiryModalProps {
     tour: WPTour | null;
     tourCode?: string;
     lang: string;
+    returnFocusTo: HTMLElement | null;
 }
 
 export default function TourInquiryModal({
@@ -16,6 +17,7 @@ export default function TourInquiryModal({
     tour,
     tourCode: tourCodeProp,
     lang,
+    returnFocusTo,
 }: TourInquiryModalProps) {
     const [isSuccess, setIsSuccess] = useState(false);
     const dialogRef = useRef<HTMLDialogElement>(null);
@@ -27,7 +29,7 @@ export default function TourInquiryModal({
         if (!isOpen || !tour || !dialog) return;
 
         setIsSuccess(false);
-        const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        const trigger = returnFocusTo;
         const previousOverflow = document.body.style.overflow;
         dialog.showModal();
         document.body.style.overflow = "hidden";
@@ -38,7 +40,7 @@ export default function TourInquiryModal({
             document.body.style.overflow = previousOverflow;
             trigger?.focus({ preventScroll: true });
         };
-    }, [isOpen, tour]);
+    }, [isOpen, tour, returnFocusTo]);
 
     if (!isOpen || !tour) return null;
 

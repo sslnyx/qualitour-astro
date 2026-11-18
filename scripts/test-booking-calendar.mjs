@@ -32,6 +32,15 @@ const require = createRequire(componentUrl);
 const React = require("react");
 const { renderToStaticMarkup } = require("react-dom/server");
 
+test("the mobile confirmed quote is shown before the contact form", async () => {
+  const view = await readFile(new URL("../src/components/booking/BookingView.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../src/components/booking/booking.css", import.meta.url), "utf8");
+  const quotedTotal = /className="qb-trip-review__total"[\s\S]*?money\(quote\.amountMinor\)/.exec(view);
+  assert.ok(quotedTotal, "a confirmed quote has an upfront total");
+  assert.ok(quotedTotal.index < view.indexOf('t("接送與聯絡資料", "Transfer & contact details")'));
+  assert.match(styles, /@media \(max-width: 760px\) \{[\s\S]*?\.qb-trip-review__total \{[^}]*display: flex/);
+});
+
 test("leap-year month lengths follow Gregorian rules", () => {
   assert.equal(calendar.getDaysInMonth(2024, 1), 29);
   assert.equal(calendar.getDaysInMonth(2023, 1), 28);

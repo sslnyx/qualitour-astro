@@ -34,3 +34,28 @@ test('tour enquiry opens a named native dialog and synchronizes native dismissal
   assert.ok(modal.includes('onCancel='));
   assert.ok(modal.includes('trigger?.focus'));
 });
+
+test('mobile enquiry already links to the in-page form before the dialog can hydrate', async () => {
+  const [cta, sidebar] = await Promise.all([
+    source('src/components/MobileInquiryCTA.tsx'),
+    source('src/components/TourSidebarForm.tsx'),
+  ]);
+  assert.match(cta, /<a\b[^>]*href="#tour-enquiry"/);
+  assert.match(sidebar, /<h3\b[^>]*id="tour-enquiry"[^>]*tabIndex=\{-1\}/);
+});
+
+test('tour dialogs retain the opener even when clicking does not focus it', async () => {
+  const [cta, featured, detail, modal, gallery] = await Promise.all([
+    source('src/components/MobileInquiryCTA.tsx'),
+    source('src/components/FeaturedToursHero.tsx'),
+    source('src/components/TourDetail.tsx'),
+    source('src/components/TourInquiryModal.tsx'),
+    source('src/components/PhotoLightbox.tsx'),
+  ]);
+  assert.match(cta, /returnFocusTo=\{triggerRef\.current\}/);
+  assert.match(featured, /triggerRef\.current = event\.currentTarget/);
+  assert.match(detail, /trigger: event\.currentTarget/);
+  assert.match(detail, /returnFocusTo=\{lightbox\.trigger\}/);
+  assert.match(modal, /const trigger = returnFocusTo/);
+  assert.match(gallery, /const trigger = returnFocusTo/);
+});

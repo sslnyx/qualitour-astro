@@ -954,7 +954,8 @@
 .qb-summary h2 {
   margin-bottom: 6px;
 }
-.qb-summary > p {
+.qb-summary > p,
+.qb-summary__total > p {
   margin: 0;
 }
 .qb-summary dl div {
@@ -994,6 +995,9 @@
 }
 .qb-trip-review button {
   flex-shrink: 0;
+}
+.qb-trip-review__total {
+  display: none;
 }
 .qb-eyebrow {
   font-size: 11px;
@@ -1119,6 +1123,20 @@
   }
   .qb-trip-review {
     flex-wrap: wrap;
+  }
+  .qb-trip-review__total {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 12px;
+  }
+  .qb-trip-review__total strong {
+    color: #111827;
+    font-size: 24px;
+    font-variant-numeric: tabular-nums;
+  }
+  .qb-summary__total[data-confirmed="true"] {
+    display: none;
   }
   .qb-native-dialog {
     width: 100vw;

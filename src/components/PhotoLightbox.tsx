@@ -9,6 +9,7 @@ export default function PhotoLightbox({
     authorName,
     initialIndex = 0,
     lang = 'en',
+    returnFocusTo,
     onClose
 }: {
     images: string[];
@@ -16,10 +17,10 @@ export default function PhotoLightbox({
     authorName: string;
     initialIndex?: number;
     lang?: string;
+    returnFocusTo?: HTMLElement;
     onClose: () => void;
 }) {
     const dialogRef = useRef<HTMLDivElement>(null);
-    const returnFocusRef = useRef<HTMLElement | null>(null);
     const [emblaRef, emblaApi] = useEmblaCarousel({
         startIndex: initialIndex,
         loop: true,
@@ -54,9 +55,9 @@ export default function PhotoLightbox({
 
     // Keyboard navigation
     useEffect(() => {
-        returnFocusRef.current = document.activeElement instanceof HTMLElement
+        const trigger = returnFocusTo ?? (document.activeElement instanceof HTMLElement
             ? document.activeElement
-            : null;
+            : null);
 
         const focusCloseButton = window.requestAnimationFrame(() => {
             dialogRef.current?.querySelector<HTMLButtonElement>('[data-lightbox-close]')?.focus();
@@ -107,9 +108,9 @@ export default function PhotoLightbox({
             window.cancelAnimationFrame(focusCloseButton);
             window.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = previousOverflow;
-            returnFocusRef.current?.focus();
+            trigger?.focus({ preventScroll: true });
         };
-    }, [onClose, scrollPrev, scrollNext]);
+    }, [onClose, returnFocusTo, scrollPrev, scrollNext]);
 
     const dialog = (
         <div

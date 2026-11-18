@@ -96,8 +96,8 @@ export default function TourSidebarForm({
 
                 {/* Inline Inquiry Form */}
                 <div className="p-4">
-                    <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span className="material-icons text-orange-500 text-lg">edit_note</span>
+                    <h3 id="tour-enquiry" tabIndex={-1} className="scroll-mt-24 text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <span className="material-icons text-orange-500 text-lg" aria-hidden="true">edit_note</span>
                         {t.sendInquiry}
                     </h3>
                     <TourInquiryForm

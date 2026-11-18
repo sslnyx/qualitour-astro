@@ -257,7 +257,7 @@ export function BookingView(p: BookingViewProps) {
     });
   const passengerId = useId();
   const checkSeq = useRef(0);
-  const contactHeading = useRef<HTMLHeadingElement>(null);
+  const tripReviewHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     const timer = setInterval(() => setTick(Date.now()), 1000);
     return () => clearInterval(timer);
@@ -369,9 +369,9 @@ export function BookingView(p: BookingViewProps) {
   const showTrip = editingTrip || !quoteValid;
   useEffect(() => {
     if (!showTrip) {
-      // Bring the page title and step list back into view, then focus the new step without a second jump.
+      // Start the new step at the quoted trip, before asking for contact details.
       window.scrollTo({ top: 0, behavior: "auto" });
-      contactHeading.current?.focus({ preventScroll: true });
+      tripReviewHeading.current?.focus({ preventScroll: true });
     }
   }, [showTrip, p.quote?.id]);
   const timeGroups = [
@@ -790,13 +790,19 @@ export function BookingView(p: BookingViewProps) {
                     <span className="qb-eyebrow">
                       {t("行程已選好", "Your trip is ready")}
                     </span>
-                    <h2>{route ? name(route) : ""}</h2>
+                    <h2 ref={tripReviewHeading} tabIndex={-1}>{route ? name(route) : ""}</h2>
                     <p>
                       {quote
                         ? formatDepartureLabel(quote.departureLabel, p.lang)
                         : ""}{" "}
                       · {passengers} {t("位乘客", "passengers")}
                     </p>
+                    {quote && (
+                      <p className="qb-trip-review__total">
+                        <span>{t("整車總額（含燃油附加費與 GST）", "Vehicle total (includes fuel surcharge and GST)")}</span>
+                        <strong>{money(quote.amountMinor)}</strong>
+                      </p>
+                    )}
                   </div>
                   <button
                     className="qt-btn"
@@ -1217,7 +1223,7 @@ export function BookingView(p: BookingViewProps) {
                       });
                   }}
                 >
-                  <h2 ref={contactHeading} tabIndex={-1}>
+                  <h2>
                     {t("接送與聯絡資料", "Transfer & contact details")}
                   </h2>
                   <p className="qb-note qb-form-intro">
@@ -1346,13 +1352,15 @@ export function BookingView(p: BookingViewProps) {
               )}
               {matches && quote ? (
                 <>
-                  <p className="qb-quote-amount">{money(quote.amountMinor)}</p>
-                  <p className="qb-note">
-                    {t(
-                      "每輛整車測試總額（含燃油附加費與 GST）",
-                      "Test total for one whole vehicle (includes fuel surcharge and GST)",
-                    )}
-                  </p>
+                  <div className="qb-summary__total" data-confirmed={!showTrip}>
+                    <p className="qb-quote-amount">{money(quote.amountMinor)}</p>
+                    <p className="qb-note">
+                      {t(
+                        "每輛整車測試總額（含燃油附加費與 GST）",
+                        "Test total for one whole vehicle (includes fuel surcharge and GST)",
+                      )}
+                    </p>
+                  </div>
                   <PriceLines lang={p.lang} price={quote} />
                   <dl>
                     {selectedPickup ? (

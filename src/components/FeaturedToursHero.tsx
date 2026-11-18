@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import type { WPTour } from "../lib/wordpress/types";
 import TourInquiryModal from "./TourInquiryModal";
@@ -22,6 +22,7 @@ export default function FeaturedToursHero({
     const [isPlaying, setIsPlaying] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTour, setSelectedTour] = useState<WPTour | null>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
 
     const onSelect = useCallback(() => {
         if (!emblaApi) return;
@@ -138,7 +139,8 @@ export default function FeaturedToursHero({
                                         <div className="mt-4 flex flex-wrap gap-2 sm:mt-6 sm:gap-3">
                                             <button
                                                 type="button"
-                                                onClick={() => {
+                                                onClick={(event) => {
+                                                    triggerRef.current = event.currentTarget;
                                                     setSelectedTour(tour);
                                                     setIsModalOpen(true);
                                                 }}
@@ -231,6 +233,7 @@ export default function FeaturedToursHero({
                 onClose={() => setIsModalOpen(false)}
                 tour={selectedTour}
                 lang={lang}
+                returnFocusTo={triggerRef.current}
             />
         </section>
     );
