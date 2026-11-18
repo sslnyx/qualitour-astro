@@ -49,16 +49,12 @@ const t = {
         title={t.title}
         subtitle={t.subtitle}
         badge={{ icon: "help_outline", text: t.badge }}
-    >
-        <!-- Quick Jump Links -->
-        <div class="mt-8">
-            <FAQQuickLinks client:load lang={currentLang} />
-        </div>
-    </PageHero>
+    />
 
     <!-- FAQ Content -->
     <section class="py-16 md:py-24 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <FAQQuickLinks lang={currentLang} />
             <FAQCategories client:load lang={currentLang} />
         </div>
     </section>

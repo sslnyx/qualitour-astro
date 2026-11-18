@@ -432,18 +432,18 @@ export function FAQQuickLinks({ lang = 'en' }: FAQProps) {
     const categories = (faqTranslations[lang as keyof typeof faqTranslations] || faqTranslations.en);
 
     return (
-        <div className="flex flex-wrap justify-center gap-3">
+        <nav aria-label={lang === 'zh' ? '常見問題分類' : 'FAQ topics'} className="mb-10 flex flex-wrap justify-center gap-3">
             {categories.map((category) => (
                 <a
                     key={category.id}
                     href={`#${category.id}`}
-                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-full px-5 py-2.5 text-sm font-medium transition-all hover:scale-105 border border-white/20"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 text-sm font-medium text-[#8a3309] hover:bg-orange-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a8410b]"
                 >
-                    <span className="material-icons text-lg">{category.icon}</span>
+                    <span className="material-icons text-lg" aria-hidden="true">{category.icon}</span>
                     <span>{category.title}</span>
                 </a>
             ))}
-        </div>
+        </nav>
     );
 }
 
