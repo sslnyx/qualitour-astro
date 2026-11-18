@@ -5,8 +5,10 @@
  * Submits to WordPress Contact Form 7.
  */
 
-import { useState, useEffect, useId } from 'react';
+import { useState, useEffect, useId, useRef } from 'react';
 import { submitTourInquiryForm, type TourInquiryFormData, type CF7Response } from '../../lib/contact-form';
+import { ServiceCalendar } from '../booking/ServiceCalendar';
+import './tour-inquiry-calendar.css';
 
 interface TourInquiryFormProps {
     tourId: string | number;
@@ -28,6 +30,8 @@ const translations = {
         email: "Email address",
         phone: "Phone number",
         travelDate: "Travel date",
+        chooseDate: "Choose a date",
+        calendar: "Departure date calendar",
         travelers: "Travelers",
         message: "Message (Optional)",
         required: "Required",
@@ -39,6 +43,7 @@ const translations = {
             emailInvalid: "Please enter a valid email address",
             phoneRequired: "Phone number is required",
             dateRequired: "Travel date is required",
+            datePast: "Please choose today or a future date",
             travelersRequired: "At least 1 traveler is required",
             unexpected: "Message could not be sent. Please check your connection or try emailing us directly."
         }
@@ -50,6 +55,8 @@ const translations = {
         email: "電郵地址",
         phone: "電話號碼",
         travelDate: "出發日期",
+        chooseDate: "選擇出發日期",
+        calendar: "出發日期月曆",
         travelers: "旅客人數",
         message: "留言（選填）",
         required: "必填",
@@ -61,6 +68,7 @@ const translations = {
             emailInvalid: "請輸入有效的電郵地址",
             phoneRequired: "請輸入電話號碼",
             dateRequired: "請選擇出發日期",
+            datePast: "請選擇今天或之後的日期",
             travelersRequired: "至少需要1名旅客",
             unexpected: "無法發送訊息，請檢查網絡連線，或直接透過電子郵件與我們聯絡。"
         }
@@ -91,6 +99,14 @@ export default function TourInquiryForm({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [result, setResult] = useState<CF7Response | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [calendarOpen, setCalendarOpen] = useState(false);
+    const dateButtonRef = useRef<HTMLButtonElement>(null);
+    const calendarRef = useRef<HTMLDivElement>(null);
+    const dateId = `${formId}-travel-date`;
+    const dateLocale = lang === 'zh' ? 'zh-Hant-CA' : 'en-CA';
+    const dateLabel = formData.travelDate
+        ? new Intl.DateTimeFormat(dateLocale, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(`${formData.travelDate}T00:00:00Z`))
+        : t.chooseDate;
 
     const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};
@@ -108,6 +124,8 @@ export default function TourInquiryForm({
         }
         if (!formData.travelDate) {
             newErrors.travelDate = t.errors.dateRequired;
+        } else if (today && formData.travelDate < today) {
+            newErrors.travelDate = t.errors.datePast;
         }
         if (formData.numTravelers < 1) {
             newErrors.numTravelers = t.errors.travelersRequired;
@@ -230,9 +248,21 @@ export default function TourInquiryForm({
         setToday(date.toISOString().slice(0, 10));
     }, []);
 
+    useEffect(() => {
+        if (!calendarOpen) return;
+        const calendar = calendarRef.current;
+        calendar?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        calendar?.querySelector<HTMLButtonElement>('[role="gridcell"][tabindex="0"]')?.focus({ preventScroll: true });
+    }, [calendarOpen]);
+
+    const closeCalendar = () => {
+        setCalendarOpen(false);
+        dateButtonRef.current?.focus();
+    };
+
     const inputClasses = compact
-        ? "w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"
-        : "w-full px-4 py-3 text-base text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70";
+        ? "min-w-0 w-full px-3 py-2 text-base lg:text-sm text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"
+        : "min-w-0 w-full px-4 py-3 text-base text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70";
     const inputErrorClasses = "border-red-500 focus:border-red-500 focus:ring-red-500/20";
     const errorTextClasses = "text-xs text-red-600 mt-0.5";
     const labelClasses = compact ? "text-xs font-medium text-gray-700 mb-0.5" : "text-sm font-medium text-gray-700 mb-1";
@@ -272,6 +302,7 @@ export default function TourInquiryForm({
                     id={`${formId}-name`}
                     type="text"
                     name="name"
+                    autoComplete="name"
                     value={formData.name}
                     onChange={handleChange}
                     placeholder={t.fullName} required aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? `${formId}-name-error` : undefined}
@@ -287,6 +318,7 @@ export default function TourInquiryForm({
                     id={`${formId}-email`}
                     type="email"
                     name="email"
+                    autoComplete="email"
                     value={formData.email}
                     onChange={handleChange}
                     placeholder={t.email} required aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? `${formId}-email-error` : undefined}
@@ -302,6 +334,7 @@ export default function TourInquiryForm({
                     id={`${formId}-phone`}
                     type="tel"
                     name="phone"
+                    autoComplete="tel"
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder={t.phone} required aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? `${formId}-phone-error` : undefined}
@@ -311,36 +344,64 @@ export default function TourInquiryForm({
                 {errors.phone && <span id={`${formId}-phone-error`} role="alert" className={errorTextClasses}>{errors.phone}</span>}
             </div>
 
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-3">
-                <div className="flex flex-col gap-1">
-                    <label htmlFor={`${formId}-travel-date`} className={labelClasses}>{t.travelDate} <span className="text-red-700">({t.required})</span></label>
-                    <input
-                        type="date"
-                        id={`${formId}-travel-date`} name="travelDate"
-                        value={formData.travelDate}
-                        onChange={handleChange}
-                        onClick={(e) => (e.target as any).showPicker?.()}
-                        min={today}
-                        required aria-invalid={Boolean(errors.travelDate)} aria-describedby={errors.travelDate ? `${formId}-travel-date-error` : undefined} className={`${inputClasses} ${errors.travelDate ? inputErrorClasses : ''}`}
-                        disabled={isSubmitting}
-                    />
-                    {errors.travelDate && <span id={`${formId}-travel-date-error`} role="alert" className={errorTextClasses}>{errors.travelDate}</span>}
-                </div>
+            <div className="flex min-w-0 flex-col gap-1" onKeyDown={(event) => {
+                if (!calendarOpen || event.key !== 'Escape') return;
+                event.preventDefault();
+                event.stopPropagation();
+                closeCalendar();
+            }}>
+                <label id={`${dateId}-label`} htmlFor={dateId} className={labelClasses}>{t.travelDate} <span className="text-red-700">({t.required})</span></label>
+                <input type="hidden" name="travelDate" value={formData.travelDate} />
+                <button
+                    ref={dateButtonRef}
+                    id={dateId}
+                    type="button"
+                    aria-labelledby={`${dateId}-label ${dateId}-value`}
+                    aria-expanded={calendarOpen}
+                    aria-controls={calendarOpen ? `${dateId}-calendar` : undefined}
+                    aria-invalid={Boolean(errors.travelDate)}
+                    aria-describedby={errors.travelDate ? `${dateId}-error` : undefined}
+                    className={`${inputClasses} ${errors.travelDate ? inputErrorClasses : ''} flex min-h-11 items-center justify-between gap-2 text-left`}
+                    disabled={!today || isSubmitting}
+                    onClick={() => calendarOpen ? closeCalendar() : setCalendarOpen(true)}
+                >
+                    <span id={`${dateId}-value`} className={formData.travelDate ? 'min-w-0 break-words' : 'min-w-0 break-words text-gray-600'}>{dateLabel}</span>
+                    <span className="material-icons shrink-0 text-lg text-[#a8410b]" aria-hidden="true">calendar_today</span>
+                </button>
+                {errors.travelDate && <span id={`${dateId}-error`} role="alert" className={errorTextClasses}>{errors.travelDate}</span>}
+                {calendarOpen && today && (
+                    <div id={`${dateId}-calendar`} ref={calendarRef} className="tour-inquiry-calendar min-w-0 rounded-xl border border-gray-200 bg-white p-2 sm:p-3">
+                        <ServiceCalendar
+                            lang={lang === 'zh' ? 'zh' : 'en'}
+                            label={t.calendar}
+                            value={formData.travelDate}
+                            min={today}
+                            compact
+                            isDateEnabled={() => true}
+                            onChange={(value) => {
+                                setFormData((prev) => ({ ...prev, travelDate: value }));
+                                setErrors((prev) => ({ ...prev, travelDate: '' }));
+                                closeCalendar();
+                            }}
+                        />
+                    </div>
+                )}
+            </div>
 
-                <div className="flex flex-col gap-1">
-                    <label htmlFor={`${formId}-travelers`} className={labelClasses}>{t.travelers} <span className="text-red-700">({t.required})</span></label>
-                    <input
-                        type="number"
-                        id={`${formId}-travelers`} name="numTravelers"
-                        value={formData.numTravelers}
-                        onChange={handleChange}
-                        min={1}
-                        max={50}
-                        required aria-invalid={Boolean(errors.numTravelers)} aria-describedby={errors.numTravelers ? `${formId}-travelers-error` : undefined} className={`${inputClasses} ${errors.numTravelers ? inputErrorClasses : ''}`}
-                        disabled={isSubmitting}
-                    />
-                    {errors.numTravelers && <span id={`${formId}-travelers-error`} role="alert" className={errorTextClasses}>{errors.numTravelers}</span>}
-                </div>
+            <div className="flex min-w-0 flex-col gap-1">
+                <label htmlFor={`${formId}-travelers`} className={labelClasses}>{t.travelers} <span className="text-red-700">({t.required})</span></label>
+                <input
+                    type="number"
+                    inputMode="numeric"
+                    id={`${formId}-travelers`} name="numTravelers"
+                    value={formData.numTravelers}
+                    onChange={handleChange}
+                    min={1}
+                    max={50}
+                    required aria-invalid={Boolean(errors.numTravelers)} aria-describedby={errors.numTravelers ? `${formId}-travelers-error` : undefined} className={`${inputClasses} ${errors.numTravelers ? inputErrorClasses : ''}`}
+                    disabled={isSubmitting}
+                />
+                {errors.numTravelers && <span id={`${formId}-travelers-error`} role="alert" className={errorTextClasses}>{errors.numTravelers}</span>}
             </div>
 
             <div className="flex flex-col gap-1">

@@ -59,3 +59,11 @@ test('tour dialogs retain the opener even when clicking does not focus it', asyn
   assert.match(modal, /const trigger = returnFocusTo/);
   assert.match(gallery, /const trigger = returnFocusTo/);
 });
+
+test('tour enquiry uses a full-width calendar instead of the browser date input', async () => {
+  const form = await source('src/components/forms/TourInquiryForm.tsx');
+  assert.doesNotMatch(form, /type="date"|showPicker\(/);
+  assert.match(form, /<ServiceCalendar\b[\s\S]*?min=\{today\}/);
+  assert.match(form, /type="hidden" name="travelDate" value=\{formData\.travelDate\}/);
+  assert.match(form, /aria-expanded=\{calendarOpen\}/);
+});

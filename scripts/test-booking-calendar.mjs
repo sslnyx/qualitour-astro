@@ -149,6 +149,22 @@ test("calendar markup exposes accessible selection and unavailable dates", () =>
   assert.ok(markup.indexOf(">Sun<") < markup.indexOf(">Mon<"));
 });
 
+test("enquiry calendar can fit a narrow form and show future months without a booking cutoff", () => {
+  const html = renderToStaticMarkup(React.createElement(calendar.ServiceCalendar, {
+    lang: "zh",
+    min: "2026-11-18",
+    value: "",
+    label: "出發日期月曆",
+    compact: true,
+    isDateEnabled: () => true,
+    onChange: () => {},
+  }));
+  assert.match(html, /出發日期月曆/);
+  assert.match(html, /min-height:44px;min-width:0/);
+  assert.match(html, /value="2027-11"/);
+  assert.doesNotMatch(html, /value="2027-12"/);
+});
+
 test("roving focus falls forward when the supplied date is unavailable", () => {
   const markup = renderToStaticMarkup(
     React.createElement(calendar.ServiceCalendar, {

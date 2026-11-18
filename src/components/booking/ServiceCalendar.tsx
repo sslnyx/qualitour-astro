@@ -11,7 +11,9 @@ export type ServiceCalendarProps = {
   lang: "en" | "zh";
   value: string;
   min: string;
-  max: string;
+  max?: string;
+  label?: string;
+  compact?: boolean;
   isDateEnabled: (date: string) => boolean;
   onChange: (date: string) => void;
 };
@@ -233,10 +235,13 @@ export function ServiceCalendar({
   lang,
   value,
   min,
-  max,
+  max: lastDate,
+  label,
+  compact = false,
   isDateEnabled,
   onChange,
 }: ServiceCalendarProps) {
+  const max = lastDate ?? "9999-12-31";
   const minMonth = min.slice(0, 7);
   const maxMonth = max.slice(0, 7);
   const initialMonth = clampMonth(
@@ -259,7 +264,6 @@ export function ServiceCalendar({
   const shouldFocusDay = useRef(false);
   const groupLabelId = useId();
   const monthSelectId = useId();
-  const monthOptions = useMemo(() => getMonthOptions(min, max), [min, max]);
   const calendarView = getCalendarViewState({
     visibleMonth,
     focusedDate,
@@ -268,6 +272,10 @@ export function ServiceCalendar({
     isDateEnabled,
   });
   const displayMonth = calendarView.visibleMonth;
+  // Enquiries can navigate indefinitely while keeping the month menu short.
+  const menuStart = lastDate ? min : `${clampMonth(shiftMonth(displayMonth, -12), minMonth, maxMonth)}-01`;
+  const menuEnd = lastDate ?? (displayMonth >= "9998-12" ? max : `${shiftMonth(displayMonth, 12)}-01`);
+  const monthOptions = useMemo(() => getMonthOptions(menuStart, menuEnd), [menuStart, menuEnd]);
   const tabStop = calendarView.focusedDate;
   const days = useMemo(() => getMonthGrid(displayMonth), [displayMonth]);
   const weekdays =
@@ -333,7 +341,7 @@ export function ServiceCalendar({
   return (
     <div className="qb-calendar" role="group" aria-labelledby={groupLabelId}>
       <span id={groupLabelId} className="qb-calendar__visually-hidden">
-        {lang === "zh" ? "選擇服務日期" : "Choose service date"}
+        {label ?? (lang === "zh" ? "選擇服務日期" : "Choose service date")}
       </span>
       <div className="qb-calendar__head">
         <button
@@ -403,7 +411,7 @@ export function ServiceCalendar({
                   type="button"
                   role="gridcell"
                   className={`qb-calendar__day${selected ? " qb-calendar__selected" : ""}${outside ? " qb-calendar__outside" : ""}`}
-                  style={{ minHeight: 44, minWidth: 44 }}
+                  style={{ minHeight: 44, minWidth: compact ? 0 : 44 }}
                   disabled={!enabled}
                   tabIndex={enabled && date === tabStop ? 0 : -1}
                   aria-selected={selected}
