@@ -206,6 +206,27 @@ export function vancouverLocalNow(now: Date): ServiceLocalNow {
   };
 }
 
+/**
+ * Qualitour's cancellation and refund policy. The same wording is used in the confirmation email and the staff refund
+ * panel (qualitour-ops `src/booking/policy.ts`); change them together.
+ */
+const POLICY_NOTICE_HOURS = 72;
+const POLICY_FEE_PERCENT = 5;
+export function CancellationPolicy({ lang }: { lang: "zh" | "en" }) {
+  return (
+    <section className="qb-policy" aria-labelledby="qb-policy-title">
+      <h3 id="qb-policy-title">
+        {lang === "zh" ? "取消與退款政策" : "Cancellation and refund policy"}
+      </h3>
+      <p>
+        {lang === "zh"
+          ? `出發前 ${POLICY_NOTICE_HOURS} 小時（含）之前可隨時取消，退款會扣除總額 ${POLICY_FEE_PERCENT}% 的行政費。超過這個時間，一律不予退款。未到（no-show）不退款。如需更改或取消預訂，請聯絡 info@qualitour.ca。`
+          : `Cancellations can be made anytime until ${POLICY_NOTICE_HOURS} hours before the service, but refunds are subject to an administration fee of ${POLICY_FEE_PERCENT}% of the total amount. After that time, all bookings are non-refundable. No-shows will not be refunded. To change or cancel a booking, contact info@qualitour.ca.`}
+      </p>
+    </section>
+  );
+}
+
 export function BookingView(p: BookingViewProps) {
   const t = (zh: string, en: string) => (p.lang === "zh" ? zh : en),
     [routeId, setRouteId] = useState(""),
@@ -673,6 +694,9 @@ export function BookingView(p: BookingViewProps) {
                       "Payment confirmed. Your receipt is saved and can be reopened in this browser.",
                     )}
                   </p>
+                )}
+                {b.status !== "cancelled" && (
+                  <CancellationPolicy lang={p.lang} />
                 )}
                 <div className="qb-public-actions">
                   {b.paymentNotification && b.status !== "cancelled" && (
@@ -1278,6 +1302,7 @@ export function BookingView(p: BookingViewProps) {
                       />
                     </label>
                   </fieldset>
+                  <CancellationPolicy lang={p.lang} />
                   <label className="qb-check qb-ack">
                     <input
                       type="checkbox"

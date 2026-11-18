@@ -1312,3 +1312,21 @@
   margin: 0;
   font-size: 1rem;
 }
+
+.qb-policy {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--qt-line, #d9d9d9);
+  border-radius: 8px;
+  background: var(--qt-surface-soft, #f7f7f7);
+}
+.qb-policy h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+.qb-policy p {
+  margin: 0;
+  color: var(--qt-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
