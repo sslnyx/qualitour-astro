@@ -30,6 +30,11 @@ test("the homepage shows tour categories before the private transfer section", a
   assert(tourSection !== -1 && transferSection > tourSection);
 });
 
+test("homepage tour previews give images a full-width column on phones", async () => {
+  const source = await read("src/components/HomeTourGroups.astro");
+  assert.match(source, /class="grid grid-cols-1[^"\n]*sm:grid-cols-2[^"\n]*md:grid-cols-3[^"\n]*" data-tour-cards/);
+});
+
 test("the mobile menu clips horizontally and its autofocus target does not slide offscreen", async () => {
   const source = await read("src/components/SiteNavAstro.astro");
   const drawer = source.match(/<dialog\s+id="mobile-drawer"[\s\S]*?<\/dialog>/)?.[0];

@@ -84,7 +84,7 @@ const previewPrice = hasDiscount || price;
 const currency = tour.tour_meta?.["tourmaster-tour-currency"];
 
 // Image dimensions for optimization
-const imageWidth = isFeatured ? 600 : isCompact ? 400 : 500;
+const imageWidth = isFeatured || isPreview ? 600 : isCompact ? 400 : 500;
 const imageHeight = isCompact
     ? Math.round((imageWidth * 9) / 16)
     : Math.round((imageWidth * 3) / 4);
@@ -159,10 +159,10 @@ const imageHeight = isCompact
     </div>
 
     <!-- Content -->
-    <div class:list={[isPreview ? 'flex min-w-0 flex-1 flex-col p-3 sm:p-5' : isFeatured ? 'p-5 p-6' : 'p-5']}>
+    <div class:list={[isPreview ? 'flex min-w-0 flex-1 flex-col p-4 md:p-5' : isFeatured ? 'p-5 p-6' : 'p-5']}>
         <!-- Title -->
         <Title
-            class:list={['font-semibold text-gray-900 mb-2 group-hover:text-orange-500 transition-colors', isPreview ? 'break-words line-clamp-3 text-sm sm:line-clamp-2 sm:text-lg' : 'line-clamp-2 text-lg']}
+            class:list={['font-semibold text-gray-900 mb-2 group-hover:text-orange-500 transition-colors', isPreview ? 'break-words line-clamp-3 text-base md:line-clamp-2 md:text-lg' : 'line-clamp-2 text-lg']}
         >
             {cleanedTitle}
         </Title>

@@ -62,9 +62,9 @@ const groups = buildHomeTourGroups(latest, catalogue).map(group => ({
                 <span aria-hidden="true" class="material-icons text-base">arrow_forward</span>
               </a>
             </div>
-            <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:gap-7" data-tour-cards>
+            <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 md:grid-cols-3 lg:gap-7" data-tour-cards>
               {group.tours.map((tour: WPTour, index: number) => (
-                <li class:list={['min-w-0 [&>a]:h-full', index >= 2 && 'hidden sm:block']}>
+                <li class:list={['min-w-0 [&>a]:h-full', index >= 2 && 'hidden md:block']}>
                   <TourCardOptimized tour={tour} lang={lang} style="preview" />
                 </li>
               ))}
