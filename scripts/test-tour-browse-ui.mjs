@@ -49,12 +49,20 @@ test("tour search terms remain visible and removable in results", async () => {
 test("tour filters open a separate destination picker instead of scrolling a nested list", async () => {
   const source = await read("src/components/TourFilterSidebarClient.tsx");
   assert.match(source, /<TourDestinationPicker\b/);
-  assert.match(source, /<select\b[^>]*id=\{styleId\}/);
   assert.doesNotMatch(source, /max-h-48.*max-h-64|Apply Filters|套用篩選/);
   const picker = await read("src/components/TourDestinationPicker.tsx");
   assert.match(picker, /aria-expanded=\{open\}/);
   assert.match(picker, /searchDestination/);
   assert.match(picker, /options\.slice\(0, visibleCount\)/);
+});
+
+test("tour styles use a single expanded picker with reachable and identifiable choices", async () => {
+  const source = await read("src/components/TourFilterSidebarClient.tsx");
+  assert.doesNotMatch(source, /<select\b/);
+  assert.match(source, /aria-expanded=\{styleOpen\}/);
+  assert.match(source, /aria-pressed=\{filters\.style === slug\}/);
+  assert.match(source, /open=\{activePicker === 'destination'\}/);
+  assert.match(source, /styleTriggerRef\.current\?\.focus\(\)/);
 });
 
 test("Chinese browse controls use Traditional Chinese", async () => {

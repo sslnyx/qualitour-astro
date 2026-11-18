@@ -28,6 +28,8 @@ interface DrawerEventDetail {
     trigger?: HTMLElement;
 }
 
+type ActivePicker = 'destination' | 'style' | null;
+
 function getFiltersFromUrl(): FilterState {
     if (typeof window === 'undefined') {
         return { destination: '', style: '', q: '' };
@@ -43,17 +45,45 @@ function getFiltersFromUrl(): FilterState {
 type FilterFieldsProps = Props & {
     filters: FilterState;
     updateFilter: (key: keyof FilterState, value: string | null) => void;
-    destinationOpen: boolean;
-    setDestinationOpen: (open: boolean) => void;
+    activePicker: ActivePicker;
+    setActivePicker: (picker: ActivePicker) => void;
 };
 
-function FilterFields({ destinations, styles, lang, filters, updateFilter, destinationOpen, setDestinationOpen }: FilterFieldsProps) {
+function FilterFields({ destinations, styles, lang, filters, updateFilter, activePicker, setActivePicker }: FilterFieldsProps) {
     const searchId = useId();
     const styleId = useId();
+    const styleTriggerRef = useRef<HTMLButtonElement>(null);
+    const styleOpen = activePicker === 'style';
     const zh = lang === 'zh';
     const searchLabel = zh ? '搜尋行程' : 'Search tours';
+    const allStylesLabel = zh ? '所有旅遊方式' : 'All travel styles';
+    const selectedStyle = styles.find(style => style.slug === filters.style);
+    const selectedStyleLabel = selectedStyle ? decodeHtml(selectedStyle.name) : filters.style || allStylesLabel;
     const fieldClass = 'min-h-11 w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 text-base text-gray-900 placeholder-gray-500 focus-visible:outline-2 focus-visible:outline-[#a8410b] sm:text-sm';
     const labelClass = 'mb-1.5 block text-sm font-semibold text-gray-900';
+    const closeStylePicker = () => {
+        setActivePicker(null);
+        styleTriggerRef.current?.focus();
+    };
+    const handleStylePickerKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+        if (!styleOpen) return;
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            closeStylePicker();
+            return;
+        }
+        const down = event.key === 'ArrowDown';
+        if (!down && event.key !== 'ArrowUp') return;
+
+        const options = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button[aria-pressed]'));
+        const current = options.findIndex(option => option === event.target);
+        const next = current === -1
+            ? (down ? 0 : options.length - 1)
+            : (current + (down ? 1 : -1) + options.length) % options.length;
+        event.preventDefault();
+        options[next]?.focus();
+    };
 
     return (
         <div className="space-y-4">
@@ -73,25 +103,45 @@ function FilterFields({ destinations, styles, lang, filters, updateFilter, desti
                 destinations={destinations}
                 value={filters.destination}
                 lang={lang}
-                open={destinationOpen}
-                onOpenChange={setDestinationOpen}
+                open={activePicker === 'destination'}
+                onOpenChange={(open) => setActivePicker(open ? 'destination' : null)}
                 onChange={(value) => updateFilter('destination', value)}
             />
 
             {styles.length > 0 && (
-                <div>
-                    <label htmlFor={styleId} className={labelClass}>{zh ? '旅遊方式' : 'Travel style'}</label>
-                    <select
-                        id={styleId}
-                        value={filters.style}
-                        onChange={(event) => updateFilter('style', event.target.value)}
-                        className={fieldClass}
+                <div onKeyDown={handleStylePickerKeyDown}>
+                    <h3 id={`${styleId}-label`} className={labelClass}>{zh ? '旅遊方式' : 'Travel style'}</h3>
+                    <button
+                        ref={styleTriggerRef}
+                        type="button"
+                        aria-labelledby={`${styleId}-label ${styleId}-value`}
+                        aria-expanded={styleOpen}
+                        aria-controls={styleOpen ? `${styleId}-choices` : undefined}
+                        onClick={() => setActivePicker(styleOpen ? null : 'style')}
+                        className="flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-900 hover:border-gray-500 focus-visible:outline-2 focus-visible:outline-[#a8410b]"
                     >
-                        <option value="">{zh ? '所有旅遊方式' : 'All travel styles'}</option>
-                        {styles.map(style => (
-                            <option key={style.id} value={style.slug}>{decodeHtml(style.name)}</option>
-                        ))}
-                    </select>
+                        <span id={`${styleId}-value`} className="min-w-0 break-words">{selectedStyleLabel}</span>
+                        <span aria-hidden="true" className={`material-icons shrink-0 text-gray-600 ${styleOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                    </button>
+                    {styleOpen && (
+                        <div id={`${styleId}-choices`} role="group" aria-labelledby={`${styleId}-label`} className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-2.5">
+                            {[{ slug: '', name: allStylesLabel }, ...styles].map(({ slug, name }) => (
+                                <button
+                                    key={slug}
+                                    type="button"
+                                    aria-pressed={filters.style === slug}
+                                    onClick={() => {
+                                        if (filters.style !== slug) updateFilter('style', slug);
+                                        closeStylePicker();
+                                    }}
+                                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg px-2 py-2 text-left text-sm text-gray-900 hover:bg-orange-50 aria-pressed:bg-orange-100 aria-pressed:font-semibold focus-visible:outline-2 focus-visible:outline-[#a8410b]"
+                                >
+                                    <span className="min-w-0 break-words">{decodeHtml(name)}</span>
+                                    {filters.style === slug && <span aria-hidden="true" className="material-icons shrink-0 text-[#a8410b]">check</span>}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -100,7 +150,7 @@ function FilterFields({ destinations, styles, lang, filters, updateFilter, desti
 
 export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
     const [filters, setFilters] = useState<FilterState>(getFiltersFromUrl);
-    const [destinationOpen, setDestinationOpen] = useState(false);
+    const [activePicker, setActivePicker] = useState<ActivePicker>(null);
     const [mobileOpen, setMobileOpen] = useState(false);
     const drawerRef = useRef<HTMLDivElement>(null);
     const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -123,7 +173,7 @@ export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
     }, []);
 
     const closeMobileFilters = useCallback(() => {
-        setDestinationOpen(false);
+        setActivePicker(null);
         setMobileOpen(false);
     }, []);
 
@@ -157,6 +207,7 @@ export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
         const handleToggle = (event: Event) => {
             const detail = (event as CustomEvent<DrawerEventDetail>).detail;
             restoreFocusRef.current = detail?.trigger || (document.activeElement as HTMLElement | null);
+            setActivePicker(null);
             setMobileOpen(true);
         };
         window.addEventListener('toggle-mobile-filters', handleToggle);
@@ -221,7 +272,7 @@ export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
         const localePrefix = getLocalePrefix(lang as Locale);
         window.history.pushState({}, '', `${localePrefix}/tours`);
         setFilters({ destination: '', style: '', q: '' });
-        setDestinationOpen(false);
+        setActivePicker(null);
         window.dispatchEvent(new Event('urlchange'));
     };
 
@@ -234,7 +285,7 @@ export function TourFilterSidebarClient({ destinations, styles, lang }: Props) {
         viewResults: zh ? '查看行程' : 'View tours',
         close: zh ? '關閉' : 'Close',
     };
-    const fieldProps = { destinations, styles, lang, filters, updateFilter, destinationOpen, setDestinationOpen };
+    const fieldProps = { destinations, styles, lang, filters, updateFilter, activePicker, setActivePicker };
     const clearClass = 'min-h-11 rounded-lg px-2 text-sm font-semibold text-[#a8410b] hover:bg-orange-50 focus-visible:outline-2 focus-visible:outline-[#a8410b]';
 
     return (
