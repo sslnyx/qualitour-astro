@@ -1,0 +1,77 @@
+---
+import { getLocalePrefix, type Locale } from '../i18n/config';
+import { buildHomeTourGroups } from '../lib/home-tour-groups.mjs';
+import type { WPTour } from '../lib/wordpress/types';
+import TourCardOptimized from './TourCardOptimized.astro';
+
+interface Props {
+  latest: WPTour[];
+  catalogue: WPTour[];
+  lang: Locale;
+}
+
+const { latest, catalogue, lang } = Astro.props;
+const zh = lang === 'zh';
+const toursPath = `${getLocalePrefix(lang)}/tours`;
+const labels: Record<string, { name: string; more: string; icon: string }> = {
+  featured: { name: zh ? '精選行程' : 'Featured tours', more: zh ? '更多精選行程' : 'More featured tours', icon: 'star_outline' },
+  canada: { name: zh ? '加拿大' : 'Canada', more: zh ? '所有加拿大行程' : 'All Canada tours', icon: 'terrain' },
+  cruises: { name: zh ? '郵輪旅遊' : 'Cruises', more: zh ? '所有郵輪行程' : 'All cruises', icon: 'directions_boat' },
+};
+const groups = buildHomeTourGroups(latest, catalogue).map(group => ({
+  ...group,
+  ...labels[group.id],
+  href: `${toursPath}/${group.path}`,
+}));
+---
+
+{groups.length > 0 && (
+  <section id="home-tours" aria-labelledby="home-tours-heading" class="bg-white py-12 sm:py-16 lg:py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 sm:mb-7">
+        <h2 id="home-tours-heading" class="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+          {zh ? '探索行程' : 'Explore tours'}
+        </h2>
+        <a href={toursPath} class="inline-flex min-h-11 items-center gap-1.5 rounded-lg text-sm font-semibold text-[#a8410b] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a8410b]">
+          {zh ? '查看全部行程' : 'View all tours'}
+          <span aria-hidden="true" class="material-icons text-lg">arrow_forward</span>
+        </a>
+      </div>
+
+      {groups.length > 1 && (
+        <nav aria-label={zh ? '行程分類' : 'Tour categories'} class="mb-8 grid max-w-2xl auto-cols-fr grid-flow-col gap-2 sm:mb-11">
+          {groups.map(group => (
+            <a
+              href={`#home-tour-${group.id}`}
+              class="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-2 py-2 text-center text-sm font-semibold text-[#8a3309] hover:border-[#a8410b] hover:bg-orange-100 focus-visible:outline-2 focus-visible:outline-[#a8410b] sm:text-base"
+            >
+              <span aria-hidden="true" class="material-icons hidden text-lg sm:block">{group.icon}</span>
+              {group.name}
+            </a>
+          ))}
+        </nav>
+      )}
+
+      <div class="space-y-8 sm:space-y-10">
+        {groups.map(group => (
+          <section id={`home-tour-${group.id}`} aria-labelledby={`home-tour-heading-${group.id}`} class="scroll-mt-24 border-b border-gray-200 pb-8 last:border-b-0 last:pb-0 sm:pb-10" data-home-tour-group={group.id}>
+            <div class="mb-3 flex items-center justify-between gap-2 sm:mb-4">
+              <h3 id={`home-tour-heading-${group.id}`} class="min-w-0 text-lg font-bold tracking-tight text-gray-900 sm:text-2xl">{group.name}</h3>
+              <a href={group.href} class="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg text-sm font-semibold text-[#a8410b] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a8410b]" data-tour-more>
+                {group.more}
+                <span aria-hidden="true" class="material-icons text-base">arrow_forward</span>
+              </a>
+            </div>
+            <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:gap-7" data-tour-cards>
+              {group.tours.map((tour: WPTour, index: number) => (
+                <li class:list={['min-w-0 [&>a]:h-full', index >= 2 && 'hidden sm:block']}>
+                  <TourCardOptimized tour={tour} lang={lang} style="preview" />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    </div>
+  </section>
+)}

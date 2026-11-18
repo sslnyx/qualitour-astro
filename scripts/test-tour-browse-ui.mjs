@@ -4,6 +4,32 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
+test("the homepage previews featured, Canadian and cruise tours using their published categories", async () => {
+  const { buildHomeTourGroups } = await import("../src/lib/home-tour-groups.mjs");
+  const tour = (id, date, tour_terms = {}) => ({ id, date, tour_terms });
+  const canada = { destinationScope: ["geo-ca-bc", "geo-ca"] };
+  const cruises = { styles: [{ slug: "cruises" }] };
+  const latest = [tour(8, "2026-11-08", canada), tour(7, "2026-11-07"), tour(6, "2026-11-06"), tour(5, "2026-11-05")];
+  const catalogue = [
+    tour(2, "2026-11-02", cruises), tour(4, "2026-11-04", canada),
+    tour(3, "2026-11-03", canada), tour(1, "2026-11-01"), ...latest,
+  ];
+  const groups = buildHomeTourGroups(latest, catalogue);
+  assert.deepEqual(groups.map(({ id, path, tours }) => [id, path, tours.map(({ id }) => id)]), [
+    ["featured", "featured", [8, 7, 6]],
+    ["canada", "destination/geo-ca", [4, 3, 8]],
+    ["cruises", "style/cruises", [2]],
+  ]);
+  assert.deepEqual(buildHomeTourGroups(latest, []).map(({ id }) => id), ["featured"]);
+});
+
+test("the homepage shows tour categories before the private transfer section", async () => {
+  const source = await read("src/pages/[...lang]/index.astro");
+  const tourSection = source.indexOf("<HomeTourGroups");
+  const transferSection = source.indexOf('id="home-private-transfers"');
+  assert(tourSection !== -1 && transferSection > tourSection);
+});
+
 test("the mobile menu clips horizontally and its autofocus target does not slide offscreen", async () => {
   const source = await read("src/components/SiteNavAstro.astro");
   const drawer = source.match(/<dialog\s+id="mobile-drawer"[\s\S]*?<\/dialog>/)?.[0];

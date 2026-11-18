@@ -2,22 +2,17 @@
 import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
 import {
+  getAllTours,
   getTours,
-  getSiteNavData,
   getGoogleReviews,
 } from "../../lib/wordpress/api";
-import {
-  getPrivateTransfersWithPricing,
-  type TransferRoute,
-} from "../../lib/zaui/zaui";
-import { wpUrl, sanitizeUrls } from "../../lib/wp-url";
+import { getPrivateTransfersWithPricing } from "../../lib/zaui/zaui";
+import { sanitizeUrls } from "../../lib/wp-url";
 import heroBackground from "../../assets/hero-background.webp";
-import heroBackgroundMobile from "../../assets/hero-background-mobile.webp";
-import TourCardOptimized from "../../components/TourCardOptimized.astro";
+import HomeTourGroups from "../../components/HomeTourGroups.astro";
 import ReviewsSlider from "../../components/ReviewsSlider";
 import TransferRoutesGrid from "../../components/TransferRoutesGrid";
 import FeaturedToursHero from "../../components/FeaturedToursHero";
-import LegacyHero from "../../components/LegacyHero.astro";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -35,9 +30,9 @@ import { optimizeTourImages, optimizeResponsiveImage, getTourImageUrl } from "..
 import { tourHeroImageSizes } from "../../lib/wordpress/image-source";
 
 // Fetch data at build time
-const [rawTours, navData, reviews, transferRoutes] = await Promise.all([
+const [rawTours, catalogue, reviews, transferRoutes] = await Promise.all([
   getTours({ per_page: 6, orderby: 'date', order: 'desc' }, lang),
-  getSiteNavData(lang),
+  getAllTours(lang),
   getGoogleReviews(),
   getPrivateTransfersWithPricing(),
 ]);
@@ -45,8 +40,7 @@ const [rawTours, navData, reviews, transferRoutes] = await Promise.all([
 // Use top 3 transfer routes for homepage
 const featuredTransfers = transferRoutes.slice(0, 3);
 
-// Both the hero and Featured Tours use the latest six published tours.
-// Cards and the hero use separate, build-generated display sizes.
+// Keep the latest six published tours for the hero, with a shorter featured preview below it.
 const featuredTours = await optimizeTourImages(rawTours.slice(0, 6));
 const heroTours = await Promise.all(featuredTours.map(async tour => {
   const source = getTourImageUrl(tour);
@@ -109,12 +103,6 @@ const t = {
       : "Specialized in small group transfers for up to 14 passengers",
   perVehicle: lang === "zh" ? "每車" : "per vehicle",
   viewAllTransfers: lang === "zh" ? "查看全部接送服務" : "View All Transfers",
-  featuredTours: lang === "zh" ? "精選行程" : "Featured Tours",
-  featuredToursSubtitle:
-    lang === "zh"
-      ? "探索我們最受歡迎的旅遊套餐"
-      : "Explore our most popular tour packages",
-  viewAllTours: lang === "zh" ? "查看全部行程" : "View All Tours",
   customerReviews: lang === "zh" ? "客戶評價" : "What Our Customers Say",
   reviewsSubtitle:
     lang === "zh"
@@ -170,14 +158,6 @@ const whyUsItems = [
     client:load
   />
 
-  <!-- Legacy Hero (Saved) -->
-  <!-- <LegacyHero
-    lang={lang}
-    localePrefix={localePrefix}
-    navData={navData}
-    t={t}
-  /> -->
-
   <!-- Why Choose Us Section -->
   <!-- <section class="py-20 bg-white relative overflow-hidden">
     <div
@@ -214,16 +194,13 @@ const whyUsItems = [
     </div>
   </section> -->
 
+  <HomeTourGroups latest={featuredTours} catalogue={catalogue} lang={lang} />
+
   <!-- Private Transfers Section -->
-  <section class="py-20 bg-gray-50">
+  <section id="home-private-transfers" aria-labelledby="home-private-transfers-heading" class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-16">
-        <span
-          class="text-orange-500 font-bold tracking-widest uppercase text-sm mb-2 block"
-        >
-          Private Transfers
-        </span>
-        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h2 id="home-private-transfers-heading" class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
           {t.privateTransfers}
         </h2>
         <p class="text-gray-600 max-w-2xl mx-auto">{t.transfersSubtitle}</p>
@@ -259,44 +236,8 @@ const whyUsItems = [
     </div>
   </section>
 
-  <!-- Featured Tours Section -->
-  <section class="py-20 bg-white overflow-hidden">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-16">
-        <span
-          class="text-orange-500 font-bold tracking-widest uppercase text-sm mb-2 block"
-        >
-          Featured
-        </span>
-        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          {t.featuredTours}
-        </h2>
-        <p class="text-gray-600 max-w-2xl mx-auto">{t.featuredToursSubtitle}</p>
-      </div>
-
-      <!-- Tour Grid using TourCard component -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {
-          featuredTours.map((tour) => (
-            <TourCardOptimized tour={tour} lang={lang} style="featured" />
-          ))
-        }
-      </div>
-
-      <div class="text-center mt-12">
-        <a
-          href={`${localePrefix}/tours`}
-          class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-full hover:shadow-2xl hover:shadow-orange-200/50 hover:scale-105 transition-all duration-300"
-        >
-          <span class="material-icons">explore</span>
-          {t.viewAllTours}
-        </a>
-      </div>
-    </div>
-  </section>
-
   <!-- Customer Reviews Section -->
-  <section class="py-20 bg-gray-50">
+  <section class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-12">
         <span
