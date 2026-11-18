@@ -27,6 +27,23 @@ test('the detail hero displays the cover without a separate image action', async
   assert.equal(/查看原圖|View full cover image/.test(detail), false);
 });
 
+test('the homepage carousel starts automatically and honors reduced motion', async () => {
+  const hero = await source('src/components/FeaturedToursHero.tsx');
+  assert.match(hero, /matchMedia\("\(prefers-reduced-motion: reduce\)"\)/);
+  assert.match(hero, /setIsPlaying\(!motion\.matches\)/);
+  assert.match(hero, /!isPlaying \|\| isModalOpen \|\| isPointerOver/);
+});
+
+test('homepage card posters use the full image in a 3:2 frame', async () => {
+  const card = await source('src/components/TourCardOptimized.astro');
+  assert.match(card, /isPreview \? "aspect-\[3\/2\]"/);
+  assert.match(card, /previewSource = isPreview \? getTourImageUrl\(tour\)/);
+  assert.match(card, /optimizeImageUrl\(previewSource, 960\)/);
+  assert.match(card, /src=\{previewImage\}[\s\S]*?class="h-full w-full object-contain"/);
+  assert.match(card, /!isPreview && ribbon/);
+  assert.match(card, /isPreview && ribbon/);
+});
+
 test('tour enquiry opens a named native dialog and synchronizes native dismissal', async () => {
   const modal = await source('src/components/TourInquiryModal.tsx');
   assert.ok(/<dialog\b[\s\S]*?aria-labelledby=\{titleId\}/.test(modal));

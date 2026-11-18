@@ -20,6 +20,7 @@ export default function FeaturedToursHero({
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, duration: 40 });
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isPointerOver, setIsPointerOver] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTour, setSelectedTour] = useState<WPTour | null>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
@@ -37,13 +38,24 @@ export default function FeaturedToursHero({
     }, [emblaApi, onSelect]);
 
     useEffect(() => {
-        if (!emblaApi || !isPlaying || isModalOpen) return;
+        const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        setIsPlaying(!motion.matches);
+        const pauseForReducedMotion = (event: MediaQueryListEvent) => {
+            if (event.matches) setIsPlaying(false);
+        };
+        motion.addEventListener("change", pauseForReducedMotion);
+        return () => motion.removeEventListener("change", pauseForReducedMotion);
+    }, []);
+
+    useEffect(() => {
+        if (!emblaApi || !isPlaying || isModalOpen || isPointerOver || tours.length < 2) return;
         const interval = window.setInterval(() => {
+            if (document.hidden) return;
             if (emblaApi.canScrollNext()) emblaApi.scrollNext();
             else emblaApi.scrollTo(0);
         }, 5000);
         return () => window.clearInterval(interval);
-    }, [emblaApi, isPlaying, isModalOpen]);
+    }, [emblaApi, isPlaying, isModalOpen, isPointerOver, tours.length]);
 
     const scrollTo = useCallback(
         (index: number) => {
@@ -72,6 +84,10 @@ export default function FeaturedToursHero({
         <section
             aria-label={isChinese ? "精選行程輪播" : "Featured tours slideshow"}
             className="bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800"
+            onPointerEnter={(event) => {
+                if (event.pointerType === "mouse") setIsPointerOver(true);
+            }}
+            onPointerLeave={() => setIsPointerOver(false)}
             onFocusCapture={(event) => {
                 if (!event.target.closest("[data-carousel-rotation]")) setIsPlaying(false);
             }}
@@ -187,7 +203,10 @@ export default function FeaturedToursHero({
                 <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-1 px-4 pb-5 sm:gap-2">
                     <button
                         type="button"
-                        onClick={() => emblaApi?.scrollPrev()}
+                        onClick={() => {
+                            setIsPlaying(false);
+                            emblaApi?.scrollPrev();
+                        }}
                         className="grid size-10 shrink-0 place-items-center rounded-full border border-white/30 text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white"
                         aria-label={isChinese ? "上一張" : "Previous slide"}
                     >
@@ -209,7 +228,10 @@ export default function FeaturedToursHero({
                     </div>
                     <button
                         type="button"
-                        onClick={() => emblaApi?.scrollNext()}
+                        onClick={() => {
+                            setIsPlaying(false);
+                            emblaApi?.scrollNext();
+                        }}
                         className="grid size-10 shrink-0 place-items-center rounded-full border border-white/30 text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white"
                         aria-label={isChinese ? "下一張" : "Next slide"}
                     >

@@ -8,9 +8,11 @@
  * For client-side filtered grids (ToursGrid), use the React TourCard instead.
  */
 import CdnImage from "./CdnImage.astro";
-import type { WPTour, WPTourFeaturedImage } from "../lib/wordpress/types";
-import { wpUrl, extractTourImageUrl } from "../lib/wp-url";
+import type { WPTour } from "../lib/wordpress/types";
+import { extractTourImageUrl } from "../lib/wp-url";
 import { getLocalePrefix, type Locale } from "../i18n/config";
+import { getTourImageUrl } from "../lib/wordpress/image-source";
+import { optimizeImageUrl } from "../lib/wordpress/image";
 
 interface Props {
     tour: WPTour;
@@ -45,10 +47,6 @@ function getExcerptWords(html: string, wordCount: number): string {
     return words.join(" ") + (words.length >= wordCount ? "..." : "");
 }
 
-function getImageUrl(tour: WPTour): string | null {
-    return extractTourImageUrl(tour.featured_image_url);
-}
-
 function getDurationText(tour: WPTour): string | null {
     if (tour.tour_meta?.duration_text) {
         return tour.tour_meta.duration_text;
@@ -65,7 +63,6 @@ function getDurationText(tour: WPTour): string | null {
 }
 
 // Computed values
-const imageUrl = tour.optimizedImageUrl || getImageUrl(tour);
 const localePrefix = getLocalePrefix(lang as Locale);
 const cleanedTitle = cleanTitle(tour.title.rendered);
 const durationText = getDurationText(tour);
@@ -77,14 +74,17 @@ const hasDiscount =
 const ribbon = tour.tour_meta?.ribbon;
 
 const isPreview = style === "preview";
-const isCompact = style === "compact" || isPreview;
+const previewSource = isPreview ? getTourImageUrl(tour) : null;
+const previewImage = previewSource ? await optimizeImageUrl(previewSource, 960) : null;
+const imageUrl = isPreview ? null : tour.optimizedImageUrl || extractTourImageUrl(tour.featured_image_url);
+const isCompact = style === "compact";
 const isFeatured = style === "featured";
 const Title = isPreview ? "h4" : "h3";
 const previewPrice = hasDiscount || price;
 const currency = tour.tour_meta?.["tourmaster-tour-currency"];
 
 // Image dimensions for optimization
-const imageWidth = isFeatured || isPreview ? 600 : isCompact ? 400 : 500;
+const imageWidth = isFeatured ? 600 : isCompact ? 400 : 500;
 const imageHeight = isCompact
     ? Math.round((imageWidth * 9) / 16)
     : Math.round((imageWidth * 3) / 4);
@@ -96,10 +96,12 @@ const imageHeight = isCompact
 >
     <!-- Image -->
     <div
-        class={`relative overflow-hidden bg-gray-100 ${isCompact ? "aspect-[16/9]" : "aspect-[4/3]"}`}
+        class={`relative overflow-hidden bg-gray-100 ${isPreview ? "aspect-[3/2]" : isCompact ? "aspect-[16/9]" : "aspect-[4/3]"}`}
     >
         {
-            imageUrl ? (
+            previewImage ? (
+                <img src={previewImage} alt={cleanedTitle} loading="lazy" decoding="async" class="h-full w-full object-contain" />
+            ) : imageUrl ? (
                 <CdnImage
                     src={imageUrl}
                     alt={cleanedTitle}
@@ -148,9 +150,9 @@ const imageHeight = isCompact
 
         <!-- Ribbon -->
         {
-            ribbon && (
-                <div class:list={['absolute', isPreview ? 'inset-x-2 top-2 sm:top-4 sm:left-4' : 'top-4 left-4']}>
-                    <div class:list={['bg-gradient-to-r from-orange-500 to-amber-500 text-white px-3 py-1 text-xs font-bold rounded-full shadow-md', isPreview && 'w-fit max-w-full truncate']}>
+            !isPreview && ribbon && (
+                <div class="absolute top-4 left-4">
+                    <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-3 py-1 text-xs font-bold rounded-full shadow-md">
                         {ribbon}
                     </div>
                 </div>
@@ -160,6 +162,9 @@ const imageHeight = isCompact
 
     <!-- Content -->
     <div class:list={[isPreview ? 'flex min-w-0 flex-1 flex-col p-4 md:p-5' : isFeatured ? 'p-5 p-6' : 'p-5']}>
+        {isPreview && ribbon && (
+            <span class="mb-2 w-fit max-w-full break-words rounded-full bg-orange-50 px-2.5 py-1 text-xs font-semibold text-[#8a3309]">{ribbon}</span>
+        )}
         <!-- Title -->
         <Title
             class:list={['font-semibold text-gray-900 mb-2 group-hover:text-orange-500 transition-colors', isPreview ? 'break-words line-clamp-3 text-base md:line-clamp-2 md:text-lg' : 'line-clamp-2 text-lg']}
