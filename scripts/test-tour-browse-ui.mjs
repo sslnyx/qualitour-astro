@@ -4,6 +4,16 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
+test("the mobile menu clips horizontally and its autofocus target does not slide offscreen", async () => {
+  const source = await read("src/components/SiteNavAstro.astro");
+  const drawer = source.match(/<dialog\s+id="mobile-drawer"[\s\S]*?<\/dialog>/)?.[0];
+  assert.ok(drawer);
+  assert.match(drawer, /\boverflow-clip\b/);
+  assert.match(drawer, /id="mobile-close-btn"\s+type="button"\s+autofocus/);
+  assert.doesNotMatch(drawer, /translate-x-/);
+  assert.doesNotMatch(source, /#mobile-drawer\[open\][^{]*\{[^}]*animation:/);
+});
+
 test("category pages leave the document main landmark to Layout", async () => {
   const source = await read("src/components/TourCategoryPage.astro");
   assert.doesNotMatch(source, /<main\b/);
