@@ -7,6 +7,7 @@ import type { WPTour, WPTourFeaturedImage } from "../../../lib/wordpress/types";
 import { toTourBrowseCard } from "../../../lib/tour-browse.mjs";
 import { ToursGrid } from "../../../components/ToursGrid";
 import { TourFilterSidebarClient } from "../../../components/TourFilterSidebarClient";
+import { TourDestinationChips } from "../../../components/TourDestinationChips";
 import { wpUrl } from "../../../lib/wp-url";
 
 // Generate paths for both locales
@@ -46,37 +47,44 @@ const tours = await optimizeTourImages(rawTours, { concurrency: 20 });
   lang={lang}
 >
   <div class="min-h-screen bg-gray-50">
-    {/* Page Header */}
-    <section class="page-hero flex items-center bg-gradient-to-r from-gray-900 to-gray-800 py-10 sm:py-12">
+    {/* Compact page header: title plus quick destination filter, so tours start above the fold */}
+    <section class="bg-white border-b border-gray-200 pt-5 pb-4 md:pt-7 md:pb-6">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center text-white">
-          <nav class="text-sm mb-4">
-            <a
-              href={`${localePrefix}/`}
-              class="text-gray-400 hover:text-white transition-colors"
-              >{lang === "zh" ? "首頁" : "Home"}</a
-            >
-            <span class="mx-2 text-gray-600">/</span>
-            <span class="text-orange-400"
-              >{lang === "zh" ? "行程" : "Tours"}</span
-            >
-          </nav>
-          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            {lang === "zh" ? "探索我們的行程" : "Explore Our Tours"}
-          </h1>
-          <p class="text-xl text-gray-300 max-w-2xl mx-auto">
-            {
-              lang === "zh"
-                ? "在我們最精彩的目的地中發現難忘的旅程"
-                : "Discover unforgettable journeys through our most remarkable destinations"
-            }
-          </p>
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+          <div class="min-w-0">
+            <nav class="text-sm mb-1.5" aria-label="Breadcrumb">
+              <a
+                href={`${localePrefix}/`}
+                class="text-gray-500 hover:text-gray-900 transition-colors"
+                >{lang === "zh" ? "首頁" : "Home"}</a
+              >
+              <span class="mx-2 text-gray-300">/</span>
+              <span class="text-[#f7941e]"
+                >{lang === "zh" ? "行程" : "Tours"}</span
+              >
+            </nav>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
+              {lang === "zh" ? "探索我們的行程" : "Explore Our Tours"}
+            </h1>
+            <p class="mt-1 text-sm md:text-base text-gray-500">
+              {
+                lang === "zh"
+                  ? "在我們最精彩的目的地中發現難忘的旅程"
+                  : "Discover unforgettable journeys through our most remarkable destinations"
+              }
+            </p>
+          </div>
+          <TourDestinationChips
+            client:load
+            destinations={navData.destinations}
+            lang={lang}
+          />
         </div>
       </div>
     </section>
 
     {/* Tours Content with Sidebar */}
-    <section class="py-12 md:py-16">
+    <section class="py-6 md:py-10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col lg:flex-row gap-8">
           {/* Filter Sidebar - Component handles desktop sidebar & mobile drawer */}

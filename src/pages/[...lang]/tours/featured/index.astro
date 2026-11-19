@@ -3,6 +3,7 @@ import { getLocalePrefix, type Locale } from "../../../../i18n/config";
 import Layout from '../../../../layouts/Layout.astro';
 import { getTours, getSiteNavData } from '../../../../lib/wordpress/api';
 import TourCardOptimized from '../../../../components/TourCardOptimized.astro';
+import TourListHero from '../../../../components/TourListHero.astro';
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -48,39 +49,18 @@ const displayTours = await optimizeTourImages(rawDisplayTours, { concurrency: 12
   lang={lang}
 >
   <div class="min-h-screen bg-gray-50">
-    {/* Page Header */}
-    <section class="page-hero relative flex items-center bg-gradient-to-r from-gray-900 to-gray-800 py-10 sm:py-12 overflow-hidden">
-      {/* Decorative elements */}
-      <div class="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl"></div>
-      <div class="absolute bottom-0 left-0 w-64 h-64 bg-orange-400/10 rounded-full blur-2xl"></div>
-      
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div class="text-center text-white">
-          <nav class="text-sm mb-4 flex items-center justify-center gap-2">
-            <a href={`${localePrefix}/`} class="text-gray-400 hover:text-white transition-colors">Home</a>
-            <span class="text-gray-600">/</span>
-            <a href={`${localePrefix}/tours`} class="text-gray-400 hover:text-white transition-colors">Tours</a>
-            <span class="text-gray-600">/</span>
-            <span class="text-orange-400">Featured</span>
-          </nav>
-          
-          <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6">
-            <span class="material-icons text-orange-400">star</span>
-            <span class="text-white/80 text-sm">Featured Selection</span>
-          </div>
-          
-          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            {isFallback ? 'Popular Tours' : 'Featured Tours'}
-          </h1>
-          <p class="text-xl text-gray-300 max-w-2xl mx-auto">
-            {isFallback 
-              ? `Explore ${displayTours.length} of our most popular tours`
-              : `Discover ${displayTours.length} handpicked premium experiences`
-            }
-          </p>
-        </div>
-      </div>
-    </section>
+    <TourListHero
+      title={isFallback ? 'Popular Tours' : 'Featured Tours'}
+      subtitle={isFallback
+        ? `Explore ${displayTours.length} of our most popular tours`
+        : `Discover ${displayTours.length} handpicked premium experiences`}
+      crumbs={[
+        { label: 'Home', href: `${localePrefix}/` },
+        { label: 'Tours', href: `${localePrefix}/tours` },
+        { label: 'Featured' },
+      ]}
+      badge={{ icon: 'star', text: 'Featured Selection' }}
+    />
 
     {/* Tours Grid */}
     <section class="py-12 md:py-16">

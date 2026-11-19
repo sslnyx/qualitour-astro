@@ -6,6 +6,8 @@ import { getLocalePrefix, type Locale } from "../../i18n/config";
  */
 
 import Layout from '../../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import heroBackground from '../../assets/tours-hero.webp';
 import { getBusinessReviews } from '../../lib/wordpress/api';
 import SimpleReviewsGrid from '../../components/SimpleReviewsGrid';
 import type { GoogleReview } from '../../lib/wordpress/types';
@@ -58,9 +60,19 @@ const t = {
 >
     <div>
         <!-- Hero Section -->
-        <section class="page-hero relative flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
-            <!-- Background pattern -->
-            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,#fff_1px,transparent_1px)] [background-size:24px_24px]"></div>
+        <section class="page-hero relative flex items-center justify-center bg-gray-900 overflow-hidden">
+            <!-- Background photo with dark overlay -->
+            <Image
+                src={heroBackground}
+                alt=""
+                aria-hidden="true"
+                widths={[640, 1280, 1920]}
+                sizes="100vw"
+                class="absolute inset-0 w-full h-full object-cover object-[50%_58%]"
+                loading="eager"
+                decoding="async"
+            />
+            <div class="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/65"></div>
             
             <!-- Gradient overlays -->
             <div class="absolute top-0 right-0 w-96 h-96 bg-[#f7941e]/20 rounded-full blur-3xl"></div>
