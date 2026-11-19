@@ -33,6 +33,7 @@ test('the editor preview renders the public tour page, so it cannot drift from t
   const { readFile, access } = await import('node:fs/promises');
   const route = await readFile(new URL('../src/server/emdash-tour.astro', import.meta.url), 'utf8');
   assert.match(route, /src\/components\/TourPage\.astro/);
+  assert.match(route, /src\/layouts\/Layout\.astro/);
   for (const stale of ['TourPage.astro', 'TourDetail.tsx']) await assert.rejects(access(new URL(`../src/components/${stale}`, import.meta.url)));
   const page = await readFile(new URL('../../src/components/TourPage.astro', import.meta.url), 'utf8');
   const detail = await readFile(new URL('../../src/components/TourDetail.tsx', import.meta.url), 'utf8');

@@ -1,12 +1,11 @@
 ---
 import { getEmDashEntry } from 'emdash';
 import { toLegacyTour } from '../lib/cms/emdash-tour';
-import Layout from '../layouts/Layout.astro';
-// The preview renders the same TourPage and TourDetail as the public site, so it can never fall behind the live layout.
+// The preview renders the same Layout (header, footer), TourPage and TourDetail as the public site, so it can never fall behind.
+import Layout from '../../../src/layouts/Layout.astro';
 import TourPage from '../../../src/components/TourPage.astro';
 import { optimizeTourPresentation } from '../lib/cms/native-site-image.mjs';
 import { tourMetadata } from '../lib/seo';
-import '../styles/global.css';
 import { previewDayRefs, previewRevision } from '../lib/cms/preview-focus';
 
 export const prerender = false;
@@ -31,7 +30,7 @@ const previewContext = isPreview && revision ? {
 const embeddedPreview = isPreview && Astro.url.searchParams.get('workspace') === '1';
 const metadata = tourMetadata(tour);
 ---
-<Layout {...metadata} lang={lang} heroImage={metadata.image} noindex={true} formsDisabled={true}>
+<Layout {...metadata} lang={lang} heroImage={metadata.image} noindex={true}>
   {embeddedPreview && <style is:inline>#emdash-toolbar { display: none !important; }</style>}
   {/* Enquiry forms stay visible as on the live page, but a preview must never send one. */}
   <script is:inline>document.addEventListener('submit', event => { event.preventDefault(); event.stopImmediatePropagation(); }, true);</script>
