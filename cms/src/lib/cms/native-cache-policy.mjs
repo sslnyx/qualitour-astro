@@ -68,6 +68,29 @@ export async function withStaticFallback(request, response, assets) {
 }
 
 /**
+ * Original media files (/_emdash/api/media/file/<key>) are NOT content-addressed: EmDash lets an editor "Replace
+ * original" under the same key, so they cannot be immutable. The endpoint's default `max-age=0, must-revalidate`
+ * made every consumer that keeps a cache (Astro's remote-image cache on a workstation, browsers) ask again for each
+ * file on each build or view (about 5,000 conditional requests per local build). One day keeps those caches warm
+ * and still shows a replaced original by the next day. Requests that carry a session cookie or credentials (CMS
+ * editors, the EmDash CLI) keep the default, so an editor sees a replacement at once.
+ */
+export const MEDIA_FILE_CACHE_CONTROL = 'public, max-age=86400, stale-while-revalidate=604800';
+export function cachedMediaFileResponse(request, response) {
+ if(!['GET','HEAD'].includes(request.method)||request.headers.has('Cookie')||request.headers.has('Authorization'))return response;
+ // A 304 carries no Content-Type, and clients (Astro's remote-image cache) recompute the expiry from the 304's own
+ // headers, so it must carry the same policy or a revalidated entry stays expired. It is recognised by the file extension.
+ const image=response.status===200?(response.headers.get('Content-Type')||'').startsWith('image/')
+  :response.status===304&&/\.(?:jpe?g|png|webp|gif|avif)$/i.test(new URL(request.url).pathname);
+ if(!image)return response;
+ if(!(response.headers.get('Cache-Control')||'').includes('must-revalidate'))return response;
+ const headers=new Headers(response.headers);
+ headers.set('Cache-Control',MEDIA_FILE_CACHE_CONTROL);
+ headers.delete('Set-Cookie');
+ return new Response(request.method==='HEAD'||response.status===304?null:response.body,{status:response.status,statusText:response.statusText,headers});
+}
+
+/**
  * Derived images are addressed by content: the source is a media storage key (a new upload is a new key) and the
  * width/format are in the URL. A 200 can therefore be cached for a year by browsers and the edge, instead of the
  * endpoint's default `max-age=0, must-revalidate`, which re-transformed every image on every view.

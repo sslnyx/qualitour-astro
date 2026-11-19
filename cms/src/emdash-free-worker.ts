@@ -5,7 +5,7 @@ import { durableExecutionContext, fetchFreeRuntime } from './lib/cms/free-runtim
 
 import {nativeSiteRoute} from './lib/cms/native-site-policy.mjs';
 import { siteGate } from './lib/cms/site-gate.mjs';
-import { isNativeProofPath, validateProofTags, forwardNativeProof, privateProofResponse, withStaticFallback, immutableImageResponse } from './lib/cms/native-cache-policy.mjs';
+import { isNativeProofPath, validateProofTags, forwardNativeProof, privateProofResponse, withStaticFallback, immutableImageResponse, cachedMediaFileResponse } from './lib/cms/native-cache-policy.mjs';
 
 export { PluginBridge };
 
@@ -90,6 +90,10 @@ export default {
       const response = immutableImageResponse(await fetchFreeRuntime(handler, request, env, context));
       if (response.status === 200 && response.headers.get('Cache-Control')?.includes('immutable')) context.waitUntil(edge.put(request, response.clone()));
       return response;
+    }
+    if (pathname.startsWith('/_emdash/api/media/file/') && ['GET', 'HEAD'].includes(request.method)) {
+      // Original files may be replaced under the same key, so they get a short cache, not an immutable one.
+      return cachedMediaFileResponse(request, await fetchFreeRuntime(handler, request, env, context));
     }
     const native = await routeNativeBooking(request, env, context);
     if (native) return native;

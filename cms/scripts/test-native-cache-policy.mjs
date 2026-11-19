@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isNativeProofPath, validateProofTags, scopedCloudflareProvider, withStaticFallback, immutableImageResponse} from '../src/lib/cms/native-cache-policy.mjs';
+import {isNativeProofPath, validateProofTags, scopedCloudflareProvider, withStaticFallback, immutableImageResponse, cachedMediaFileResponse, MEDIA_FILE_CACHE_CONTROL} from '../src/lib/cms/native-cache-policy.mjs';
 test('cache entrypoint admits only the bounded native proof routes',()=>{
  for(const path of ['/native-proof/zh','/native-proof/zh/tours/01M77CFJT9M7H2YPYV1J8GF8PV'])assert.ok(isNativeProofPath(path));
  for(const path of ['/zh','/_emdash/admin','/api/transfer/catalog','/book/return/id','/native-proof/zh/anything','/native-proof/zh/tours/a/b','/native-proof/zh/tours/%2e%2e'])assert.equal(isNativeProofPath(path),false);
@@ -84,6 +84,26 @@ test('derived images get a year-long immutable cache, other responses are left a
  assert.equal(image.headers.get('Cache-Control'),'public, max-age=31536000, immutable');assert.equal(image.headers.has('Set-Cookie'),false);assert.equal(await image.text(),'webp');
  const missing=new Response('nope',{status:404,headers:{'Content-Type':'image/webp'}});assert.equal(immutableImageResponse(missing),missing);
  const html=new Response('<p>',{status:200,headers:{'Content-Type':'text/html'}});assert.equal(immutableImageResponse(html),html);
+});
+test('original media files get a one-day cache for anonymous readers; editors, non-images and errors are untouched',async()=>{
+ const origin=()=>new Response('jpg',{status:200,headers:{'Content-Type':'image/jpeg','ETag':'W/"1-2"','Cache-Control':'public, max-age=0, must-revalidate','Set-Cookie':'a=b'}});
+ const url='https://example.test/_emdash/api/media/file/01ABC.01DEF.jpg';
+ const anon=cachedMediaFileResponse(new Request(url),origin());
+ assert.equal(anon.headers.get('Cache-Control'),MEDIA_FILE_CACHE_CONTROL);assert.equal(anon.headers.get('ETag'),'W/"1-2"','the validator stays so stale copies can still be checked');
+ assert.equal(anon.headers.has('Set-Cookie'),false);assert.equal(await anon.text(),'jpg');
+ const head=cachedMediaFileResponse(new Request(url,{method:'HEAD'}),origin());assert.equal(head.headers.get('Cache-Control'),MEDIA_FILE_CACHE_CONTROL);assert.equal(await head.text(),'');
+ for(const headers of [{Cookie:'session=1'},{Authorization:'Bearer x'}]){
+  const editor=origin();assert.equal(cachedMediaFileResponse(new Request(url,{headers}),editor),editor,'an editor with credentials keeps must-revalidate');
+ }
+ const post=origin();assert.equal(cachedMediaFileResponse(new Request(url,{method:'POST'}),post),post);
+ const pdf=new Response('pdf',{status:200,headers:{'Content-Type':'application/pdf','Cache-Control':'public, max-age=0, must-revalidate'}});assert.equal(cachedMediaFileResponse(new Request(url),pdf),pdf);
+ // A 304 (no Content-Type) must carry the policy too: Astro recomputes a revalidated entry's expiry from the 304's headers.
+ const notModified=cachedMediaFileResponse(new Request(url),new Response(null,{status:304,headers:{'ETag':'W/"1-2"','Cache-Control':'public, max-age=0, must-revalidate'}}));
+ assert.equal(notModified.status,304);assert.equal(notModified.headers.get('Cache-Control'),MEDIA_FILE_CACHE_CONTROL);assert.equal(notModified.headers.get('ETag'),'W/"1-2"');
+ const pdfUrl='https://example.test/_emdash/api/media/file/01ABC.01DEF.pdf';
+ const pdfNotModified=new Response(null,{status:304,headers:{'Cache-Control':'public, max-age=0, must-revalidate'}});assert.equal(cachedMediaFileResponse(new Request(pdfUrl),pdfNotModified),pdfNotModified,'a 304 for a non-image keeps the default');
+ const missing=new Response('nope',{status:404,headers:{'Content-Type':'image/jpeg','Cache-Control':'private, no-store'}});assert.equal(cachedMediaFileResponse(new Request(url),missing),missing);
+ const already=new Response('jpg',{status:200,headers:{'Content-Type':'image/jpeg','Cache-Control':'public, max-age=31536000, immutable'}});assert.equal(cachedMediaFileResponse(new Request(url),already),already,'a response that already sets a policy is not overridden');
 });
 test('a failed render of a path with lowercase percent-escapes still finds its prerendered page',async()=>{
  // Our own links spell escapes in lowercase (%e8), but the assets service only matches the uppercase spelling of a non-ASCII file name.
