@@ -1,8 +1,7 @@
 ---
 import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
-import PageHero from "../../components/PageHero.astro";
-import aboutHeroImg from "../../assets/images/about-hero.png";
+import PageTitle from "../../components/PageTitle.astro";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -23,7 +22,6 @@ const t = {
         currentLang === "zh"
             ? "在預訂我們的旅遊服務之前，請仔細閱讀這些條款。"
             : "Please read these terms carefully before booking our travel services.",
-    heroBadge: currentLang === "zh" ? "重要預訂信息" : "Important Booking Info",
     lastUpdated:
         currentLang === "zh"
             ? "最後更新：2024年12月18日"
@@ -120,20 +118,17 @@ const sections = [
         : "Qualitour Terms & Conditions - Learn about booking details, cancellation policies, and liability."}
     lang={currentLang}
 >
-    <!-- Hero Section -->
-    <PageHero
-        image={aboutHeroImg}
+    <PageTitle
         title={t.heroTitle}
         subtitle={t.heroSubtitle}
-        badge={{ icon: "gavel", text: t.heroBadge }}
     >
-        <p class="text-white/50 text-sm mb-10">
+        <p class="text-sm text-gray-300">
             {t.lastUpdated}
         </p>
-    </PageHero>
+    </PageTitle>
 
     <!-- Main Content -->
-    <section class="py-16 bg-gray-50">
+    <section class="py-8 sm:py-12 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="max-w-3xl mx-auto">
                 <!-- Introduction -->
