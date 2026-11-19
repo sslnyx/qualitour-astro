@@ -16,6 +16,8 @@ export interface GalleryPhoto {
     full: string;
     width?: number;
     height?: number;
+    /** Show the whole picture (a text picture or poster): never cropped. */
+    whole?: boolean;
 }
 
 interface Props {
@@ -75,7 +77,7 @@ export function TourGallery({ photos, title, lang = 'en' }: Props) {
     // ---- One photo: banner -------------------------------------------------------------------------------------
     if (photos.length === 1) {
         const [photo] = photos;
-        const wide = photo.width && photo.height ? photo.width / photo.height >= 1.5 : true;
+        const wide = !photo.whole && (photo.width && photo.height ? photo.width / photo.height >= 1.5 : true);
         return (
             <div className="relative h-[220px] overflow-hidden rounded-2xl bg-gray-900 sm:h-[320px] lg:h-[440px]">
                 {!wide && (

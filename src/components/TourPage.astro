@@ -3,6 +3,7 @@ import { plainText } from "../lib/seo";
 import type { GoogleReview, WPTour } from "../lib/wordpress/types";
 import { getCfTransformUrl, wpUrl } from "../lib/wp-url";
 import { collectTourPhotoSources } from "../lib/image-delivery.mjs";
+import tourImageKinds from "../data/tour-image-kinds.json";
 import MobileInquiryCTA from "./MobileInquiryCTA";
 import { TourDetail } from "./TourDetail";
 import { TourGallery } from "./TourGallery";
@@ -41,17 +42,32 @@ if (!tourCode && tour.goodlayers_data) {
   if (match?.[1]) tourCode = match[1].trim();
 }
 
-// Photos for the collage: the cover first, then the gallery. Build-time derivatives when present.
-const galleryPhotos = collectTourPhotoSources(tour).map((raw: string) => {
+// Photos for the collage: the cover first, then the gallery, each picture once. The CMS holds the same picture under
+// several media ids and text pictures (tables, posters, maps) next to real photos; tour-image-kinds.json (built by
+// scripts/classify-tour-images) says which ids are duplicates and which are text pictures. A tour with no real photo
+// shows its first picture alone, whole.
+const mediaId = (url: string) => url.match(/m-[0-9a-f]{16}/)?.[0];
+const textPictures = new Set<string>(tourImageKinds.graphics);
+const seenPictures = new Set<string>();
+const galleryPhotos: { thumb: string; full: string; width?: number; height?: number; whole?: boolean }[] = [];
+let firstPicture: (typeof galleryPhotos)[number] | undefined;
+for (const raw of collectTourPhotoSources(tour)) {
   const url = wpUrl(raw);
+  const id = mediaId(url);
+  const picture = (id && (tourImageKinds.canonical as Record<string, string>)[id]) || id || url;
+  if (seenPictures.has(picture)) continue;
+  seenPictures.add(picture);
   const optimized = tour.optimizedPhotos?.[url];
-  return {
+  const entry = {
     thumb: optimized?.thumbnail || getCfTransformUrl(url, { width: 600, height: 450, format: "webp" }),
     full: optimized?.full || getCfTransformUrl(url, { width: 1600, height: 1200, format: "webp" }),
     width: optimized?.width,
     height: optimized?.height,
   };
-});
+  firstPicture ??= entry;
+  if (!textPictures.has(picture)) galleryPhotos.push(entry);
+}
+if (galleryPhotos.length === 0 && firstPicture) galleryPhotos.push({ ...firstPicture, whole: true });
 const tourTitle = plainText(tour.title.rendered);
 
 const copy =
