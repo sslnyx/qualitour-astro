@@ -355,6 +355,8 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
     const brochureTitle = typeof brochure === 'object' && brochure ? (brochure.title || brochure.filename) : 'Tour Brochure';
     // The media file is served from the same site, so a same-origin link lets the browser honour `download`.
     const brochureHref = brochureUrl ? brochureUrl.replace(/^https?:\/\/qualitour\.qualitour\.workers\.dev(?=\/_emdash\/)/, '') : null;
+    // `?inline=1` makes the site show a PDF in the browser instead of downloading it.
+    const brochureViewHref = brochureHref && /\.pdf$/i.test(brochureHref) && brochureHref.startsWith('/') ? `${brochureHref}?inline=1` : (brochureHref || brochureUrl);
     const brochureFilename = typeof brochure === 'object' && brochure ? (brochure.filename || brochure.title) : undefined;
 
     const renderBlock = (block: ContentBlock, idx: number) => {
@@ -735,7 +737,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                             </p>
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                                 <a
-                                    href={brochureHref || brochureUrl}
+                                    href={brochureViewHref ?? undefined}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-8 py-3.5 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-colors shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500 focus-visible:ring-offset-2"

@@ -43,6 +43,19 @@ export function toPublicResponse(response, cmsOrigin, publicOrigin) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
+/**
+ * The CMS serves every non-image media file as an attachment. A PDF the visitor asked to view (`?inline=1`) is shown in
+ * the browser's own viewer instead; nothing else is ever turned inline, and the type must really be a PDF.
+ */
+export function toInlinePdf(response, url) {
+  if (!url.searchParams.has('inline') || !/\.pdf$/i.test(url.pathname) || response.status !== 200) return response;
+  if ((response.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase() !== 'application/pdf') return response;
+  const headers = new Headers(response.headers);
+  headers.set('Content-Disposition', (headers.get('Content-Disposition') || 'attachment').replace(/^attachment/i, 'inline'));
+  headers.set('X-Content-Type-Options', 'nosniff');
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -55,6 +68,6 @@ export default {
     }
     if (!isForwardedPath(url.pathname)) return env.ASSETS.fetch(request);
     const cmsOrigin = new URL(env.CMS_ORIGIN).origin;
-    return toPublicResponse(await env.CMS.fetch(toCmsRequest(request, cmsOrigin), { redirect: 'manual' }), cmsOrigin, url.origin);
+    return toInlinePdf(toPublicResponse(await env.CMS.fetch(toCmsRequest(request, cmsOrigin), { redirect: 'manual' }), cmsOrigin, url.origin), url);
   },
 };

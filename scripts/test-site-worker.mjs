@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { readForRelease } from './lib/release-read.mjs';
-import worker, { isBookingPagePath, isForwardedPath, toCmsRequest, toPublicResponse } from '../site/worker.mjs';
+import worker, { isBookingPagePath, isForwardedPath, toCmsRequest, toInlinePdf, toPublicResponse } from '../site/worker.mjs';
 
 const cms = 'https://qualitour.qualitour.workers.dev';
 const pub = 'https://qualitour-site.qualitour.workers.dev';
@@ -100,4 +100,16 @@ test('booking pages are served from the Worker\'s own /book asset, never from th
   await worker.fetch(new Request(pub + '/zh/book/manage/' + id), env);
   assert.deepEqual(seen, ['/book', '/zh/book']);
   assert.equal((await worker.fetch(new Request(pub + '/book/manage/' + id, { method: 'POST' }), env)).status, 405);
+});
+
+test('a PDF asked for with ?inline=1 is shown in the browser; everything else keeps its attachment header', async () => {
+  const pdf = () => new Response('%PDF', { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="a.pdf"; filename*=UTF-8\'\'a.pdf' } });
+  const view = toInlinePdf(pdf(), new URL(`${pub}/_emdash/api/media/file/x.pdf?inline=1`));
+  assert.match(view.headers.get('Content-Disposition'), /^inline; filename="a\.pdf"/);
+  assert.equal(view.headers.get('X-Content-Type-Options'), 'nosniff');
+  assert.match(toInlinePdf(pdf(), new URL(`${pub}/_emdash/api/media/file/x.pdf`)).headers.get('Content-Disposition'), /^attachment/);
+  const html = new Response('<script>', { headers: { 'Content-Type': 'text/html', 'Content-Disposition': 'attachment' } });
+  assert.equal(toInlinePdf(html, new URL(`${pub}/_emdash/api/media/file/x.pdf?inline=1`)).headers.get('Content-Disposition'), 'attachment');
+  const notPdfPath = new Response('x', { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment' } });
+  assert.equal(toInlinePdf(notPdfPath, new URL(`${pub}/_emdash/api/media/file/x.bin?inline=1`)).headers.get('Content-Disposition'), 'attachment');
 });
