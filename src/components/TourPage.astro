@@ -1,5 +1,7 @@
 ---
 import { plainText } from "../lib/seo";
+import CdnImage from "./CdnImage.astro";
+import { extractTourImageUrl } from "../lib/wp-url";
 import type { GoogleReview, WPTour } from "../lib/wordpress/types";
 import MobileInquiryCTA from "./MobileInquiryCTA";
 import { TourDetail } from "./TourDetail";
@@ -39,6 +41,8 @@ if (!tourCode && tour.goodlayers_data) {
 }
 
 const tourTitle = plainText(tour.title.rendered);
+// The same cover the tour card shows, so visitors can tell they opened the tour they clicked.
+const coverUrl = tour.optimizedImageUrl || extractTourImageUrl(tour.featured_image_url);
 
 const copy =
   lang === "zh"
@@ -93,51 +97,72 @@ const copy =
           }
         </nav>
 
-        <h1 class="max-w-5xl break-words text-2xl font-bold leading-tight text-gray-900 sm:text-3xl lg:text-4xl" set:html={tour.title.rendered} />
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+          {
+            coverUrl && (
+              <figure class="w-full max-w-[240px] shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:w-56 sm:max-w-none lg:w-64">
+                <CdnImage
+                  src={coverUrl}
+                  alt={tourTitle}
+                  width={500}
+                  height={375}
+                  class="aspect-[4/3] h-full w-full object-cover"
+                  loading="eager"
+                  fetchpriority="high"
+                  decoding="async"
+                  format="webp"
+                  quality={80}
+                />
+              </figure>
+            )
+          }
+          <div class="min-w-0">
+            <h1 class="max-w-5xl break-words text-2xl font-bold leading-tight text-gray-900 sm:text-3xl lg:text-4xl" set:html={tour.title.rendered} />
 
-        <ul class="mt-3 flex flex-wrap gap-2 text-sm font-medium text-gray-700 empty:hidden">
-          {
-            (location || country) && (
-              <li class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
-                <span class="material-icons text-base text-orange-500" aria-hidden="true">location_on</span>
-                {[location, country].filter(Boolean).join(", ")}
-              </li>
-            )
-          }
-          {
-            duration && (
-              <li class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
-                <span class="material-icons text-base text-orange-500" aria-hidden="true">schedule</span>
-                {duration}
-              </li>
-            )
-          }
-          {
-            groupSize && (
-              <li class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
-                <span class="material-icons text-base text-orange-500" aria-hidden="true">groups</span>
-                {groupSize} {copy.guests}
-              </li>
-            )
-          }
-          {
-            categories.length > 0 && (
-              <li class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
-                <span class="material-icons text-base text-orange-500" aria-hidden="true">category</span>
-                {categories[0].name}
-              </li>
-            )
-          }
-          {
-            tourCode && (
-              <li class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
-                <span class="material-icons text-base text-orange-500" aria-hidden="true">confirmation_number</span>
-                {tourCode}
-              </li>
-            )
-          }
-        </ul>
-
+            <ul class="mt-3 flex flex-wrap gap-2 text-sm font-medium text-gray-700 empty:hidden">
+              {
+                (location || country) && (
+                  <li class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
+                    <span class="material-icons text-base text-orange-500" aria-hidden="true">location_on</span>
+                    {[location, country].filter(Boolean).join(", ")}
+                  </li>
+                )
+              }
+              {
+                duration && (
+                  <li class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
+                    <span class="material-icons text-base text-orange-500" aria-hidden="true">schedule</span>
+                    {duration}
+                  </li>
+                )
+              }
+              {
+                groupSize && (
+                  <li class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
+                    <span class="material-icons text-base text-orange-500" aria-hidden="true">groups</span>
+                    {groupSize} {copy.guests}
+                  </li>
+                )
+              }
+              {
+                categories.length > 0 && (
+                  <li class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
+                    <span class="material-icons text-base text-orange-500" aria-hidden="true">category</span>
+                    {categories[0].name}
+                  </li>
+                )
+              }
+              {
+                tourCode && (
+                  <li class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
+                    <span class="material-icons text-base text-orange-500" aria-hidden="true">confirmation_number</span>
+                    {tourCode}
+                  </li>
+                )
+              }
+            </ul>
+          </div>
+        </div>
       </div>
     </header>
 

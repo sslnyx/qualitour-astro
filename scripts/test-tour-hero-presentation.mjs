@@ -4,7 +4,7 @@ import test from 'node:test';
 
 const source = (path) => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
-test('tour detail opens with a plain white title section and no hero image', async () => {
+test('tour detail opens with a plain white title section showing the same cover as the tour card', async () => {
   const [detail, css] = await Promise.all([
     source('src/components/TourPage.astro'),
     source('src/styles/global.css'),
@@ -13,7 +13,9 @@ test('tour detail opens with a plain white title section and no hero image', asy
   assert.ok(header, 'title section is a <header>');
   assert.match(header, /bg-white/);
   assert.match(header, /<h1\b/);
-  assert.doesNotMatch(header, /<(?:img|figure)\b|bg-gradient|from-gray-950/);
+  assert.doesNotMatch(header, /bg-gradient|from-gray-950/);
+  assert.match(detail, /const coverUrl = tour\.optimizedImageUrl/);
+  assert.match(header, /<CdnImage\b[\s\S]*?src=\{coverUrl\}/);
   assert.doesNotMatch(detail, /page-hero|tour-hero-cover|optimizedHero/);
   assert.doesNotMatch(css, /tour-hero-cover/);
 });
