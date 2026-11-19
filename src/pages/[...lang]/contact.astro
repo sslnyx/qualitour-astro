@@ -34,9 +34,7 @@ const t = {
             : "Have a question about a tour or need a custom itinerary? Fill out the form below.",
     phone: currentLang === "zh" ? "電話" : "Phone",
     phoneHours:
-        currentLang === "zh"
-            ? "週一至週五 9am-6pm PST"
-            : "Mon-Fri from 9am to 6pm PST",
+        COMPANY_BRANCHES[0].hours[currentLang === "zh" ? "zh" : "en"],
     emailLabel: currentLang === "zh" ? "電子郵件" : "Email",
     emailDesc:
         currentLang === "zh"
@@ -112,11 +110,7 @@ const t = {
                                     {t.phone}
                                 </h3>
                                 <p class="text-gray-500 text-sm mb-3">
-                                    {
-                                        currentLang === "zh"
-                                            ? ci.hours_zh
-                                            : ci.hours
-                                    }
+                                    {t.phoneHours}
                                 </p>
                                 <a
                                     href={`tel:${formatPhone(ci.phone).tel}`}
@@ -169,6 +163,9 @@ const t = {
                                         <h3 class="text-lg font-bold text-gray-900 mb-1">
                                             {branch.name[currentLang === "zh" ? "zh" : "en"]}
                                         </h3>
+                                        <p class="text-gray-500 text-sm mb-2">
+                                            {branch.hours[currentLang === "zh" ? "zh" : "en"]}
+                                        </p>
                                         <address class="text-lg text-gray-800 not-italic font-medium mb-3">
                                             {branch.street}<br />
                                             {branch.city}, {branch.province} {branch.postal}<br />

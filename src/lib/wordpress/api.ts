@@ -540,8 +540,8 @@ const COMPANY_INFO_DEFAULTS: CompanyInfo = {
         country: 'Canada',
     },
     google_maps_url: '',
-    hours: 'Mon-Fri from 9am to 6pm PST',
-    hours_zh: '週一至週五 9am-6pm PST',
+    hours: 'Mon-Fri 11am-5pm PST',
+    hours_zh: '週一至週五 11am-5pm PST',
     social: {
         facebook: 'https://www.facebook.com/profile.php?id=61571902435431',
         instagram: 'https://www.instagram.com/qualitour',
