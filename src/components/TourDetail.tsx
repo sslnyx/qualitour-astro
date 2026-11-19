@@ -1,24 +1,24 @@
 import { renderInlineImages } from '../lib/inline-images.mjs';
+import { collectTourPhotoSources } from '../lib/image-delivery.mjs';
 /**
  * TourDetail Component
  * 
- * React component for the tour detail body: a sticky section nav and stacked sections
- * (Overview, Pricing, Itinerary, Additional Info, FAQ, Brochure). Photos live in TourGallery.
+ * React component for tour detail page with tabs for Overview, Itinerary, Photos, FAQ.
  * Used as an Astro island with client:load for interactivity.
  * Supports i18n for English and Chinese.
  */
 
-import { useState, useMemo, useEffect, useRef } from 'react';
-import type { MouseEvent, ReactNode } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { WPTour } from '../lib/wordpress/types';
 import { wpUrl, processHtmlContent as normalizeHtmlContent, getCfTransformUrl } from '../lib/wp-url';
+import PhotoLightbox from './PhotoLightbox';
 
 interface TourDetailProps {
     tour: WPTour;
     lang?: string;
 }
 
-type TabId = 'overview' | 'pricing' | 'itinerary' | 'info' | 'faq' | 'brochure';
+type TabId = 'overview' | 'pricing' | 'itinerary' | 'info' | 'photos' | 'faq' | 'brochure';
 
 interface Tab {
     id: TabId;
@@ -31,6 +31,7 @@ const tabs: Tab[] = [
     { id: 'pricing', label: { en: 'Pricing', zh: '費用說明' }, icon: 'sell' },
     { id: 'itinerary', label: { en: 'Itinerary', zh: '每日行程' }, icon: 'route' },
     { id: 'info', label: { en: 'Additional Info', zh: '附加資訊' }, icon: 'article' },
+    { id: 'photos', label: { en: 'Photos', zh: '照片' }, icon: 'photo_library' },
     { id: 'faq', label: { en: 'FAQ', zh: '常見問題' }, icon: 'help_outline' },
     { id: 'brochure', label: { en: 'Brochure', zh: '行程手冊' }, icon: 'picture_as_pdf' },
 ];
@@ -114,11 +115,9 @@ const translations = {
 
 export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
     const [activeTab, setActiveTab] = useState<TabId>('overview');
-    const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
-    const navRef = useRef<HTMLElement>(null);
-    const overviewRef = useRef<HTMLDivElement>(null);
-    const [overviewTall, setOverviewTall] = useState(false);
-    const [overviewOpen, setOverviewOpen] = useState(false);
+    const [expandedDay, setExpandedDay] = useState<number | null>(null);
+    const [lightbox, setLightbox] = useState<{ index: number; trigger: HTMLButtonElement } | null>(null);
+    const closeLightbox = useCallback(() => setLightbox(null), []);
 
     const processHtmlContent = (html: string) => renderInlineImages(normalizeHtmlContent(html), tour.optimizedInlineImages, wpUrl);
 
@@ -294,6 +293,11 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
         return gd?.tour_itinerary || gd?.['tourmaster-tour-itinerary'] || [];
     }, [gd, sections]);
 
+    // Source extraction is shared with the build so thumbnails never need the original upload.
+    const photos = useMemo(() => collectTourPhotoSources(tour).map((url: string) => wpUrl(url)), [tour]);
+    const fullPhotos = photos.map((photo: string) => tour.optimizedPhotos?.[photo]?.full
+        || getCfTransformUrl(photo, { width: 1600, height: 1200, format: 'webp' }));
+
     // Check for FAQ
     const faqItems = useMemo(() => {
         const faqSection = sections.find(
@@ -415,367 +419,372 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
         }
     };
 
-    // Show only the sections that have content
+    // Filter tabs based on available content
     const availableTabs = tabs.filter(tab => {
         if (tab.id === 'overview') return true;
         if (tab.id === 'pricing') return !!pricingHtml || pricingBlocks.length > 0 || !!tourIncludes || !!tourExcludes;
         if (tab.id === 'itinerary') return itinerary.length > 0;
         if (tab.id === 'info') return infoItems.length > 0;
+        if (tab.id === 'photos') return photos.length > 0;
         if (tab.id === 'faq') return faqItems.length > 0;
         if (tab.id === 'brochure') return !!brochureUrl;
         return false;
     });
-    const sectionIds = availableTabs.map(tab => tab.id).join(',');
-
-    const OVERVIEW_COLLAPSE_AT = 640;
-    const ui = lang === 'zh'
-        ? { nav: '行程內容導覽', more: '展開全部內容', less: '收合內容', expandAll: '展開全部', collapseAll: '收合全部' }
-        : { nav: 'Tour sections', more: 'Show more', less: 'Show less', expandAll: 'Expand all', collapseAll: 'Collapse all' };
-
-    // Long single-body descriptions start collapsed (the full text stays in the page for search engines and without JavaScript).
-    useEffect(() => {
-        const el = overviewRef.current;
-        if (el && el.scrollHeight > OVERVIEW_COLLAPSE_AT + 160) setOverviewTall(true);
-    }, []);
-    const overviewCollapsed = overviewTall && !overviewOpen;
-
-    // The nav follows the section the reader is in.
-    useEffect(() => {
-        const elements = sectionIds
-            .split(',')
-            .filter(Boolean)
-            .map(id => document.getElementById(`tour-${id}`))
-            .filter((el): el is HTMLElement => !!el);
-        if (elements.length < 2 || typeof IntersectionObserver === 'undefined') return;
-        const visible = new Set<string>();
-        const observer = new IntersectionObserver(
-            entries => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) visible.add(entry.target.id);
-                    else visible.delete(entry.target.id);
-                }
-                const current = elements.find(el => visible.has(el.id));
-                if (current) setActiveTab(current.id.replace('tour-', '') as TabId);
-            },
-            { rootMargin: '-150px 0px -55% 0px' },
-        );
-        elements.forEach(el => observer.observe(el));
-        return () => observer.disconnect();
-    }, [sectionIds]);
-
-    // Keep the active nav item in view on narrow screens (scrolls the nav only, never the page).
-    useEffect(() => {
-        const nav = navRef.current;
-        const active = nav?.querySelector<HTMLElement>('[aria-current="true"]');
-        if (nav && active) nav.scrollTo({ left: active.offsetLeft - nav.clientWidth / 2 + active.clientWidth / 2, behavior: 'smooth' });
-    }, [activeTab]);
-
-    const goTo = (id: TabId) => (event: MouseEvent<HTMLAnchorElement>) => {
-        const target = document.getElementById(`tour-${id}`);
-        if (!target) return;
-        event.preventDefault();
-        setActiveTab(id);
-        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-    };
-
-    const toggleDay = (index: number) =>
-        setExpandedDays(previous => {
-            const next = new Set(previous);
-            if (next.has(index)) next.delete(index);
-            else next.add(index);
-            return next;
-        });
-    const allDaysOpen = itinerary.length > 0 && expandedDays.size === itinerary.length;
-
-    const card = 'scroll-mt-36 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:p-8';
-    const heading = (id: TabId, action?: ReactNode) => {
-        const tab = tabs.find(item => item.id === id)!;
-        return (
-            <div className="mb-5 flex items-center justify-between gap-3">
-                <h2 className="flex items-center gap-2.5 text-xl font-bold text-gray-900 md:text-2xl">
-                    <span className="material-icons text-orange-500" aria-hidden="true">{tab.icon}</span>
-                    {tab.label[lang as keyof typeof tab.label] || tab.label.en}
-                </h2>
-                {action}
-            </div>
-        );
-    };
 
     return (
-        <div className="tour-detail-tabs-content space-y-4">
-            {/* Section nav */}
-            {availableTabs.length > 1 && (
-                <nav
-                    ref={navRef}
-                    aria-label={ui.nav}
-                    className="scrollbar-hide sticky top-[72px] z-30 -mx-4 flex overflow-x-auto border-y border-gray-200 bg-white/95 px-4 shadow-sm backdrop-blur sm:mx-0 sm:rounded-xl sm:border sm:px-2"
-                >
-                    {availableTabs.map(tab => (
-                        <a
+        <div className="overflow-hidden">
+            {/* Tab Navigation */}
+            <div className="bg-gray-50 border-b border-gray-200">
+                <nav className="flex overflow-x-auto scrollbar-hide" aria-label="Tabs">
+                    {availableTabs.map((tab, index) => (
+                        <button
                             key={tab.id}
-                            href={`#tour-${tab.id}`}
-                            onClick={goTo(tab.id)}
-                            aria-current={activeTab === tab.id ? 'true' : undefined}
-                            className={`relative my-1.5 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                                activeTab === tab.id ? 'bg-orange-50 text-orange-600' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                            }`}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`
+                relative flex items-center gap-2 px-6 py-5 text-sm font-semibold whitespace-nowrap transition-all duration-300
+                ${activeTab === tab.id
+                                    ? 'text-orange-500 bg-white'
+                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                                }
+                ${index === 0 ? 'rounded-tl-2xl' : ''}
+              `}
                         >
+                            <span className={`material-icons text-xl ${activeTab === tab.id ? 'text-orange-500' : 'text-gray-400'}`}>
+                                {tab.icon}
+                            </span>
                             {tab.label[lang as keyof typeof tab.label] || tab.label.en}
+
                             {activeTab === tab.id && (
-                                <span className="absolute inset-x-3 -bottom-1.5 h-[3px] rounded-full bg-orange-500" />
+                                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-amber-500" />
                             )}
-                        </a>
+                        </button>
                     ))}
                 </nav>
-            )}
+            </div>
 
-            {/* Overview */}
-            <section id="tour-overview" data-tour-panel="overview" className={card}>
-                {heading('overview')}
-                <div
-                    ref={overviewRef}
-                    className="relative space-y-8"
-                    style={overviewCollapsed ? { maxHeight: OVERVIEW_COLLAPSE_AT, overflow: 'hidden' } : undefined}
-                >
-                    {/* Tour highlights first, like a "what you'll love" summary */}
-                    {tourHighlights && (
-                        <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-amber-50 p-5 md:p-6">
-                            <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
-                                <span className="material-icons text-orange-500" aria-hidden="true">star</span>
-                                {t.highlights}
-                            </h3>
+            {/* Tab Content */}
+            <div className="p-6 md:p-8 tour-detail-tabs-content">
+                {/* Overview Tab */}
+                {(
+                    <div hidden={activeTab !== 'overview'} data-tour-panel="overview" className="animate-fadeIn space-y-8">
+                        {/* Main Content - only show if no text blocks in contentBlocks to avoid duplication */}
+                        {overviewHtml && !contentBlocks.some(b => b.type === 'text') && (
                             <div
-                                className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-orange-500"
-                                dangerouslySetInnerHTML={{ __html: tourHighlights }}
+                                className="prose prose-base max-w-none text-gray-700 leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: overviewHtml }}
                             />
-                        </div>
-                    )}
+                        )}
 
-                    {/* Description as one rich-text body (no separate blocks) */}
-                    {overviewHtml && !contentBlocks.some(b => b.type === 'text') && (
-                        <div
-                            className="prose prose-base max-w-none text-gray-700 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: overviewHtml }}
-                        />
-                    )}
+                        {/* Content Blocks from detail/details section */}
+                        {overviewBlocks.map(renderBlock)}
 
-                    {/* Content blocks from the detail section */}
-                    {overviewBlocks.map(renderBlock)}
-
-                    {overviewCollapsed && (
-                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white via-white/90 to-transparent" />
-                    )}
-                </div>
-                {overviewTall && (
-                    <button
-                        type="button"
-                        onClick={() => setOverviewOpen(open => !open)}
-                        aria-expanded={overviewOpen}
-                        className="mt-4 inline-flex items-center gap-1 rounded-lg px-1 py-1.5 text-sm font-semibold text-orange-600 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500"
-                    >
-                        {overviewOpen ? ui.less : ui.more}
-                        <span className={`material-icons text-lg transition-transform ${overviewOpen ? 'rotate-180' : ''}`} aria-hidden="true">expand_more</span>
-                    </button>
-                )}
-            </section>
-
-            {/* Pricing: departure dates, rates and what the price covers */}
-            {(pricingHtml || pricingBlocks.length > 0 || tourIncludes || tourExcludes) && (
-                <section id="tour-pricing" data-tour-panel="pricing" className={`${card} space-y-8`}>
-                    {heading('pricing')}
-                    {pricingHtml && (
-                        <div
-                            className="prose prose-base max-w-none text-gray-700 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: pricingHtml }}
-                        />
-                    )}
-
-                    {pricingBlocks.map(renderBlock)}
-
-                    {(tourIncludes || tourExcludes) && (
-                        <div className="grid gap-6 md:grid-cols-2">
-                            {tourIncludes && (
-                                <div className="rounded-2xl border border-green-100 bg-green-50 p-5 md:p-6">
-                                    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
-                                        <span className="material-icons text-green-500" aria-hidden="true">check_circle</span>
-                                        {t.whatsIncluded}
-                                    </h3>
-                                    <div
-                                        className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-green-500"
-                                        dangerouslySetInnerHTML={{ __html: tourIncludes }}
-                                    />
-                                </div>
-                            )}
-                            {tourExcludes && (
-                                <div className="rounded-2xl border border-red-100 bg-red-50 p-5 md:p-6">
-                                    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
-                                        <span className="material-icons text-red-500" aria-hidden="true">cancel</span>
-                                        {t.whatsNotIncluded}
-                                    </h3>
-                                    <div
-                                        className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-red-500"
-                                        dangerouslySetInnerHTML={{ __html: tourExcludes }}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </section>
-            )}
-
-            {/* Itinerary */}
-            {itinerary.length > 0 && (
-                <section id="tour-itinerary" data-tour-panel="itinerary" className={`${card} space-y-3`}>
-                    {heading(
-                        'itinerary',
-                        itinerary.length > 1 && (
-                            <button
-                                type="button"
-                                onClick={() => setExpandedDays(allDaysOpen ? new Set() : new Set(itinerary.map((_: unknown, index: number) => index)))}
-                                className="shrink-0 rounded-lg px-2 py-1.5 text-sm font-semibold text-orange-600 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500"
-                            >
-                                {allDaysOpen ? ui.collapseAll : ui.expandAll}
-                            </button>
-                        ),
-                    )}
-                    {itinerary.map((day: any, index: number) => (
-                        <div key={index} className="overflow-hidden rounded-xl border border-gray-200">
-                            <button
-                                type="button"
-                                aria-expanded={expandedDays.has(index)}
-                                onClick={() => toggleDay(index)}
-                                className="flex w-full items-center justify-between bg-gray-50 p-4 transition-colors hover:bg-gray-100"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="flex h-10 w-10 min-w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-amber-500 font-bold text-white">
-                                        {index + 1}
-                                    </div>
-                                    <h3 className="text-left font-semibold text-gray-900">
-                                        {day.title || (lang === 'zh' ? `${t.day}${index + 1}天` : `${t.day} ${index + 1}`)}
-                                    </h3>
-                                </div>
-                                <span className={`material-icons text-gray-400 transition-transform ${expandedDays.has(index) ? 'rotate-180' : ''}`}>
-                                    expand_more
-                                </span>
-                            </button>
-
-                            <div hidden={!expandedDays.has(index)} data-itinerary-body className="border-t border-gray-200 p-4">
+                        {/* Tour Highlights */}
+                        {tourHighlights && (
+                            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <span className="material-icons text-orange-500">star</span>
+                                    {t.highlights}
+                                </h3>
                                 <div
-                                    className="prose prose-sm max-w-none text-gray-600"
-                                    dangerouslySetInnerHTML={{ __html: processHtmlContent(day.content || day.caption || '') }}
+                                    className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-orange-500"
+                                    dangerouslySetInnerHTML={{ __html: tourHighlights }}
                                 />
                             </div>
-                        </div>
-                    ))}
-                </section>
-            )}
+                        )}
 
-            {/* Additional info */}
-            {infoItems.length > 0 && (
-                <section id="tour-info" data-tour-panel="info" className={`${card} space-y-6`}>
-                    {heading('info')}
-                    {infoItems.map((block, idx) => {
-                        switch (block.type) {
-                            case 'title':
-                                return (
-                                    <h3 key={idx} className="flex items-center gap-3 text-xl font-bold text-gray-900">
-                                        <span className="h-7 w-1 rounded-full bg-orange-500"></span>
-                                        {block.content}
-                                    </h3>
-                                );
-                            case 'text':
-                                return (
-                                    <div
-                                        key={idx}
-                                        className="prose prose-base max-w-none rounded-xl border border-gray-200 bg-white p-5 text-gray-700 leading-relaxed md:p-6"
-                                        dangerouslySetInnerHTML={{ __html: block.content }}
-                                    />
-                                );
-                            default:
-                                return null;
-                        }
-                    })}
-                </section>
-            )}
-
-            {/* FAQ */}
-            {faqItems.length > 0 && (
-                <section id="tour-faq" data-tour-panel="faq" className={`${card} space-y-3`}>
-                    {heading('faq')}
-                    {faqItems.map((item: any, index: number) => (
-                        <details key={index} className="group overflow-hidden rounded-xl border border-gray-200">
-                            <summary className="flex cursor-pointer list-none items-center justify-between bg-gray-50 p-4 transition-colors hover:bg-gray-100">
-                                <span className="font-semibold text-gray-900">{item.title}</span>
-                                <span className="material-icons text-gray-400 transition-transform group-open:rotate-180">
-                                    expand_more
-                                </span>
-                            </summary>
-                            <div className="border-t border-gray-200 p-4">
-                                <div
-                                    className="prose prose-sm max-w-none text-gray-600"
-                                    dangerouslySetInnerHTML={{ __html: processHtmlContent(item.content || item.caption || '') }}
-                                />
-                            </div>
-                        </details>
-                    ))}
-                </section>
-            )}
-
-            {/* Brochure */}
-            {brochureUrl && (
-                <section id="tour-brochure" data-tour-panel="brochure" className={card}>
-                    {heading('brochure')}
-                    <div className="rounded-xl border border-gray-200 bg-white p-6 text-center md:p-8">
+                        {/* Tour Meta Info */}
                         {(() => {
-                            const brochureObj = typeof brochure === 'object' ? brochure : null;
-                            const isPdf = brochureObj?.mime_type === 'application/pdf' || brochureUrl.toLowerCase().endsWith('.pdf');
-                            const isImage = brochureObj?.mime_type?.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(brochureUrl);
+                            // Extract tour meta from multiple sources
+                            const duration = tour.tour_meta?.duration_text ||
+                                tour.tour_meta?.duration ||
+                                gd?.['tourmaster-tour-duration'] ||
+                                gd?.tour_duration ||
+                                '';
+                            const location = tour.tour_meta?.location ||
+                                gd?.['tourmaster-tour-location'] ||
+                                gd?.tour_location ||
+                                tour.tour_terms?.destinations?.[0]?.name ||
+                                '';
+                            const country = tour.tour_meta?.country ||
+                                gd?.['tourmaster-tour-country'] ||
+                                gd?.tour_country ||
+                                '';
 
-                            if (isPdf) {
-                                return (
-                                    <div className="mb-8 h-[600px] w-full overflow-hidden rounded-lg border border-gray-200">
-                                        <iframe
-                                            loading="lazy"
-                                            src={`${brochureUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                                            className="h-full w-full"
-                                            title={brochureTitle}
-                                        />
-                                    </div>
-                                );
-                            } else if (isImage) {
-                                return (
-                                    <div className="mb-8 overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-                                        <img
-                                            src={brochureUrl}
-                                            alt={brochureTitle}
-                                            className="mx-auto h-auto max-h-[800px] w-full object-contain"
-                                        />
-                                    </div>
-                                );
-                            }
+                            const hasAnyMeta = duration || location || country;
+
+                            if (!hasAnyMeta) return null;
+
                             return (
-                                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-red-500">
-                                    <span className="material-icons text-4xl">picture_as_pdf</span>
+                                <div className="pt-8 border-t border-gray-100">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-4">{t.tourDetails}</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        {duration && (
+                                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                                <span className="material-icons text-orange-500">schedule</span>
+                                                <div>
+                                                    <div className="text-xs text-gray-500 uppercase">{t.duration}</div>
+                                                    <div className="font-medium text-gray-900">{duration}</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {location && (
+                                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                                <span className="material-icons text-orange-500">place</span>
+                                                <div>
+                                                    <div className="text-xs text-gray-500 uppercase">{t.location}</div>
+                                                    <div className="font-medium text-gray-900">{location}</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {country && (
+                                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                                <span className="material-icons text-orange-500">public</span>
+                                                <div>
+                                                    <div className="text-xs text-gray-500 uppercase">{t.country}</div>
+                                                    <div className="font-medium text-gray-900">{country}</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             );
                         })()}
-
-                        <p className="mx-auto mb-8 max-w-md text-gray-500">
-                            {lang === 'zh' ? '預覽或下載完整行程詳細資訊。' : 'Preview or download the full tour itinerary and details.'}
-                        </p>
-                        <a
-                            href={brochureUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex transform items-center gap-2 rounded-xl bg-orange-500 px-8 py-4 font-bold text-white shadow-lg transition-colors duration-300 hover:-translate-y-1 hover:bg-orange-600 hover:shadow-xl"
-                        >
-                            <span className="material-icons">download</span>
-                            {lang === 'zh' ? '下載手冊' : 'Download Brochure'}
-                        </a>
                     </div>
-                </section>
-            )}
+                )}
+
+                {/* Pricing Tab: departure dates, rates and what the price covers */}
+                {(pricingHtml || pricingBlocks.length > 0 || tourIncludes || tourExcludes) && (
+                    <div hidden={activeTab !== 'pricing'} data-tour-panel="pricing" className="animate-fadeIn space-y-8">
+                        {pricingHtml && (
+                            <div
+                                className="prose prose-base max-w-none text-gray-700 leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: pricingHtml }}
+                            />
+                        )}
+
+                        {pricingBlocks.map(renderBlock)}
+
+                        {/* Includes / Excludes */}
+                        {(tourIncludes || tourExcludes) && (
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {tourIncludes && (
+                                    <div className="bg-green-50 rounded-2xl p-6 border border-green-100">
+                                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                            <span className="material-icons text-green-500">check_circle</span>
+                                            {t.whatsIncluded}
+                                        </h3>
+                                        <div
+                                            className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-green-500"
+                                            dangerouslySetInnerHTML={{ __html: tourIncludes }}
+                                        />
+                                    </div>
+                                )}
+                                {tourExcludes && (
+                                    <div className="bg-red-50 rounded-2xl p-6 border border-red-100">
+                                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                            <span className="material-icons text-red-500">cancel</span>
+                                            {t.whatsNotIncluded}
+                                        </h3>
+                                        <div
+                                            className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-red-500"
+                                            dangerouslySetInnerHTML={{ __html: tourExcludes }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Itinerary Tab */}
+                {itinerary.length > 0 && (
+                    <div hidden={activeTab !== 'itinerary'} data-tour-panel="itinerary" className="animate-fadeIn space-y-4">
+                        {itinerary.map((day: any, index: number) => (
+                            <div
+                                key={index}
+                                className="border border-gray-200 rounded-xl overflow-hidden"
+                            >
+                                <button
+                                    aria-expanded={expandedDay === index}
+                                    onClick={() => setExpandedDay(expandedDay === index ? null : index)}
+                                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="min-w-10 w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center text-white font-bold">
+                                            {index + 1}
+                                        </div>
+                                        <h4 className="font-semibold text-gray-900 text-left">
+                                            {day.title || (lang === 'zh' ? `${t.day}${index + 1}天` : `${t.day} ${index + 1}`)}
+                                        </h4>
+                                    </div>
+                                    <span className={`material-icons text-gray-400 transition-transform ${expandedDay === index ? 'rotate-180' : ''}`}>
+                                        expand_more
+                                    </span>
+                                </button>
+
+                                {(
+                                    <div hidden={expandedDay !== index} data-itinerary-body className="p-4 border-t border-gray-200">
+                                        <div
+                                            className="prose prose-sm max-w-none text-gray-600"
+                                            dangerouslySetInnerHTML={{ __html: processHtmlContent(day.content || day.caption || '') }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Additional Info Tab */}
+                {infoItems.length > 0 && (
+                    <div hidden={activeTab !== 'info'} data-tour-panel="info" className="animate-fadeIn space-y-6">
+                        {infoItems.map((block, idx) => {
+                            switch (block.type) {
+                                case 'title':
+                                    return (
+                                        <h3 key={idx} className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                                            <span className="w-1 h-8 bg-orange-500 rounded-full"></span>
+                                            {block.content}
+                                        </h3>
+                                    );
+                                case 'text':
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className="prose prose-base max-w-none text-gray-700 leading-relaxed bg-white rounded-xl p-6 border border-gray-200"
+                                            dangerouslySetInnerHTML={{ __html: block.content }}
+                                        />
+                                    );
+                                default:
+                                    return null;
+                            }
+                        })}
+                    </div>
+                )}
+
+                {/* Photos Tab */}
+                {photos.length > 0 && (
+                    <div hidden={activeTab !== 'photos'} data-tour-panel="photos" className="animate-fadeIn">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {photos.map((photo, index) => (
+                                <button
+                                    type="button"
+                                    key={index}
+                                    className="relative aspect-[4/3] rounded-xl overflow-hidden group cursor-pointer border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                                    onClick={(event) => setLightbox({ index, trigger: event.currentTarget })}
+                                    aria-label={`Open photo ${index + 1} of ${photos.length}`}
+                                >
+                                    <img
+                                        src={tour.optimizedPhotos?.[photo]?.thumbnail || getCfTransformUrl(photo, { width: 600, height: 450, format: 'webp' })}
+                                        alt={`Tour photo ${index + 1}`}
+                                        className="absolute inset-0 !w-full !h-full object-cover transition-transform duration-300 group-hover:scale-110 !m-0"
+                                        loading="lazy"
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                        <span className="material-icons text-white text-3xl opacity-0 group-hover:opacity-100 transition-opacity transform scale-75 group-hover:scale-100 duration-300">
+                                            zoom_in
+                                        </span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Photo Lightbox */}
+                        {lightbox && (
+                            <PhotoLightbox
+                                images={fullPhotos}
+                                imageDimensions={photos.map((photo: string) => tour.optimizedPhotos?.[photo])}
+                                authorName={tour.title?.rendered || 'Tour'}
+                                initialIndex={lightbox.index}
+                                lang={lang}
+                                onClose={closeLightbox}
+                                returnFocusTo={lightbox.trigger}
+                            />
+                        )}
+                    </div>
+                )}
+
+                {/* FAQ Tab */}
+                {faqItems.length > 0 && (
+                    <div hidden={activeTab !== 'faq'} data-tour-panel="faq" className="animate-fadeIn space-y-4">
+                        {faqItems.map((item: any, index: number) => (
+                            <details
+                                key={index}
+                                className="group border border-gray-200 rounded-xl overflow-hidden"
+                            >
+                                <summary className="flex items-center justify-between p-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors list-none">
+                                    <span className="font-semibold text-gray-900">{item.title}</span>
+                                    <span className="material-icons text-gray-400 group-open:rotate-180 transition-transform">
+                                        expand_more
+                                    </span>
+                                </summary>
+                                <div className="p-4 border-t border-gray-200">
+                                    <div
+                                        className="prose prose-sm max-w-none text-gray-600"
+                                        dangerouslySetInnerHTML={{ __html: processHtmlContent(item.content || item.caption || '') }}
+                                    />
+                                </div>
+                            </details>
+                        ))}
+                    </div>
+                )}
+
+                {/* Brochure Tab */}
+                {brochureUrl && (
+                    <div hidden={activeTab !== 'brochure'} data-tour-panel="brochure" className="animate-fadeIn">
+                        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
+                            {/* Preview Section */}
+                            {(() => {
+                                const brochureObj = typeof brochure === 'object' ? brochure : null;
+                                const isPdf = brochureObj?.mime_type === 'application/pdf' || brochureUrl.toLowerCase().endsWith('.pdf');
+                                const isImage = brochureObj?.mime_type?.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(brochureUrl);
+
+                                if (isPdf) {
+                                    return (
+                                        <div className="w-full h-[600px] mb-8 border border-gray-200 rounded-lg overflow-hidden">
+                                            <iframe
+                                                loading="lazy"
+                                                src={`${brochureUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                                                className="w-full h-full"
+                                                title={brochureTitle}
+                                            />
+                                        </div>
+                                    );
+                                } else if (isImage) {
+                                    return (
+                                        <div className="mb-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                                            <img
+                                                src={brochureUrl}
+                                                alt={brochureTitle}
+                                                className="w-full h-auto max-h-[800px] object-contain mx-auto"
+                                            />
+                                        </div>
+                                    );
+                                }
+                                return (
+                                    <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <span className="material-icons text-4xl">picture_as_pdf</span>
+                                    </div>
+                                );
+                            })()}
+
+                            <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                                {lang === 'zh' ? '預覽或下載完整行程詳細資訊。' : 'Preview or download the full tour itinerary and details.'}
+                            </p>
+                            <a
+                                href={brochureUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-8 py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-colors shadow-lg hover:shadow-xl hover:-translate-y-1 transform duration-300"
+                            >
+                                <span className="material-icons">download</span>
+                                {lang === 'zh' ? '下載手冊' : 'Download Brochure'}
+                            </a>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
+
