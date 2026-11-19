@@ -8,7 +8,7 @@ import { collectTourPhotoSources } from '../lib/image-delivery.mjs';
  * Supports i18n for English and Chinese.
  */
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { WPTour } from '../lib/wordpress/types';
 import { wpUrl, processHtmlContent as normalizeHtmlContent, getCfTransformUrl } from '../lib/wp-url';
 import PhotoLightbox from './PhotoLightbox';
@@ -116,9 +116,6 @@ const translations = {
 export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
-    const overviewRef = useRef<HTMLDivElement>(null);
-    const [overviewTall, setOverviewTall] = useState(false);
-    const [overviewOpen, setOverviewOpen] = useState(false);
     const [lightbox, setLightbox] = useState<{ index: number; trigger: HTMLButtonElement } | null>(null);
     const closeLightbox = useCallback(() => setLightbox(null), []);
 
@@ -434,17 +431,9 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
         return false;
     });
 
-    const OVERVIEW_COLLAPSE_AT = 640;
     const ui = lang === 'zh'
-        ? { more: '展開全部內容', less: '收合內容', expandAll: '展開全部', collapseAll: '收合全部' }
-        : { more: 'Show more', less: 'Show less', expandAll: 'Expand all', collapseAll: 'Collapse all' };
-
-    // Long overviews start collapsed (the full text stays in the page for search engines and without JavaScript).
-    useEffect(() => {
-        const el = overviewRef.current;
-        if (el && el.scrollHeight > OVERVIEW_COLLAPSE_AT + 160) setOverviewTall(true);
-    }, []);
-    const overviewCollapsed = overviewTall && !overviewOpen;
+        ? { expandAll: '展開全部', collapseAll: '收合全部' }
+        : { expandAll: 'Expand all', collapseAll: 'Collapse all' };
 
     const toggleDay = (index: number) =>
         setExpandedDays(previous => {
@@ -491,11 +480,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 {/* Overview Tab */}
                 {(
                     <div hidden={activeTab !== 'overview'} data-tour-panel="overview" className="animate-fadeIn">
-                        <div
-                            ref={overviewRef}
-                            className="relative space-y-8"
-                            style={overviewCollapsed ? { maxHeight: OVERVIEW_COLLAPSE_AT, overflow: 'hidden' } : undefined}
-                        >
+                        <div className="space-y-8">
                             {/* Tour highlights first, like a "what you'll love" summary */}
                             {tourHighlights && (
                                 <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-amber-50 p-5 md:p-6">
@@ -521,21 +506,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                             {/* Content Blocks from detail/details section */}
                             {overviewBlocks.map(renderBlock)}
 
-                            {overviewCollapsed && (
-                                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white via-white/90 to-transparent" />
-                            )}
                         </div>
-                        {overviewTall && (
-                            <button
-                                type="button"
-                                onClick={() => setOverviewOpen(open => !open)}
-                                aria-expanded={overviewOpen}
-                                className="mt-4 inline-flex items-center gap-1 rounded-lg px-1 py-1.5 text-sm font-semibold text-orange-600 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500"
-                            >
-                                {overviewOpen ? ui.less : ui.more}
-                                <span className={`material-icons text-lg transition-transform ${overviewOpen ? 'rotate-180' : ''}`} aria-hidden="true">expand_more</span>
-                            </button>
-                        )}
                     </div>
                 )}
 
