@@ -1,5 +1,6 @@
 import type { WPTour } from './wordpress/types';
 import { absolutePublicUrl, normalizePublicPath, plainText } from './seo.ts';
+import { COMPANY_BRANCHES } from './company-branches.ts';
 
 export interface Alternate { lang: string; href: string }
 
@@ -15,7 +16,7 @@ export function pageAlternates(path: string, origin: string, base: string): Alte
     if (!pairedPages.has(relative)) return [];
     const en = absolutePublicUrl(origin, prefix + relative || '/') + (prefix && !relative ? '/' : '');
     const zh = absolutePublicUrl(origin, prefix + '/zh' + relative);
-    return [{ lang: 'en', href: en }, { lang: 'zh', href: zh }, { lang: 'x-default', href: en }];
+    return [{ lang: 'en', href: en }, { lang: 'zh-Hant', href: zh }, { lang: 'x-default', href: en }];
 }
 
 export function confirmedTourAlternates(tour: WPTour, lang: 'en' | 'zh', tours: Record<'en' | 'zh', WPTour[]>, origin: string, base: string): Alternate[] {
@@ -29,16 +30,42 @@ export function confirmedTourAlternates(tour: WPTour, lang: 'en' | 'zh', tours: 
     const prefix = base === '/' ? '' : base.replace(/\/$/, '');
     const en = absolutePublicUrl(origin, `${prefix}/tours/${enTour.slug}`);
     const zh = absolutePublicUrl(origin, `${prefix}/zh/tours/${zhTour.slug}`);
-    return [{ lang: 'en', href: en }, { lang: 'zh', href: zh }, { lang: 'x-default', href: en }];
+    return [{ lang: 'en', href: en }, { lang: 'zh-Hant', href: zh }, { lang: 'x-default', href: en }];
 }
 
-export function tourStructuredData(tour: WPTour, origin: string, base: string, lang: 'en' | 'zh', canonicalOverride?: string) {
+/** Qualitour as a business: the registered name, logo and the two offices' real addresses and phone numbers. */
+export function organizationStructuredData(origin: string) {
+    const phone = (digits: string) => `+${digits.slice(0, 1)}-${digits.slice(1, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
+    const [main] = COMPANY_BRANCHES;
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'TravelAgency', // a kind of Organization and LocalBusiness; a single string, as the release checks expect
+        '@id': new URL('/#organization', origin).href,
+        name: 'Qualitour Holiday Inc.',
+        url: new URL('/', origin).href,
+        logo: new URL('/qualitour_logo.png', origin).href,
+        telephone: phone(main.phone),
+        location: COMPANY_BRANCHES.map(branch => ({
+            '@type': 'Place',
+            name: branch.name.en,
+            telephone: phone(branch.phone),
+            address: { '@type': 'PostalAddress', streetAddress: branch.street, addressLocality: branch.city, addressRegion: branch.province, postalCode: branch.postal, addressCountry: 'CA' },
+        })),
+    };
+}
+
+export interface TripExtras { description?: string; image?: string }
+
+export function tourStructuredData(tour: WPTour, origin: string, base: string, lang: 'en' | 'zh', canonicalOverride?: string, extras: TripExtras = {}) {
     const prefix = base === '/' ? '' : base.replace(/\/$/, '');
     const locale = lang === 'zh' ? `${prefix}/zh` : prefix;
     // Same normalization SeoHead applies to the <link rel=canonical>, so schema URLs never diverge from it.
     const canonical = absolutePublicUrl(origin, canonicalOverride || `${locale}/tours/${tour.slug}`);
     return [
-        { '@context': 'https://schema.org', '@type': 'TouristTrip', '@id': canonical + '#trip', name: plainText(tour.title.rendered), url: canonical, provider: { '@id': origin + '/#organization' } },
+        { '@context': 'https://schema.org', '@type': 'TouristTrip', '@id': canonical + '#trip', name: plainText(tour.title.rendered), url: canonical, provider: { '@id': origin + '/#organization' },
+            // Only what the page itself shows: the same summary and cover picture used for its meta tags.
+            ...(extras.description ? { description: extras.description } : {}),
+            ...(extras.image ? { image: new URL(extras.image, origin).href } : {}) },
         { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
             { '@type': 'ListItem', position: 1, name: lang === 'zh' ? '首頁' : 'Home', item: absolutePublicUrl(origin, locale || '/') + (locale === prefix && prefix ? '/' : '') },
             { '@type': 'ListItem', position: 2, name: lang === 'zh' ? '行程' : 'Tours', item: absolutePublicUrl(origin, `${locale}/tours`) },

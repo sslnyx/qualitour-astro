@@ -23,6 +23,7 @@ import { refPattern } from './lib/image-ref-pattern.mjs';
 import { findBrokenIslandProps } from './lib/island-props.mjs';
 import { remoteImagePattern } from './lib/remote-images.mjs';
 import { readForRelease } from './lib/release-read.mjs';
+import { legacyRedirectRules } from './lib/legacy-redirects.mjs';
 
 const cmsOrigin = process.env.QUALITOUR_CMS_ORIGIN || 'https://qualitour.qualitour.workers.dev';
 // Copies in the CMS media library of images that tour content takes from the old WordPress site and partner sites.
@@ -302,8 +303,11 @@ for (const [path, html] of pages) {
 }
 
 // The CMS sitemap lists its own /cms-proof/ routes, so the site publishes one built from the pages it serves.
-const routed = [...pages.keys()].filter(path => nativeSiteRoute(path)).sort();
+// Once the site is indexable, a page that asks not to be indexed (a thin listing) is kept out of the sitemap too.
+const indexableRelease = process.env.PUBLIC_SITE_INDEXABLE === 'true';
+const routed = [...pages.keys()].filter(path => nativeSiteRoute(path)).filter(path => !indexableRelease || !/<meta name="robots" content="noindex/i.test(pages.get(path))).sort();
 await writeFile(join(tmp, 'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + routed.map(path => `  <url><loc>${new URL(path === '/' ? '/' : path, publicOrigin).href.replaceAll('&', '&amp;')}</loc></url>`).join('\n') + '\n</urlset>\n');
+await writeFile(join(tmp, '_redirects'), legacyRedirectRules());
 await writeFile(join(tmp, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${publicOrigin}/sitemap.xml\n`);
 
 let files = 0, largest = 0;

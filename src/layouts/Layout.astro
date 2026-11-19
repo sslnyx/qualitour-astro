@@ -50,7 +50,7 @@ const {
 
 // Get current locale from URL or use provided lang
 const currentLocale = lang || getCurrentLocale(Astro.url);
-const htmlLang = currentLocale === "zh" ? "zh" : "en-CA";
+const htmlLang = currentLocale === "zh" ? "zh-Hant" : "en-CA";
 
 // Fetch navigation data at build time
 let navData: SiteNavData = {

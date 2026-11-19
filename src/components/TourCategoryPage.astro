@@ -57,6 +57,8 @@ const regionIntros = regions.flatMap((region) => {
 // Cruise types belong to the Cruises style only; each is a hash filter, so the page stays cacheable by path.
 const showCruiseTypes = kind === 'style' && term.slug === 'cruises' && cruiseTypes.length > 0;
 
+// A destination that lists only one or two tours is a thin page; it stays reachable but is kept out of search results.
+const MIN_INDEXABLE_DESTINATION_TOURS = 3;
 const title = zh ? `${name}行程 | Qualitour` : `${name} Tours | Qualitour`;
 const description = zh
   ? `瀏覽 ${tours.length} 個${name}行程，查看路線、出發資訊與價格，並聯絡 Qualitour 安排旅程。`
@@ -64,7 +66,7 @@ const description = zh
 const label = kind === 'style' ? (zh ? '旅遊方式' : 'Travel Style') : (zh ? '目的地' : 'Destination');
 ---
 
-<Layout title={title} description={description} lang={lang} alternates={alternates} noindex={tours.length === 0}>
+<Layout title={title} description={description} lang={lang} alternates={alternates} noindex={tours.length < (kind === 'destination' && children.length === 0 ? MIN_INDEXABLE_DESTINATION_TOURS : 1)}>
   <div class="min-h-screen bg-gray-50">
     <TourListHero
       title={name}

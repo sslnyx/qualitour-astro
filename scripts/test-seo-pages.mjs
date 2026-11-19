@@ -44,3 +44,31 @@ test('home alternate uses canonical trailing slash only for the staging root', (
     assert.equal(pageAlternates('/staging/index.html', 'https://qualitour.ca', '/staging')[0].href, 'https://qualitour.ca/staging/');
     assert.equal(pageAlternates('/index.html', 'https://qualitour.ca', '/')[0].href, 'https://qualitour.ca/');
 });
+
+test('trip schema carries the page summary and cover picture only when the page has them', () => {
+    const tour = { slug: 'one', title: { rendered: 'One' } };
+    const bare = tourStructuredData(tour, 'https://qualitour.ca', '/', 'en')[0];
+    assert.equal('description' in bare, false);
+    assert.equal('image' in bare, false);
+    const rich = tourStructuredData(tour, 'https://qualitour.ca', '/', 'en', undefined, { description: 'A day out.', image: '/img/cover-1280.webp' })[0];
+    assert.equal(rich.description, 'A day out.');
+    assert.equal(rich.image, 'https://qualitour.ca/img/cover-1280.webp');
+    assert.equal('offers' in rich, false);
+});
+
+test('organization schema lists both offices with real addresses and phone numbers', async () => {
+    const { organizationStructuredData } = await import('../src/lib/seo-pages.ts');
+    const org = organizationStructuredData('https://qualitour.ca');
+    assert.equal(org['@type'], 'TravelAgency');
+    assert.equal(org['@id'], 'https://qualitour.ca/#organization');
+    assert.equal(org.logo, 'https://qualitour.ca/qualitour_logo.png');
+    assert.equal(org.telephone, '+1-778-945-6000');
+    assert.equal(org.location.length, 2);
+    assert.equal(org.location[1].address.addressLocality, 'Richmond');
+    assert.equal(org.location[1].telephone, '+1-778-945-7000');
+});
+
+test('Chinese pages are marked as Traditional Chinese in hreflang', () => {
+    const alternates = pageAlternates('/zh/contact', 'https://qualitour.ca', '/');
+    assert.deepEqual(alternates.map(a => a.lang), ['en', 'zh-Hant', 'x-default']);
+});

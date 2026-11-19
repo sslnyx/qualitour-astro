@@ -61,6 +61,6 @@ if (alternates.length) {
 
 <Layout {...seo.metadata} canonical={seo.canonical} noindex={seo.noindex} heroImage={displayTour.optimizedHero?.src} heroImageSrcSet={displayTour.optimizedHero?.srcSet}
   heroImageSizes={displayTour.optimizedHero?.srcSet ? tourHeroImageSizes : undefined} lang={lang} tourTranslations={safeTranslations}
-  alternates={alternates} structuredData={tourStructuredData(tour, origin, base, lang, seo.canonical)}>
+  alternates={alternates} structuredData={tourStructuredData(tour, origin, base, lang, seo.canonical, { description: seo.metadata.description, image: seo.metadata.image })}>
   <TourPage tour={displayTour} lang={lang} localePrefix={localePrefix} reviews={reviews} />
 </Layout>

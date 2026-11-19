@@ -1,7 +1,7 @@
 ---
 import { wpUrl } from "../lib/wp-url";
 import { absolutePublicUrl, normalizePublicPath, serializeJsonLd } from '../lib/seo';
-import { pageAlternates, type Alternate } from '../lib/seo-pages';
+import { organizationStructuredData, pageAlternates, type Alternate } from '../lib/seo-pages';
 
 // Original fonts are self-hosted and declared before first paint.
 // - Inter: optional display avoids a late body-text swap
@@ -47,7 +47,7 @@ if (base && normalizePublicPath(Astro.url.pathname) === base) canonicalUrl += '/
 const indexable = import.meta.env.PUBLIC_SITE_INDEXABLE === 'true' && !noindex;
 const languageAlternates = alternates ?? pageAlternates(Astro.url.pathname, siteUrl, base || '/');
 const schemas = [
-    { '@context': 'https://schema.org', '@type': 'Organization', '@id': new URL('/#organization', siteUrl).href, name: 'Qualitour Holiday Inc.', url: new URL('/', siteUrl).href },
+    organizationStructuredData(siteUrl),
     { '@context': 'https://schema.org', '@type': 'WebSite', '@id': new URL(`${base || ''}/#website`, siteUrl).href, url: new URL(`${base || ''}/`, siteUrl).href, name: 'Qualitour', inLanguage: lang, publisher: { '@id': new URL('/#organization', siteUrl).href } },
     ...structuredData,
 ];
