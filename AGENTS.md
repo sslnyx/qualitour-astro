@@ -55,4 +55,6 @@ Tests: `npm run test:site`, `npm run test:worker`, and the individual `node cms/
 - **Local folder `Local Sites/qualitour/qualitour-astro-modernization`** holds the git store for all worktrees of this repo and is checked out on the old `codex/astro-modernization-20261111` line. Do not move it, and do not treat its working tree as the live site. Work in a worktree on this branch (`/Users/ning/.codex/worktrees/qualitour-*`).
 - `Local Sites/qualitour/qualitour-astro` is the old cPanel-era `main` checkout.
 
+`archive/` holds files that nothing uses any more (see [archive/README.md](archive/README.md)). Do not build on them.
+
 Per-Worker notes: [cms/README.md](cms/README.md), [site/README.md](site/README.md).
