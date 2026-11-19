@@ -4,20 +4,17 @@ import test from 'node:test';
 
 const source = (path) => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
-test('tour detail opens with a plain white title section showing the same cover as the tour card', async () => {
-  const [detail, css] = await Promise.all([
-    source('src/components/TourPage.astro'),
-    source('src/styles/global.css'),
-  ]);
+test('tour detail opens with a full-bleed cover hero that never crops a poster', async () => {
+  const detail = await source('src/components/TourPage.astro');
   const header = detail.match(/<header\b[\s\S]*?<\/header>/)?.[0];
-  assert.ok(header, 'title section is a <header>');
-  assert.match(header, /bg-white/);
+  assert.ok(header, 'hero is a <header>');
+  assert.match(header, /class="page-hero /);
+  assert.match(header, /absolute inset-0/);
   assert.match(header, /<h1\b/);
-  assert.doesNotMatch(header, /bg-gradient|from-gray-950/);
-  assert.match(detail, /const coverUrl = tour\.optimizedImageUrl/);
-  assert.match(header, /<CdnImage\b[\s\S]*?src=\{coverUrl\}/);
-  assert.doesNotMatch(detail, /page-hero|tour-hero-cover|optimizedHero/);
-  assert.doesNotMatch(css, /tour-hero-cover/);
+  assert.match(detail, /tour\.optimizedHero/);
+  assert.match(header, /heroIsWide \? "object-cover" : "object-contain"/);
+  assert.match(header, /blur-2xl/);
+  assert.doesNotMatch(detail, /tour-hero-cover/);
 });
 
 test('the homepage renders separate full-bleed backgrounds over the shared hero height', async () => {
