@@ -78,3 +78,40 @@ test('the same picture stored under different URLs shows once, keeping the first
  assert.deepEqual(dedupePhotoSources(['https://cms/img/copy.webp','https://cms/img/cover.webp'],prints,{key:u=>u.replace('https://cms','')}),['https://cms/img/copy.webp']);
  assert.deepEqual(collectTourPhotoSources({photoSources:['/img/cover.webp'],featured_image_url:'/img/other.webp'}),['/img/cover.webp']);
 });
+
+test('copies keep the first position but show the largest file; flat pictures match only by colour thumbnail', async()=>{
+ const {analyzePhotoSources,dedupePhotoSources}=await import('../src/lib/image-delivery.mjs');
+ const prints={
+  '/a/small.jpg':{hash:'f0f0f0f0aaaa5555',width:600,height:400},
+  '/a/other.jpg':{hash:'0ff00ff0cc33aa55',width:900,height:600},
+  '/a/large.jpg':{hash:'f0f0f0f0aaaa5555',width:1800,height:1200},   // copy of small, larger: replaces it in place
+  '/a/dark1.jpg':{hash:'0800402101008000',width:1200,height:633,thumb:Buffer.alloc(192,20).toString('base64')},
+  '/a/dark2.jpg':{hash:'0800402101008000',width:1200,height:633,thumb:Buffer.alloc(192,22).toString('base64')},   // same dark picture
+  '/a/dark3.jpg':{hash:'0800402101008000',width:1200,height:633,thumb:Buffer.alloc(192,200).toString('base64')},  // a different, bright flat picture
+  '/a/dark4.jpg':{hash:'0800402101008000',width:1200,height:633},                                                  // no thumbnail: never merged
+ };
+ const result=analyzePhotoSources(['/a/small.jpg','/a/other.jpg','/a/large.jpg','/a/dark1.jpg','/a/dark2.jpg','/a/dark3.jpg','/a/dark4.jpg'],prints);
+ assert.deepEqual(result.kept,['/a/large.jpg','/a/other.jpg','/a/dark1.jpg','/a/dark3.jpg','/a/dark4.jpg']);
+ assert.deepEqual(result.groups,[{keep:'/a/large.jpg',copies:['/a/small.jpg']},{keep:'/a/dark1.jpg',copies:['/a/dark2.jpg']}]);
+ assert.deepEqual(dedupePhotoSources(['/a/small.jpg','/a/large.jpg'],prints),['/a/large.jpg']);
+});
+
+test('among copies of similar size the site-hosted file is preferred over an old WordPress link', async()=>{
+ const {analyzePhotoSources}=await import('../src/lib/image-delivery.mjs');
+ const prints={'wp.jpg':{hash:'f0f0f0f0aaaa5555',width:1000,height:667},'cms.avif':{hash:'f0f0f0f0aaaa5555',width:1000,height:667},'cms-small.avif':{hash:'f0f0f0f0aaaa5555',width:500,height:333}};
+ const own=s=>s.startsWith('cms');
+ assert.deepEqual(analyzePhotoSources(['wp.jpg','cms.avif','cms-small.avif'],prints,{prefer:own}),{kept:['cms.avif'],groups:[{keep:'cms.avif',copies:['wp.jpg','cms-small.avif']}]});
+ assert.deepEqual(analyzePhotoSources(['wp.jpg','cms.avif'],prints).kept,['wp.jpg']);
+});
+
+test('a tiny WordPress crop of a larger photo counts as its thumbnail copy, a tiny unrelated image does not', async()=>{
+ const {analyzePhotoSources}=await import('../src/lib/image-delivery.mjs');
+ const prints={
+  'big.jpg':{hash:'f0f0f0f0aaaa5555',width:864,height:432},
+  'crop150.jpg':{hash:'f0f0f0f0aaaa5e55',width:150,height:150},      // 3 bits away: centre crop of big.jpg
+  'icon150.jpg':{hash:'0ff00ff0cc33aa55',width:150,height:150},       // unrelated tiny image: kept
+  'near300.jpg':{hash:'f0f0f0f0aaaa5e55',width:300,height:300},       // not a thumbnail by size: kept
+ };
+ assert.deepEqual(analyzePhotoSources(['big.jpg','crop150.jpg','icon150.jpg','near300.jpg'],prints).kept,['big.jpg','icon150.jpg','near300.jpg']);
+ assert.deepEqual(analyzePhotoSources(['crop150.jpg','big.jpg'],prints).kept,['big.jpg']);
+});

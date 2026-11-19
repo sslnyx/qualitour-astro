@@ -124,28 +124,69 @@ export function hashDistance(a, b) {
 }
 
 /** A hash is only trusted for matching when the picture has enough structure; flat images all hash alike. */
-const informative = hash => { const bits = hashDistance(hash, '0000000000000000'); return bits >= 8 && bits <= 56; };
+export const isInformativeHash = hash => { const bits = hashDistance(hash, '0000000000000000'); return bits >= 8 && bits <= 56; };
+
+const area = print => print.width * print.height;
+const sameProportions = (a, b) => Math.abs(a.width / a.height - b.width / b.height) / (a.width / a.height) < 0.03;
+
+/** Mean absolute difference between two base64 8x8 RGB thumbnails (0 = identical, 255 = opposite). */
+function thumbDifference(a, b) {
+  const bytes = text => Uint8Array.from(atob(text), char => char.charCodeAt(0));
+  const x = bytes(a), y = bytes(b);
+  if (x.length !== y.length || !x.length) return Infinity;
+  let sum = 0;
+  for (let i = 0; i < x.length; i++) sum += Math.abs(x[i] - y[i]);
+  return sum / x.length;
+}
+
+const longSide = print => Math.max(print.width, print.height);
+
+/**
+ * WordPress leaves a 150x150 centre crop of a photo next to the photo. Such a tiny file, whose structure still resembles
+ * a much larger one (looser hash limit because the crop cuts the edges), is a thumbnail of it.
+ */
+function isThumbnailOf(small, large, { thumbnailSide = 200, maxThumbnailDistance = 12 } = {}) {
+  return longSide(small) <= thumbnailSide && longSide(large) >= 2 * longSide(small)
+    && isInformativeHash(small.hash) && isInformativeHash(large.hash)
+    && hashDistance(small.hash, large.hash) <= maxThumbnailDistance;
+}
+
+/** Whether two fingerprints are the same picture (any file type or size). */
+export function samePicture(a, b, { maxDistance = 5, maxThumbDifference = 6, ...thumbnailOptions } = {}) {
+  if (!a || !b) return false;
+  if (isThumbnailOf(a, b, thumbnailOptions) || isThumbnailOf(b, a, thumbnailOptions)) return true;
+  if (!sameProportions(a, b)) return false;
+  if (isInformativeHash(a.hash) && isInformativeHash(b.hash)) return hashDistance(a.hash, b.hash) <= maxDistance;
+  // Flat pictures all hash alike, so they are only compared by their colour thumbnail, and only when both have one.
+  if (!isInformativeHash(a.hash) && !isInformativeHash(b.hash) && a.thumb && b.thumb) return thumbDifference(a.thumb, b.thumb) <= maxThumbDifference;
+  return false;
+}
 
 /**
  * The same picture is often stored in the media library several times (cover, inline figure, gallery), so the URLs
- * differ although the photo is identical. `fingerprints` maps a photo URL to { hash, width, height } (an image
- * difference hash made at release time, scripts/fingerprint-photos.mjs). A photo whose fingerprint matches an earlier
- * one (nearly equal hash and the same proportions) is dropped; the first occurrence, in gallery order, stays.
- * Photos without a fingerprint, or with a flat, uninformative one, are always kept.
+ * differ although the photo is identical. `fingerprints` maps a photo URL to { hash, width, height, thumb? } (made at
+ * release time by scripts/fingerprint-photos.mjs). Copies are grouped; each group keeps the position of its first
+ * photo in gallery order but shows its largest file (`prefer(source)` breaks ties between files of similar size, so a
+ * file the site hosts itself beats the old WordPress one). Photos without a fingerprint are always kept.
+ * Returns { kept, groups } where groups lists every picture that exists more than once as { keep, copies }.
  */
-export function dedupePhotoSources(sources, fingerprints = {}, { maxDistance = 5, key = value => value } = {}) {
-  const kept = [];
-  const keptPrints = [];
+export function analyzePhotoSources(sources, fingerprints = {}, options = {}) {
+  const { key = value => value, prefer = () => false, ...match } = options;
+  const entries = []; // { source, print, copies }
   for (const source of sources) {
     const print = fingerprints[key(source)];
-    if (print && informative(print.hash)) {
-      const ratio = print.width / print.height;
-      const duplicate = keptPrints.some(other => hashDistance(other.hash, print.hash) <= maxDistance
-        && Math.abs(other.width / other.height - ratio) / ratio < 0.03);
-      if (duplicate) continue;
-      keptPrints.push(print);
-    }
-    kept.push(source);
+    const entry = print && entries.find(other => samePicture(other.print, print, match));
+    if (!entry) { entries.push({ source, print, copies: [] }); continue; }
+    const larger = area(print) > area(entry.print) * 1.05;
+    const similarSize = area(print) * 1.05 >= area(entry.print) && area(entry.print) * 1.05 >= area(print);
+    // Larger file wins; among files of about the same size one the site hosts itself is preferred.
+    if (larger || (similarSize && prefer(source) && !prefer(entry.source))) { entry.copies.push(entry.source); entry.source = source; entry.print = print; }
+    else entry.copies.push(source);
   }
-  return kept;
+  return {
+    kept: entries.map(entry => entry.source),
+    groups: entries.filter(entry => entry.copies.length).map(entry => ({ keep: entry.source, copies: entry.copies })),
+  };
 }
+
+export const dedupePhotoSources = (sources, fingerprints = {}, options = {}) => analyzePhotoSources(sources, fingerprints, options).kept;

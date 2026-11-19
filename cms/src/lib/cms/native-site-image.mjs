@@ -7,6 +7,8 @@ const mediaOrigins=new Set(['https://qualitour-cms-free-test.qualitour.workers.d
 const widths=[480,960,1280,1920];
 const mediaDimensionsKey=Symbol.for('qualitour:native-media-dimensions');
 /** Photo URLs appear with and without the CMS origin; fingerprints are stored without it. */
+/** Files in the CMS media library, as opposed to images still linked from the old WordPress site. */
+export const isCmsHostedPhoto=url=>typeof url==='string'&&url.includes('/_emdash/api/media/');
 export const photoFingerprintKey=url=>{for(const origin of mediaOrigins)if(typeof url==='string'&&url.startsWith(origin+'/'))return url.slice(origin.length);return url;};
 const textUrl=value=>typeof value==='string'&&value.trim()?value:typeof value?.url==='string'&&value.url.trim()?value.url:null;
 
@@ -83,7 +85,7 @@ export async function optimizeTourPresentation(tour) {
   const optimizedPhotos={...(tour.optimizedPhotos||{})};
   // The same picture is stored several times in the media library (cover, inline figure, gallery): show it once.
   const rawPhotos=collectTourPhotoSources(tour);
-  const photoSources=dedupePhotoSources(rawPhotos,photoFingerprints,{key:photoFingerprintKey});
+  const photoSources=dedupePhotoSources(rawPhotos,photoFingerprints,{key:photoFingerprintKey,prefer:isCmsHostedPhoto});
   for(const raw of photoSources)if(transformHref(raw)&&!optimizedPhotos[raw]){
     const size=dimensions[raw]||{width:1600,height:1067};
     optimizedPhotos[raw]={thumbnail:imageTransformUrl(raw,600),full:imageTransformUrl(raw,1600),width:size.width,height:size.height};
