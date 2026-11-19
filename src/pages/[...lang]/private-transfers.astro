@@ -17,7 +17,6 @@ import standardVanImg from "../../assets/images/fleet/standard-van.jpg";
 import deluxeVanImg from "../../assets/images/fleet/deluxe-van.jpg";
 import sprinterStandardImg from "../../assets/images/fleet/sprinter-standard.png";
 import sprinterDeluxeImg from "../../assets/images/fleet/sprinter-deluxe.png";
-import charterPackageImg from "../../assets/images/fleet/charter-package.jpg";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -266,17 +265,6 @@ const charterRates =
                   ],
                   popular: true,
               },
-              {
-                  imageUrl: charterPackageImg,
-                  title: "高端包車套餐",
-                  priceNumber: "110",
-                  priceUnit: "/ 小時",
-                  bullets: [
-                      "最多 14 位帶行李乘客",
-                      "最少 2.5 小時",
-                      "僅限大溫哥華地區",
-                  ],
-              },
           ]
         : [
               {
@@ -301,17 +289,6 @@ const charterRates =
                       "Within Greater Vancouver only",
                   ],
                   popular: true,
-              },
-              {
-                  imageUrl: charterPackageImg,
-                  title: "Premium Charter Package",
-                  priceNumber: "110",
-                  priceUnit: "/ Hr",
-                  bullets: [
-                      "Up to 14 passengers with luggage",
-                      "Min. 2.5 hours",
-                      "Within Greater Vancouver only",
-                  ],
               },
           ];
 
@@ -498,7 +475,7 @@ function extractPriceNumber(caption: string): string | null {
 
             <!-- Charter Rates -->
             <div
-                class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-20"
+                class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-20"
             >
                 {
                     charterRates.map((rate) => (
