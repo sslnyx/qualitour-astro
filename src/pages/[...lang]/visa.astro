@@ -1,7 +1,7 @@
 ---
 import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
-import PageHero from "../../components/PageHero.astro";
+import PageTitle from "../../components/PageTitle.astro";
 import { wpUrl } from "../../lib/wp-url";
 import { VisaInquiryForm } from "../../components/forms";
 import PremiumReviewsGrid from "../../components/PremiumReviewsGrid";
@@ -19,9 +19,6 @@ export function getStaticPaths() {
 const { lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || "en";
 const localePrefix = getLocalePrefix(lang as Locale);
-
-// Visa hero background
-const VISA_HERO_BG = visaHero;
 
 // Fetch reviews
 let reviews: any[] = [];
@@ -162,22 +159,16 @@ const requirements =
         ? "专业签证支持：各类国际旅行签证咨询、材料清单及申请指导。"
         : "Professional visa support: consultation, document checklists, and application guidance for international travel."}
     lang={lang}
-    image={VISA_HERO_BG.src}
+    image={visaHero.src}
 >
-    <!-- Hero Section -->
-    <PageHero
-        image={VISA_HERO_BG}
+    <PageTitle
         title={title}
         subtitle={subtitle}
-        badge={{
-            icon: "assignment",
-            text: lang === "zh" ? "签证服务" : "Visa Services",
-        }}
     />
 
     <!-- Value Props Section -->
     <section
-        class="py-16 md:py-24 bg-gradient-to-br from-gray-50 via-white to-gray-50"
+        class="py-8 sm:py-12 bg-gradient-to-br from-gray-50 via-white to-gray-50"
     >
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">

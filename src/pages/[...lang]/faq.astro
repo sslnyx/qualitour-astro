@@ -1,9 +1,8 @@
 ---
 import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
-import PageHero from "../../components/PageHero.astro";
+import PageTitle from "../../components/PageTitle.astro";
 import { FAQCategories, FAQQuickLinks } from "../../components/FAQAccordion";
-import faqHeroImg from "../../assets/images/faq-hero.png";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -23,7 +22,6 @@ const t = {
         currentLang === "zh"
             ? "關於Qualitour行程的常見問題解答。"
             : "Everything you need to know about your journey with Qualitour.",
-    badge: currentLang === "zh" ? "幫助中心" : "Help Center",
     stillQuestions:
         currentLang === "zh" ? "還有問題？" : "Still Have Questions?",
     stillQuestionsDesc:
@@ -43,16 +41,13 @@ const t = {
     lang={currentLang}
     image="/faq-hero.png"
 >
-    <!-- Hero Section -->
-    <PageHero
-        image={faqHeroImg}
+    <PageTitle
         title={t.title}
         subtitle={t.subtitle}
-        badge={{ icon: "help_outline", text: t.badge }}
     />
 
     <!-- FAQ Content -->
-    <section class="py-16 md:py-24 bg-gray-50">
+    <section class="py-8 sm:py-12 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <FAQQuickLinks lang={currentLang} />
             <FAQCategories client:load lang={currentLang} />

@@ -1,7 +1,7 @@
 ---
 import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
-import PageHero from "../../components/PageHero.astro";
+import PageTitle from "../../components/PageTitle.astro";
 import { wpUrl } from "../../lib/wp-url";
 import TransferRoutesGrid from "../../components/TransferRoutesGrid";
 import PremiumReviewsGrid from "../../components/PremiumReviewsGrid";
@@ -122,7 +122,6 @@ const t = {
         lang === "zh"
             ? "舒適、安全、準時的專屬用車服務"
             : "Premium door-to-door transportation across British Columbia",
-    heroTagline: lang === "zh" ? "專業接送" : "PROFESSIONAL TRANSFERS",
     whyUs: lang === "zh" ? "為什麼選擇我們" : "Why Choose Qualitour",
     ourFleet: lang === "zh" ? "車隊與包車服務" : "Fleet & Charter Services",
     fleetDesc:
@@ -383,33 +382,30 @@ function extractPriceNumber(caption: string): string | null {
     lang={lang}
     image={skiShuttleImg.src}
 >
-    <!-- Hero Section -->
-    <PageHero
-        image={skiShuttleImg}
+    <PageTitle
         title={t.heading}
         subtitle={t.subheading}
-        badge={{ icon: "airport_shuttle", text: t.heroTagline }}
     >
-        <div class="mt-6 flex flex-wrap justify-center gap-2 sm:mt-10 sm:gap-4">
+        <div class="flex flex-wrap justify-center gap-2 sm:gap-4">
             <a
                 href="#routes"
                 class="inline-flex min-h-11 items-center gap-2 rounded-full bg-gradient-to-r from-[#f7941e] to-[#ff6b35] px-4 py-2 text-sm font-bold text-white transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/30 sm:px-8 sm:py-4 sm:text-base"
             >
-                <span class="material-icons">route</span>
+                <span class="material-icons" aria-hidden="true">route</span>
                 {t.popularRoutes}
             </a>
             <a
                 href={`${localePrefix}/contact`}
                 class="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold text-white backdrop-blur-sm transition-all duration-300 hover:bg-white/20 sm:px-8 sm:py-4 sm:text-base"
             >
-                <span class="material-icons">mail</span>
+                <span class="material-icons" aria-hidden="true">mail</span>
                 {t.getInTouch}
             </a>
         </div>
-    </PageHero>
+    </PageTitle>
 
     <!-- Popular Routes -->
-    <section id="routes" class="py-12 sm:py-16 lg:py-20 bg-gray-50 scroll-mt-20">
+    <section id="routes" class="py-8 sm:py-12 bg-gray-50 scroll-mt-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-8 sm:mb-12">
                 <span

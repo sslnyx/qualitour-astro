@@ -6,6 +6,7 @@
  */
 import { getLocalePrefix, type Locale } from '../i18n/config';
 import Layout from '../layouts/Layout.astro';
+import PageTitle from './PageTitle.astro';
 import TourCardOptimized from './TourCardOptimized.astro';
 import { decodeHtml } from '../lib/utils';
 import type { CategoryTerm, WPTour } from '../lib/wordpress/types';
@@ -60,40 +61,26 @@ const title = zh ? `${name}行程 | Qualitour` : `${name} Tours | Qualitour`;
 const description = zh
   ? `瀏覽 ${tours.length} 個${name}行程，查看路線、出發資訊與價格，並聯絡 Qualitour 安排旅程。`
   : `Browse ${tours.length} ${name} tours with itineraries, departure details and pricing, and contact Qualitour to plan your journey.`;
-const label = kind === 'style' ? (zh ? '旅遊方式' : 'Travel Style') : (zh ? '目的地' : 'Destination');
+const subtitle = zh ? `共 ${tours.length} 個行程` : `${tours.length} ${tours.length === 1 ? 'tour' : 'tours'} to explore`;
 ---
 
 <Layout title={title} description={description} lang={lang} alternates={alternates} noindex={tours.length === 0}>
   <div class="min-h-screen bg-gray-50">
-    <section class="page-hero relative flex items-center bg-gradient-to-r from-gray-900 to-gray-800 py-10 sm:py-12 overflow-hidden">
-      <div class="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl"></div>
-      <div class="absolute bottom-0 left-0 w-64 h-64 bg-orange-400/10 rounded-full blur-2xl"></div>
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div class="text-center text-white">
-          <nav class="text-sm mb-4 flex flex-wrap items-center justify-center gap-2" aria-label="Breadcrumb">
-            <a href={`${localePrefix}/`} class="text-gray-400 hover:text-white transition-colors">{zh ? '首頁' : 'Home'}</a>
-            <span class="text-gray-600">/</span>
-            <a href={`${localePrefix}/tours`} class="text-gray-400 hover:text-white transition-colors">{zh ? '行程' : 'Tours'}</a>
-            {trail.map((node) => (
-              <>
-                <span class="text-gray-600">/</span>
-                <a href={`${localePrefix}/tours/destination/${node.slug}`} class="text-gray-400 hover:text-white transition-colors">{decodeHtml(node.name)}</a>
-              </>
-            ))}
-            <span class="text-gray-600">/</span>
-            <span class="text-orange-400">{name}</span>
-          </nav>
-          <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6">
-            <span class="material-icons text-orange-400">{kind === 'style' ? 'category' : 'place'}</span>
-            <span class="text-white/80 text-sm">{label}</span>
-          </div>
-          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">{name}</h1>
-          <p class="text-xl text-gray-300 max-w-2xl mx-auto">
-            {zh ? `共 ${tours.length} 個行程` : `${tours.length} ${tours.length === 1 ? 'tour' : 'tours'} to explore`}
-          </p>
-        </div>
-      </div>
-    </section>
+    <PageTitle title={name} subtitle={subtitle}>
+      <nav slot="breadcrumb" class="mb-3 flex flex-wrap items-center justify-center gap-2 text-sm" aria-label={zh ? '頁面路徑' : 'Breadcrumb'}>
+        <a href={`${localePrefix}/`} class="text-gray-300 hover:text-white">{zh ? '首頁' : 'Home'}</a>
+        <span class="text-gray-400" aria-hidden="true">/</span>
+        <a href={`${localePrefix}/tours`} class="text-gray-300 hover:text-white">{zh ? '行程' : 'Tours'}</a>
+        {trail.map((node) => (
+          <>
+            <span class="text-gray-400" aria-hidden="true">/</span>
+            <a href={`${localePrefix}/tours/destination/${node.slug}`} class="break-words text-gray-300 hover:text-white">{decodeHtml(node.name)}</a>
+          </>
+        ))}
+        <span class="text-gray-400" aria-hidden="true">/</span>
+        <span class="break-words text-orange-400" aria-current="page">{name}</span>
+      </nav>
+    </PageTitle>
 
     {(introParagraphs.length > 0 || term.promo) && (
       <section class="py-8 bg-white border-b border-gray-100" id="category-intro">
@@ -165,7 +152,7 @@ const label = kind === 'style' ? (zh ? '旅遊方式' : 'Travel Style') : (zh ? 
       </section>
     )}
 
-    <section class="py-12 md:py-16">
+    <section class="py-8 sm:py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between gap-4 mb-8">
           <p class="text-gray-600">{zh ? '顯示' : 'Showing'} <span class="font-semibold text-gray-900" id="category-count">{tours.length}</span> {zh ? '個行程' : 'tours'}</p>

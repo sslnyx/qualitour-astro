@@ -1,8 +1,7 @@
 ---
 import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
-import PageHero from "../../components/PageHero.astro";
-import privacyHeroImg from "../../assets/images/privacy-hero.png";
+import PageTitle from "../../components/PageTitle.astro";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -23,7 +22,6 @@ const t = {
         currentLang === "zh"
             ? "我們致力於保護您的個人信息，並對其使用方式保持透明。"
             : "We are committed to protecting your personal information and being transparent about how we use it.",
-    heroBadge: currentLang === "zh" ? "您的隱私很重要" : "Your Privacy Matters",
     lastUpdated:
         currentLang === "zh"
             ? "最後更新：2024年12月15日"
@@ -314,20 +312,17 @@ const rightsItems =
         : "Qualitour Privacy Policy - Learn how we collect, use, and protect your personal information."}
     lang={currentLang}
 >
-    <!-- Hero Section -->
-    <PageHero
-        image={privacyHeroImg}
+    <PageTitle
         title={t.heroTitle}
         subtitle={t.heroSubtitle}
-        badge={{ icon: "lock", text: t.heroBadge }}
     >
-        <p class="text-sm text-white/80">
+        <p class="text-sm text-gray-300">
             {t.lastUpdated}
         </p>
-    </PageHero>
+    </PageTitle>
 
     <!-- Policy Content -->
-    <section class="py-16 bg-gray-50">
+    <section class="py-8 sm:py-12 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav aria-label={currentLang === "zh" ? "隱私政策章節" : "Privacy policy sections"} class="mb-10 flex flex-wrap justify-center gap-3">
                 {policySections.map((section) => (
