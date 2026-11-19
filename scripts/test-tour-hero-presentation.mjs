@@ -4,15 +4,20 @@ import test from 'node:test';
 
 const source = (path) => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
-test('tour detail preserves the original poster without a cropped derivative', async () => {
-  const [detail, css] = await Promise.all([
+test('tour detail opens with a photo collage and a single banner when there is one photo', async () => {
+  const [page, gallery] = await Promise.all([
     source('src/components/TourPage.astro'),
-    source('src/styles/global.css'),
+    source('src/components/TourGallery.tsx'),
   ]);
-  assert.match(detail, /tour-hero-cover/);
-  assert.doesNotMatch(detail, /\bobject-cover\b/);
-  assert.doesNotMatch(detail, /width:\s*1920,\s*height:\s*1080/);
-  assert.match(css, /\.tour-hero-cover\s*\{[^}]*object-fit:\s*contain/);
+  assert.match(page, /<TourGallery\b[^>]*client:load[^>]*photos=\{galleryPhotos\}/);
+  assert.doesNotMatch(page, /tour-hero-cover/);
+  // 1 photo: banner (a poster/portrait is shown whole on a blurred backdrop); 2, 3-4 and 5+ photos: collage layouts.
+  assert.match(gallery, /photos\.length === 1/);
+  assert.match(gallery, /object-contain/);
+  assert.match(gallery, /count === 2/);
+  assert.match(gallery, /count < 5/);
+  assert.match(gallery, /grid-cols-4 grid-rows-2/);
+  assert.match(gallery, /snap-x snap-mandatory/);
 });
 
 test('the homepage renders separate full-bleed backgrounds over the shared hero height', async () => {
@@ -28,14 +33,6 @@ test('the homepage renders separate full-bleed backgrounds over the shared hero 
   assert.doesNotMatch(featured, /tour\.optimizedHero|featured_image_url|tour-hero-cover/);
   assert.match(pageHero, /class="page-hero /);
   assert.match(css, /--site-hero-min-height:\s*60vh/);
-});
-
-test('the detail hero displays the cover without a separate image action', async () => {
-  const detail = await source('src/components/TourPage.astro');
-  const cover = detail.match(/<figure\b[^>]*>[\s\S]*?<\/figure>/)?.[0];
-  assert.ok(cover?.includes('tour-hero-cover'));
-  assert.equal(/<(?:a|button|figcaption)\b/.test(cover), false);
-  assert.equal(/查看原圖|View full cover image/.test(detail), false);
 });
 
 test('the homepage carousel starts automatically and honors reduced motion', async () => {
@@ -75,10 +72,10 @@ test('mobile enquiry already links to the in-page form before the dialog can hyd
 });
 
 test('tour dialogs retain the opener even when clicking does not focus it', async () => {
-  const [cta, featured, detail, modal, gallery] = await Promise.all([
+  const [cta, featured, detail, modal, lightbox] = await Promise.all([
     source('src/components/MobileInquiryCTA.tsx'),
     source('src/components/FeaturedToursHero.tsx'),
-    source('src/components/TourDetail.tsx'),
+    source('src/components/TourGallery.tsx'),
     source('src/components/TourInquiryModal.tsx'),
     source('src/components/PhotoLightbox.tsx'),
   ]);
@@ -87,7 +84,7 @@ test('tour dialogs retain the opener even when clicking does not focus it', asyn
   assert.match(detail, /trigger: event\.currentTarget/);
   assert.match(detail, /returnFocusTo=\{lightbox\.trigger\}/);
   assert.match(modal, /const trigger = returnFocusTo/);
-  assert.match(gallery, /const trigger = returnFocusTo/);
+  assert.match(lightbox, /const trigger = returnFocusTo/);
 });
 
 test('tour enquiry uses a full-width calendar instead of the browser date input', async () => {

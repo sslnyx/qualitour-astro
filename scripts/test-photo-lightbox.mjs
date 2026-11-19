@@ -39,6 +39,6 @@ test('the photo lightbox exposes dialog semantics and accessible gallery control
 });
 
 test('tour thumbnails use named buttons to open the gallery',async()=>{
- const source=await readFile('src/components/TourDetail.tsx','utf8');
+ const source=await readFile('src/components/TourGallery.tsx','utf8');
  assert.match(source,/<button\s+[\s\S]*?aria-label=\{`Open photo \$\{index \+ 1\} of \$\{photos\.length\}`\}/);
 });
