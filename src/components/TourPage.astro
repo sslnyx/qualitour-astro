@@ -44,17 +44,25 @@ if (!tourCode && tour.goodlayers_data) {
 
 // Photos for the collage: the cover first, then the gallery, each picture once. The CMS holds the same picture under
 // several media ids and text pictures (tables, posters, maps) next to real photos; tour-image-kinds.json (built by
-// scripts/classify-tour-images) says which ids are duplicates and which are text pictures. A tour with no real photo
+// scripts/classify-tour-images) maps each picture reference to its media id and says which ids are duplicates and
+// which are text pictures. A picture it does not know (a new upload) counts as a photo. A tour with no real photo
 // shows its first picture alone, whole.
-const mediaId = (url: string) => url.match(/m-[0-9a-f]{16}/)?.[0];
+const MEDIA_PATH = /\/_emdash\/api\/media\/file\/[A-Za-z0-9][A-Za-z0-9._-]*\.(?:jpe?g|png|webp|gif|avif)(?![A-Za-z0-9._-])/;
+const pictureRefs = tourImageKinds.refs as Record<string, string>;
+const canonicalIds = tourImageKinds.canonical as Record<string, string>;
+const referenceId = (raw: string): string | undefined => {
+  const media = raw.match(MEDIA_PATH)?.[0];
+  if (media) return pictureRefs[media];
+  try { return pictureRefs[raw] ?? pictureRefs[new URL(raw).href]; } catch { return pictureRefs[raw]; }
+};
 const textPictures = new Set<string>(tourImageKinds.graphics);
 const seenPictures = new Set<string>();
 const galleryPhotos: { thumb: string; full: string; width?: number; height?: number; whole?: boolean }[] = [];
 let firstPicture: (typeof galleryPhotos)[number] | undefined;
 for (const raw of collectTourPhotoSources(tour)) {
   const url = wpUrl(raw);
-  const id = mediaId(url);
-  const picture = (id && (tourImageKinds.canonical as Record<string, string>)[id]) || id || url;
+  const id = referenceId(raw);
+  const picture = (id && canonicalIds[id]) || id || url;
   if (seenPictures.has(picture)) continue;
   seenPictures.add(picture);
   const optimized = tour.optimizedPhotos?.[url];

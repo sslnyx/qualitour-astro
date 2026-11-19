@@ -9,9 +9,11 @@ text pictures (visa tables, inclusion lists, posters, ads, maps). The gallery sh
 Needs macOS (swiftc, Vision), Pillow and numpy. Refresh after content changes; ids missing from the output are
 treated as photos and shown.
 
-  python3 scripts/classify-tour-images/classify.py --fixtures "<dir with tours/<en|zh>/*.json>" [--work DIR] [--force]
+  QUALITOUR_CMS_ORIGIN=https://qualitour.qualitour.workers.dev node scripts/classify-tour-images/collect-sources.mjs refs.json
+  python3 scripts/classify-tour-images/classify.py --refs refs.json [--work DIR] [--force]
 
-The fixtures are saved by `Local Sites/qualitour/_dev-fixtures/snapshot-tours.mjs`.
+refs.json (step 1) maps the address a tour page sees for each picture to its static-site name m-<hash>; the
+pictures themselves are downloaded from the static site.
 """
 import argparse, json, re, subprocess, urllib.request, concurrent.futures as cf
 from pathlib import Path
@@ -23,7 +25,7 @@ HERE = Path(__file__).resolve().parent
 ID = re.compile(r'm-[0-9a-f]{16}')
 
 ap = argparse.ArgumentParser()
-ap.add_argument('--fixtures', required=True)
+ap.add_argument('--refs', required=True)
 ap.add_argument('--origin', default='https://qualitour-site.qualitour.workers.dev')
 ap.add_argument('--work', default=str(HERE / '.work'))
 ap.add_argument('--out', default=str(HERE.parent.parent / 'src/data/tour-image-kinds.json'))
@@ -31,13 +33,9 @@ ap.add_argument('--force', action='store_true')
 args = ap.parse_args()
 work = Path(args.work); (work / 'full').mkdir(parents=True, exist_ok=True)
 
-# 1. every distinct media id referenced by a tour gallery, with its 1600px derivative
-sources = {}
-for path in Path(args.fixtures).glob('*/*.json'):
-    if path.name == 'index.json': continue
-    for url, photo in (json.loads(path.read_text()).get('optimizedPhotos') or {}).items():
-        match = ID.search(url)
-        if match and match.group(0) not in sources: sources[match.group(0)] = photo['full']
+# 1. every distinct media id referenced by a tour gallery
+refs = json.loads(Path(args.refs).read_text())
+sources = {ident: f'/img/{ident}.webp' for ident in sorted(set(refs.values()))}
 print(len(sources), 'distinct media ids')
 
 def fetch(item):
@@ -89,6 +87,6 @@ for members in groups.values():
     if any(ocr.get(m, {}).get('chars', 0) >= TEXT_CHARS or m in force_graphic for m in members) and not (set(members) & force_photo):
         graphics.append(best)
 
-result = {'version': 1, 'textChars': TEXT_CHARS, 'graphics': sorted(graphics), 'canonical': dict(sorted(canonical.items()))}
-Path(args.out).write_text(json.dumps(result, indent=0, ensure_ascii=False) + '\n')
-print(f'{len(groups)} distinct pictures, {len(canonical)} duplicate ids, {len(graphics)} text pictures -> {args.out}')
+result = {'version': 2, 'textChars': TEXT_CHARS, 'graphics': sorted(graphics), 'canonical': dict(sorted(canonical.items())), 'refs': dict(sorted(refs.items()))}
+Path(args.out).write_text(json.dumps(result, indent=0, ensure_ascii=False, separators=(',', ':')) + '\n')
+print(f'{len(groups)} distinct pictures, {len(canonical)} duplicate ids, {len(graphics)} text pictures, {len(refs)} references -> {args.out}')

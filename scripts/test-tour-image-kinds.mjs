@@ -6,8 +6,9 @@ const kinds = JSON.parse(await readFile(new URL('../src/data/tour-image-kinds.js
 const id = /^m-[0-9a-f]{16}$/;
 
 test('tour image kinds list only well-formed media ids', () => {
-  assert.equal(kinds.version, 1);
+  assert.equal(kinds.version, 2);
   for (const graphic of kinds.graphics) assert.match(graphic, id);
+  for (const ident of Object.values(kinds.refs)) assert.match(ident, id);
   for (const [duplicate, canonical] of Object.entries(kinds.canonical)) {
     assert.match(duplicate, id);
     assert.match(canonical, id);
