@@ -60,3 +60,21 @@ test('official runtime image derivatives are never nested inside a second transf
  const source='/_image?href=%2F_emdash%2Fapi%2Fmedia%2Ffile%2Fcover.png&w=960&f=webp&q=80';
  assert.equal((await d.image({src:source,width:600,height:450})).src,source);
 });
+
+test('the same picture stored under different URLs shows once, keeping the first and ignoring flat or unmatched images', async()=>{
+ const {dedupePhotoSources,collectTourPhotoSources,hashDistance}=await import('../src/lib/image-delivery.mjs');
+ assert.equal(hashDistance('ffffffffffffffff','fffffffffffffffe'),1);
+ const prints={
+  '/img/cover.webp':{hash:'f0f0f0f0aaaa5555',width:1169,height:768},
+  '/img/figure.webp':{hash:'f0f0f0f0aaaa5555',width:1169,height:862},   // same hash, other proportions: a different picture
+  '/img/copy.webp':{hash:'f0f0f0f0aaaa5554',width:1169,height:768},      // one bit off, same proportions: a copy
+  '/img/far.webp':{hash:'f0f0f0f0aaaa503f',width:1169,height:768},       // 6+ bits away: a different picture
+  '/img/flat-a.webp':{hash:'0000000000000000',width:800,height:600},
+  '/img/flat-b.webp':{hash:'0000000000000000',width:800,height:600},     // flat images hash alike but are not copies
+ };
+ const sources=['/img/cover.webp','/img/figure.webp','/img/copy.webp','/img/far.webp','/img/flat-a.webp','/img/flat-b.webp','/img/unknown.webp'];
+ assert.deepEqual(dedupePhotoSources(sources,prints),['/img/cover.webp','/img/figure.webp','/img/far.webp','/img/flat-a.webp','/img/flat-b.webp','/img/unknown.webp']);
+ assert.deepEqual(dedupePhotoSources(sources,{}),sources);
+ assert.deepEqual(dedupePhotoSources(['https://cms/img/copy.webp','https://cms/img/cover.webp'],prints,{key:u=>u.replace('https://cms','')}),['https://cms/img/copy.webp']);
+ assert.deepEqual(collectTourPhotoSources({photoSources:['/img/cover.webp'],featured_image_url:'/img/other.webp'}),['/img/cover.webp']);
+});

@@ -14,6 +14,7 @@ try{
  await beginWorkerRelease(root);
  const astro=JSON.parse(await readFile('node_modules/astro/package.json','utf8'));const bin=typeof astro.bin==='string'?astro.bin:astro.bin.astro;
  run(['scripts/prebuild-images.mjs']);
+ run(['scripts/fingerprint-photos.mjs']);
  run([resolve('node_modules/astro',bin),'build','--config','astro.config.worker-cms.mjs']);
  const entry=await readFile(cms+'/server/entry.mjs','utf8');const chunks=await Promise.all((await readdir(cms+'/server/chunks')).filter(x=>x.endsWith('.mjs')).map(x=>readFile(cms+'/server/chunks/'+x,'utf8')));assertCmsRuntime(entry,chunks);
  run(['scripts/build-worker-static.mjs']);

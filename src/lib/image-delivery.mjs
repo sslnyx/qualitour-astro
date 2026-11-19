@@ -27,8 +27,15 @@ export function applyImageFallback(image, source) {
   image.src = source;
 }
 
-/** Public gallery source extraction, shared by build-time derivatives and the client. */
+/**
+ * Public gallery source extraction, shared by build-time derivatives and the client.
+ * `tour.photoSources` is the already de-duplicated list the server prepared (see dedupePhotoSources); when present it
+ * is the gallery, so the client never shows a photo the server dropped.
+ * @param {any} tour
+ * @returns {string[]}
+ */
 export function collectTourPhotoSources(tour) {
+  if (Array.isArray(tour?.photoSources)) return tour.photoSources;
   const result = [];
   const add = value => {
     const url = typeof value === 'string' ? value : value?.url || value?.thumbnail;
@@ -107,4 +114,38 @@ export function createImageDelivery({ optimize, transform, infer }) {
     });
   }
   return { image, responsive };
+}
+
+/** Number of differing bits between two 64-bit hashes given as 16-digit hex strings. */
+export function hashDistance(a, b) {
+  let x = BigInt('0x' + a) ^ BigInt('0x' + b), bits = 0;
+  while (x) { bits += Number(x & 1n); x >>= 1n; }
+  return bits;
+}
+
+/** A hash is only trusted for matching when the picture has enough structure; flat images all hash alike. */
+const informative = hash => { const bits = hashDistance(hash, '0000000000000000'); return bits >= 8 && bits <= 56; };
+
+/**
+ * The same picture is often stored in the media library several times (cover, inline figure, gallery), so the URLs
+ * differ although the photo is identical. `fingerprints` maps a photo URL to { hash, width, height } (an image
+ * difference hash made at release time, scripts/fingerprint-photos.mjs). A photo whose fingerprint matches an earlier
+ * one (nearly equal hash and the same proportions) is dropped; the first occurrence, in gallery order, stays.
+ * Photos without a fingerprint, or with a flat, uninformative one, are always kept.
+ */
+export function dedupePhotoSources(sources, fingerprints = {}, { maxDistance = 5, key = value => value } = {}) {
+  const kept = [];
+  const keptPrints = [];
+  for (const source of sources) {
+    const print = fingerprints[key(source)];
+    if (print && informative(print.hash)) {
+      const ratio = print.width / print.height;
+      const duplicate = keptPrints.some(other => hashDistance(other.hash, print.hash) <= maxDistance
+        && Math.abs(other.width / other.height - ratio) / ratio < 0.03);
+      if (duplicate) continue;
+      keptPrints.push(print);
+    }
+    kept.push(source);
+  }
+  return kept;
 }
