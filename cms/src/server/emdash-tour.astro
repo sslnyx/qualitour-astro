@@ -2,7 +2,9 @@
 import { getEmDashEntry } from 'emdash';
 import { toLegacyTour } from '../lib/cms/emdash-tour';
 import Layout from '../layouts/Layout.astro';
-import TourPage from '../components/TourPage.astro';
+// The preview renders the same TourPage and TourDetail as the public site, so it can never fall behind the live layout.
+import TourPage from '../../../src/components/TourPage.astro';
+import { optimizeTourPresentation } from '../lib/cms/native-site-image.mjs';
 import { tourMetadata } from '../lib/seo';
 import '../styles/global.css';
 import { previewDayRefs, previewRevision } from '../lib/cms/preview-focus';
@@ -14,7 +16,9 @@ const { entry, isPreview, error } = await getEmDashEntry('tours', Astro.params.i
 if (error) return new Response('CMS unavailable', { status: 503 });
 // EmDash resolves global IDs before locale filters; enforce the public route's language.
 if (!entry || entry.data.locale !== lang) return new Response('Tour not found', { status: 404, headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
-const tour = toLegacyTour(entry);
+let tour = toLegacyTour(entry);
+// Same responsive cover, photo de-duplication and inline images as the published page.
+try { tour = await optimizeTourPresentation(tour); } catch (error) { console.error('[cms-proof] tour presentation skipped:', error); }
 // Start without public caching so draft isolation and publish freshness are observable.
 Astro.response.headers.set('Cache-Control', 'private, no-store');
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
@@ -29,6 +33,8 @@ const metadata = tourMetadata(tour);
 ---
 <Layout {...metadata} lang={lang} heroImage={metadata.image} noindex={true} formsDisabled={true}>
   {embeddedPreview && <style is:inline>#emdash-toolbar { display: none !important; }</style>}
+  {/* Enquiry forms stay visible as on the live page, but a preview must never send one. */}
+  <script is:inline>document.addEventListener('submit', event => { event.preventDefault(); event.stopImmediatePropagation(); }, true);</script>
   {isPreview && <aside role="alert" class="bg-amber-100 text-amber-950 p-3 text-center font-semibold">草稿預覽 · 尚未發佈 / Draft preview · Unpublished changes</aside>}
-  <TourPage tour={tour} lang={lang} localePrefix={prefix} reviews={[]} previewContext={previewContext} inquiryDisabled={true} />
+  <TourPage tour={tour} lang={lang} localePrefix={prefix} reviews={[]} previewContext={previewContext} />
 </Layout>

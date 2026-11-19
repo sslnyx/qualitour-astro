@@ -1,4 +1,5 @@
 ---
+import type { PreviewContext } from "../../cms/src/lib/cms/preview-focus";
 import { plainText } from "../lib/seo";
 import { getCfTransformUrl } from "../lib/wp-url";
 import { getTourImageUrl, tourHeroImageSizes } from "../lib/wordpress/image-source";
@@ -13,9 +14,11 @@ interface Props {
   lang: "en" | "zh";
   localePrefix: string;
   reviews: GoogleReview[];
+  /** Only the CMS editor's preview passes this, so the editor can scroll the page to what is being edited. */
+  previewContext?: PreviewContext;
 }
 
-const { tour, lang, localePrefix, reviews } = Astro.props;
+const { tour, lang, localePrefix, reviews, previewContext } = Astro.props;
 
 // The mobile inquiry modal only needs identity and pricing, not the full itinerary.
 const inquiryTour: WPTour = { id: tour.id, slug: tour.slug, title: { rendered: plainText(tour.title.rendered) }, excerpt: tour.excerpt, featured_media: tour.featured_media, tour_meta: tour.tour_meta };
@@ -86,7 +89,7 @@ const copy =
 
 <div class="tour-detail-page bg-white">
   <div class="min-h-screen bg-gray-50">
-    <header class="page-hero relative flex items-end overflow-hidden bg-gray-900">
+    <header data-tour-hero class="page-hero relative flex items-end overflow-hidden bg-gray-900">
       {
         heroUrl && (
           <div class="absolute inset-0">
@@ -179,7 +182,7 @@ const copy =
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div class="lg:col-span-2 space-y-8">
             <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-              <TourDetail tour={tour} lang={lang} client:load />
+              <TourDetail tour={tour} lang={lang} previewContext={previewContext} client:load />
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">

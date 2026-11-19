@@ -8,7 +8,8 @@ import { collectTourPhotoSources } from '../lib/image-delivery.mjs';
  * Supports i18n for English and Chinese.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { parsePreviewRequest, type PreviewContext, type PreviewRequest } from '../../cms/src/lib/cms/preview-focus';
 import type { WPTour } from '../lib/wordpress/types';
 import { wpUrl, processHtmlContent as normalizeHtmlContent, getCfTransformUrl } from '../lib/wp-url';
 import PhotoLightbox from './PhotoLightbox';
@@ -16,6 +17,8 @@ import PhotoLightbox from './PhotoLightbox';
 interface TourDetailProps {
     tour: WPTour;
     lang?: string;
+    /** Set only by the CMS editor's embedded preview; lets the editor scroll this page to the section being edited. */
+    previewContext?: PreviewContext;
 }
 
 type TabId = 'overview' | 'pricing' | 'itinerary' | 'info' | 'photos' | 'faq' | 'brochure';
@@ -113,11 +116,50 @@ const translations = {
     },
 };
 
-export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
+export function TourDetail({ tour, lang = 'en', previewContext }: TourDetailProps) {
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
     const [lightbox, setLightbox] = useState<{ index: number; trigger: HTMLButtonElement } | null>(null);
     const closeLightbox = useCallback(() => setLightbox(null), []);
+    const [previewRequest, setPreviewRequest] = useState<PreviewRequest | null>(null);
+
+    // CMS editor preview: follow the section and day the editor selects, then confirm which saved revision is on screen.
+    useEffect(() => {
+        if (!previewContext || window.parent === window) return;
+        const receive = (event: MessageEvent) => {
+            if (event.origin !== window.location.origin || event.source !== window.parent) return;
+            const request = parsePreviewRequest(event.data);
+            if (!request || request.entryId !== previewContext.entryId || request.locale !== previewContext.locale) return;
+            setPreviewRequest(request);
+            setActiveTab(request.section === 'hero' ? 'overview' : request.section);
+            const index = previewContext.days.findIndex(day => day?.field === request.day?.field && day?.key === request.day?.key);
+            setExpandedDays(new Set(request.section === 'itinerary' && index >= 0 ? [index] : []));
+        };
+        window.addEventListener('message', receive);
+        window.parent.postMessage({ type: 'qualitour:preview-mounted', ...previewContext, days: undefined }, window.location.origin);
+        return () => window.removeEventListener('message', receive);
+    }, [previewContext]);
+
+    useEffect(() => {
+        if (!previewContext || !previewRequest || activeTab !== (previewRequest.section === 'hero' ? 'overview' : previewRequest.section)) return;
+        const index = previewContext.days.findIndex(day => day?.field === previewRequest.day?.field && day?.key === previewRequest.day?.key);
+        if (previewRequest.section === 'itinerary' && index >= 0 && !expandedDays.has(index)) return;
+        const frame = requestAnimationFrame(() => {
+            const target = previewRequest.section === 'hero' ? document.querySelector('[data-tour-hero]') : previewRequest.section === 'itinerary' && index >= 0
+                ? document.querySelectorAll('[data-preview-day]')[index]
+                : document.querySelector(`[data-tour-panel="${previewRequest.section}"]`);
+            // Scroll only this preview document; scrollIntoView can also move the editor's outer scroll container
+            // through the embedding iframe.
+            if (target) {
+                const nav = document.querySelector('body > nav');
+                const offset = nav && getComputedStyle(nav).position === 'sticky' ? nav.getBoundingClientRect().height : 0;
+                window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - offset - 12, behavior: 'instant' });
+            }
+            window.parent.postMessage({ ...previewRequest, type: 'qualitour:preview-ready', isPreview: true,
+                revision: previewContext.revision, dayFound: index >= 0 }, window.location.origin);
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [previewContext, previewRequest, activeTab, expandedDays]);
 
     const processHtmlContent = (html: string) => renderInlineImages(normalizeHtmlContent(html), tour.optimizedInlineImages, wpUrl);
 
@@ -576,6 +618,7 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                         {itinerary.map((day: any, index: number) => (
                             <div
                                 key={index}
+                                data-preview-day={previewContext ? index : undefined}
                                 className="border border-gray-200 rounded-xl overflow-hidden"
                             >
                                 <button
