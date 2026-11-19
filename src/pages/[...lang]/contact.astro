@@ -5,6 +5,7 @@ import PageHero from "../../components/PageHero.astro";
 import { ContactForm } from "../../components/forms";
 import contactHeroImg from "../../assets/images/contact-hero.png";
 import { getCompanyInfo, formatPhone } from "../../lib/wordpress/api";
+import { COMPANY_BRANCHES, branchMapUrl } from "../../lib/company-branches";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -157,37 +158,34 @@ const t = {
                         </div>
                     </div>
 
-                    <div
-                        class="bg-white rounded-2xl shadow-lg p-8 transform transition-transform hover:-translate-y-1 duration-300 border-l-4 border-[#f7941e]"
-                    >
-                        <div class="flex items-start gap-4">
-                            <div
-                                class="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center flex-shrink-0"
-                            >
-                                <span class="material-icons text-[#f7941e]"
-                                    >location_on</span
-                                >
+                    {
+                        COMPANY_BRANCHES.map((branch) => (
+                            <div class="bg-white rounded-2xl shadow-lg p-8 transform transition-transform hover:-translate-y-1 duration-300 border-l-4 border-[#f7941e]">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span class="material-icons text-[#f7941e]">location_on</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900 mb-1">
+                                            {branch.name[currentLang === "zh" ? "zh" : "en"]}
+                                        </h3>
+                                        <address class="text-lg text-gray-800 not-italic font-medium mb-3">
+                                            {branch.street}<br />
+                                            {branch.city}, {branch.province} {branch.postal}<br />
+                                            {currentLang === "zh" ? "加拿大" : "Canada"}
+                                        </address>
+                                        <a
+                                            href={`tel:${formatPhone(branch.phone).tel}`}
+                                            class="text-base font-semibold text-gray-800 hover:text-[#f7941e] transition-colors inline-flex items-center gap-2"
+                                        >
+                                            <span class="material-icons text-[#f7941e] text-lg">call</span>
+                                            {formatPhone(branch.phone).display}
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <h3
-                                    class="text-lg font-bold text-gray-900 mb-1"
-                                >
-                                    {t.office}
-                                </h3>
-                                <p class="text-gray-500 text-sm mb-3">
-                                    {t.officeDesc}
-                                </p>
-                                <address
-                                    class="text-lg text-gray-800 not-italic font-medium"
-                                >
-                                    {ci.address.street}<br />
-                                    {ci.address.city}, {ci.address.province}
-                                    {ci.address.postal}<br />
-                                    {ci.address.country}
-                                </address>
-                            </div>
-                        </div>
-                    </div>
+                        ))
+                    }
 
                     <!-- FAQ Teaser -->
                     <div
@@ -259,19 +257,25 @@ const t = {
         </div>
     </section>
 
-    <!-- Map Section -->
-    <section class="h-[500px] w-full relative z-0">
-        <iframe
-            width="100%"
-            height="100%"
-            src={ci.google_maps_url ||
-                "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2602.9652944451893!2d-123.17161!3d49.26!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x5486d0c5c5c5c5cd%3A0x0!2s8283%20Granville%20St%2C%20Vancouver%2C%20BC%20V6P%204Z6!5e0!3m2!1sen!2sca"}
-            style="border: 0; filter: grayscale(100%) contrast(1.2) brightness(0.9);"
-            allowfullscreen
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            class="w-full h-full grayscale hover:grayscale-0 transition-all duration-700"
-        ></iframe>
+    <!-- Map Section: one map per office -->
+    <section class="grid w-full grid-cols-1 md:grid-cols-2 relative z-0">
+        {
+            COMPANY_BRANCHES.map((branch) => (
+                <div class="h-[360px] md:h-[500px] relative">
+                    <iframe
+                        width="100%"
+                        height="100%"
+                        src={branchMapUrl(branch)}
+                        title={branch.name[currentLang === "zh" ? "zh" : "en"]}
+                        style="border: 0;"
+                        allowfullscreen
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                        class="w-full h-full grayscale hover:grayscale-0 transition-all duration-700"
+                    />
+                </div>
+            ))
+        }
         <div
             class="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-gray-50 to-transparent pointer-events-none"
         >

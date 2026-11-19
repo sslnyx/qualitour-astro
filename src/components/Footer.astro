@@ -4,6 +4,7 @@ import { Image } from "astro:assets";
 import consumerProtectionLogo from "../assets/Consumer-Protection-BC-Logo-licensed-by-WEB.png";
 import NewsletterForm from "./NewsletterForm";
 import { getCompanyInfo, formatPhone } from "../lib/wordpress/api";
+import { COMPANY_BRANCHES } from "../lib/company-branches";
 
 interface Props {
     lang?: Locale;
@@ -256,26 +257,20 @@ const ci = await getCompanyInfo();
                                 {ci.email}
                             </a>
                         </li>
-                        <li class="hidden sm:block">
-                            <div class="flex items-start gap-2">
-                                <span
-                                    class="material-icons text-orange-400 text-lg mt-0.5"
-                                    >location_on</span
-                                >
-                                <span
-                                    class="text-white text-sm leading-relaxed text-left font-medium"
-                                >
-                                    {ci.address.street}<br />
-                                    {ci.address.city}, {ci.address.province}
-                                    {ci.address.postal}<br />
-                                    {
-                                        currentLocale === "zh"
-                                            ? "加拿大"
-                                            : ci.address.country
-                                    }
-                                </span>
-                            </div>
-                        </li>
+                        {
+                            COMPANY_BRANCHES.map((branch) => (
+                                <li class="hidden sm:block">
+                                    <div class="flex items-start gap-2">
+                                        <span class="material-icons text-orange-400 text-lg mt-0.5">location_on</span>
+                                        <span class="text-white text-sm leading-relaxed text-left font-medium">
+                                            <span class="font-bold">{branch.name[currentLocale === "zh" ? "zh" : "en"]}</span><br />
+                                            {branch.street}<br />
+                                            {branch.city}, {branch.province} {branch.postal}
+                                        </span>
+                                    </div>
+                                </li>
+                            ))
+                        }
                     </ul>
                 </div>
 
