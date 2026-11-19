@@ -8,7 +8,7 @@ import { collectTourPhotoSources } from '../lib/image-delivery.mjs';
  * Supports i18n for English and Chinese.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { WPTour } from '../lib/wordpress/types';
 import { wpUrl, processHtmlContent as normalizeHtmlContent, getCfTransformUrl } from '../lib/wp-url';
 import PhotoLightbox from './PhotoLightbox';
@@ -115,7 +115,10 @@ const translations = {
 
 export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
     const [activeTab, setActiveTab] = useState<TabId>('overview');
-    const [expandedDay, setExpandedDay] = useState<number | null>(null);
+    const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
+    const overviewRef = useRef<HTMLDivElement>(null);
+    const [overviewTall, setOverviewTall] = useState(false);
+    const [overviewOpen, setOverviewOpen] = useState(false);
     const [lightbox, setLightbox] = useState<{ index: number; trigger: HTMLButtonElement } | null>(null);
     const closeLightbox = useCallback(() => setLightbox(null), []);
 
@@ -431,6 +434,27 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
         return false;
     });
 
+    const OVERVIEW_COLLAPSE_AT = 640;
+    const ui = lang === 'zh'
+        ? { more: '展開全部內容', less: '收合內容', expandAll: '展開全部', collapseAll: '收合全部' }
+        : { more: 'Show more', less: 'Show less', expandAll: 'Expand all', collapseAll: 'Collapse all' };
+
+    // Long overviews start collapsed (the full text stays in the page for search engines and without JavaScript).
+    useEffect(() => {
+        const el = overviewRef.current;
+        if (el && el.scrollHeight > OVERVIEW_COLLAPSE_AT + 160) setOverviewTall(true);
+    }, []);
+    const overviewCollapsed = overviewTall && !overviewOpen;
+
+    const toggleDay = (index: number) =>
+        setExpandedDays(previous => {
+            const next = new Set(previous);
+            if (next.has(index)) next.delete(index);
+            else next.add(index);
+            return next;
+        });
+    const allDaysOpen = itinerary.length > 0 && expandedDays.size === itinerary.length;
+
     return (
         <div className="overflow-hidden">
             {/* Tab Navigation */}
@@ -466,89 +490,52 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
             <div className="p-6 md:p-8 tour-detail-tabs-content">
                 {/* Overview Tab */}
                 {(
-                    <div hidden={activeTab !== 'overview'} data-tour-panel="overview" className="animate-fadeIn space-y-8">
-                        {/* Main Content - only show if no text blocks in contentBlocks to avoid duplication */}
-                        {overviewHtml && !contentBlocks.some(b => b.type === 'text') && (
-                            <div
-                                className="prose prose-base max-w-none text-gray-700 leading-relaxed"
-                                dangerouslySetInnerHTML={{ __html: overviewHtml }}
-                            />
-                        )}
-
-                        {/* Content Blocks from detail/details section */}
-                        {overviewBlocks.map(renderBlock)}
-
-                        {/* Tour Highlights */}
-                        {tourHighlights && (
-                            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <span className="material-icons text-orange-500">star</span>
-                                    {t.highlights}
-                                </h3>
-                                <div
-                                    className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-orange-500"
-                                    dangerouslySetInnerHTML={{ __html: tourHighlights }}
-                                />
-                            </div>
-                        )}
-
-                        {/* Tour Meta Info */}
-                        {(() => {
-                            // Extract tour meta from multiple sources
-                            const duration = tour.tour_meta?.duration_text ||
-                                tour.tour_meta?.duration ||
-                                gd?.['tourmaster-tour-duration'] ||
-                                gd?.tour_duration ||
-                                '';
-                            const location = tour.tour_meta?.location ||
-                                gd?.['tourmaster-tour-location'] ||
-                                gd?.tour_location ||
-                                tour.tour_terms?.destinations?.[0]?.name ||
-                                '';
-                            const country = tour.tour_meta?.country ||
-                                gd?.['tourmaster-tour-country'] ||
-                                gd?.tour_country ||
-                                '';
-
-                            const hasAnyMeta = duration || location || country;
-
-                            if (!hasAnyMeta) return null;
-
-                            return (
-                                <div className="pt-8 border-t border-gray-100">
-                                    <h3 className="text-lg font-bold text-gray-900 mb-4">{t.tourDetails}</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                        {duration && (
-                                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                                <span className="material-icons text-orange-500">schedule</span>
-                                                <div>
-                                                    <div className="text-xs text-gray-500 uppercase">{t.duration}</div>
-                                                    <div className="font-medium text-gray-900">{duration}</div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {location && (
-                                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                                <span className="material-icons text-orange-500">place</span>
-                                                <div>
-                                                    <div className="text-xs text-gray-500 uppercase">{t.location}</div>
-                                                    <div className="font-medium text-gray-900">{location}</div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {country && (
-                                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                                <span className="material-icons text-orange-500">public</span>
-                                                <div>
-                                                    <div className="text-xs text-gray-500 uppercase">{t.country}</div>
-                                                    <div className="font-medium text-gray-900">{country}</div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                    <div hidden={activeTab !== 'overview'} data-tour-panel="overview" className="animate-fadeIn">
+                        <div
+                            ref={overviewRef}
+                            className="relative space-y-8"
+                            style={overviewCollapsed ? { maxHeight: OVERVIEW_COLLAPSE_AT, overflow: 'hidden' } : undefined}
+                        >
+                            {/* Tour highlights first, like a "what you'll love" summary */}
+                            {tourHighlights && (
+                                <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-amber-50 p-5 md:p-6">
+                                    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
+                                        <span className="material-icons text-orange-500" aria-hidden="true">star</span>
+                                        {t.highlights}
+                                    </h3>
+                                    <div
+                                        className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-orange-500"
+                                        dangerouslySetInnerHTML={{ __html: tourHighlights }}
+                                    />
                                 </div>
-                            );
-                        })()}
+                            )}
+
+                            {/* Main Content - only show if no text blocks in contentBlocks to avoid duplication */}
+                            {overviewHtml && !contentBlocks.some(b => b.type === 'text') && (
+                                <div
+                                    className="prose prose-base max-w-none text-gray-700 leading-relaxed"
+                                    dangerouslySetInnerHTML={{ __html: overviewHtml }}
+                                />
+                            )}
+
+                            {/* Content Blocks from detail/details section */}
+                            {overviewBlocks.map(renderBlock)}
+
+                            {overviewCollapsed && (
+                                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white via-white/90 to-transparent" />
+                            )}
+                        </div>
+                        {overviewTall && (
+                            <button
+                                type="button"
+                                onClick={() => setOverviewOpen(open => !open)}
+                                aria-expanded={overviewOpen}
+                                className="mt-4 inline-flex items-center gap-1 rounded-lg px-1 py-1.5 text-sm font-semibold text-orange-600 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500"
+                            >
+                                {overviewOpen ? ui.less : ui.more}
+                                <span className={`material-icons text-lg transition-transform ${overviewOpen ? 'rotate-180' : ''}`} aria-hidden="true">expand_more</span>
+                            </button>
+                        )}
                     </div>
                 )}
 
@@ -599,14 +586,25 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 {/* Itinerary Tab */}
                 {itinerary.length > 0 && (
                     <div hidden={activeTab !== 'itinerary'} data-tour-panel="itinerary" className="animate-fadeIn space-y-4">
+                        {itinerary.length > 1 && (
+                            <div className="flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => setExpandedDays(allDaysOpen ? new Set() : new Set(itinerary.map((_: unknown, index: number) => index)))}
+                                    className="rounded-lg px-2 py-1.5 text-sm font-semibold text-orange-600 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500"
+                                >
+                                    {allDaysOpen ? ui.collapseAll : ui.expandAll}
+                                </button>
+                            </div>
+                        )}
                         {itinerary.map((day: any, index: number) => (
                             <div
                                 key={index}
                                 className="border border-gray-200 rounded-xl overflow-hidden"
                             >
                                 <button
-                                    aria-expanded={expandedDay === index}
-                                    onClick={() => setExpandedDay(expandedDay === index ? null : index)}
+                                    aria-expanded={expandedDays.has(index)}
+                                    onClick={() => toggleDay(index)}
                                     className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
                                 >
                                     <div className="flex items-center gap-4">
@@ -617,13 +615,13 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                             {day.title || (lang === 'zh' ? `${t.day}${index + 1}天` : `${t.day} ${index + 1}`)}
                                         </h4>
                                     </div>
-                                    <span className={`material-icons text-gray-400 transition-transform ${expandedDay === index ? 'rotate-180' : ''}`}>
+                                    <span className={`material-icons text-gray-400 transition-transform ${expandedDays.has(index) ? 'rotate-180' : ''}`}>
                                         expand_more
                                     </span>
                                 </button>
 
                                 {(
-                                    <div hidden={expandedDay !== index} data-itinerary-body className="p-4 border-t border-gray-200">
+                                    <div hidden={!expandedDays.has(index)} data-itinerary-body className="p-4 border-t border-gray-200">
                                         <div
                                             className="prose prose-sm max-w-none text-gray-600"
                                             dangerouslySetInnerHTML={{ __html: processHtmlContent(day.content || day.caption || '') }}
