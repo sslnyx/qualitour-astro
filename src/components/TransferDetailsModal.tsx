@@ -43,12 +43,12 @@ export default function TransferDetailsModal({
     if (!isOpen) return null;
 
     const t = {
-        title: lang === 'zh' ? '行程详情' : 'Transfer Details',
-        close: lang === 'zh' ? '关闭' : 'Close',
-        price: lang === 'zh' ? '价格' : 'Price',
-        perVehicle: lang === 'zh' ? '每车' : 'per vehicle',
+        title: lang === 'zh' ? '行程詳情' : 'Transfer Details',
+        close: lang === 'zh' ? '關閉' : 'Close',
+        price: lang === 'zh' ? '價格' : 'Price',
+        perVehicle: lang === 'zh' ? '每車' : 'per vehicle',
         includes: lang === 'zh' ? '包含' : 'Includes',
-        noData: lang === 'zh' ? '暂无详情' : 'No details available',
+        noData: lang === 'zh' ? '暫無詳情' : 'No details available',
     };
 
     // Get details from cached data
@@ -154,23 +154,23 @@ export default function TransferDetailsModal({
                                     <ul className="space-y-2 text-gray-600">
                                         <li className="flex items-center gap-2">
                                             <span className="material-icons text-green-500 text-sm">check</span>
-                                            {lang === 'zh' ? '专业司机' : 'Professional driver'}
+                                            {lang === 'zh' ? '專業司機' : 'Professional driver'}
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <span className="material-icons text-green-500 text-sm">check</span>
-                                            {lang === 'zh' ? '门到门服务' : 'Door-to-door service'}
+                                            {lang === 'zh' ? '門到門服務' : 'Door-to-door service'}
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <span className="material-icons text-green-500 text-sm">check</span>
-                                            {lang === 'zh' ? '航班追踪' : 'Flight tracking'}
+                                            {lang === 'zh' ? '航班追蹤' : 'Flight tracking'}
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <span className="material-icons text-green-500 text-sm">check</span>
-                                            {lang === 'zh' ? '行李空间' : 'Luggage space'}
+                                            {lang === 'zh' ? '行李空間' : 'Luggage space'}
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <span className="material-icons text-green-500 text-sm">check</span>
-                                            {lang === 'zh' ? '含税费' : 'All taxes included'}
+                                            {lang === 'zh' ? '含稅費' : 'All taxes included'}
                                         </li>
                                     </ul>
                                 </div>

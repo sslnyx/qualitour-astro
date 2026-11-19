@@ -96,7 +96,9 @@ export default function FeaturedToursHero({
                 <div className="flex touch-pan-y">
                     {tours.map((tour, index) => {
                         const background = tour.homeHeroBackground;
-                        const price = tour.tour_meta?.["tour-price-text"];
+                        // Same fallback as the tour cards: some tours only carry `price`, not `tour-price-text`.
+                        const price = tour.tour_meta?.["tour-price-text"] || tour.tour_meta?.price;
+                        const currency = String(tour.tour_meta?.["tourmaster-tour-currency"] ?? "").trim().toUpperCase();
                         const location = tour.tour_meta?.location;
                         const duration = tour.tour_meta?.duration_text;
 
@@ -159,7 +161,8 @@ export default function FeaturedToursHero({
                                                     <span className="material-icons text-orange-400" aria-hidden="true">
                                                         sell
                                                     </span>
-                                                    {price}
+                                                    ${price}
+                                                    {currency === "USD" && <span className="text-xs font-bold">USD</span>}
                                                 </div>
                                             )}
                                         </div>

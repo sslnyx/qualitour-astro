@@ -38,10 +38,10 @@ const visaKeywords = [
     "application",
     "documents",
     "passport",
-    "签证",
-    "中国",
-    "护照",
-    "申请",
+    "簽證",
+    "中國",
+    "護照",
+    "申請",
 ];
 const visaReviews = reviews
     .filter((r) => {
@@ -59,10 +59,10 @@ const displayReviews =
         ? visaReviews
         : reviews.filter((r) => r.rating >= 5).slice(0, 6);
 
-const title = lang === "zh" ? "签证服务" : "Global Visa Services";
+const title = lang === "zh" ? "簽證服務" : "Global Visa Services";
 const subtitle =
     lang === "zh"
-        ? "专业协助，让您的国际旅行申请更简单"
+        ? "專業協助，讓您的國際旅行申請更簡單"
         : "Professional support for your international travel visa applications";
 
 const valueProps =
@@ -70,18 +70,18 @@ const valueProps =
         ? [
               {
                   icon: "schedule",
-                  title: "节省时间",
-                  body: "不必花大量时间研究材料与表格，我们会协助您按要求准备。",
+                  title: "節省時間",
+                  body: "不必花大量時間研究材料與表格，我們會協助您按要求準備。",
               },
               {
                   icon: "support_agent",
-                  title: "经验支持",
-                  body: "我们熟悉申请流程与常见问题，帮助您更高效地完成递交。",
+                  title: "經驗支持",
+                  body: "我們熟悉申請流程與常見問題，幫助您更高效地完成遞交。",
               },
               {
                   icon: "verified",
                   title: "更高成功率",
-                  body: "通过更清晰的材料准备与提交检查，降低遗漏风险。",
+                  body: "通過更清晰的材料準備與提交檢查，降低遺漏風險。",
               },
           ]
         : [
@@ -106,18 +106,18 @@ const steps =
     lang === "zh"
         ? [
               {
-                  title: "咨询与签证类型确认",
-                  body: "根据出行目的与行程，确认适合您的签证类型与时间安排。",
+                  title: "諮詢與簽證類型確認",
+                  body: "根據出行目的與行程，確認適合您的簽證類型與時間安排。",
               },
               {
-                  title: "材料清单与表格指导",
-                  body: "提供清晰的材料清单并协助填写表格，确保信息准确一致。",
+                  title: "材料清單與表格指導",
+                  body: "提供清晰的材料清單並協助填寫表格，確保資訊準確一致。",
               },
               {
-                  title: "递交与进度跟进",
-                  body: "协助递交申请或提供递交指引，并跟进进度，及时提醒补充材料。",
+                  title: "遞交與進度跟進",
+                  body: "協助遞交申請或提供遞交指引，並跟進進度，及時提醒補充材料。",
               },
-              { title: "取证与交付", body: "完成后通知取证或协助寄送安排。" },
+              { title: "取證與交付", body: "完成後通知取證或協助寄送安排。" },
           ]
         : [
               {
@@ -141,10 +141,10 @@ const steps =
 const requirements =
     lang === "zh"
         ? [
-              "有效护照",
-              "签证照片",
-              "出行行程/机票与住宿信息（如适用）",
-              "工作/财务等辅助材料（视情况）",
+              "有效護照",
+              "簽證照片",
+              "出行行程/機票與住宿資訊（如適用）",
+              "工作/財務等輔助材料（視情況）",
           ]
         : [
               "Valid passport",
@@ -156,10 +156,10 @@ const requirements =
 
 <Layout
     title={lang === "zh"
-        ? "签证服务 | Qualitour"
+        ? "簽證服務 | Qualitour"
         : "Global Visa Services | Qualitour"}
     description={lang === "zh"
-        ? "专业签证支持：各类国际旅行签证咨询、材料清单及申请指导。"
+        ? "專業簽證支持：各類國際旅行簽證諮詢、材料清單及申請指導。"
         : "Professional visa support: consultation, document checklists, and application guidance for international travel."}
     lang={lang}
     image={VISA_HERO_BG.src}
@@ -171,7 +171,7 @@ const requirements =
         subtitle={subtitle}
         badge={{
             icon: "assignment",
-            text: lang === "zh" ? "签证服务" : "Visa Services",
+            text: lang === "zh" ? "簽證服務" : "Visa Services",
         }}
     />
 
@@ -226,7 +226,7 @@ const requirements =
                         <h2
                             class="text-3xl md:text-4xl font-bold text-gray-900"
                         >
-                            {lang === "zh" ? "我们如何协助" : "How it works"}
+                            {lang === "zh" ? "我們如何協助" : "How it works"}
                         </h2>
                     </div>
 
@@ -277,14 +277,14 @@ const requirements =
                             <h2 class="text-3xl font-bold text-gray-900 mb-3">
                                 {
                                     lang === "zh"
-                                        ? "常见材料"
+                                        ? "常見材料"
                                         : "Typical requirements"
                                 }
                             </h2>
                             <p class="text-gray-500 leading-relaxed">
                                 {
                                     lang === "zh"
-                                        ? "具体材料可能因签证类型与个人情况不同，请以我们最终确认的清单为准。"
+                                        ? "具體材料可能因簽證類型與個人情況不同，請以我們最終確認的清單為準。"
                                         : "Requirements may vary by visa type and personal situation. We'll confirm the final checklist with you."
                                 }
                             </p>
@@ -320,7 +320,7 @@ const requirements =
                                 >
                                     {
                                         lang === "zh"
-                                            ? "提示：签证政策可能调整，建议尽早规划并预留办理时间。"
+                                            ? "提示：簽證政策可能調整，建議儘早規劃並預留辦理時間。"
                                             : "Note: Visa policies can change. Plan ahead and allow sufficient processing time."
                                     }
                                 </p>
@@ -376,7 +376,7 @@ const requirements =
                         >
                             {
                                 lang === "zh"
-                                    ? "中国签证专家"
+                                    ? "中國簽證專家"
                                     : "China Visa Specialist"
                             }
                         </span>
@@ -386,11 +386,11 @@ const requirements =
                     <h2
                         class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
                     >
-                        {lang === "zh" ? "需要办理" : "Heading to"}
+                        {lang === "zh" ? "需要辦理" : "Heading to"}
                         <span
                             class="text-transparent bg-clip-text bg-gradient-to-r from-[#f7941e] to-[#ff6b35]"
                         >
-                            {lang === "zh" ? "中国签证？" : " China?"}
+                            {lang === "zh" ? "中國簽證？" : " China?"}
                         </span>
                     </h2>
 
@@ -400,7 +400,7 @@ const requirements =
                     >
                         {
                             lang === "zh"
-                                ? "对于所有中国签证申请，我们建议咨询我们的专业合作伙伴。他们拥有超过20年的经验，提供全方位的认证、翻译和申请支持。"
+                                ? "對於所有中國簽證申請，我們建議諮詢我們的專業合作伙伴。他們擁有超過20年的經驗，提供全方位的認證、翻譯和申請支持。"
                                 : "For all China visa applications, we recommend consulting our specialized partner. With over 20 years of experience, they provide comprehensive authentication, translation, and application support."
                         }
                     </p>
@@ -415,7 +415,7 @@ const requirements =
                         >
                             {
                                 lang === "zh"
-                                    ? "访问 MyChinaVisa.ca"
+                                    ? "前往 MyChinaVisa.ca"
                                     : "Visit MyChinaVisa.ca"
                             }
                             <span
@@ -448,7 +448,7 @@ const requirements =
                         <div>
                             <div class="text-3xl font-bold text-white">20+</div>
                             <div class="text-sm text-white/50">
-                                {lang === "zh" ? "年经验" : "Years Experience"}
+                                {lang === "zh" ? "年經驗" : "Years Experience"}
                             </div>
                         </div>
                         <div>
@@ -456,7 +456,7 @@ const requirements =
                                 10K+
                             </div>
                             <div class="text-sm text-white/50">
-                                {lang === "zh" ? "成功申请" : "Applications"}
+                                {lang === "zh" ? "成功申請" : "Applications"}
                             </div>
                         </div>
                         <div>
@@ -470,7 +470,7 @@ const requirements =
                                 >
                             </div>
                             <div class="text-sm text-white/50">
-                                {lang === "zh" ? "客户评价" : "Rating"}
+                                {lang === "zh" ? "客戶評價" : "Rating"}
                             </div>
                         </div>
                     </div>
@@ -532,7 +532,7 @@ const requirements =
                         <span
                             class="text-[#f7941e] font-semibold text-sm tracking-wide uppercase"
                         >
-                            {lang === "zh" ? "在线咨询" : "Start Your Inquiry"}
+                            {lang === "zh" ? "在線諮詢" : "Start Your Inquiry"}
                         </span>
                     </div>
                     <h2
@@ -547,7 +547,7 @@ const requirements =
                     <p class="text-gray-500 leading-relaxed">
                         {
                             lang === "zh"
-                                ? "填写以下表格，我们的签证顾问将在1个工作日内与您联系。"
+                                ? "填寫以下表格，我們的簽證顧問將在1個工作日內與您聯繫。"
                                 : "Fill out the form below and our visa consultants will get back to you within 1 business day."
                         }
                     </p>
@@ -570,17 +570,17 @@ const requirements =
                                         star
                                     </span>
                                     <span class="text-[#f7941e] font-semibold text-sm tracking-wide uppercase">
-                                        {lang === "zh" ? "评价" : "Reviews"}
+                                        {lang === "zh" ? "評價" : "Reviews"}
                                     </span>
                                 </div>
                                 <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
                                     {lang === "zh"
-                                        ? "客户评价"
+                                        ? "客戶評價"
                                         : "Customer Reviews"}
                                 </h2>
                                 <p class="text-gray-500">
                                     {lang === "zh"
-                                        ? "来自 Google 的真实评价"
+                                        ? "來自 Google 的真實評價"
                                         : "Real reviews from Google"}
                                 </p>
                             </div>
@@ -598,7 +598,7 @@ const requirements =
                             >
                                 <span>
                                     {lang === "zh"
-                                        ? "查看所有评价"
+                                        ? "查看所有評價"
                                         : "Read more reviews"}
                                 </span>
                                 <span class="material-icons text-xl group-hover:translate-x-1 transition-transform">
@@ -634,7 +634,7 @@ const requirements =
                 <h2 class="text-3xl md:text-5xl font-bold text-white mb-6">
                     {
                         lang === "zh"
-                            ? "规划下一次精彩旅程？"
+                            ? "規劃下一次精彩旅程？"
                             : "Ready for your next journey?"
                     }
                 </h2>
@@ -642,7 +642,7 @@ const requirements =
                 <p class="text-xl text-white/90 mb-10 leading-relaxed">
                     {
                         lang === "zh"
-                            ? "告诉我们您的目的地，我们会协助您理清签证材料，让申请无忧。"
+                            ? "告訴我們您的目的地，我們會協助您理清簽證材料，讓申請無憂。"
                             : "Tell us your destination and we'll help you organize the visa requirements for a worry-free application."
                     }
                 </p>
@@ -653,7 +653,7 @@ const requirements =
                         class="inline-flex items-center gap-2 bg-white text-[#f7941e] px-10 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
                     >
                         <span class="material-icons">mail</span>
-                        {lang === "zh" ? "立即咨询" : "Talk to us"}
+                        {lang === "zh" ? "立即諮詢" : "Talk to us"}
                     </a>
                     <a
                         href="tel:+17789456000"

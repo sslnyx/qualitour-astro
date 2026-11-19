@@ -18,7 +18,7 @@ interface TourDetailProps {
     lang?: string;
 }
 
-type TabId = 'overview' | 'itinerary' | 'info' | 'photos' | 'faq' | 'brochure';
+type TabId = 'overview' | 'pricing' | 'itinerary' | 'info' | 'photos' | 'faq' | 'brochure';
 
 interface Tab {
     id: TabId;
@@ -28,12 +28,66 @@ interface Tab {
 
 const tabs: Tab[] = [
     { id: 'overview', label: { en: 'Overview', zh: '行程概述' }, icon: 'info' },
+    { id: 'pricing', label: { en: 'Pricing', zh: '費用說明' }, icon: 'sell' },
     { id: 'itinerary', label: { en: 'Itinerary', zh: '每日行程' }, icon: 'route' },
     { id: 'info', label: { en: 'Additional Info', zh: '附加資訊' }, icon: 'article' },
     { id: 'photos', label: { en: 'Photos', zh: '照片' }, icon: 'photo_library' },
-    { id: 'faq', label: { en: 'FAQ', zh: '常见问题' }, icon: 'help_outline' },
+    { id: 'faq', label: { en: 'FAQ', zh: '常見問題' }, icon: 'help_outline' },
     { id: 'brochure', label: { en: 'Brochure', zh: '行程手冊' }, icon: 'picture_as_pdf' },
 ];
+
+/**
+ * The tour description is one flat list of blocks. Departure dates, rates and what the price covers all come after the
+ * itinerary summary, so the first block that opens one of those parts starts the "Pricing" tab and everything after it
+ * moves there. Matched on the block's own heading or opening words, in both languages.
+ */
+const PRICING_START = /^(departure\s+dates?\b|rates?\b|price\b|pricing\b|fares?\b|tour\s+fare|what['’]?s\s+included|出發日期|價格|收費|費用)/i;
+
+function opensPricing(html: string): boolean {
+    const text = String(html ?? '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;|\u00a0/g, ' ')
+        .replace(/^[\s*•\-–—]+/, '')
+        .trim();
+    return PRICING_START.test(text);
+}
+
+function blockStartsPricing(block: { type: string; content: any }): boolean {
+    return (block.type === 'title' || block.type === 'text') && opensPricing(block.content);
+}
+
+const VOID_TAGS = new Set(['br', 'hr', 'img', 'input', 'meta', 'link', 'wbr', 'col', 'source']);
+
+/**
+ * Splits one rich-text body at the first top-level element that opens the pricing part (see PRICING_START).
+ * Only element boundaries at nesting depth 0 are used, so no tag is ever cut in half. Without a match everything stays
+ * in the first part.
+ */
+function splitRichTextAtPricing(html: string): [string, string] {
+    const tag = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b[^>]*?(\/?)>/g;
+    let depth = 0;
+    let elementStart = -1;
+    let match: RegExpExecArray | null;
+    while ((match = tag.exec(html))) {
+        const closing = match[1] === '/';
+        const name = match[2].toLowerCase();
+        const selfClosing = match[3] === '/' || VOID_TAGS.has(name);
+        if (!closing) {
+            if (depth === 0) elementStart = match.index;
+            if (!selfClosing) depth += 1;
+        } else {
+            depth = Math.max(0, depth - 1);
+        }
+        if (depth === 0 && elementStart >= 0) {
+            const elementEnd = match.index + match[0].length;
+            if (opensPricing(html.slice(elementStart, elementEnd))) {
+                return [html.slice(0, elementStart), html.slice(elementStart)];
+            }
+            elementStart = -1;
+        }
+    }
+    return [html, ''];
+}
 
 // i18n translations
 const translations = {
@@ -48,13 +102,13 @@ const translations = {
         day: 'Day',
     },
     zh: {
-        tourDetails: '行程详情',
-        duration: '行程天数',
-        location: '地点',
-        country: '国家',
-        highlights: '行程亮点',
-        whatsIncluded: '费用包含',
-        whatsNotIncluded: '费用不包含',
+        tourDetails: '行程詳情',
+        duration: '行程天數',
+        location: '地點',
+        country: '國家',
+        highlights: '行程亮點',
+        whatsIncluded: '費用包含',
+        whatsNotIncluded: '費用不包含',
         day: '第',
     },
 };
@@ -188,6 +242,12 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
         return blocks;
     }, [sections]);
 
+
+    // Overview keeps the itinerary summary; dates, rates and inclusions go to their own tab.
+    const pricingStartIndex = useMemo(() => contentBlocks.findIndex(blockStartsPricing), [contentBlocks]);
+    const overviewBlocks = pricingStartIndex >= 0 ? contentBlocks.slice(0, pricingStartIndex) : contentBlocks;
+    const pricingBlocks = pricingStartIndex >= 0 ? contentBlocks.slice(pricingStartIndex) : [];
+
     // Extract content by section type
     const overviewContent = useMemo(() => {
         // Try to get from excerpt or content
@@ -206,6 +266,12 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
 
         return processHtmlContent(sectionContent || content || excerpt);
     }, [tour, sections]);
+
+    // The same split for a tour whose description is a single rich-text body instead of separate blocks.
+    const [overviewHtml, pricingHtml] = useMemo(
+        () => (overviewContent && !contentBlocks.some(b => b.type === 'text') ? splitRichTextAtPricing(overviewContent) : [overviewContent, '']),
+        [overviewContent, contentBlocks],
+    );
 
     // Check for itinerary
     const itinerary = useMemo(() => {
@@ -288,9 +354,75 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
     const brochureUrl = typeof brochure === 'object' && brochure ? brochure.url : (typeof brochure === 'string' ? brochure : null);
     const brochureTitle = typeof brochure === 'object' && brochure ? (brochure.title || brochure.filename) : 'Tour Brochure';
 
+    const renderBlock = (block: ContentBlock, idx: number) => {
+        switch (block.type) {
+            case 'title':
+                return (
+                    <h3 key={idx} className="text-2xl font-bold text-gray-900 mt-8 mb-4 flex items-center gap-3">
+                        <span className="w-1 h-8 bg-orange-500 rounded-full"></span>
+                        {block.content}
+                    </h3>
+                );
+            case 'text':
+                return (
+                    <div
+                        key={idx}
+                        className="prose prose-base max-w-none text-gray-700 leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: block.content }}
+                    />
+                );
+            case 'icon-list':
+                return (
+                    <div key={idx} className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                        <ul className="grid md:grid-cols-2 gap-4">
+                            {block.content.map((listItem: any, listIdx: number) => (
+                                <li key={listIdx} className="flex items-start gap-3 group">
+                                    <span className="text-orange-500 shrink-0 text-lg group-hover:scale-110 transition-transform">
+                                        {listItem.icon === 'icon_clock' ? (
+                                            <span className="material-icons">schedule</span>
+                                        ) : listItem.icon ? (
+                                            <i className={listItem.icon} style={{ fontSize: '20px' }} />
+                                        ) : (
+                                            <span className="material-icons">check_circle</span>
+                                        )}
+                                    </span>
+                                    <span className="text-gray-700 flex-1">{listItem.title}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                );
+            case 'image':
+                return (
+                    <div key={idx} className="overflow-hidden">
+                        <img
+                            src={block.content.url}
+                            width={block.content.width}
+                            height={block.content.height}
+                            srcSet={block.content.srcSet}
+                            sizes="(min-width: 1024px) 66vw, 100vw"
+                            loading="lazy"
+                            decoding="async"
+                            alt={block.content.alt}
+                            className="w-full h-auto block"
+                            data-original-src={block.content.url}
+                            onError={(e) => {
+                                console.error('Image failed to load:', block.content.url);
+                                // Prevent infinite fallback loop
+                                e.currentTarget.dataset.fallbackTried = 'true';
+                            }}
+                        />
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
     // Filter tabs based on available content
     const availableTabs = tabs.filter(tab => {
         if (tab.id === 'overview') return true;
+        if (tab.id === 'pricing') return !!pricingHtml || pricingBlocks.length > 0 || !!tourIncludes || !!tourExcludes;
         if (tab.id === 'itinerary') return itinerary.length > 0;
         if (tab.id === 'info') return infoItems.length > 0;
         if (tab.id === 'photos') return photos.length > 0;
@@ -336,80 +468,17 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 {(
                     <div hidden={activeTab !== 'overview'} data-tour-panel="overview" className="animate-fadeIn space-y-8">
                         {/* Main Content - only show if no text blocks in contentBlocks to avoid duplication */}
-                        {overviewContent && !contentBlocks.some(b => b.type === 'text') && (
+                        {overviewHtml && !contentBlocks.some(b => b.type === 'text') && (
                             <div className="bg-orange-50 rounded-xl p-8 border border-orange-200">
                                 <div
                                     className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
-                                    dangerouslySetInnerHTML={{ __html: overviewContent }}
+                                    dangerouslySetInnerHTML={{ __html: overviewHtml }}
                                 />
                             </div>
                         )}
 
                         {/* Content Blocks from detail/details section */}
-                        {contentBlocks.map((block, idx) => {
-                            switch (block.type) {
-                                case 'title':
-                                    return (
-                                        <h3 key={idx} className="text-2xl font-bold text-gray-900 mt-8 mb-4 flex items-center gap-3">
-                                            <span className="w-1 h-8 bg-orange-500 rounded-full"></span>
-                                            {block.content}
-                                        </h3>
-                                    );
-                                case 'text':
-                                    return (
-                                        <div
-                                            key={idx}
-                                            className="prose prose-base max-w-none text-gray-700 leading-relaxed"
-                                            dangerouslySetInnerHTML={{ __html: block.content }}
-                                        />
-                                    );
-                                case 'icon-list':
-                                    return (
-                                        <div key={idx} className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                                            <ul className="grid md:grid-cols-2 gap-4">
-                                                {block.content.map((listItem: any, listIdx: number) => (
-                                                    <li key={listIdx} className="flex items-start gap-3 group">
-                                                        <span className="text-orange-500 shrink-0 text-lg group-hover:scale-110 transition-transform">
-                                                            {listItem.icon === 'icon_clock' ? (
-                                                                <span className="material-icons">schedule</span>
-                                                            ) : listItem.icon ? (
-                                                                <i className={listItem.icon} style={{ fontSize: '20px' }} />
-                                                            ) : (
-                                                                <span className="material-icons">check_circle</span>
-                                                            )}
-                                                        </span>
-                                                        <span className="text-gray-700 flex-1">{listItem.title}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    );
-                                case 'image':
-                                    return (
-                                        <div key={idx} className="overflow-hidden">
-                                            <img
-                                                src={block.content.url}
-                                                width={block.content.width}
-                                                height={block.content.height}
-                                                srcSet={block.content.srcSet}
-                                                sizes="(min-width: 1024px) 66vw, 100vw"
-                                                loading="lazy"
-                                                decoding="async"
-                                                alt={block.content.alt}
-                                                className="w-full h-auto block"
-                                                data-original-src={block.content.url}
-                                                onError={(e) => {
-                                                    console.error('Image failed to load:', block.content.url);
-                                                    // Prevent infinite fallback loop
-                                                    e.currentTarget.dataset.fallbackTried = 'true';
-                                                }}
-                                            />
-                                        </div>
-                                    );
-                                default:
-                                    return null;
-                            }
-                        })}
+                        {overviewBlocks.map(renderBlock)}
 
                         {/* Tour Highlights */}
                         {tourHighlights && (
@@ -422,36 +491,6 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                     className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-orange-500"
                                     dangerouslySetInnerHTML={{ __html: tourHighlights }}
                                 />
-                            </div>
-                        )}
-
-                        {/* Includes / Excludes */}
-                        {(tourIncludes || tourExcludes) && (
-                            <div className="grid md:grid-cols-2 gap-6">
-                                {tourIncludes && (
-                                    <div className="bg-green-50 rounded-2xl p-6 border border-green-100">
-                                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                            <span className="material-icons text-green-500">check_circle</span>
-                                            {t.whatsIncluded}
-                                        </h3>
-                                        <div
-                                            className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-green-500"
-                                            dangerouslySetInnerHTML={{ __html: tourIncludes }}
-                                        />
-                                    </div>
-                                )}
-                                {tourExcludes && (
-                                    <div className="bg-red-50 rounded-2xl p-6 border border-red-100">
-                                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                            <span className="material-icons text-red-500">cancel</span>
-                                            {t.whatsNotIncluded}
-                                        </h3>
-                                        <div
-                                            className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-red-500"
-                                            dangerouslySetInnerHTML={{ __html: tourExcludes }}
-                                        />
-                                    </div>
-                                )}
                             </div>
                         )}
 
@@ -512,6 +551,52 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                 </div>
                             );
                         })()}
+                    </div>
+                )}
+
+                {/* Pricing Tab: departure dates, rates and what the price covers */}
+                {(pricingHtml || pricingBlocks.length > 0 || tourIncludes || tourExcludes) && (
+                    <div hidden={activeTab !== 'pricing'} data-tour-panel="pricing" className="animate-fadeIn space-y-8">
+                        {pricingHtml && (
+                            <div className="bg-orange-50 rounded-xl p-8 border border-orange-200">
+                                <div
+                                    className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
+                                    dangerouslySetInnerHTML={{ __html: pricingHtml }}
+                                />
+                            </div>
+                        )}
+
+                        {pricingBlocks.map(renderBlock)}
+
+                        {/* Includes / Excludes */}
+                        {(tourIncludes || tourExcludes) && (
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {tourIncludes && (
+                                    <div className="bg-green-50 rounded-2xl p-6 border border-green-100">
+                                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                            <span className="material-icons text-green-500">check_circle</span>
+                                            {t.whatsIncluded}
+                                        </h3>
+                                        <div
+                                            className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-green-500"
+                                            dangerouslySetInnerHTML={{ __html: tourIncludes }}
+                                        />
+                                    </div>
+                                )}
+                                {tourExcludes && (
+                                    <div className="bg-red-50 rounded-2xl p-6 border border-red-100">
+                                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                            <span className="material-icons text-red-500">cancel</span>
+                                            {t.whatsNotIncluded}
+                                        </h3>
+                                        <div
+                                            className="prose prose-sm max-w-none text-gray-700 prose-li:marker:text-red-500"
+                                            dangerouslySetInnerHTML={{ __html: tourExcludes }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 

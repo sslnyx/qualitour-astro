@@ -133,7 +133,7 @@ Note: Some tours may have specific cancellation policies. Please check the indiv
                 },
                 {
                     question: 'What currency are prices listed in?',
-                    answer: 'Our prices are listed in USD (United States Dollars) unless otherwise specified. For tours in Canada, prices may also be displayed in CAD. The currency will be clearly indicated on each tour page.'
+                    answer: 'Prices are in Canadian dollars (CAD) by default, so no currency is shown next to them. Tours priced in another currency, such as USD, show that currency beside the price.'
                 },
                 {
                     question: 'Are there any hidden fees?',
@@ -288,7 +288,7 @@ Note: Some tours may have specific cancellation policies. Please check the indiv
                 },
                 {
                     question: '價格以哪種貨幣標示？',
-                    answer: '除非另有說明，我們的價格以美元 (USD) 標示。對於加拿大的行程，價格也可能以加元 (CAD) 顯示。貨幣將在每個行程頁面上明確註明。'
+                    answer: '行程預設以加幣 (CAD) 計價，因此價格旁不另外標示幣別；若以其他幣別（例如美元 USD）計價，才會在價格旁特別註明。'
                 },
                 {
                     question: '是否有任何隱藏費用？',

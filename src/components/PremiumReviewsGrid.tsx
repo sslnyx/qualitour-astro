@@ -405,7 +405,7 @@ export default function PremiumReviewsGrid({
                         className="inline-flex items-center gap-2 px-10 py-4 bg-white border-2 border-[#f7941e] text-[#f7941e] hover:bg-[#f7941e] hover:text-white rounded-full font-bold text-lg transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105"
                     >
                         <span className="material-icons">expand_more</span>
-                        {lang === 'zh' ? `加载更多 (${reviews.length - visibleCount} 条)` : `Load More (${reviews.length - visibleCount} remaining)`}
+                        {lang === 'zh' ? `加載更多 (${reviews.length - visibleCount} 條)` : `Load More (${reviews.length - visibleCount} remaining)`}
                     </button>
                 </div>
             )}
