@@ -193,14 +193,14 @@ export function ToursGrid({ tours, destinations, durations, types, lang }: Tours
     const localePrefix = getLocalePrefix(lang as Locale);
 
     const t = {
-        showing: lang === 'zh' ? '显示' : 'Showing',
+        showing: lang === 'zh' ? '顯示' : 'Showing',
         of: lang === 'zh' ? '共' : 'of',
-        tours: lang === 'zh' ? '个行程' : 'tours',
-        filters: lang === 'zh' ? '筛选' : 'Filters',
-        previous: lang === 'zh' ? '上一页' : 'Previous',
-        next: lang === 'zh' ? '下一页' : 'Next',
-        noTours: lang === 'zh' ? '未找到相关行程' : 'No tours found',
-        noToursDesc: lang === 'zh' ? '尝试调整您的筛选条件或搜索关键词' : 'Try adjusting your filters or search criteria',
+        tours: lang === 'zh' ? '個行程' : 'tours',
+        filters: lang === 'zh' ? '篩選' : 'Filters',
+        previous: lang === 'zh' ? '上一頁' : 'Previous',
+        next: lang === 'zh' ? '下一頁' : 'Next',
+        noTours: lang === 'zh' ? '未找到相關行程' : 'No tours found',
+        noToursDesc: lang === 'zh' ? '嘗試調整您的篩選條件或搜索關鍵詞' : 'Try adjusting your filters or search criteria',
         viewAll: lang === 'zh' ? '查看所有行程' : 'View All Tours'
     };
 

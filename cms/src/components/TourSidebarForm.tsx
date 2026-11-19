@@ -37,7 +37,7 @@ const translations = {
         startingFrom: "起價",
         contactForPrice: "聯繫詢價",
         perPerson: "每人",
-        sendInquiry: "發送咨詢",
+        sendInquiry: "發送諮詢",
         downloadItinerary: "下載行程單",
         bestPrice: "最優價格",
         support: "24/7 支持",

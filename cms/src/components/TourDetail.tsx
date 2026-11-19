@@ -31,7 +31,7 @@ const tabs: Tab[] = [
     { id: 'itinerary', label: { en: 'Itinerary', zh: '每日行程' }, icon: 'route' },
     { id: 'info', label: { en: 'Additional Info', zh: '附加資訊' }, icon: 'article' },
     { id: 'photos', label: { en: 'Photos', zh: '照片' }, icon: 'photo_library' },
-    { id: 'faq', label: { en: 'FAQ', zh: '常见问题' }, icon: 'help_outline' },
+    { id: 'faq', label: { en: 'FAQ', zh: '常見問題' }, icon: 'help_outline' },
     { id: 'brochure', label: { en: 'Brochure', zh: '行程手冊' }, icon: 'picture_as_pdf' },
 ];
 
@@ -48,13 +48,13 @@ const translations = {
         day: 'Day',
     },
     zh: {
-        tourDetails: '行程详情',
-        duration: '行程天数',
-        location: '地点',
-        country: '国家',
-        highlights: '行程亮点',
-        whatsIncluded: '费用包含',
-        whatsNotIncluded: '费用不包含',
+        tourDetails: '行程詳情',
+        duration: '行程天數',
+        location: '地點',
+        country: '國家',
+        highlights: '行程亮點',
+        whatsIncluded: '費用包含',
+        whatsNotIncluded: '費用不包含',
         day: '第',
     },
 };

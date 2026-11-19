@@ -44,7 +44,7 @@ const translations = {
         }
     },
     zh: {
-        inquiringAbout: "咨詢項目：",
+        inquiringAbout: "諮詢項目：",
         tourCode: "團號：",
         fullName: "姓名*",
         email: "電子郵箱*",
@@ -52,7 +52,7 @@ const translations = {
         travelDate: "出發日期*",
         travelers: "人數*",
         message: "留言 (選填)",
-        sendInquiry: "發送咨詢",
+        sendInquiry: "發送諮詢",
         sending: "發送中...",
         errors: {
             nameRequired: "請輸入姓名",
@@ -159,7 +159,7 @@ export default function TourInquiryForm({
                 if (response.message.includes("One or more fields have an error")) {
                     response.message = "內容輸入有誤，請檢查後重試。";
                 } else if (response.message.includes("Thank you for your message")) {
-                    response.message = "感謝您的咨詢，我們將儘快聯絡您。";
+                    response.message = "感謝您的諮詢，我們將儘快聯絡您。";
                 }
             }
 

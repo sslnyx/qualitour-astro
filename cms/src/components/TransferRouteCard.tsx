@@ -47,12 +47,12 @@ export default function TransferRouteCard({
     const hasReverseDirection = route.reverseActivityIds && route.reverseActivityIds.length > 0;
 
     const t = {
-        from: lang === 'zh' ? '从' : 'From',
-        perVehicle: lang === 'zh' ? '每车' : 'per vehicle',
-        details: lang === 'zh' ? '详情' : 'Details',
-        book: lang === 'zh' ? '预订' : 'Book',
+        from: lang === 'zh' ? '從' : 'From',
+        perVehicle: lang === 'zh' ? '每車' : 'per vehicle',
+        details: lang === 'zh' ? '詳情' : 'Details',
+        book: lang === 'zh' ? '預訂' : 'Book',
         seater: lang === 'zh' ? '座' : '-seater',
-        swapDirection: lang === 'zh' ? '切换方向' : 'Swap direction',
+        swapDirection: lang === 'zh' ? '切換方向' : 'Swap direction',
     };
 
     const handleToggleDirection = () => {
@@ -121,7 +121,7 @@ export default function TransferRouteCard({
                             <span className="text-gray-500 text-sm">{t.perVehicle}</span>
                         </div>
                     ) : (
-                        <div className="text-gray-500">{lang === 'zh' ? '请联系询价' : 'Contact for price'}</div>
+                        <div className="text-gray-500">{lang === 'zh' ? '請聯繫詢價' : 'Contact for price'}</div>
                     )}
                     {usingReferencePrice && (
                         <p className="text-xs text-gray-500 mt-2">
@@ -177,7 +177,7 @@ export default function TransferRouteCard({
                             <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-gray-200">
                                 <div className="min-w-0">
                                     <h2 className="text-lg font-bold text-gray-900 truncate">
-                                        {lang === 'zh' ? '预订' : 'Booking'}
+                                        {lang === 'zh' ? '預訂' : 'Booking'}
                                     </h2>
                                     <p className="text-sm text-gray-500">
                                         {fromLocation} → {toLocation} ({selectedVehicle.seater}{t.seater})
@@ -190,19 +190,19 @@ export default function TransferRouteCard({
                                         rel="noopener noreferrer"
                                         className="px-3 py-2 rounded-md bg-[#f7941e] hover:bg-[#e68a1c] text-white font-semibold transition-colors"
                                     >
-                                        {lang === 'zh' ? '新窗口打开' : 'Open in new tab'}
+                                        {lang === 'zh' ? '新窗口打開' : 'Open in new tab'}
                                     </a>
                                     <button
                                         onClick={() => setIsModalOpen(false)}
                                         className="px-3 py-2 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-900 font-semibold transition-colors"
                                     >
-                                        {lang === 'zh' ? '关闭' : 'Close'}
+                                        {lang === 'zh' ? '關閉' : 'Close'}
                                     </button>
                                 </div>
                             </div>
                             <div className="bg-gray-50">
                                 <iframe
-                                    title={lang === 'zh' ? 'Zaui 预订' : 'Zaui booking'}
+                                    title={lang === 'zh' ? 'Zaui 預訂' : 'Zaui booking'}
                                     src={getBookingUrl(selectedVehicle.activityId)}
                                     className="w-full"
                                     style={{ height: '80vh' }}

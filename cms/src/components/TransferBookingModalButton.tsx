@@ -63,12 +63,12 @@ export default function TransferBookingModalButton({
     const ui =
         lang === 'zh'
             ? {
-                heading: '预订',
-                hint: '如果无法加载，请使用"新窗口打开"。',
-                openNewTab: '新窗口打开',
-                close: '关闭',
-                closeAria: '关闭弹窗',
-                iframeTitle: 'Zaui 预订',
+                heading: '預訂',
+                hint: '如果無法加載，請使用"新窗口打開"。',
+                openNewTab: '新窗口打開',
+                close: '關閉',
+                closeAria: '關閉彈窗',
+                iframeTitle: 'Zaui 預訂',
             }
             : {
                 heading: 'Booking',

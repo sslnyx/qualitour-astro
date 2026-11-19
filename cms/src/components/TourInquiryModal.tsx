@@ -46,8 +46,8 @@ export default function TourInquiryModal({
     const currency = tour.tour_meta?.["tourmaster-tour-currency"] || "";
 
     const t = {
-        title: lang === "zh" ? "發送咨詢" : "Send Inquiry",
-        inquiringAbout: lang === "zh" ? "咨詢項目：" : "Inquiring about:",
+        title: lang === "zh" ? "發送諮詢" : "Send Inquiry",
+        inquiringAbout: lang === "zh" ? "諮詢項目：" : "Inquiring about:",
         success: lang === "zh" ? "發送成功！我們會儘快聯繫您。" : "Sent successfully! We will contact you shortly.",
         bestPrice: lang === "zh" ? "最優價格" : "Best Price",
         support: lang === "zh" ? "24/7 支持" : "24/7 Support",

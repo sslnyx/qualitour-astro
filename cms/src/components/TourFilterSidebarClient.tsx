@@ -468,15 +468,15 @@ export function TourFilterSidebarClient({ destinations, durations, types, lang }
     const activeFilterCount = (filters.duration ? 1 : 0) + (filters.type ? 1 : 0) + (filters.destination ? 1 : 0) + (filters.q ? 1 : 0);
 
     const t = {
-        filters: lang === 'zh' ? '筛选' : 'Filters',
+        filters: lang === 'zh' ? '篩選' : 'Filters',
         searchPlaceholder: lang === 'zh' ? '搜索行程...' : 'Search tours...',
-        activeFilters: lang === 'zh' ? '已选筛选条件' : 'Active Filters',
+        activeFilters: lang === 'zh' ? '已選篩選條件' : 'Active Filters',
         clearAll: lang === 'zh' ? '清除所有' : 'Clear All',
-        tourLength: lang === 'zh' ? '行程天数' : 'Tour Length',
-        tourType: lang === 'zh' ? '旅游类型' : 'Tour Type',
+        tourLength: lang === 'zh' ? '行程天數' : 'Tour Length',
+        tourType: lang === 'zh' ? '旅遊類型' : 'Tour Type',
         destinations: lang === 'zh' ? '目的地' : 'Destinations',
-        applyFilters: lang === 'zh' ? '应用筛选' : 'Apply Filters',
-        close: lang === 'zh' ? '关闭' : 'Close',
+        applyFilters: lang === 'zh' ? '應用篩選' : 'Apply Filters',
+        close: lang === 'zh' ? '關閉' : 'Close',
     };
 
     const contentProps = {
