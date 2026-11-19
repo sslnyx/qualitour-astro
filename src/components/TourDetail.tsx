@@ -517,13 +517,13 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                             href={`#tour-${tab.id}`}
                             onClick={goTo(tab.id)}
                             aria-current={activeTab === tab.id ? 'true' : undefined}
-                            className={`relative whitespace-nowrap px-4 py-3.5 text-sm font-semibold transition-colors ${
-                                activeTab === tab.id ? 'text-orange-600' : 'text-gray-500 hover:text-gray-900'
+                            className={`relative my-1.5 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                                activeTab === tab.id ? 'bg-orange-50 text-orange-600' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         >
                             {tab.label[lang as keyof typeof tab.label] || tab.label.en}
                             {activeTab === tab.id && (
-                                <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-orange-500" />
+                                <span className="absolute inset-x-3 -bottom-1.5 h-[3px] rounded-full bg-orange-500" />
                             )}
                         </a>
                     ))}
