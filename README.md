@@ -1,5 +1,7 @@
 # Qualitour Astro frontend
 
+> **Agents and new contributors: read [AGENTS.md](AGENTS.md) first.** This branch builds two Cloudflare Workers (CMS `qualitour` and frontend `qualitour-site`). The rest of this README describes the older cPanel/WordPress staging flow (`qualitour.ca/staging`), which is not how the Workers are built or deployed.
+
 WordPress supplies public content; Astro pre-renders HTML for cPanel. React islands handle search, tour tabs/photos and inquiry forms. GitHub publishes **only** `https://qualitour.ca/staging/`; the live WordPress site at the domain root is separate.
 
 ## Local development
