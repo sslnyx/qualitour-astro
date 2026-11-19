@@ -469,12 +469,10 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                     <div hidden={activeTab !== 'overview'} data-tour-panel="overview" className="animate-fadeIn space-y-8">
                         {/* Main Content - only show if no text blocks in contentBlocks to avoid duplication */}
                         {overviewHtml && !contentBlocks.some(b => b.type === 'text') && (
-                            <div className="bg-orange-50 rounded-xl p-8 border border-orange-200">
-                                <div
-                                    className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
-                                    dangerouslySetInnerHTML={{ __html: overviewHtml }}
-                                />
-                            </div>
+                            <div
+                                className="prose prose-base max-w-none text-gray-700 leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: overviewHtml }}
+                            />
                         )}
 
                         {/* Content Blocks from detail/details section */}
@@ -558,12 +556,10 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 {(pricingHtml || pricingBlocks.length > 0 || tourIncludes || tourExcludes) && (
                     <div hidden={activeTab !== 'pricing'} data-tour-panel="pricing" className="animate-fadeIn space-y-8">
                         {pricingHtml && (
-                            <div className="bg-orange-50 rounded-xl p-8 border border-orange-200">
-                                <div
-                                    className="prose prose-lg max-w-none text-gray-800 leading-relaxed"
-                                    dangerouslySetInnerHTML={{ __html: pricingHtml }}
-                                />
-                            </div>
+                            <div
+                                className="prose prose-base max-w-none text-gray-700 leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: pricingHtml }}
+                            />
                         )}
 
                         {pricingBlocks.map(renderBlock)}

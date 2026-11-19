@@ -82,7 +82,7 @@ const {
     >
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-8 sm:py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-6 sm:py-8">
         <div
             class:list={[
                 align === "center" && "text-center max-w-4xl mx-auto",
@@ -95,7 +95,7 @@ const {
                 badge && (
                     <div
                         class:list={[
-                            "inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-5 py-2.5 mb-8 border border-white/20",
+                            "inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-4 sm:mb-6 border border-white/20",
                         ]}
                     >
                         <span class="material-icons text-[#f7941e] text-xl">
@@ -110,7 +110,7 @@ const {
 
             <!-- Title -->
             <h1
-                class="text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-6 drop-shadow-xl leading-tight"
+                class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-xl leading-tight"
             >
                 {title}
             </h1>
@@ -120,7 +120,7 @@ const {
                 subtitle && (
                     <p
                         class:list={[
-                            "text-xl md:text-2xl text-white/90 mb-6 sm:mb-10 leading-relaxed font-light",
+                            "text-lg md:text-xl text-white/90 mb-4 sm:mb-6 leading-relaxed font-light",
                             align === "center" && "max-w-2xl mx-auto",
                             align === "left" && "max-w-xl",
                             align === "right" && "max-w-xl ml-auto",
