@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
+import { formatPrice } from "../lib/utils";
 import type { WPTour } from "../lib/wordpress/types";
 import TourInquiryModal from "./TourInquiryModal";
 
@@ -161,7 +162,7 @@ export default function FeaturedToursHero({
                                                     <span className="material-icons text-orange-400" aria-hidden="true">
                                                         sell
                                                     </span>
-                                                    ${price}
+                                                    ${formatPrice(price)}
                                                     {currency === "USD" && <span className="text-xs font-bold">USD</span>}
                                                 </div>
                                             )}

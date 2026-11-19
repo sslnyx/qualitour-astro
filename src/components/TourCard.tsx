@@ -12,6 +12,7 @@ import { getLocalePrefix, type Locale } from "../i18n/config";
 
 import type { WPTour, WPTourFeaturedImage } from '../lib/wordpress/types';
 import { wpUrl, getCfTransformUrl, extractTourImageUrl } from '../lib/wp-url';
+import { formatPrice } from '../lib/utils';
 
 interface TourCardProps {
     tour: WPTour;
@@ -133,10 +134,10 @@ export function TourCard({
                 {hasDiscount && (
                     <div className="absolute top-4 right-4 z-10">
                         <div className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                            ${discountPrice} <span className="text-[10px] opacity-80 uppercase">{currency}</span>
+                            ${formatPrice(discountPrice)} <span className="text-[10px] opacity-80 uppercase">{currency}</span>
                         </div>
                         <div className="bg-gray-800/80 text-white px-2 py-0.5 rounded text-xs line-through mt-1 text-right">
-                            ${price}
+                            ${formatPrice(price)}
                         </div>
                     </div>
                 )}
@@ -145,7 +146,7 @@ export function TourCard({
                 {price && !hasDiscount && (
                     <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full shadow-md">
                         <span className="text-sm text-gray-500">{lang === 'zh' ? '起價 ' : 'From '}</span>
-                        <span className="font-bold text-orange-500">${price}</span>
+                        <span className="font-bold text-orange-500">${formatPrice(price)}</span>
                         {currency && <span className="ml-1 text-[10px] text-gray-400 font-bold uppercase">{currency}</span>}
                     </div>
                 )}

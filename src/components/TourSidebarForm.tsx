@@ -6,6 +6,7 @@
  */
 
 import TourInquiryForm from './forms/TourInquiryForm';
+import { formatPrice } from '../lib/utils';
 
 interface TourSidebarFormProps {
     tourId: number | string;
@@ -69,7 +70,7 @@ export default function TourSidebarForm({
                         <div className="text-xs opacity-90">{t.startingFrom}</div>
                         {price ? (
                             <div className="text-2xl font-bold">
-                                ${price} <span className="text-sm font-medium opacity-80">{currency}</span>
+                                ${formatPrice(price)} <span className="text-sm font-medium opacity-80">{currency}</span>
                             </div>
                         ) : (
                             <div className="text-lg font-bold">{t.contactForPrice}</div>

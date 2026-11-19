@@ -10,6 +10,7 @@
 import CdnImage from "./CdnImage.astro";
 import type { WPTour } from "../lib/wordpress/types";
 import { extractTourImageUrl } from "../lib/wp-url";
+import { formatPrice } from "../lib/utils";
 import { getLocalePrefix, type Locale } from "../i18n/config";
 
 interface Props {
@@ -123,10 +124,10 @@ const imageHeight = isCompact
             hasDiscount && (
                 <div class="absolute top-4 right-4 z-10">
                     <div class="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                        ${discountPrice}
+                        ${formatPrice(discountPrice)}
                     </div>
                     <div class="bg-gray-800/80 text-white px-2 py-0.5 rounded text-xs line-through mt-1 text-right">
-                        ${price}
+                        ${formatPrice(price)}
                     </div>
                 </div>
             )
@@ -139,7 +140,7 @@ const imageHeight = isCompact
                     <span class="text-sm text-gray-500">
                         {lang === "zh" ? "起價 " : "From "}
                     </span>
-                    <span class="font-bold text-orange-500">${price}</span>
+                    <span class="font-bold text-orange-500">${formatPrice(price)}</span>
                 </div>
             )
         }
