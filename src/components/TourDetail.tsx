@@ -353,6 +353,9 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
     const brochure = tour.tour_meta?.brochure;
     const brochureUrl = typeof brochure === 'object' && brochure ? brochure.url : (typeof brochure === 'string' ? brochure : null);
     const brochureTitle = typeof brochure === 'object' && brochure ? (brochure.title || brochure.filename) : 'Tour Brochure';
+    // The media file is served from the same site, so a same-origin link lets the browser honour `download`.
+    const brochureHref = brochureUrl ? brochureUrl.replace(/^https?:\/\/qualitour\.qualitour\.workers\.dev(?=\/_emdash\/)/, '') : null;
+    const brochureFilename = typeof brochure === 'object' && brochure ? (brochure.filename || brochure.title) : undefined;
 
     const renderBlock = (block: ContentBlock, idx: number) => {
         switch (block.type) {
@@ -701,25 +704,12 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                 {/* Brochure Tab */}
                 {brochureUrl && (
                     <div hidden={activeTab !== 'brochure'} data-tour-panel="brochure" className="animate-fadeIn">
-                        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-                            {/* Preview Section */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 text-center">
                             {(() => {
                                 const brochureObj = typeof brochure === 'object' ? brochure : null;
-                                const isPdf = brochureObj?.mime_type === 'application/pdf' || brochureUrl.toLowerCase().endsWith('.pdf');
                                 const isImage = brochureObj?.mime_type?.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(brochureUrl);
 
-                                if (isPdf) {
-                                    return (
-                                        <div className="w-full h-[600px] mb-8 border border-gray-200 rounded-lg overflow-hidden">
-                                            <iframe
-                                                loading="lazy"
-                                                src={`${brochureUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                                                className="w-full h-full"
-                                                title={brochureTitle}
-                                            />
-                                        </div>
-                                    );
-                                } else if (isImage) {
+                                if (isImage) {
                                     return (
                                         <div className="mb-8 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                                             <img
@@ -731,24 +721,37 @@ export function TourDetail({ tour, lang = 'en' }: TourDetailProps) {
                                     );
                                 }
                                 return (
-                                    <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <span className="material-icons text-4xl">picture_as_pdf</span>
+                                    <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5">
+                                        <span className="material-icons text-4xl" aria-hidden="true">picture_as_pdf</span>
                                     </div>
                                 );
                             })()}
 
+                            {brochureTitle && (
+                                <p className="mx-auto mb-2 max-w-xl break-words font-semibold text-gray-900">{brochureTitle}</p>
+                            )}
                             <p className="text-gray-500 mb-8 max-w-md mx-auto">
-                                {lang === 'zh' ? '預覽或下載完整行程詳細資訊。' : 'Preview or download the full tour itinerary and details.'}
+                                {lang === 'zh' ? '在新分頁檢視，或下載完整行程詳細資訊。' : 'View the full tour itinerary and details in a new tab, or download a copy.'}
                             </p>
-                            <a
-                                href={brochureUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-8 py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-colors shadow-lg hover:shadow-xl hover:-translate-y-1 transform duration-300"
-                            >
-                                <span className="material-icons">download</span>
-                                {lang === 'zh' ? '下載手冊' : 'Download Brochure'}
-                            </a>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                                <a
+                                    href={brochureHref || brochureUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-8 py-3.5 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-colors shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                                >
+                                    <span className="material-icons" aria-hidden="true">visibility</span>
+                                    {lang === 'zh' ? '檢視手冊' : 'View Brochure'}
+                                </a>
+                                <a
+                                    href={brochureHref || brochureUrl}
+                                    download={brochureFilename || true}
+                                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-8 py-3.5 bg-white text-orange-600 font-bold rounded-xl border-2 border-orange-500 hover:bg-orange-50 transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                                >
+                                    <span className="material-icons" aria-hidden="true">download</span>
+                                    {lang === 'zh' ? '下載手冊' : 'Download Brochure'}
+                                </a>
+                            </div>
                         </div>
                     </div>
                 )}

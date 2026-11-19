@@ -91,3 +91,12 @@ test('tour enquiry uses a full-width calendar instead of the browser date input'
   assert.match(form, /type="hidden" name="travelDate" value=\{formData\.travelDate\}/);
   assert.match(form, /aria-expanded=\{calendarOpen\}/);
 });
+
+test('a tour PDF brochure offers separate View and Download buttons instead of an embedded viewer', async () => {
+  const detail = await source('src/components/TourDetail.tsx');
+  const panel = detail.slice(detail.indexOf('Brochure Tab'));
+  assert.doesNotMatch(panel, /<iframe\b/);
+  assert.match(panel, /target="_blank"[\s\S]*?View Brochure/);
+  assert.match(panel, /download=\{brochureFilename \|\| true\}[\s\S]*?Download Brochure/);
+  assert.match(detail, /const brochureHref = /);
+});
