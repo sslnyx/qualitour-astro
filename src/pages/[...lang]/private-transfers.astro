@@ -126,8 +126,8 @@ const t = {
     ourFleet: lang === "zh" ? "車隊與包車服務" : "Fleet & Charter Services",
     fleetDesc:
         lang === "zh"
-            ? "專注於小團體私人接送"
-            : "Specialized vehicles for every occasion",
+            ? "多元車型，滿足您各種旅行需求"
+            : "Versatile fleet options designed to meet all your travel needs",
     popularRoutes: lang === "zh" ? "熱門路線" : "Popular Routes",
     routesDesc: lang === "zh" ? "選擇您的行程" : "Select your journey",
     perVehicle: lang === "zh" ? "每車" : "per vehicle",
@@ -189,53 +189,45 @@ const fleetItems =
         ? [
               {
                   imageUrl: siennaImg,
-                  label: "迷你廂型車",
-                  capacity: "4 位乘客",
-                  features: ["舒適座椅", "空調", "行李空間"],
+                  label: "豐田 Sienna 7 座廂型車",
+                  capacity: "適合 1-4 位乘客",
+                  description: "適合小團體與家庭出遊，座位舒適。",
               },
               {
                   imageUrl: standardVanImg,
-                  label: "標準版廂型車",
-                  capacity: "11 位乘客",
-                  features: ["寬敞內部空間", "優質舒適度", "額外行李空間"],
+                  label: "賓士 12 座廂型車",
+                  capacity: "適合 6-10 位乘客",
+                  description:
+                      "後車廂空間寬敞，可放置托運行李、大型行李與運動器材。",
               },
               {
                   imageUrl: deluxeVanImg,
-                  label: "豪華版廂型車",
-                  capacity: "14 位乘客",
-                  features: ["豪華座椅", "娛樂系統", "極致舒適"],
+                  label: "賓士 16 座廂型車",
+                  capacity: "適合 6-13 位乘客",
+                  description: "可舒適容納大型團體，行李廂空間充裕。",
               },
           ]
         : [
               {
                   imageUrl: siennaImg,
-                  label: "Mini-van",
-                  capacity: "4 passengers",
-                  features: [
-                      "Comfortable seating",
-                      "Air conditioning",
-                      "Luggage space",
-                  ],
+                  label: "Sienna Toyota 7-seat Van",
+                  capacity: "Suitable for 1-4 passengers",
+                  description:
+                      "Great for small groups and family outings with comfortable seating",
               },
               {
                   imageUrl: standardVanImg,
-                  label: "Standard Van",
-                  capacity: "11 passengers",
-                  features: [
-                      "Spacious interior",
-                      "Premium comfort",
-                      "Extra luggage room",
-                  ],
+                  label: "Mercedes Benz-12-seat Van",
+                  capacity: "Suitable for 6-10 passengers",
+                  description:
+                      "Spacious rear storage offering a lot of space for check-in luggage, oversized bags, and sports gear",
               },
               {
                   imageUrl: deluxeVanImg,
-                  label: "Deluxe Van",
-                  capacity: "14 passengers",
-                  features: [
-                      "Luxury seating",
-                      "Entertainment system",
-                      "Maximum comfort",
-                  ],
+                  label: "Mercedes Benz-16-seat Van",
+                  capacity: "Suitable for 6-13 passengers",
+                  description:
+                      "Seats large groups comfortably with ample trunk room for luggage",
               },
           ];
 
@@ -551,16 +543,9 @@ function extractPriceNumber(caption: string): string | null {
                                 <p class="text-[#f7941e] font-semibold mb-4">
                                     {item.capacity}
                                 </p>
-                                <ul class="space-y-2">
-                                    {item.features.map((feature) => (
-                                        <li class="flex items-center gap-2 text-gray-600 text-sm">
-                                            <span class="material-icons text-green-500 text-base">
-                                                check_circle
-                                            </span>
-                                            {feature}
-                                        </li>
-                                    ))}
-                                </ul>
+                                <p class="text-gray-600 text-sm leading-relaxed">
+                                    {item.description}
+                                </p>
                             </div>
                         </div>
                     ))
