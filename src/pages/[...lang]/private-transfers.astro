@@ -10,6 +10,8 @@ import { getPrivateTransfersWithPricing } from "../../lib/zaui/zaui";
 import CdnImage from "../../components/CdnImage.astro";
 import { Image } from "astro:assets";
 import skiShuttleImg from "../../assets/images/ski-shuttle.jpg";
+import vehicleModels from "../../data/vehicle-models.json";
+import { buildPrivateTransferCards } from "../../lib/private-transfer-cards.mjs";
 
 // Local fleet images
 import siennaImg from "../../assets/images/fleet/sienna.png";
@@ -182,105 +184,29 @@ const whyUsItems = [
     },
 ];
 
-const fleetItems =
-    lang === "zh"
-        ? [
-              {
-                  imageUrl: siennaImg,
-                  label: "豐田 Sienna 7 座廂型車",
-                  capacity: "適合 1-4 位乘客",
-                  description: "適合小團體與家庭出遊，座位舒適。",
-              },
-              {
-                  imageUrl: sprinterStandardImg,
-                  label: "賓士 12 座廂型車",
-                  capacity: "適合 6-10 位乘客",
-                  description:
-                      "後車廂空間寬敞，可放置托運行李、大型行李與運動器材。",
-              },
-              {
-                  imageUrl: sprinterDeluxeImg,
-                  label: "賓士 16 座廂型車",
-                  capacity: "適合 6-13 位乘客",
-                  description: "可舒適容納大型團體，行李廂空間充裕。",
-              },
-          ]
-        : [
-              {
-                  imageUrl: siennaImg,
-                  label: "Sienna Toyota 7-seat Van",
-                  capacity: "Suitable for 1-4 passengers",
-                  description:
-                      "Great for small groups and family outings with comfortable seating",
-              },
-              {
-                  imageUrl: sprinterStandardImg,
-                  label: "Mercedes Benz-12-seat Van",
-                  capacity: "Suitable for 6-10 passengers",
-                  description:
-                      "Spacious rear storage offering a lot of space for check-in luggage, oversized bags, and sports gear",
-              },
-              {
-                  imageUrl: sprinterDeluxeImg,
-                  label: "Mercedes Benz-16-seat Van",
-                  capacity: "Suitable for 6-13 passengers",
-                  description:
-                      "Seats large groups comfortably with ample trunk room for luggage",
-              },
-          ];
+// Fleet and charter cards come from the vehicle models exported by the ops app. A model's exported photo wins;
+// otherwise the bundled picture below, and a model with neither renders its card with a plain placeholder.
+const exportedPhotos = import.meta.glob<{ default: ImageMetadata }>(
+    "/src/assets/images/fleet/models/*.{webp,png,jpg}",
+    { eager: true },
+);
+const bundledPhotos: Record<string, ImageMetadata> = {
+    "sienna-7": siennaImg,
+    "mercedes-12": sprinterStandardImg,
+    "mercedes-16": sprinterDeluxeImg,
+};
+function imageFor(id: string): ImageMetadata | undefined {
+    const exported = Object.entries(exportedPhotos).find(
+        ([path]) => path.replace(/^.*\//, "").replace(/\.[^.]+$/, "") === id,
+    );
+    return exported?.[1].default ?? bundledPhotos[id];
+}
 
-const charterRates =
-    lang === "zh"
-        ? [
-              {
-                  imageUrl: sprinterStandardImg,
-                  title: "賓士 12 座廂型車",
-                  priceNumber: "95",
-                  priceUnit: "/ 小時",
-                  bullets: [
-                      "適合 6-10 位乘客",
-                      "最少 2.5 小時",
-                      "僅限大溫哥華地區",
-                  ],
-              },
-              {
-                  imageUrl: sprinterDeluxeImg,
-                  title: "賓士 16 座廂型車",
-                  priceNumber: "110",
-                  priceUnit: "/ 小時",
-                  bullets: [
-                      "適合 6-13 位乘客",
-                      "最少 2.5 小時",
-                      "僅限大溫哥華地區",
-                  ],
-                  popular: true,
-              },
-          ]
-        : [
-              {
-                  imageUrl: sprinterStandardImg,
-                  title: "Mercedes Benz-12-seat Van",
-                  priceNumber: "95",
-                  priceUnit: "/ Hr",
-                  bullets: [
-                      "Suitable for 6-10 passengers",
-                      "Min. 2.5 hours",
-                      "Within Greater Vancouver only",
-                  ],
-              },
-              {
-                  imageUrl: sprinterDeluxeImg,
-                  title: "Mercedes Benz-16-seat Van",
-                  priceNumber: "110",
-                  priceUnit: "/ Hr",
-                  bullets: [
-                      "Suitable for 6-13 passengers",
-                      "Min. 2.5 hours",
-                      "Within Greater Vancouver only",
-                  ],
-                  popular: true,
-              },
-          ];
+const { fleetItems, charterRates } = buildPrivateTransferCards({
+    models: vehicleModels.models,
+    lang,
+    imageFor,
+});
 
 // Transfer routes are now fetched from Zaui API (see above)
 
@@ -478,11 +404,15 @@ function extractPriceNumber(caption: string): string | null {
                                 </div>
                             )}
                             <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 p-6 flex items-center justify-center">
-                                <Image
-                                    src={rate.imageUrl}
-                                    alt={rate.title}
-                                    class="max-w-full max-h-full object-contain"
-                                />
+                                {rate.image ? (
+                                    <Image
+                                        src={rate.image}
+                                        alt={rate.title}
+                                        class="max-w-full max-h-full object-contain"
+                                    />
+                                ) : (
+                                    <span class="material-icons text-6xl text-gray-300" aria-hidden="true">airport_shuttle</span>
+                                )}
                             </div>
                             <div class="p-6">
                                 <h3 class="text-lg font-bold text-gray-900 mb-2">
@@ -528,11 +458,15 @@ function extractPriceNumber(caption: string): string | null {
                     fleetItems.map((item) => (
                         <div class="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                             <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 p-6 flex items-center justify-center">
-                                <Image
-                                    src={item.imageUrl}
-                                    alt={item.label}
-                                    class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                                />
+                                {item.image ? (
+                                    <Image
+                                        src={item.image}
+                                        alt={item.label}
+                                        class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                                    />
+                                ) : (
+                                    <span class="material-icons text-6xl text-gray-300" aria-hidden="true">airport_shuttle</span>
+                                )}
                             </div>
                             <div class="p-6">
                                 <h3 class="text-xl font-bold text-gray-900 mb-1">

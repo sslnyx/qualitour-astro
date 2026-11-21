@@ -1,0 +1,41 @@
+{
+  "version": "seed",
+  "models": [
+    {
+      "id": "sienna-7",
+      "name": { "en": "Sienna Toyota 7-seat Van", "zh": "豐田 Sienna 7 座廂型車" },
+      "seats": 7,
+      "suitable": { "min": 1, "max": 4 },
+      "description": {
+        "en": "Great for small groups and family outings with comfortable seating",
+        "zh": "適合小團體與家庭出遊，座位舒適。"
+      },
+      "sortOrder": 10,
+      "photo": null
+    },
+    {
+      "id": "mercedes-12",
+      "name": { "en": "Mercedes Benz-12-seat Van", "zh": "賓士 12 座廂型車" },
+      "seats": 12,
+      "suitable": { "min": 6, "max": 10 },
+      "description": {
+        "en": "Spacious rear storage offering a lot of space for check-in luggage, oversized bags, and sports gear",
+        "zh": "後車廂空間寬敞，可放置托運行李、大型行李與運動器材。"
+      },
+      "sortOrder": 20,
+      "photo": null
+    },
+    {
+      "id": "mercedes-16",
+      "name": { "en": "Mercedes Benz-16-seat Van", "zh": "賓士 16 座廂型車" },
+      "seats": 16,
+      "suitable": { "min": 6, "max": 13 },
+      "description": {
+        "en": "Seats large groups comfortably with ample trunk room for luggage",
+        "zh": "可舒適容納大型團體，行李廂空間充裕。"
+      },
+      "sortOrder": 30,
+      "photo": null
+    }
+  ]
+}
