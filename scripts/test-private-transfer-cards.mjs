@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { buildPrivateTransferCards, suitableText } from '../src/lib/private-transfer-cards.mjs';
 
@@ -82,12 +83,95 @@ test('imageFor fallback is used when a model has no photo', () => {
     assert.ok(calls.includes('sienna-7'));
 });
 
-test('a malformed data file falls back to the built-in default cards', () => {
-    for (const bad of [undefined, null, 'x', {}, [{ id: 'sienna-7' }], [{ ...sienna, suitable: { min: 'a', max: 4 } }], [m12, null]]) {
-        const { fleetItems, charterRates } = buildPrivateTransferCards({ models: bad, lang: 'en', imageFor });
-        assert.deepEqual(fleetItems.map((i) => i.id), ['sienna-7', 'mercedes-12', 'mercedes-16']);
+const defaultIds = ['sienna-7', 'mercedes-12', 'mercedes-16'];
+
+// Collect console.warn output while `fn` runs.
+function withWarnings(fn) {
+    const warnings = [];
+    const original = console.warn;
+    console.warn = (...args) => warnings.push(args.join(' '));
+    try {
+        return { result: fn(), warnings };
+    } finally {
+        console.warn = original;
+    }
+}
+
+test('a structurally unusable data file falls back to the built-in default cards, with a warning', () => {
+    for (const bad of [undefined, null, 'x', {}, 42]) {
+        const { result, warnings } = withWarnings(() => buildPrivateTransferCards({ models: bad, lang: 'en', imageFor }));
+        const { fleetItems, charterRates } = result;
+        assert.deepEqual(fleetItems.map((i) => i.id), defaultIds);
         assert.equal(fleetItems[0].label, 'Sienna Toyota 7-seat Van');
         assert.equal(fleetItems[1].capacity, 'Suitable for 6-10 passengers');
         assert.equal(charterRates[1].title, 'Mercedes Benz-16-seat Van');
+        assert.equal(warnings.length, 1);
+    }
+});
+
+test('one invalid model is dropped with a warning and the others stay in order', () => {
+    const bad = [
+        { id: 'broken-a', name: { en: 'A', zh: 'A' }, suitable: { min: 'a', max: 4 }, description: { en: '', zh: '' } },
+        null,
+        { ...m12, name: { en: '', zh: 'x' } },
+        { ...m12, description: { en: 5, zh: 'x' } },
+    ];
+    const { result, warnings } = withWarnings(() =>
+        buildPrivateTransferCards({ models: [m16, ...bad, sienna], lang: 'en', imageFor }),
+    );
+    assert.deepEqual(result.fleetItems.map((i) => i.id), ['mercedes-16', 'sienna-7']);
+    assert.equal(warnings.length, 4);
+    assert.match(warnings[0], /broken-a/);
+    assert.match(warnings[0], /index 1/);
+    assert.match(warnings[1], /index 2/);
+    assert.match(warnings[2], /mercedes-12/);
+    assert.match(warnings[3], /mercedes-12/);
+});
+
+test('valid data raises no warning', () => {
+    const { warnings } = withWarnings(() => buildPrivateTransferCards({ models: [sienna, m12, m16], lang: 'en', imageFor }));
+    assert.deepEqual(warnings, []);
+});
+
+test('an empty description is allowed and kept as an empty string', () => {
+    const quiet = model('sienna-7', 'Sienna', '豐田', 1, 4, '', '');
+    const { result, warnings } = withWarnings(() => buildPrivateTransferCards({ models: [quiet, m12], lang: 'zh', imageFor }));
+    assert.deepEqual(warnings, []);
+    assert.deepEqual(result.fleetItems.map((i) => [i.id, i.description]), [['sienna-7', ''], ['mercedes-12', '行李']]);
+});
+
+// CONTRACT: this file is the output of the ops app's buildVehicleModelsRelease (src/booking/vehicle-models-release.ts)
+// for a model with an empty description, a model with a photo, and mercedes-16 absent (hidden or inactive).
+const opsRelease = JSON.parse(readFileSync(new URL('./fixtures/vehicle-models-ops-release.json', import.meta.url), 'utf8'));
+
+test('contract: an ops release with an empty description still drives the cards', () => {
+    const { result, warnings } = withWarnings(() =>
+        buildPrivateTransferCards({ models: opsRelease.models, lang: 'en', imageFor }),
+    );
+    assert.deepEqual(warnings, []);
+    assert.deepEqual(result.fleetItems, [
+        { id: 'sienna-7', label: 'Sienna Toyota 7-seat Van', capacity: 'Suitable for 1-4 passengers', description: '', image: 'image:sienna-7' },
+        { id: 'mercedes-12', label: 'Mercedes Benz-12-seat Van', capacity: 'Suitable for 6-10 passengers', description: 'Roomy for luggage', image: 'image:mercedes-12' },
+    ]);
+    // mercedes-16 is absent from the release: its charter card keeps the default wording.
+    assert.equal(result.charterRates[0].title, 'Mercedes Benz-12-seat Van');
+    assert.equal(result.charterRates[1].modelId, 'mercedes-16');
+    assert.equal(result.charterRates[1].title, 'Mercedes Benz-16-seat Van');
+    assert.equal(result.charterRates[1].bullets[0], 'Suitable for 6-13 passengers');
+    const zh = buildPrivateTransferCards({ models: opsRelease.models, lang: 'zh', imageFor });
+    assert.equal(zh.fleetItems[1].label, '賓士 12 座廂型車');
+    assert.equal(zh.fleetItems[1].description, '行李空間充裕');
+    // The photo reference is data for the build, not for the cards.
+    assert.deepEqual(opsRelease.models[1].photo, { file: 'mercedes-12.png', width: 3, height: 2 });
+});
+
+test('the seed vehicle-models.json produces exactly the built-in default cards', () => {
+    const seed = JSON.parse(readFileSync(new URL('../src/data/vehicle-models.json', import.meta.url), 'utf8'));
+    for (const lang of ['en', 'zh']) {
+        const fromSeed = withWarnings(() => buildPrivateTransferCards({ models: seed.models, lang, imageFor }));
+        const fromDefaults = withWarnings(() => buildPrivateTransferCards({ models: undefined, lang, imageFor }));
+        assert.deepEqual(fromSeed.warnings, []);
+        assert.deepEqual(fromSeed.result, fromDefaults.result);
+        assert.deepEqual(fromSeed.result.fleetItems.map((i) => i.id), defaultIds);
     }
 });

@@ -475,9 +475,11 @@ function extractPriceNumber(caption: string): string | null {
                                 <p class="text-[#f7941e] font-semibold mb-4">
                                     {item.capacity}
                                 </p>
-                                <p class="text-gray-600 text-sm leading-relaxed">
-                                    {item.description}
-                                </p>
+                                {item.description && (
+                                    <p class="text-gray-600 text-sm leading-relaxed">
+                                        {item.description}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     ))

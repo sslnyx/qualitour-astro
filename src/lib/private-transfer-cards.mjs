@@ -47,6 +47,8 @@ export function suitableText(min, max, lang) {
 }
 
 const isText = (value) => typeof value === 'string' && value !== '';
+// A description may be empty (the ops app allows it); the page then leaves the paragraph out.
+const isDescription = (value) => typeof value === 'string';
 const isCount = (value) => Number.isFinite(value);
 
 function isModel(model) {
@@ -55,14 +57,28 @@ function isModel(model) {
             isText(model.id) &&
             isText(model.name?.en) && isText(model.name?.zh) &&
             isCount(model.suitable?.min) && isCount(model.suitable?.max) &&
-            isText(model.description?.en) && isText(model.description?.zh),
+            isDescription(model.description?.en) && isDescription(model.description?.zh),
     );
+}
+
+// Validate one model at a time: an invalid entry is dropped (and named in a warning), the rest stay in order.
+// Only a file that is not usable at all falls back to the built-in cards. Neither case may break the page.
+function usableModels(models) {
+    if (!Array.isArray(models)) {
+        console.warn('vehicle-models.json: "models" is not an array; showing the built-in vehicle cards');
+        return DEFAULT_MODELS;
+    }
+    return models.filter((model, index) => {
+        if (isModel(model)) return true;
+        const id = typeof model?.id === 'string' && model.id !== '' ? ` (${model.id})` : '';
+        console.warn(`vehicle-models.json: dropped model at index ${index}${id}: a required field is missing or has the wrong type`);
+        return false;
+    });
 }
 
 export function buildPrivateTransferCards({ models, lang, imageFor }) {
     const language = lang === 'zh' ? 'zh' : 'en';
-    // An unexpected shape must never break the page: show the built-in cards instead.
-    const usable = Array.isArray(models) && models.every(isModel) ? models : DEFAULT_MODELS;
+    const usable = usableModels(models);
 
     const fleetItems = usable.map((model) => ({
         id: model.id,
