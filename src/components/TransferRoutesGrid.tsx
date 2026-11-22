@@ -2,7 +2,7 @@
  * TransferRoutesGrid - Client component wrapper for transfer cards
  * 
  * Manages the details modal state and renders all transfer route cards.
- * Activity details are fetched at build time and passed to modal (no runtime fetch).
+ * Passes the build-time activity data to the modal as its fallback.
  */
 
 import { useState, useMemo } from 'react';
@@ -24,22 +24,18 @@ export default function TransferRoutesGrid({
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [selectedActivityId, setSelectedActivityId] = useState<string>('');
 
-    // Build a lookup map of all activity details from routes (build-time data)
     const activityDetailsMap = useMemo(() => {
-        const map = new Map<string, TransferVehicle>();
-        routes.forEach(route => {
-            route.vehicles?.forEach(v => {
-                if (v.activityId) map.set(v.activityId, v);
-            });
-            route.reverseActivityIds?.forEach(v => {
-                if (v.activityId) map.set(v.activityId, v);
-            });
-        });
+        const map = new Map<string, { activity: TransferVehicle; variants: TransferVehicle[] }>();
+        for (const route of routes) {
+            for (const variants of [route.vehicles, route.reverseActivityIds]) {
+                for (const activity of variants) {
+                    if (activity.activityId) map.set(activity.activityId, { activity, variants });
+                }
+            }
+        }
         return map;
     }, [routes]);
-
-    // Get the selected activity's cached details
-    const selectedActivity = activityDetailsMap.get(selectedActivityId);
+    const selection = activityDetailsMap.get(selectedActivityId);
 
     const handleDetailsClick = (activityId: string) => {
         setSelectedActivityId(activityId);
@@ -63,7 +59,9 @@ export default function TransferRoutesGrid({
             <TransferDetailsModal
                 isOpen={detailsModalOpen}
                 onClose={() => setDetailsModalOpen(false)}
-                activity={selectedActivity}
+                activity={selection?.activity}
+                variants={selection?.variants}
+                onSelectActivity={setSelectedActivityId}
                 lang={lang}
             />
         </>

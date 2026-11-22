@@ -59,7 +59,7 @@ jobs:
           node scripts/test-vehicle-release-site.mjs
           node cms/scripts/test-vehicle-website-release.mjs
           node cms/scripts/test-vehicle-release-actions.mjs
-          node --test scripts/test-private-transfer-cards.mjs
+          node --test scripts/test-private-transfer-cards.mjs scripts/test-transfer-website-details.mjs
       - name: Build the static site from the published content
         env:
           EMDASH_TOKEN: ${{ secrets.EMDASH_TOKEN }}

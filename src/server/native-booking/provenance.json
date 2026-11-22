@@ -2,9 +2,9 @@
   "sourceRepository": "qualitour-ops",
   "baseCommit": "a66bac0",
   "buildCommand": "npm exec -- wrangler deploy --config wrangler.website.bundle.json --dry-run --minify --outdir .private/website-booking-staging/same-worker-bundle",
-  "bundleSha256": "099c86a35651fcd3b1d3442d80ca75e2fde686679bbb1ebd9767994962dbba45",
+  "bundleSha256": "bea2d5b9c2df2024ea7de4479135cf95192d5d792e04e66cd48caf9d75208a4b",
   "sourceHashes": {
-    "src/booking/website-worker.ts": "3b84fadf1529c29f5ce5492c8d31342e4b1ec5fd6297bc1406e29ab85a9c66fb",
+    "src/booking/website-worker.ts": "8c422ede97a73bb08e5f2a0161a85ca2b4bc3ca84bbe082e85675fe9f2c59f3d",
     "src/booking/catalog.ts": "d2a413cbc022bdfa3d3190c71f25f593b7b9544e59b761ee8a49ecf29945b5d4",
     "src/booking/contracts.ts": "f2ddc4e922b8763b981e658def4ccc41a2294a65f1484e1b2c7247675bee4acd",
     "src/booking/routes.ts": "49fefa3d144529da198cb937997e6108fbc5bfd567508729ab958304930e272e",
@@ -21,12 +21,19 @@
     "src/booking/origin.ts": "b8055c63f46c69ada50287fbdc6be320d6b978a68a3448569aee677834b111ee",
     "src/booking/policy.ts": "86d29eba0f442eaafe00aedb7fe9e6d86e44c82228731c83223dd590de2f7616",
     "src/booking/service-rules.ts": "cb38976f6234a5273d07e3846c3ad2173dbede61fc032760ed7a4bea090a7276",
-    "migrations-app/0024_transfer_location_policies.sql": "d2dc847baadaf6ca52268cfde33f821a57e90f082b850be2272544c6d19d65a2"
+    "migrations-app/0024_transfer_location_policies.sql": "d2dc847baadaf6ca52268cfde33f821a57e90f082b850be2272544c6d19d65a2",
+    "src/booking/transfer-website-details.ts": "ef46d1207e1ea0e6e56e3f642627cba218b7099133d6308e48117ae740a6825b",
+    "src/booking/transfer-website-details-contract.ts": "dd615dbeef4c1c9526903799ca9ee818a040ebf9ebc986a16da3a68282105963"
   },
   "customerOnly": true,
   "origin": "https://qualitour.qualitour.workers.dev",
   "binding": "TRANSFER_DB",
   "stripeBinding": "TRANSFER_SANDBOX_KEY",
   "livePayments": false,
-  "sourceCommit": "42aa88a81e42332cc802340b4bffd0465c80231c"
+  "sourceCommit": "42aa88a81e42332cc802340b4bffd0465c80231c",
+  "sourceOverlay": [
+    "src/booking/website-worker.ts",
+    "src/booking/transfer-website-details.ts",
+    "src/booking/transfer-website-details-contract.ts"
+  ]
 }

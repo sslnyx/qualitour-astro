@@ -1,11 +1,11 @@
 /**
  * TransferDetailsModal - Modal showing activity details
  * 
- * Now uses cached data from build time (no runtime API fetch).
- * Displays activity name, description, price, and inclusions.
+ * Uses the saved Zaui snapshot as a fallback for the website details managed in PT Admin.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useId, useState } from 'react';
+import { resolveTransferWebsiteDetails } from '../lib/booking/transfer-website-details';
 import type { TransferVehicle } from '../lib/zaui/zaui';
 import { getCfTransformUrl, wpUrl } from '../lib/wp-url';
 
@@ -13,6 +13,8 @@ interface TransferDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     activity?: TransferVehicle;
+    variants?: TransferVehicle[];
+    onSelectActivity: (activityId: string) => void;
     lang: 'en' | 'zh';
 }
 
@@ -20,8 +22,26 @@ export default function TransferDetailsModal({
     isOpen,
     onClose,
     activity,
+    variants,
+    onSelectActivity,
     lang,
 }: TransferDetailsModalProps) {
+    const titleId = useId();
+    const activityId = activity?.activityId;
+    const [saved, setSaved] = useState<{ activityId: string; value: unknown }>();
+
+    useEffect(() => {
+        if (!isOpen || !activityId || !/^[0-9]{1,12}$/.test(activityId)) return;
+        const controller = new AbortController();
+        void fetch(`/api/transfer/details/${activityId}`, {
+            credentials: 'omit',
+            signal: controller.signal,
+            headers: { Accept: 'application/json' },
+        }).then(response => response.ok ? response.json() : null).then(value => {
+            if (!controller.signal.aborted) setSaved({ activityId, value });
+        }).catch(() => {});
+        return () => controller.abort();
+    }, [isOpen, activityId]);
 
     // Handle escape key and body scroll lock
     useEffect(() => {
@@ -48,11 +68,14 @@ export default function TransferDetailsModal({
         price: lang === 'zh' ? '價格' : 'Price',
         perVehicle: lang === 'zh' ? '每車' : 'per vehicle',
         includes: lang === 'zh' ? '包含' : 'Includes',
+        vehicle: lang === 'zh' ? '車型' : 'Vehicle',
+        seats: lang === 'zh' ? '座' : ' seats',
         noData: lang === 'zh' ? '暫無詳情' : 'No details available',
     };
 
-    // Get details from cached data
-    const details = activity?.details;
+    const details = activity && resolveTransferWebsiteDetails(
+        activity.details, saved?.activityId === activityId ? saved?.value : null, lang,
+    );
     const price = activity?.price;
 
     return (
@@ -66,6 +89,9 @@ export default function TransferDetailsModal({
             {/* Modal */}
             <div className="absolute inset-0 flex items-center justify-center p-4">
                 <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby={titleId}
                     className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -76,9 +102,11 @@ export default function TransferDetailsModal({
                                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                                     <span className="material-icons text-white text-2xl">info</span>
                                 </div>
-                                <h2 className="text-xl font-bold text-white">{t.title}</h2>
+                                <h2 id={titleId} className="text-xl font-bold text-white">{t.title}</h2>
                             </div>
                             <button
+                                type="button"
+                                aria-label={t.close}
                                 onClick={onClose}
                                 className="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded-full transition-colors"
                             >
@@ -89,13 +117,29 @@ export default function TransferDetailsModal({
 
                     {/* Content */}
                     <div className="p-6 overflow-y-auto flex-1">
-                        {!details ? (
+                        {!activity || !details ? (
                             <div className="text-center py-12 text-gray-500">
                                 <span className="material-icons text-4xl">info_outline</span>
                                 <p className="mt-2">{t.noData}</p>
                             </div>
                         ) : (
                             <div className="space-y-6">
+                                {variants && variants.length > 1 && (
+                                    <label className="flex items-center flex-wrap gap-2 text-sm text-gray-600">
+                                        <span>{t.vehicle}</span>
+                                        <select
+                                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
+                                            value={activity.activityId}
+                                            onChange={event => onSelectActivity(event.currentTarget.value)}
+                                        >
+                                            {variants.map(vehicle => (
+                                                <option key={vehicle.activityId} value={vehicle.activityId}>
+                                                    {vehicle.seater}{t.seats}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                )}
                                 {/* Activity Name */}
                                 <div>
                                     <h3 className="text-2xl font-bold text-gray-900">
@@ -109,6 +153,7 @@ export default function TransferDetailsModal({
                                         <img
                                             src={getCfTransformUrl(wpUrl(details.imageUrl), { width: 800, height: 400, format: 'webp' })}
                                             alt={details.activityName}
+                                            referrerPolicy="no-referrer"
                                             className="w-full h-48 object-cover"
                                         />
                                     </div>
@@ -140,40 +185,27 @@ export default function TransferDetailsModal({
                                 {details.description && (
                                     <div className="prose prose-gray max-w-none">
                                         <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                                            {details.description.replace(/&#39;/g, "'")}
+                                            {details.description}
                                         </p>
                                     </div>
                                 )}
 
-                                {/* What's Included */}
-                                <div>
-                                    <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                        <span className="material-icons text-green-500">check_circle</span>
-                                        {t.includes}
-                                    </h4>
-                                    <ul className="space-y-2 text-gray-600">
-                                        <li className="flex items-center gap-2">
-                                            <span className="material-icons text-green-500 text-sm">check</span>
-                                            {lang === 'zh' ? '專業司機' : 'Professional driver'}
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <span className="material-icons text-green-500 text-sm">check</span>
-                                            {lang === 'zh' ? '門到門服務' : 'Door-to-door service'}
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <span className="material-icons text-green-500 text-sm">check</span>
-                                            {lang === 'zh' ? '航班追蹤' : 'Flight tracking'}
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <span className="material-icons text-green-500 text-sm">check</span>
-                                            {lang === 'zh' ? '行李空間' : 'Luggage space'}
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <span className="material-icons text-green-500 text-sm">check</span>
-                                            {lang === 'zh' ? '含稅費' : 'All taxes included'}
-                                        </li>
-                                    </ul>
-                                </div>
+                                {details.includes.length > 0 && (
+                                    <div>
+                                        <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                            <span className="material-icons text-green-500">check_circle</span>
+                                            {t.includes}
+                                        </h4>
+                                        <ul className="space-y-2 text-gray-600">
+                                            {details.includes.map((item, index) => (
+                                                <li key={`${index}-${item}`} className="flex items-center gap-2">
+                                                    <span className="material-icons text-green-500 text-sm">check</span>
+                                                    {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
