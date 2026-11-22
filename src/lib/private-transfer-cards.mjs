@@ -79,13 +79,14 @@ function usableModels(models) {
 export function buildPrivateTransferCards({ models, lang, imageFor }) {
     const language = lang === 'zh' ? 'zh' : 'en';
     const usable = usableModels(models);
+    const modelImage = (model) => typeof model.photo === 'string' ? model.photo : imageFor(model.id);
 
     const fleetItems = usable.map((model) => ({
         id: model.id,
         label: model.name[language],
         capacity: suitableText(model.suitable.min, model.suitable.max, language),
         description: model.description[language],
-        image: imageFor(model.id, model),
+        image: modelImage(model),
     }));
 
     const text = CHARTER_TEXT[language];
@@ -99,7 +100,7 @@ export function buildPrivateTransferCards({ models, lang, imageFor }) {
             priceUnit: text.unit,
             bullets: [suitableText(model.suitable.min, model.suitable.max, language), text.minimum, text.area],
             ...(popular ? { popular: true } : {}),
-            image: imageFor(modelId, model),
+            image: modelImage(model),
         };
     });
 

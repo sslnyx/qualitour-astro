@@ -175,3 +175,10 @@ test('the seed vehicle-models.json produces exactly the built-in default cards',
         assert.deepEqual(fromSeed.result.fleetItems.map((i) => i.id), defaultIds);
     }
 });
+
+test('an approved snapshot photo URL overrides the bundled Astro image in both card variants', () => {
+    const photo = '/_vehicle-release/d625d585-cb19-4925-84fb-dc85b8310109/mercedes-12.webp';
+    const { fleetItems, charterRates } = buildPrivateTransferCards({ models: [{ ...m12, photo }], lang: 'en', imageFor });
+    assert.equal(fleetItems[0].image, photo);
+    assert.equal(charterRates.find(rate => rate.modelId === 'mercedes-12').image, photo);
+});

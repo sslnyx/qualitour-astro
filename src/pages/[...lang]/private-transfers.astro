@@ -202,8 +202,7 @@ const bundledPhotos: Record<string, ImageMetadata> = {
     "mercedes-12": sprinterStandardImg,
     "mercedes-16": sprinterDeluxeImg,
 };
-function imageFor(id: string, model?: { photo?: string | null }): ImageMetadata | string | undefined {
-    if (model?.photo) return model.photo;
+function imageFor(id: string): ImageMetadata | undefined {
     const exported = Object.entries(exportedPhotos).find(
         ([path]) => path.replace(/^.*\//, "").replace(/\.[^.]+$/, "") === id,
     );
