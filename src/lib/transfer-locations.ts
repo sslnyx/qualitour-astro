@@ -1,6 +1,6 @@
 /** Display names for the Zaui route snapshot's English-only locations on the Chinese pages. */
 const ZH: Record<string, string> = {
-  "Abbotsford (YXX) Airport": "阿伯茨福機場（YXX）",
+  "Abbotsford (YXX) Airport": "阿伯茨福德機場（YXX）",
   "Canada Place Cruise Terminal": "加拿大廣場郵輪碼頭",
   "Greater Vancouver": "大溫哥華地區",
   "Greater Vancouver (Zone 1)": "大溫哥華（1 區）",

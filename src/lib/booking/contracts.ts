@@ -1,5 +1,10 @@
 export type CatalogSource = { activityId: string; capturedDate: string };
-export type RouteLocation = { id: string; nameZh: string; nameEn: string };
+export type RouteLocation = {
+  id: string;
+  nameZh: string;
+  nameEn: string;
+  requiresAddress?: boolean;
+};
 export type RouteServiceRules = {
   validFrom: string;
   validTo: string;

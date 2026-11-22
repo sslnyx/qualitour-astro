@@ -12,6 +12,14 @@ const messages: Record<string, [string, string]> = {
     "請檢查輸入資料後重試。",
     "Please check your entries and try again.",
   ],
+  PICKUP_ADDRESS_REQUIRED: [
+    "請填寫詳細上車地址。",
+    "Enter the detailed pickup address.",
+  ],
+  DROPOFF_ADDRESS_REQUIRED: [
+    "請填寫詳細下車地址。",
+    "Enter the detailed drop-off address.",
+  ],
   INVALID_LOCAL_TIME: [
     "請輸入有效的溫哥華當地時間。",
     "Please enter a valid Vancouver local date and time.",

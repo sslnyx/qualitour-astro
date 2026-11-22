@@ -473,39 +473,13 @@
     },
     {
       "id": "route-8",
-      "name": "YVR ↔ Abbotsford",
-      "fromLocation": "Vancouver Airport (YVR)",
+      "name": "Greater Vancouver – Abbotsford (YXX) Airport",
+      "fromLocation": "Greater Vancouver",
       "toLocation": "Abbotsford (YXX) Airport",
       "imageUrl": "https://zaui-assets-gjcmcbfka3ghhvar.a03.azurefd.net/application/qualitour/data/tourImagesVideo/34_10_tourImage.png?v=1626992334",
       "currency": "CAD",
       "priceDate": "2026-11-12",
       "vehicles": [
-        {
-          "seater": "11",
-          "activityId": "34",
-          "price": "365.00",
-          "details": {
-            "activityName": "Abbotsford (YXX) Airport to Greater Vancouver (11-seater)",
-            "description": "Transfer Rates Normal daytime (8am - 10pm) service: $330 Early morning (before 8am) or late night (after 10pm) service: $365 Why book with us? Customized pick-up and drop-off location. Customized pick-up and drop-off time available. Safe and hassle-free private transfer service. Our vehicles are all licensed, insured, and operated by experienced drivers. Book securely and safely online. What's included Private door-to-door transfer service by Sprinter Passenger Van 1 suitcase, 1 carry-on bag per person permitted on board (Please contact us if you have more luggage) Customized pick-up and drop-off location/time available",
-            "imageUrl": "https://zaui-assets-gjcmcbfka3ghhvar.a03.azurefd.net/application/qualitour/data/tourImagesVideo/34_10_tourImage.png?v=1626992334"
-          },
-          "currency": "CAD",
-          "priceDate": "2026-11-12"
-        },
-        {
-          "seater": "14",
-          "activityId": "56",
-          "price": "445.00",
-          "details": {
-            "activityName": "Abbotsford (YXX) Airport to Greater Vancouver (14-seater)",
-            "description": "Transfer Rates Normal daytime (8am - 10pm) service: $410 Early morning (before 8am) or late night (after 10pm) service: $445 Why book with us? Customized pick-up and drop-off location. Customized pick-up and drop-off time available. Safe and hassle-free private transfer service. Our vehicles are all licensed, insured, and operated by experienced drivers. Book securely and safely online. What's included Private door-to-door transfer service by Sprinter Passenger Van 1 suitcase, 1 carry-on bag per person permitted on board (Please contact us if you have more luggage) Customized pick-up and drop-off location/time available",
-            "imageUrl": "https://zaui-assets-gjcmcbfka3ghhvar.a03.azurefd.net/application/qualitour/data/tourImagesVideo/56_40_tourImage.png?v=1631665091"
-          },
-          "currency": "CAD",
-          "priceDate": "2026-11-12"
-        }
-      ],
-      "reverseActivityIds": [
         {
           "seater": "11",
           "activityId": "36",
@@ -526,6 +500,32 @@
             "activityName": "Greater Vancouver to Abbotsford (YXX) Airport (14-seater)",
             "description": "Transfer Rates Normal daytime (8am - 10pm) service: $360 Early morning (before 8am) or late night (after 10pm) service: $395 Why book with us? Customized pick-up and drop-off location. Customized pick-up and drop-off time available. Safe and hassle-free private transfer service. Our vehicles are all licensed, insured, and operated by experienced drivers. Book securely and safely online. What's included Private door-to-door transfer service by Sprinter Passenger Van 1 suitcase, 1 carry-on bag per person permitted on board (Please contact us if you have more luggage) Customized pick-up and drop-off location/time available",
             "imageUrl": "https://zaui-assets-gjcmcbfka3ghhvar.a03.azurefd.net/application/qualitour/data/tourImagesVideo/57_41_tourImage.png?v=1631665108"
+          },
+          "currency": "CAD",
+          "priceDate": "2026-11-12"
+        }
+      ],
+      "reverseActivityIds": [
+        {
+          "seater": "11",
+          "activityId": "34",
+          "price": "365.00",
+          "details": {
+            "activityName": "Abbotsford (YXX) Airport to Greater Vancouver (11-seater)",
+            "description": "Transfer Rates Normal daytime (8am - 10pm) service: $330 Early morning (before 8am) or late night (after 10pm) service: $365 Why book with us? Customized pick-up and drop-off location. Customized pick-up and drop-off time available. Safe and hassle-free private transfer service. Our vehicles are all licensed, insured, and operated by experienced drivers. Book securely and safely online. What's included Private door-to-door transfer service by Sprinter Passenger Van 1 suitcase, 1 carry-on bag per person permitted on board (Please contact us if you have more luggage) Customized pick-up and drop-off location/time available",
+            "imageUrl": "https://zaui-assets-gjcmcbfka3ghhvar.a03.azurefd.net/application/qualitour/data/tourImagesVideo/34_10_tourImage.png?v=1626992334"
+          },
+          "currency": "CAD",
+          "priceDate": "2026-11-12"
+        },
+        {
+          "seater": "14",
+          "activityId": "56",
+          "price": "445.00",
+          "details": {
+            "activityName": "Abbotsford (YXX) Airport to Greater Vancouver (14-seater)",
+            "description": "Transfer Rates Normal daytime (8am - 10pm) service: $410 Early morning (before 8am) or late night (after 10pm) service: $445 Why book with us? Customized pick-up and drop-off location. Customized pick-up and drop-off time available. Safe and hassle-free private transfer service. Our vehicles are all licensed, insured, and operated by experienced drivers. Book securely and safely online. What's included Private door-to-door transfer service by Sprinter Passenger Van 1 suitcase, 1 carry-on bag per person permitted on board (Please contact us if you have more luggage) Customized pick-up and drop-off location/time available",
+            "imageUrl": "https://zaui-assets-gjcmcbfka3ghhvar.a03.azurefd.net/application/qualitour/data/tourImagesVideo/56_40_tourImage.png?v=1631665091"
           },
           "currency": "CAD",
           "priceDate": "2026-11-12"

@@ -182,3 +182,15 @@ test('an approved snapshot photo URL overrides the bundled Astro image in both c
     assert.equal(fleetItems[0].image, photo);
     assert.equal(charterRates.find(rate => rate.modelId === 'mercedes-12').image, photo);
 });
+
+test('YXX card uses Greater Vancouver and maps each displayed direction to the matching activities', () => {
+    const published = JSON.parse(readFileSync(new URL('../src/data/zaui-transfer-routes.json', import.meta.url)));
+    const definitions = JSON.parse(readFileSync(new URL('./zaui-route-map.json', import.meta.url)));
+    for (const routes of [published.routes, definitions]) {
+        const card = routes.find(({ id }) => id === 'route-8');
+        assert.equal(card.fromLocation, 'Greater Vancouver');
+        assert.equal(card.toLocation, 'Abbotsford (YXX) Airport');
+        assert.deepEqual(card.vehicles.map(({ activityId }) => activityId), ['36', '57']);
+        assert.deepEqual(card.reverseActivityIds.map(({ activityId }) => activityId), ['34', '56']);
+    }
+});

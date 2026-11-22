@@ -2,15 +2,15 @@
   "sourceRepository": "qualitour-ops",
   "baseCommit": "a66bac0",
   "buildCommand": "npm exec -- wrangler deploy --config wrangler.website.bundle.json --dry-run --minify --outdir .private/website-booking-staging/same-worker-bundle",
-  "bundleSha256": "419b0393ceffb950da480d267bb7bd851d117e7659a35e5787a0b4ded81e29b3",
+  "bundleSha256": "099c86a35651fcd3b1d3442d80ca75e2fde686679bbb1ebd9767994962dbba45",
   "sourceHashes": {
     "src/booking/website-worker.ts": "3b84fadf1529c29f5ce5492c8d31342e4b1ec5fd6297bc1406e29ab85a9c66fb",
-    "src/booking/catalog.ts": "d94acc0ba677fc83f34c88aa5864062a58753162723ac2d2e22562844784f610",
-    "src/booking/contracts.ts": "7585ab8bd94d7244a0cb4faa699ac9a01d1ee88eb5f48d31e509defd75f36620",
+    "src/booking/catalog.ts": "d2a413cbc022bdfa3d3190c71f25f593b7b9544e59b761ee8a49ecf29945b5d4",
+    "src/booking/contracts.ts": "f2ddc4e922b8763b981e658def4ccc41a2294a65f1484e1b2c7247675bee4acd",
     "src/booking/routes.ts": "49fefa3d144529da198cb937997e6108fbc5bfd567508729ab958304930e272e",
     "src/booking/payments.ts": "e9eaffb668bf30b2e70e42ee7b2209fbc798473ffea2395d5fe9a78865205f08",
     "src/booking/guest.ts": "19ce5cbdf4f7b8d800fd0703e4c0faf6799e79161c6b913f2ac5ddd9a1979085",
-    "src/booking/reservations.ts": "ae98684c4dab4888c8c83246f3e99a17d0ab85f68ffe8e2a80ea649f7aa35902",
+    "src/booking/reservations.ts": "a387abd33f10cbf30f5bdff5d1c216e110cea816764843c9fa3e8b8fb931d2b8",
     "src/booking/maintenance.ts": "a03e5c00c4280aabafa9eb35acfc888a257e66f45e86c598319f921fb70bba07",
     "src/zaui/bridge.ts": "474ed76e8c1efab1fad896d50a334d9dcd1885bed3f1e52fe1a43036efb1c7ff",
     "src/booking/pricing.ts": "081af83ea23fa59c007c170eac172ed61a75cb7e926de9e7dcb76e83ce34d4e3",
@@ -19,12 +19,14 @@
     "src/booking/emails.ts": "0bfffcfb133521e1002f9a078a1200fecb7bf4821790e97367007c3a57de4f4a",
     "src/booking/mail.ts": "478652660c05ef827410b26461dac3f94b840867790accaadec4198a53ca8d17",
     "src/booking/origin.ts": "b8055c63f46c69ada50287fbdc6be320d6b978a68a3448569aee677834b111ee",
-    "src/booking/policy.ts": "86d29eba0f442eaafe00aedb7fe9e6d86e44c82228731c83223dd590de2f7616"
+    "src/booking/policy.ts": "86d29eba0f442eaafe00aedb7fe9e6d86e44c82228731c83223dd590de2f7616",
+    "src/booking/service-rules.ts": "cb38976f6234a5273d07e3846c3ad2173dbede61fc032760ed7a4bea090a7276",
+    "migrations-app/0024_transfer_location_policies.sql": "d2dc847baadaf6ca52268cfde33f821a57e90f082b850be2272544c6d19d65a2"
   },
   "customerOnly": true,
   "origin": "https://qualitour.qualitour.workers.dev",
   "binding": "TRANSFER_DB",
   "stripeBinding": "TRANSFER_SANDBOX_KEY",
   "livePayments": false,
-  "sourceCommit": "a66bac04463c46baf8365b02b0576fa449f38814"
+  "sourceCommit": "42aa88a81e42332cc802340b4bffd0465c80231c"
 }

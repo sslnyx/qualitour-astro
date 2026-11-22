@@ -6,6 +6,7 @@ import type {
   RouteServiceRules,
 } from "../../lib/booking/contracts";
 import { BookingRecovery } from "./BookingRecovery";
+import { BookingLocationSelect } from "./BookingLocationSelect";
 import { ServiceCalendar } from "./ServiceCalendar";
 import {
   formatDepartureLabel,
@@ -330,20 +331,12 @@ export function BookingView(p: BookingViewProps) {
     selectedDropoff = quote?.dropoffOptions?.find(
       (option) => option.id === customer.dropoffLocationId,
     );
-  // A fixed pickup point (airport terminal, cruise terminal, pier, station) needs no street address; a city or area
-  // pickup does, so the driver knows where to come. Routes with no pickup choice keep asking.
-  const fixedPoint =
-    /airport|terminal|cruise|pier|station|機場|航廈|碼頭|郵輪|車站/i;
-  const askPickupAddress = !(
-    quote?.pickupOptions?.length &&
-    (selectedPickup
-      ? fixedPoint.test(selectedPickup.nameEn) ||
-        fixedPoint.test(selectedPickup.nameZh)
-      : quote.pickupOptions.every(
-          (option) =>
-            fixedPoint.test(option.nameEn) || fixedPoint.test(option.nameZh),
-        ))
-  );
+  const askPickupAddress = selectedPickup
+    ? selectedPickup.requiresAddress !== false
+    : !quote?.pickupOptions?.length;
+  const askDropoffAddress = selectedDropoff
+    ? selectedDropoff.requiresAddress !== false
+    : !quote?.dropoffOptions?.length;
   const matches = Boolean(
       quote &&
       quote.routeId === routeId &&
@@ -790,7 +783,9 @@ export function BookingView(p: BookingViewProps) {
                     <span className="qb-eyebrow">
                       {t("行程已選好", "Your trip is ready")}
                     </span>
-                    <h2 ref={tripReviewHeading} tabIndex={-1}>{route ? name(route) : ""}</h2>
+                    <h2 ref={tripReviewHeading} tabIndex={-1}>
+                      {route ? name(route) : ""}
+                    </h2>
                     <p>
                       {quote
                         ? formatDepartureLabel(quote.departureLabel, p.lang)
@@ -799,7 +794,12 @@ export function BookingView(p: BookingViewProps) {
                     </p>
                     {quote && (
                       <p className="qb-trip-review__total">
-                        <span>{t("整車總額（含燃油附加費與 GST）", "Vehicle total (includes fuel surcharge and GST)")}</span>
+                        <span>
+                          {t(
+                            "整車總額（含燃油附加費與 GST）",
+                            "Vehicle total (includes fuel surcharge and GST)",
+                          )}
+                        </span>
                         <strong>{money(quote.amountMinor)}</strong>
                       </p>
                     )}
@@ -1220,12 +1220,13 @@ export function BookingView(p: BookingViewProps) {
                         pickupAddress: askPickupAddress
                           ? customer.pickupAddress
                           : "",
+                        dropoffAddress: askDropoffAddress
+                          ? customer.dropoffAddress
+                          : "",
                       });
                   }}
                 >
-                  <h2>
-                    {t("接送與聯絡資料", "Transfer & contact details")}
-                  </h2>
+                  <h2>{t("接送與聯絡資料", "Transfer & contact details")}</h2>
                   <p className="qb-note qb-form-intro">
                     {t(
                       "填寫接送地點及聯絡方式，方便安排你的行程。",
@@ -1234,56 +1235,51 @@ export function BookingView(p: BookingViewProps) {
                   </p>
                   <fieldset className="qb-fields" disabled={p.busy}>
                     {quote.pickupOptions && quote.pickupOptions.length > 1 ? (
-                      <label className="qt-field qb-full">
-                        <span>
-                          {t(
-                            "上車航廈／地點（必選）",
-                            "Pickup terminal / location (required)",
-                          )}
-                        </span>
-                        <select
-                          required
-                          value={customer.pickupLocationId ?? ""}
-                          onChange={(e) =>
-                            patch("pickupLocationId", e.target.value)
-                          }
-                        >
-                          <option value="">
-                            {t("請選擇上車地點", "Choose a pickup location")}
-                          </option>
-                          {quote.pickupOptions.map((option) => (
-                            <option key={option.id} value={option.id}>
-                              {name(option)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      <BookingLocationSelect
+                        label={t(
+                          "上車航廈／地點",
+                          "Pickup terminal / location",
+                        )}
+                        placeholder={t(
+                          "請選擇上車地點",
+                          "Choose a pickup location",
+                        )}
+                        value={customer.pickupLocationId ?? ""}
+                        options={quote.pickupOptions.map((option) => ({
+                          id: option.id,
+                          label: name(option),
+                        }))}
+                        onChange={(id) =>
+                          setCustomer((current) => ({
+                            ...current,
+                            pickupLocationId: id,
+                            pickupAddress: "",
+                          }))
+                        }
+                        required
+                      />
                     ) : null}
                     {quote.dropoffOptions && quote.dropoffOptions.length > 1 ? (
-                      <label className="qt-field qb-full">
-                        <span>
-                          {t(
-                            "下車地點（必選）",
-                            "Drop-off location (required)",
-                          )}
-                        </span>
-                        <select
-                          required
-                          value={customer.dropoffLocationId ?? ""}
-                          onChange={(e) =>
-                            patch("dropoffLocationId", e.target.value)
-                          }
-                        >
-                          <option value="">
-                            {t("請選擇下車地點", "Choose a drop-off location")}
-                          </option>
-                          {quote.dropoffOptions.map((option) => (
-                            <option key={option.id} value={option.id}>
-                              {name(option)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      <BookingLocationSelect
+                        label={t("下車地點", "Drop-off location")}
+                        placeholder={t(
+                          "請選擇下車地點",
+                          "Choose a drop-off location",
+                        )}
+                        value={customer.dropoffLocationId ?? ""}
+                        options={quote.dropoffOptions.map((option) => ({
+                          id: option.id,
+                          label: name(option),
+                        }))}
+                        onChange={(id) =>
+                          setCustomer((current) => ({
+                            ...current,
+                            dropoffLocationId: id,
+                            dropoffAddress: "",
+                          }))
+                        }
+                        required
+                      />
                     ) : null}
                     {field("name", t("姓名", "Full name"), "text", true, 100)}
                     {field("email", t("電郵", "Email"), "email", true, 254)}
@@ -1294,10 +1290,12 @@ export function BookingView(p: BookingViewProps) {
                           t("詳細上車地址", "Detailed pickup address"),
                         )
                       : null}
-                    {field(
-                      "dropoffAddress",
-                      t("詳細下車地址", "Detailed drop-off address"),
-                    )}
+                    {askDropoffAddress
+                      ? field(
+                          "dropoffAddress",
+                          t("詳細下車地址", "Detailed drop-off address"),
+                        )
+                      : null}
                     <label className="qt-field qb-full">
                       <span>{t("備註（選填）", "Notes (optional)")}</span>
                       <textarea
@@ -1353,7 +1351,9 @@ export function BookingView(p: BookingViewProps) {
               {matches && quote ? (
                 <>
                   <div className="qb-summary__total" data-confirmed={!showTrip}>
-                    <p className="qb-quote-amount">{money(quote.amountMinor)}</p>
+                    <p className="qb-quote-amount">
+                      {money(quote.amountMinor)}
+                    </p>
                     <p className="qb-note">
                       {t(
                         "每輛整車測試總額（含燃油附加費與 GST）",

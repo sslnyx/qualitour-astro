@@ -201,20 +201,10 @@
   },
   {
     "id": "route-8",
-    "name": "YVR ↔ Abbotsford",
-    "fromLocation": "Vancouver Airport (YVR)",
+    "name": "Greater Vancouver – Abbotsford (YXX) Airport",
+    "fromLocation": "Greater Vancouver",
     "toLocation": "Abbotsford (YXX) Airport",
     "vehicles": [
-      {
-        "seater": "11",
-        "activityId": "34"
-      },
-      {
-        "seater": "14",
-        "activityId": "56"
-      }
-    ],
-    "reverseActivityIds": [
       {
         "seater": "11",
         "activityId": "36"
@@ -222,6 +212,16 @@
       {
         "seater": "14",
         "activityId": "57"
+      }
+    ],
+    "reverseActivityIds": [
+      {
+        "seater": "11",
+        "activityId": "34"
+      },
+      {
+        "seater": "14",
+        "activityId": "56"
       }
     ]
   }
