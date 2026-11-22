@@ -9,7 +9,7 @@ export function assertWorkerBindings(config){
  assert.deepEqual(config.kv_namespaces.map(x=>[x.binding,x.id]),[['SESSION','71990ee89fd4417a9046aacbbdb88fa4']]);
  assert.deepEqual(config.durable_objects.bindings,[{name:'CMS_RUNTIME',class_name:'QualitourCmsRuntime'}]);
  assert.equal(config.vars.EMDASH_CMS_EXECUTION,'durable');
- assert.deepEqual(config.exports,{default:{type:'worker',cache:{enabled:false}},NativeProofCache:{type:'worker',cache:{enabled:true}}});
+ assert.deepEqual(config.exports,{default:{type:'worker',cache:{enabled:false}},NativeProofCache:{type:'worker',cache:{enabled:true}},VehicleReleaseActions:{type:'worker'}});
  assert.equal(config.images.binding,'IMAGES');
  assert.equal(config.cache.enabled,false,'Only the named proof entrypoint may use Workers Cache');
  assert.ok(config.assets.run_worker_first.includes('/native-proof/*'));
@@ -21,6 +21,7 @@ export function assertWorkerBindings(config){
 }
 export function assertCmsRuntime(entry,chunks){
  assert.ok(entry.includes('QualitourCmsRuntime')&&entry.includes('fetchFreeRuntime'),'Missing approved Durable CMS runtime');
+ assert.ok(entry.includes('VehicleReleaseActions'),'Missing internal staging vehicle release entrypoint');
  assert.ok(chunks.some(x=>x.includes('qualitourValidatorCache'))&&chunks.some(x=>x.includes('async function enrichImageMetadata(')),'Missing approved CMS CPU transforms');
  for(const code of chunks)assert.ok(!/await generatePlaceholder\(override|async function decodeJpeg\(|async function generatePlaceholder\(/.test(code),'Unreviewed original-image CPU decoder reached CMS runtime');
 }

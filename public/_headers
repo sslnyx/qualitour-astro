@@ -45,5 +45,8 @@
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
 
+/site-release.json
+  Cache-Control: no-store
+
 /
   Cache-Control: public, max-age=0, must-revalidate

@@ -19,6 +19,12 @@ function sameSecret(given, secret) {
   return difference === 0;
 }
 
+/** True only for a request made by the site-release job. */
+export function hasSiteBuildKey(request, env) {
+  const secret = env?.SITE_BUILD_KEY;
+  return typeof secret === 'string' && secret !== '' && sameSecret(request.headers.get(SITE_BUILD_HEADER), secret);
+}
+
 /** Returns a redirect to the static site for a visitor, or null when the request may be rendered here. */
 export function siteGate(request, env) {
   if (!['GET', 'HEAD'].includes(request.method)) return null;
@@ -26,7 +32,7 @@ export function siteGate(request, env) {
   if (!isSitePage(url.pathname)) return null;
   const secret = env?.SITE_BUILD_KEY;
   if (typeof secret !== 'string' || !secret) return null;
-  if (sameSecret(request.headers.get(SITE_BUILD_HEADER), secret)) return null;
+  if (hasSiteBuildKey(request, env)) return null;
   const origin = new URL(env.PUBLIC_SITE_ORIGIN || DEFAULT_PUBLIC_ORIGIN).origin;
   return new Response(null, {
     status: 302,

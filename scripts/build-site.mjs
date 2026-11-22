@@ -24,6 +24,7 @@ import { findBrokenIslandProps } from './lib/island-props.mjs';
 import { remoteImagePattern } from './lib/remote-images.mjs';
 import { readForRelease } from './lib/release-read.mjs';
 import { legacyRedirectRules } from './lib/legacy-redirects.mjs';
+import { markerForVehicleRelease, vehicleReleaseId, vehicleReleaseIdFromManifest, vehicleReleasePhotoPaths } from './lib/vehicle-release-site.mjs';
 
 const cmsOrigin = process.env.QUALITOUR_CMS_ORIGIN || 'https://qualitour.qualitour.workers.dev';
 // Copies in the CMS media library of images that tour content takes from the old WordPress site and partner sites.
@@ -33,6 +34,39 @@ const baseAssets = resolve(process.env.SITE_BASE_ASSETS || '.astro/worker-releas
 const outDir = resolve(process.env.SITE_OUT_DIR || '.astro/site-release/assets');
 const concurrency = Number(process.env.SITE_CRAWL_CONCURRENCY || 6);
 const publicOrigin = process.env.SITE_PUBLIC_ORIGIN || cmsOrigin;
+const vehicleReleasePages = new Set(['/private-transfers', '/zh/private-transfers']);
+const fixedCmsOrigin = 'https://qualitour.qualitour.workers.dev';
+
+async function preservedVehicleReleaseId() {
+  // The normal CMS release command must preserve the deployed pointer even on a workstation. Local/mock CMS
+  // origins stay isolated unless their matching static origin is supplied explicitly.
+  const originValue = process.env.SITE_VEHICLE_RELEASE_ORIGIN || (cmsOrigin === fixedCmsOrigin ? 'https://qualitour-site.qualitour.workers.dev' : '');
+  if (!originValue) return null;
+  let origin;
+  try {
+    origin = new URL(originValue);
+    if (!['https:', 'http:'].includes(origin.protocol) || origin.pathname !== '/' || origin.search || origin.hash) throw new Error('origin must not have a path, query, or hash');
+  } catch (error) {
+    throw new Error(`SITE_VEHICLE_RELEASE_ORIGIN is invalid: ${error.message}`);
+  }
+  let response;
+  try {
+    const manifestUrl = new URL('/site-release.json', origin);
+    manifestUrl.searchParams.set('release-read', String(Date.now()));
+    response = await fetch(manifestUrl, { headers: { 'user-agent': 'qualitour-site-build/1.0', accept: 'application/json', 'cache-control': 'no-cache, no-store', pragma: 'no-cache' }, redirect: 'error', signal: AbortSignal.timeout(45000) });
+  } catch (error) {
+    throw new Error(`Could not preserve the deployed vehicle website release: ${error.message}`);
+  }
+  if (response.status === 404) return null; // A pre-release site has no marker yet.
+  if (!response.ok) throw new Error(`Could not preserve the deployed vehicle website release: HTTP ${response.status}`);
+  if (!(response.headers.get('content-type') || '').includes('application/json')) throw new Error('Could not preserve the deployed vehicle website release: site-release.json was not JSON');
+  let manifest;
+  try { manifest = await response.json(); } catch { throw new Error('Could not preserve the deployed vehicle website release: invalid site-release.json'); }
+  return vehicleReleaseIdFromManifest(manifest);
+}
+
+const explicitVehicleReleaseId = vehicleReleaseId(process.env.SITE_VEHICLE_RELEASE_ID);
+const vehicleWebsiteReleaseId = explicitVehicleReleaseId ?? await preservedVehicleReleaseId();
 
 // The published set comes from the CMS itself (EMDASH_TOKEN in CI, the CLI login on a workstation) unless
 // SITE_USE_SNAPSHOT=1 reuses the snapshot already on disk.
@@ -69,10 +103,12 @@ async function crawlAll() {
     queued.add(key); queue.push(key);
   };
   const fetchHtml = path => readForRelease(path, async () => {
-    const response = await fetch(new URL(path, cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0', accept: 'text/html', ...(process.env.SITE_BUILD_KEY ? { 'x-qualitour-site-build': process.env.SITE_BUILD_KEY } : {}) }, redirect: 'manual', signal: AbortSignal.timeout(45000) });
+    const selectedVehicleRelease = vehicleWebsiteReleaseId && vehicleReleasePages.has(path);
+    const response = await fetch(new URL(path, cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0', accept: 'text/html', ...(process.env.SITE_BUILD_KEY ? { 'x-qualitour-site-build': process.env.SITE_BUILD_KEY } : {}), ...(selectedVehicleRelease ? { 'x-qualitour-vehicle-release': vehicleWebsiteReleaseId } : {}) }, redirect: 'manual', signal: AbortSignal.timeout(45000) });
     if (response.status !== 200) { failures.push(`${response.status} ${path}`); return null; }
     if (!(response.headers.get('content-type') || '').includes('text/html')) { failures.push(`not html ${path}`); return null; }
     if (response.headers.get('x-qualitour-rendered') === 'static-fallback') { failures.push(`static fallback ${path}`); return null; }
+    if (selectedVehicleRelease && !new RegExp(`^${vehicleWebsiteReleaseId}; revision=[0-9]+$`).test(response.headers.get('x-qualitour-vehicle-release') || '')) { failures.push(`vehicle release response header ${path}`); return null; }
     return response.text();
   });
   seeds.forEach(enqueue);
@@ -117,6 +153,11 @@ const { pages } = crawled;
 const deadLinks = verdict.dead;
 if (verdict.hard.length) { console.error('Site build failed:\n' + verdict.hard.join('\n')); process.exit(1); }
 if (!pages.has('/') || !pages.has('/zh') || !pages.has('/book')) { console.error('Site build failed: home or booking pages missing'); process.exit(1); }
+if (vehicleWebsiteReleaseId) {
+  const expectedMarker = markerForVehicleRelease(vehicleWebsiteReleaseId);
+  const markerFailures = [...vehicleReleasePages].filter(path => !pages.get(path)?.includes(expectedMarker));
+  if (markerFailures.length) throw new Error(`Vehicle website release marker mismatch: ${markerFailures.join(', ')}`);
+}
 
 // Assemble into a sibling directory and swap, so a failed build never touches the previous release.
 const tmp = outDir + '.partial';
@@ -262,6 +303,24 @@ for (const [path, html] of pages) pages.set(path, html.replace(mediaPattern, fou
 if (mediaSeen.size) console.log(JSON.stringify({ cmsMediaImages: mediaSeen.size, cmsMediaFailed: mediaFailed.length }));
 if (mediaFailed.length) console.log('CMS media kept as media paths:\n' + mediaFailed.slice(0, 10).join('\n'));
 
+// Approved fleet photos are fetched only while producing this release, then copied at their exact rendered paths.
+// The public static Worker therefore never needs the CMS's build credential to show a vehicle image.
+const vehicleReleasePhotoFailures = [];
+if (vehicleWebsiteReleaseId) {
+  const photos = new Set([...vehicleReleasePages].flatMap(path => vehicleReleasePhotoPaths(pages.get(path) || '', vehicleWebsiteReleaseId)));
+  for (const path of photos) {
+    try {
+      const response = await fetch(new URL(path, cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0', ...(process.env.SITE_BUILD_KEY ? { 'x-qualitour-site-build': process.env.SITE_BUILD_KEY } : {}) }, redirect: 'error', signal: AbortSignal.timeout(45000) });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(response.headers.get('content-type') || '')) throw new Error('unexpected MIME type');
+      const file = join(tmp, path.slice(1));
+      await mkdir(dirname(file), { recursive: true });
+      await writeFile(file, Buffer.from(await response.arrayBuffer()));
+    } catch (error) { vehicleReleasePhotoFailures.push(`${path}: ${String(error).slice(0, 100)}`); }
+  }
+  if (vehicleReleasePhotoFailures.length) throw new Error(`Vehicle website release photos could not be copied:\n${vehicleReleasePhotoFailures.join('\n')}`);
+}
+
 // Gate: no page may carry an island whose props are not valid JSON (the component would never hydrate).
 const brokenIslands = [...pages].flatMap(([path, html]) => findBrokenIslandProps(path, html));
 if (brokenIslands.length) throw new Error(`${brokenIslands.length} island(s) with invalid props; first: ${brokenIslands.slice(0, 5).join(' | ')}`);
@@ -320,7 +379,7 @@ async function walk(dir) {
 }
 await walk(tmp);
 if (files + 1 > 20000 || largest > 25 * 1024 * 1024) { console.error(`Asset limits exceeded: ${files} files, largest ${largest} bytes`); process.exit(1); }
-await writeFile(join(tmp, 'site-release.json'), JSON.stringify({ schema: 1, generatedAt: new Date().toISOString(), cmsOrigin, pages: pages.size, tours: requiredTours.length, files: files + 1, deadLinks, images: { derivatives: produced.size, failed: imageFailures.length }, hashes }) + '\n');
+await writeFile(join(tmp, 'site-release.json'), JSON.stringify({ schema: 1, generatedAt: new Date().toISOString(), cmsOrigin, vehicleWebsiteReleaseId, pages: pages.size, tours: requiredTours.length, files: files + 1, deadLinks, images: { derivatives: produced.size, failed: imageFailures.length }, hashes }) + '\n');
 
 const backup = outDir + '.previous';
 await rm(backup, { recursive: true, force: true });
@@ -329,4 +388,4 @@ try { await rename(outDir, backup); } catch (error) { if (error.code !== 'ENOENT
 await rename(tmp, outDir);
 await rm(backup, { recursive: true, force: true });
 if (imageFailures.length) console.log('image fallbacks (kept as /_image):\n' + imageFailures.slice(0, 20).join('\n'));
-console.log(JSON.stringify({ derivatives: produced.size, imageFallbacks: imageFailures.length, pages: pages.size, tours: requiredTours.length, files: files + 1, largestBytes: largest, deadLinks, outDir }));
+console.log(JSON.stringify({ vehicleWebsiteReleaseId, derivatives: produced.size, imageFallbacks: imageFailures.length, pages: pages.size, tours: requiredTours.length, files: files + 1, largestBytes: largest, deadLinks, outDir }));

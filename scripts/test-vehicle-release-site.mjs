@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { markerForVehicleRelease, vehicleReleaseId, vehicleReleaseIdFromManifest, vehicleReleasePhotoPaths } from './lib/vehicle-release-site.mjs';
+
+const id = '2f5c2d8e-8afd-4e4b-923b-208398d96049';
+assert.equal(vehicleReleaseId(id), id);
+assert.equal(vehicleReleaseId(''), null);
+assert.throws(() => vehicleReleaseId('UPPERCASE'));
+assert.equal(vehicleReleaseIdFromManifest({ schema: 1 }), null);
+assert.equal(vehicleReleaseIdFromManifest({ vehicleWebsiteReleaseId: id }), id);
+assert.throws(() => vehicleReleaseIdFromManifest({ vehicleWebsiteReleaseId: '../bad' }));
+assert.equal(markerForVehicleRelease(id), `data-vehicle-website-release="${id}"`);
+assert.deepEqual(vehicleReleasePhotoPaths(`<img src="/_vehicle-release/${id}/sienna-7.webp"><a href="/_vehicle-release/${id}/ignore.gif">`, id), [`/_vehicle-release/${id}/sienna-7.webp`]);
+assert.deepEqual(vehicleReleasePhotoPaths(`<img src="/_vehicle-release/8e4f00a9-e7c4-48bb-ae43-1c25f148b545/sienna-7.webp">`, id), []);
+console.log('vehicle release site helpers passed');

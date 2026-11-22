@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import { handleVehicleReleaseActions } from '../src/lib/cms/vehicle-release-actions.mjs';
+
+const id = '2f5c2d8e-8afd-4e4b-923b-208398d96049';
+const calls = [];
+const env = { GITHUB_DISPATCH_TOKEN: 'secret', TRANSFER_DB: { prepare() { return { bind(value) { assert.equal(value, id); return { first: async () => ({ id: value }) }; } }; } } };
+const fetchImpl = async (url, init) => { calls.push({ url, init }); return new Response(null, { status: 204 }); };
+const dispatch = new Request(`https://internal/repos/sslnyx/qualitour-astro/actions/workflows/site-release.yml/dispatches`, { method: 'POST', body: JSON.stringify({ ref: 'main', inputs: { vehicle_release_id: id } }) });
+assert.equal((await handleVehicleReleaseActions(dispatch, env, fetchImpl)).status, 204);
+assert.equal(calls[0].url, 'https://api.github.com/repos/sslnyx/qualitour-astro/actions/workflows/site-release.yml/dispatches');
+assert.equal(calls[0].init.headers.Authorization, 'Bearer secret');
+assert.equal(calls[0].init.redirect, 'error');
+assert.equal((await handleVehicleReleaseActions(new Request('https://internal/repos/other/actions/runs/1'), env, fetchImpl)).status, 404);
+assert.equal((await handleVehicleReleaseActions(new Request(`https://internal/repos/sslnyx/qualitour-astro/actions/workflows/site-release.yml/runs?per_page=10&event=workflow_dispatch`), env, async () => new Response('{"workflow_runs":[]}', { headers: { 'Content-Type': 'application/json' } }))).status, 200);
+const recovery = '/repos/sslnyx/qualitour-astro/actions/workflows/site-release.yml/runs?event=workflow_dispatch&branch=main&created=%3E%3D2026-11-22T09%3A00%3A00.000Z&per_page=100';
+assert.equal((await handleVehicleReleaseActions(new Request('https://internal' + recovery), env, fetchImpl)).status, 204);
+assert.equal(calls.at(-1).url, 'https://api.github.com' + recovery);
+const jobs = '/repos/sslnyx/qualitour-astro/actions/runs/73/jobs?filter=latest&per_page=100';
+assert.equal((await handleVehicleReleaseActions(new Request('https://internal' + jobs), env, fetchImpl)).status, 204);
+assert.equal(calls.at(-1).url, 'https://api.github.com' + jobs);
+assert.equal((await handleVehicleReleaseActions(new Request(`https://internal/repos/sslnyx/qualitour-astro/actions/workflows/site-release.yml/dispatches`, { method: 'POST', body: '{"ref":"main","inputs":{"vehicle_release_id":"bad"}}' }), env, fetchImpl)).status, 400);
+console.log('vehicle release actions proxy passed');

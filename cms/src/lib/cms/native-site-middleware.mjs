@@ -5,6 +5,8 @@ import {getNativeSiteCatalogues,getNativeSiteCacheHint,getNativeTourDetail,setNa
 import {getGoogleReviews} from './native-site-api.mjs';
 import {resolveNativePageProps} from './native-site-page-props.mjs';
 import {nativeSiteRoute} from './native-site-policy.mjs';
+import { VEHICLE_WEBSITE_RELEASE_HEADER } from './vehicle-website-release.mjs';
+import { loadVehicleWebsiteRelease } from './vehicle-website-release.mjs';
 import {getImage} from 'astro:assets';
 /**
  * Astro loads the configured image service with a lazy import the first time any <Image> renders. In the Worker
@@ -30,6 +32,10 @@ export const onRequest=defineMiddleware(async(context,next)=>{
  const mode=getRequestContext();
  if(mode?.preview||mode?.editMode||context.url.searchParams.has('_preview')||context.url.searchParams.has('_edit'))return failure(404,'Page not found');
  try{
+  const vehicleReleaseRoute=route.pathname==='/private-transfers'||route.pathname==='/zh/private-transfers';
+  if(context.request.headers.has(VEHICLE_WEBSITE_RELEASE_HEADER)&&!vehicleReleaseRoute)return failure(404,'Page not found');
+  const vehicleWebsiteRelease=vehicleReleaseRoute?await loadVehicleWebsiteRelease(context.request,env):null;
+  if(vehicleWebsiteRelease)context.locals.qualitourVehicleWebsiteRelease=vehicleWebsiteRelease;
   const catalogues=await getNativeSiteCatalogues();
   let props={};
   if(!['home','simple','tours','featured'].includes(route.kind)){
@@ -42,7 +48,7 @@ export const onRequest=defineMiddleware(async(context,next)=>{
    }
   }
   context.locals.qualitourPageProps=props;
-  if(context.request.headers.has('Authorization')||context.request.headers.has('Cookie'))context.cache.set(false);
+  if(context.request.headers.has('Authorization')||context.request.headers.has('Cookie')||vehicleWebsiteRelease)context.cache.set(false);
   else {const hint=await getNativeSiteCacheHint();context.cache.set({...hint,tags:[...new Set(['tours',...(hint?.tags||[])])],maxAge:86400,swr:604800});}
   const response=await next();
   if(response.status!==200){context.cache.set(false);return response;}

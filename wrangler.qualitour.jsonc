@@ -153,6 +153,9 @@
       "cache": {
         "enabled": true
       }
+    },
+    "VehicleReleaseActions": {
+      "type": "worker"
     }
   },
   "images": {

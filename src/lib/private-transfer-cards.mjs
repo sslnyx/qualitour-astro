@@ -85,7 +85,7 @@ export function buildPrivateTransferCards({ models, lang, imageFor }) {
         label: model.name[language],
         capacity: suitableText(model.suitable.min, model.suitable.max, language),
         description: model.description[language],
-        image: imageFor(model.id),
+        image: imageFor(model.id, model),
     }));
 
     const text = CHARTER_TEXT[language];
@@ -99,7 +99,7 @@ export function buildPrivateTransferCards({ models, lang, imageFor }) {
             priceUnit: text.unit,
             bullets: [suitableText(model.suitable.min, model.suitable.max, language), text.minimum, text.area],
             ...(popular ? { popular: true } : {}),
-            image: imageFor(modelId),
+            image: imageFor(modelId, model),
         };
     });
 

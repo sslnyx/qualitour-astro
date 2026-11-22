@@ -29,6 +29,13 @@ export function getStaticPaths() {
 const { lang: langParam } = Astro.params;
 const lang: Locale = (langParam as Locale) || "en";
 const localePrefix = getLocalePrefix(lang as Locale);
+const vehicleWebsiteRelease = (Astro.locals as {
+    qualitourVehicleWebsiteRelease?: { id: string; revision: number; models: any[] };
+}).qualitourVehicleWebsiteRelease;
+if (vehicleWebsiteRelease) {
+    Astro.response.headers.set("X-Qualitour-Vehicle-Release", `${vehicleWebsiteRelease.id}; revision=${vehicleWebsiteRelease.revision}`);
+    Astro.response.headers.set("Cache-Control", "private, no-store");
+}
 
 // Fetch reviews
 let reviews: any[] = [];
@@ -195,7 +202,8 @@ const bundledPhotos: Record<string, ImageMetadata> = {
     "mercedes-12": sprinterStandardImg,
     "mercedes-16": sprinterDeluxeImg,
 };
-function imageFor(id: string): ImageMetadata | undefined {
+function imageFor(id: string, model?: { photo?: string | null }): ImageMetadata | string | undefined {
+    if (model?.photo) return model.photo;
     const exported = Object.entries(exportedPhotos).find(
         ([path]) => path.replace(/^.*\//, "").replace(/\.[^.]+$/, "") === id,
     );
@@ -203,7 +211,7 @@ function imageFor(id: string): ImageMetadata | undefined {
 }
 
 const { fleetItems, charterRates } = buildPrivateTransferCards({
-    models: vehicleModels.models,
+    models: vehicleWebsiteRelease?.models ?? vehicleModels.models,
     lang,
     imageFor,
 });
@@ -377,7 +385,7 @@ function extractPriceNumber(caption: string): string | null {
     </section>
 
     <!-- Fleet & Charter Services -->
-    <section id="charter" class="py-20 bg-gray-50 scroll-mt-20">
+    <section id="charter" class="py-20 bg-gray-50 scroll-mt-20" data-vehicle-website-release={vehicleWebsiteRelease?.id}>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <span
@@ -404,7 +412,13 @@ function extractPriceNumber(caption: string): string | null {
                                 </div>
                             )}
                             <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 p-6 flex items-center justify-center">
-                                {rate.image ? (
+                                {typeof rate.image === "string" ? (
+                                    <img
+                                        src={rate.image}
+                                        alt={rate.title}
+                                        class="max-w-full max-h-full object-contain"
+                                    />
+                                ) : rate.image ? (
                                     <Image
                                         src={rate.image}
                                         alt={rate.title}
@@ -458,7 +472,13 @@ function extractPriceNumber(caption: string): string | null {
                     fleetItems.map((item) => (
                         <div class="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                             <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 p-6 flex items-center justify-center">
-                                {item.image ? (
+                                {typeof item.image === "string" ? (
+                                    <img
+                                        src={item.image}
+                                        alt={item.label}
+                                        class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                                    />
+                                ) : item.image ? (
                                     <Image
                                         src={item.image}
                                         alt={item.label}

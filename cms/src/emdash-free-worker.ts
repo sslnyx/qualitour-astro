@@ -4,7 +4,10 @@ import { routeNativeBooking } from '../../src/server/native-booking/index.mjs';
 import { durableExecutionContext, fetchFreeRuntime } from './lib/cms/free-runtime.mjs';
 
 import {nativeSiteRoute} from './lib/cms/native-site-policy.mjs';
-import { siteGate } from './lib/cms/site-gate.mjs';
+import { hasSiteBuildKey, siteGate } from './lib/cms/site-gate.mjs';
+import { VEHICLE_WEBSITE_RELEASE_HEADER } from './lib/cms/vehicle-website-release.mjs';
+import { vehicleWebsiteReleasePhotoResponse, vehicleWebsiteReleaseReadyResponse } from './lib/cms/vehicle-website-release.mjs';
+import { handleVehicleReleaseActions } from './lib/cms/vehicle-release-actions.mjs';
 import { isNativeProofPath, validateProofTags, forwardNativeProof, privateProofResponse, withStaticFallback, immutableImageResponse, cachedMediaFileResponse } from './lib/cms/native-cache-policy.mjs';
 
 export { PluginBridge };
@@ -67,10 +70,24 @@ export class NativeProofCache extends WorkerEntrypoint<RuntimeEnv> {
   }
 }
 
+// This named entrypoint is callable only through a Cloudflare service binding. It is deliberately not routed by the
+// public fetch handler, so the CMS holds the GitHub token without exposing a generic GitHub proxy.
+export class VehicleReleaseActions extends WorkerEntrypoint<RuntimeEnv> {
+  async fetch(request: Request): Promise<Response> {
+    return handleVehicleReleaseActions(request, this.env);
+  }
+}
+
 export default {
   ...handler,
   async fetch(request: Request, env: RuntimeEnv, context: ExecutionContext) {
     const pathname = new URL(request.url).pathname;
+    if (/^\/_vehicle-release\/[0-9a-f-]{36}\/ready$/.test(pathname) && request.method === 'GET') {
+      return vehicleWebsiteReleaseReadyResponse(request, env, pathname);
+    }
+    if (pathname.startsWith('/_vehicle-release/') && ['GET', 'HEAD'].includes(request.method)) {
+      return vehicleWebsiteReleasePhotoResponse(request, env, pathname);
+    }
     // Public pages belong to the static Worker `qualitour-site`; only its build may render them here.
     const gated = siteGate(request, env as { SITE_BUILD_KEY?: string; PUBLIC_SITE_ORIGIN?: string });
     if (gated) return gated;
@@ -79,7 +96,8 @@ export default {
     }
     if (pathname.startsWith('/native-proof/') || nativeSiteRoute(pathname)) {
       const proof = (context.exports as { NativeProofCache: { fetch(request: Request): Promise<Response> } }).NativeProofCache;
-      const response = await forwardNativeProof(proof, request);
+      const vehicleSnapshot = Boolean(request.headers.get(VEHICLE_WEBSITE_RELEASE_HEADER)) && hasSiteBuildKey(request, env);
+      const response = await forwardNativeProof(proof, request, vehicleSnapshot);
       return withStaticFallback(request, response, env.ASSETS as { fetch(request: Request): Promise<Response> } | undefined);
     }
     if (pathname === '/_image' && request.method === 'GET') {

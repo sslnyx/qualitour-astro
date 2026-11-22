@@ -15,10 +15,12 @@ export function scopedCloudflareProvider(nativeProvider,purge){
 }
 
 const hasPrivateHeaders = request => request.headers.has('Authorization') || request.headers.has('Cookie');
-export function forwardNativeProof(entrypoint, request) {
+// `vehicleSnapshot` is computed by the outer Worker only after validating SITE_BUILD_KEY. It must not reuse or
+// populate the normal page cache, because that would let a selected snapshot leak into an ordinary site build.
+export function forwardNativeProof(entrypoint, request, vehicleSnapshot = false) {
  const url=new URL(request.url), visitor=nativeSiteRoute(url.pathname);
  if(visitor&&(url.searchParams.has('_preview')||url.searchParams.has('_edit')))return Promise.resolve(new Response('Page not found',{status:404,headers:{'Cache-Control':'private, no-store','X-Robots-Tag':'noindex, nofollow'}}));
- if(hasPrivateHeaders(request))return entrypoint.fetch(request,{cache:'no-store'});
+ if(hasPrivateHeaders(request)||vehicleSnapshot)return entrypoint.fetch(request,{cache:'no-store'});
  return visitor?entrypoint.fetch(request,{cf:{cacheKey:url.pathname}}):entrypoint.fetch(request);
 }
 export function privateProofResponse(request, response) {
