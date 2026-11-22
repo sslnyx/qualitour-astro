@@ -59,6 +59,8 @@ async function stillDispatching(env, releaseId) {
 }
 
 async function githubResponse(response) {
+  // Workers supports "manual" for stopping a redirect at the service boundary.
+  if (response.status >= 300 && response.status < 400) return new Response('Unexpected GitHub redirect', { status: 502, headers: noStore });
   if (response.status === 204) return new Response(null, { status: 204, headers: noStore });
   const body = await response.text();
   if (body.length > 1_000_000) return new Response('GitHub response too large', { status: 502, headers: noStore });
@@ -75,12 +77,12 @@ export async function handleVehicleReleaseActions(request, env, fetchImpl = fetc
     const body = await dispatchBody(request);
     if (!body) return reject(400);
     if (!await stillDispatching(env, body.inputs.vehicle_release_id)) return new Response('Release is no longer current', { status: 409, headers: noStore });
-    const response = await fetchImpl(`${API}${BASE}/dispatches`, { method: 'POST', headers: { ...actionHeaders(token), 'Content-Type': 'application/json' }, body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(10_000) });
+    const response = await fetchImpl(`${API}${BASE}/dispatches`, { method: 'POST', headers: { ...actionHeaders(token), 'Content-Type': 'application/json' }, body: JSON.stringify(body), redirect: 'manual', signal: AbortSignal.timeout(10_000) });
     return githubResponse(response);
   }
   if (request.method !== 'GET') return reject();
   const path = githubPath(url);
   if (!path) return reject();
-  const response = await fetchImpl(`${API}${path}`, { method: 'GET', headers: actionHeaders(token), redirect: 'error', signal: AbortSignal.timeout(10_000) });
+  const response = await fetchImpl(`${API}${path}`, { method: 'GET', headers: actionHeaders(token), redirect: 'manual', signal: AbortSignal.timeout(10_000) });
   return githubResponse(response);
 }

@@ -9,7 +9,8 @@ const dispatch = new Request(`https://internal/repos/sslnyx/qualitour-astro/acti
 assert.equal((await handleVehicleReleaseActions(dispatch, env, fetchImpl)).status, 204);
 assert.equal(calls[0].url, 'https://api.github.com/repos/sslnyx/qualitour-astro/actions/workflows/site-release.yml/dispatches');
 assert.equal(calls[0].init.headers.Authorization, 'Bearer secret');
-assert.equal(calls[0].init.redirect, 'error');
+assert.equal(calls[0].init.redirect, 'manual');
+assert.equal((await handleVehicleReleaseActions(new Request('https://internal/repos/sslnyx/qualitour-astro/actions/runs/73'), env, async () => Response.redirect('https://example.org'))).status, 502);
 assert.equal((await handleVehicleReleaseActions(new Request('https://internal/repos/other/actions/runs/1'), env, fetchImpl)).status, 404);
 assert.equal((await handleVehicleReleaseActions(new Request(`https://internal/repos/sslnyx/qualitour-astro/actions/workflows/site-release.yml/runs?per_page=10&event=workflow_dispatch`), env, async () => new Response('{"workflow_runs":[]}', { headers: { 'Content-Type': 'application/json' } }))).status, 200);
 const recovery = '/repos/sslnyx/qualitour-astro/actions/workflows/site-release.yml/runs?event=workflow_dispatch&branch=main&created=%3E%3D2026-11-22T09%3A00%3A00.000Z&per_page=100';
