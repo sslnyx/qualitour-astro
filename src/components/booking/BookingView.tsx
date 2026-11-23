@@ -25,6 +25,7 @@ const VANCOUVER_FORMATTER = new Intl.DateTimeFormat("en-CA", {
 });
 export const MIN_BOOKING_LEAD_MINUTES = 60;
 export const MAX_BOOKING_HORIZON_DAYS = 366;
+const AVAILABILITY_FRESH_MS = 30_000;
 
 export function leadLabel(minutes: number, lang: "zh" | "en") {
   if (minutes % 1440 === 0) {
@@ -245,6 +246,7 @@ export function BookingView(p: BookingViewProps) {
       key: string;
       status: "loading" | "ready" | "error";
       slots: Record<string, boolean>;
+      receivedAt?: number;
     }>({ key: "", status: "loading", slots: {} }),
     [timeCheck, setTimeCheck] = useState<"idle" | "checking" | "taken">("idle"),
     [customer, setCustomer] = useState<CustomerInput>({
@@ -418,7 +420,15 @@ export function BookingView(p: BookingViewProps) {
       key = availabilityKey;
     setAvailability({ key, status: "loading", slots: {} });
     loadAvailability(controller.signal)
-      .then((slots) => setAvailability({ key, status: "ready", slots }))
+      .then((slots) => {
+        if (!controller.signal.aborted)
+          setAvailability({
+            key,
+            status: "ready",
+            slots,
+            receivedAt: Date.now(),
+          });
+      })
       .catch(() => {
         if (!controller.signal.aborted)
           setAvailability({ key, status: "error", slots: {} });
@@ -451,9 +461,17 @@ export function BookingView(p: BookingViewProps) {
     }
     setTimeCheck("checking");
     try {
-      const slots = await loadAvailability();
+      const age = Date.now() - (availability.receivedAt ?? 0);
+      const fresh = availabilityReady && age >= 0 && age < AVAILABILITY_FRESH_MS;
+      const slots = fresh ? availability.slots : await loadAvailability();
       if (seq !== checkSeq.current) return;
-      setAvailability({ key: availabilityKey, status: "ready", slots });
+      if (!fresh)
+        setAvailability({
+          key: availabilityKey,
+          status: "ready",
+          slots,
+          receivedAt: Date.now(),
+        });
       if (slots[time] !== true) {
         setServiceTime("");
         setTimeCheck("taken");

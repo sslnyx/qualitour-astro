@@ -2,12 +2,12 @@
   "sourceRepository": "qualitour-ops",
   "baseCommit": "a66bac0",
   "buildCommand": "npm exec -- wrangler deploy --config wrangler.website.bundle.json --dry-run --minify --outdir .private/website-booking-staging/same-worker-bundle",
-  "bundleSha256": "bea2d5b9c2df2024ea7de4479135cf95192d5d792e04e66cd48caf9d75208a4b",
+  "bundleSha256": "1ab026f23163a095fb1aecd3b9d64f83787ecbba45b22b71667053781a7c04ba",
   "sourceHashes": {
     "src/booking/website-worker.ts": "8c422ede97a73bb08e5f2a0161a85ca2b4bc3ca84bbe082e85675fe9f2c59f3d",
     "src/booking/catalog.ts": "d2a413cbc022bdfa3d3190c71f25f593b7b9544e59b761ee8a49ecf29945b5d4",
     "src/booking/contracts.ts": "f2ddc4e922b8763b981e658def4ccc41a2294a65f1484e1b2c7247675bee4acd",
-    "src/booking/routes.ts": "49fefa3d144529da198cb937997e6108fbc5bfd567508729ab958304930e272e",
+    "src/booking/routes.ts": "bbb5b9a18db5d196916a706741098ab9cc6bf8314e53e309a891d897286f7980",
     "src/booking/payments.ts": "e9eaffb668bf30b2e70e42ee7b2209fbc798473ffea2395d5fe9a78865205f08",
     "src/booking/guest.ts": "19ce5cbdf4f7b8d800fd0703e4c0faf6799e79161c6b913f2ac5ddd9a1979085",
     "src/booking/reservations.ts": "a387abd33f10cbf30f5bdff5d1c216e110cea816764843c9fa3e8b8fb931d2b8",
@@ -34,6 +34,7 @@
   "sourceOverlay": [
     "src/booking/website-worker.ts",
     "src/booking/transfer-website-details.ts",
-    "src/booking/transfer-website-details-contract.ts"
+    "src/booking/transfer-website-details-contract.ts",
+    "src/booking/routes.ts"
   ]
 }
