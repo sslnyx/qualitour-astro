@@ -4,8 +4,8 @@ import {createNativeBookingRouter} from '../src/server/native-booking/router.mjs
 const origin='https://qualitour.qualitour.workers.dev';
 const req=path=>new Request(origin+path);
 test('customer APIs are intercepted while CMS and regular static routes fall through',async()=>{
- const route=createNativeBookingRouter({fetch:async(r,env)=>{assert.equal(new URL(r.url).pathname,'/api/transfer/catalog');assert.equal(env.TRANSFER_DB,'transfer-only');assert.equal(env.DB,undefined);return new Response('{"sandbox":true}')}});
- const env={TRANSFER_DB:'transfer-only',DB:'cms-database',TRANSFER_SANDBOX_KEY:'sk_test_fake'};
+ const route=createNativeBookingRouter({fetch:async(r,env)=>{assert.equal(new URL(r.url).pathname,'/api/transfer/catalog');assert.equal(env.TRANSFER_DB,'transfer-only');assert.equal(env.TRANSFER_CATALOGUE,'catalogue-bucket');assert.equal(env.DB,undefined);return new Response('{"sandbox":true}')}});
+ const env={TRANSFER_DB:'transfer-only',TRANSFER_CATALOGUE:'catalogue-bucket',DB:'cms-database',TRANSFER_SANDBOX_KEY:'sk_test_fake'};
  assert.equal(await route(req('/_emdash/admin'),env,{}),null);assert.equal(await route(req('/api/operations/orders'),env,{}),null);assert.equal(await route(req('/book'),env,{}),null);assert.equal(await (await route(req('/api/transfer/catalog'),env,{})).text(),'{"sandbox":true}');
 });
 test('deep links keep language shell and original URL while using pretty static asset paths',async()=>{

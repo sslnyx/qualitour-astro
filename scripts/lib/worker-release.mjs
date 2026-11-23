@@ -5,7 +5,7 @@ export const ACCOUNT_ID='ca4d347f96116e87e8f5dbd6c62f0b30';
 export function assertWorkerBindings(config){
  assert.equal(config.name,'qualitour');assert.equal(config.account_id,ACCOUNT_ID);
  assert.deepEqual(config.d1_databases.map(x=>[x.binding,x.database_id]),[['DB','cf36703e-a507-4810-b865-9cd57f6681a8'],['TRANSFER_DB','f8cb062c-16b1-4f44-992f-8563b71ced20']]);
- assert.deepEqual(config.r2_buckets.map(x=>[x.binding,x.bucket_name]),[['MEDIA','qualitour-cms-free-test-media']]);
+ assert.deepEqual(config.r2_buckets.map(x=>[x.binding,x.bucket_name]),[['MEDIA','qualitour-cms-free-test-media'],['TRANSFER_CATALOGUE','qualitour-transfer-catalogue-staging']]);
  assert.deepEqual(config.kv_namespaces.map(x=>[x.binding,x.id]),[['SESSION','71990ee89fd4417a9046aacbbdb88fa4']]);
  assert.deepEqual(config.durable_objects.bindings,[{name:'CMS_RUNTIME',class_name:'QualitourCmsRuntime'}]);
  assert.equal(config.vars.EMDASH_CMS_EXECUTION,'durable');

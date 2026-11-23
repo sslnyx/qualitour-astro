@@ -42,6 +42,10 @@
     {
       "binding": "MEDIA",
       "bucket_name": "qualitour-cms-free-test-media"
+    },
+    {
+      "binding": "TRANSFER_CATALOGUE",
+      "bucket_name": "qualitour-transfer-catalogue-staging"
     }
   ],
   "kv_namespaces": [

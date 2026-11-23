@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { bookingApi, ApiError } from "../../lib/booking/api";
 import { bookingMessage } from "../../lib/booking/errors";
 import { settleAbortable } from "../../lib/booking/request";
+import { pollPendingPayment } from "../../lib/booking/payment-status-poll";
 import type {
   AvailabilityResult,
   BookingQuote,
@@ -58,6 +59,11 @@ export default function BookingExperience({
     id?: string;
   }>({});
   const reservationKey = useRef(crypto.randomUUID());
+  const bookingRequest = useRef<{
+    id: string;
+    controller: AbortController;
+    result: Promise<boolean>;
+  }>(undefined);
   const requestedProductId = productId ?? queryProductId;
   const selectedProductId =
     requestedProductId &&
@@ -137,20 +143,33 @@ export default function BookingExperience({
     }
   }, []);
 
-  const loadBooking = useCallback(async () => {
-    if (!routeState.id) return;
+  const loadBooking = useCallback(() => {
+    const id = routeState.id;
+    if (!id) return Promise.resolve(false);
+    if (bookingRequest.current?.id === id) return bookingRequest.current.result;
+    bookingRequest.current?.controller.abort();
+    const controller = new AbortController();
     setBookingLoading(true);
     setError(undefined);
-    try {
-      const next = await bookingApi<GuestBooking>(
-        `bookings/${encodeURIComponent(routeState.id)}`,
-      );
+    const result = bookingApi<GuestBooking>(
+      `bookings/${encodeURIComponent(id)}`,
+      undefined,
+      controller.signal,
+    ).then((next) => {
+      if (controller.signal.aborted) return false;
       setBooking(next);
-    } catch (nextError) {
-      setError(nextError);
-    } finally {
-      setBookingLoading(false);
-    }
+      return next.status === "pending";
+    }).catch((nextError) => {
+      if (!controller.signal.aborted) setError(nextError);
+      return false;
+    }).finally(() => {
+      if (bookingRequest.current?.controller === controller) {
+        bookingRequest.current = undefined;
+        setBookingLoading(false);
+      }
+    });
+    bookingRequest.current = { id, controller, result };
+    return result;
   }, [routeState.id]);
 
   useEffect(() => {
@@ -181,7 +200,7 @@ export default function BookingExperience({
   }, [locationReady, recover, routeState.id]);
 
   useEffect(() => {
-    if (!routeState.id) return;
+    if (!routeState.id || routeState.view === "claim") return;
     if (routeState.view === "receipt") {
       setBookingLoading(true);
       setError(undefined);
@@ -194,13 +213,23 @@ export default function BookingExperience({
       return;
     }
     void loadBooking();
+    return () => {
+      const current = bookingRequest.current;
+      if (current && current.id === routeState.id) {
+        current.controller.abort();
+        bookingRequest.current = undefined;
+      }
+    };
   }, [loadBooking, routeState.id, routeState.view]);
 
+  const pendingPayment =
+    booking?.id === routeState.id &&
+    booking?.status === "pending" &&
+    routeState.view !== "receipt" &&
+    routeState.view !== "claim";
   useEffect(() => {
-    if (!routeState.id || booking?.status !== "pending") return;
-    const timer = window.setInterval(() => void loadBooking(), 5000);
-    return () => window.clearInterval(timer);
-  }, [booking?.status, loadBooking, routeState.id]);
+    if (pendingPayment) return pollPendingPayment(loadBooking);
+  }, [pendingPayment, loadBooking]);
 
   const navigate = (url: string) => {
     window.location.assign(url);
@@ -287,12 +316,12 @@ export default function BookingExperience({
     setBusy(true);
     setError(undefined);
     try {
-      setBooking(
-        await bookingApi<GuestBooking>(
-          `bookings/${encodeURIComponent(routeState.id)}/cancel`,
-          {},
-        ),
+      const cancelled = await bookingApi<GuestBooking>(
+        `bookings/${encodeURIComponent(routeState.id)}/cancel`,
+        {},
       );
+      bookingRequest.current?.controller.abort();
+      setBooking(cancelled);
       void recover();
     } catch (nextError) {
       setError(nextError);
