@@ -12,11 +12,7 @@ import { Image } from "astro:assets";
 import skiShuttleImg from "../../assets/images/ski-shuttle.jpg";
 import vehicleModels from "../../data/vehicle-models.json";
 import { buildPrivateTransferCards } from "../../lib/private-transfer-cards.mjs";
-
-// Local fleet images
-import siennaImg from "../../assets/images/fleet/sienna.png";
-import sprinterStandardImg from "../../assets/images/fleet/sprinter-standard.png";
-import sprinterDeluxeImg from "../../assets/images/fleet/sprinter-deluxe.png";
+import { vehicleModelImage } from "../../lib/vehicle-model-images";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -181,28 +177,10 @@ const whyUsItems = [
     },
 ];
 
-// Fleet and charter cards come from the vehicle models exported by the ops app. A model's exported photo wins;
-// otherwise the bundled picture below, and a model with neither renders its card with a plain placeholder.
-const exportedPhotos = import.meta.glob<{ default: ImageMetadata }>(
-    "/src/assets/images/fleet/models/*.{webp,png,jpg}",
-    { eager: true },
-);
-const bundledPhotos: Record<string, ImageMetadata> = {
-    "sienna-7": siennaImg,
-    "mercedes-12": sprinterStandardImg,
-    "mercedes-16": sprinterDeluxeImg,
-};
-function imageFor(id: string): ImageMetadata | undefined {
-    const exported = Object.entries(exportedPhotos).find(
-        ([path]) => path.replace(/^.*\//, "").replace(/\.[^.]+$/, "") === id,
-    );
-    return exported?.[1].default ?? bundledPhotos[id];
-}
-
 const { fleetItems, charterRates } = buildPrivateTransferCards({
     models: vehicleWebsiteRelease?.models ?? vehicleModels.models,
     lang,
-    imageFor,
+    imageFor: vehicleModelImage,
 });
 
 const faqItems = [
@@ -364,7 +342,7 @@ const faqItems = [
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <span
-                    class="text-[#f7941e] font-bold tracking-widest uppercase text-sm mb-2 block"
+                    class="section-label mb-2 block font-bold uppercase text-[#f7941e]"
                     >{t.ourFleet}</span
                 >
                 <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -522,7 +500,7 @@ const faqItems = [
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <span
-                    class="text-[#f7941e] font-bold tracking-widest uppercase text-sm mb-2 block"
+                    class="section-label mb-2 block font-bold uppercase text-[#f7941e]"
                     >FAQ</span
                 >
                 <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">

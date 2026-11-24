@@ -17,7 +17,7 @@ import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { dirname, join, resolve } from 'node:path';
 import { transferProductPages } from '../src/lib/transfer-products.ts';
-import { nativeSiteRoute } from '../cms/src/lib/cms/native-site-policy.mjs';
+import { nativeSiteRoute, vehicleWebsiteReleasePaths } from '../cms/src/lib/cms/native-site-policy.mjs';
 import { syncCmsSnapshot } from '../src/lib/cms/content-server.mjs';
 import { createCmsReader } from '../src/lib/cms/read-client.mjs';
 import { refPattern } from './lib/image-ref-pattern.mjs';
@@ -35,7 +35,6 @@ const baseAssets = resolve(process.env.SITE_BASE_ASSETS || '.astro/worker-releas
 const outDir = resolve(process.env.SITE_OUT_DIR || '.astro/site-release/assets');
 const concurrency = Number(process.env.SITE_CRAWL_CONCURRENCY || 6);
 const publicOrigin = process.env.SITE_PUBLIC_ORIGIN || cmsOrigin;
-const vehicleReleasePages = new Set(['/private-transfers', '/zh/private-transfers']);
 const fixedCmsOrigin = 'https://qualitour.qualitour.workers.dev';
 
 async function preservedVehicleReleaseId() {
@@ -106,7 +105,7 @@ async function crawlAll() {
     queued.add(key); queue.push(key);
   };
   const fetchHtml = path => readForRelease(path, async () => {
-    const selectedVehicleRelease = vehicleWebsiteReleaseId && vehicleReleasePages.has(path);
+    const selectedVehicleRelease = vehicleWebsiteReleaseId && vehicleWebsiteReleasePaths.has(path);
     const response = await fetch(new URL(path, cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0', accept: 'text/html', ...(process.env.SITE_BUILD_KEY ? { 'x-qualitour-site-build': process.env.SITE_BUILD_KEY } : {}), ...(selectedVehicleRelease ? { 'x-qualitour-vehicle-release': vehicleWebsiteReleaseId } : {}) }, redirect: 'manual', signal: AbortSignal.timeout(45000) });
     if (response.status !== 200) { failures.push(`${response.status} ${path}`); return null; }
     if (!(response.headers.get('content-type') || '').includes('text/html')) { failures.push(`not html ${path}`); return null; }
@@ -160,7 +159,7 @@ if (verdict.hard.length) { console.error('Site build failed:\n' + verdict.hard.j
 if (!pages.has('/') || !pages.has('/zh') || !pages.has('/booking-status') || !pages.has('/zh/booking-status')) { console.error('Site build failed: home or booking status pages missing'); process.exit(1); }
 if (vehicleWebsiteReleaseId) {
   const expectedMarker = markerForVehicleRelease(vehicleWebsiteReleaseId);
-  const markerFailures = [...vehicleReleasePages].filter(path => !pages.get(path)?.includes(expectedMarker));
+  const markerFailures = [...vehicleWebsiteReleasePaths].filter(path => !pages.get(path)?.includes(expectedMarker));
   if (markerFailures.length) throw new Error(`Vehicle website release marker mismatch: ${markerFailures.join(', ')}`);
 }
 
@@ -312,7 +311,7 @@ if (mediaFailed.length) console.log('CMS media kept as media paths:\n' + mediaFa
 // The public static Worker therefore never needs the CMS's build credential to show a vehicle image.
 const vehicleReleasePhotoFailures = [];
 if (vehicleWebsiteReleaseId) {
-  const photos = new Set([...vehicleReleasePages].flatMap(path => vehicleReleasePhotoPaths(pages.get(path) || '', vehicleWebsiteReleaseId)));
+  const photos = new Set([...vehicleWebsiteReleasePaths].flatMap(path => vehicleReleasePhotoPaths(pages.get(path) || '', vehicleWebsiteReleaseId)));
   for (const path of photos) {
     try {
       const response = await fetch(new URL(path, cmsOrigin), { headers: { 'user-agent': 'qualitour-site-build/1.0', ...(process.env.SITE_BUILD_KEY ? { 'x-qualitour-site-build': process.env.SITE_BUILD_KEY } : {}) }, redirect: 'error', signal: AbortSignal.timeout(45000) });

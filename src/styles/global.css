@@ -193,6 +193,10 @@ html {
 /* Utilities */
 @layer utilities {
 
+    .section-label {
+        @apply text-xl leading-tight tracking-wide md:text-2xl md:leading-tight;
+    }
+
     /* Container */
     .container-qualitour {
         @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;

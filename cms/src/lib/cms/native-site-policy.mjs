@@ -1,6 +1,10 @@
-import {transferProductBySlug} from '../../../../src/lib/transfer-products.ts';
+import {transferProductBySlug,transferProductPages} from '../../../../src/lib/transfer-products.ts';
 const simplePages=['about-us','contact','faq','privacy-policy','terms','visa','reviews','private-transfers'];
 const categories=new Set(['style','destination']);
+export const vehicleWebsiteReleasePaths=new Set(['','/zh'].flatMap(prefix=>[
+ `${prefix}/private-transfers`,
+ ...transferProductPages.map(({slug})=>`${prefix}/private-transfers/${slug}`),
+]));
 const safeSegment=value=>{try{const d=decodeURIComponent(value);return d&&d!=='.'&&d!=='..'&&!/[\\/\u0000-\u001f\u007f]/.test(d)?d:null;}catch{return null;}};
 /** Only existing public HTML routes. API/admin/assets and transactional booking are separate. */
 export function nativeSiteRoute(pathname){

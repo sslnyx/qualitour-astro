@@ -4,7 +4,7 @@ import {env} from 'cloudflare:workers';
 import {getNativeSiteCatalogues,getNativeSiteCacheHint,getNativeTourDetail,setNativeSnapshotKv} from './native-site-data.mjs';
 import {getGoogleReviews} from './native-site-api.mjs';
 import {resolveNativePageProps} from './native-site-page-props.mjs';
-import {nativeSiteRoute} from './native-site-policy.mjs';
+import {nativeSiteRoute,vehicleWebsiteReleasePaths} from './native-site-policy.mjs';
 import { VEHICLE_WEBSITE_RELEASE_HEADER } from './vehicle-website-release.mjs';
 import { loadVehicleWebsiteRelease } from './vehicle-website-release.mjs';
 import {getImage} from 'astro:assets';
@@ -34,7 +34,7 @@ export const onRequest=defineMiddleware(async(context,next)=>{
  const mode=getRequestContext();
  if(mode?.preview||mode?.editMode||context.url.searchParams.has('_preview')||context.url.searchParams.has('_edit'))return failure(404,'Page not found');
  try{
-  const vehicleReleaseRoute=route.pathname==='/private-transfers'||route.pathname==='/zh/private-transfers';
+  const vehicleReleaseRoute=vehicleWebsiteReleasePaths.has(route.pathname);
   if(context.request.headers.has(VEHICLE_WEBSITE_RELEASE_HEADER)&&!vehicleReleaseRoute)return failure(404,'Page not found');
   const vehicleWebsiteRelease=vehicleReleaseRoute?await loadVehicleWebsiteRelease(context.request,env):null;
   if(vehicleWebsiteRelease)context.locals.qualitourVehicleWebsiteRelease=vehicleWebsiteRelease;

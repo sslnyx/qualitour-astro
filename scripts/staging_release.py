@@ -19,6 +19,9 @@ from datetime import timezone
 
 SITE = 'https://qualitour.ca/staging'
 MANIFEST = 'qualitour-release.json'
+HOMEPAGE_TRANSFER_LIMIT = json.loads(
+    (Path(__file__).resolve().parents[1] / 'src/data/homepage-transfers.json').read_text()
+)['routeLimit']
 
 
 def digest(data):
@@ -213,7 +216,7 @@ def validate_shared_transfers(snapshot, detail_routes, home_routes):
                 raise ValueError('Transfer snapshot activity mapping changed')
             if any(v.get('currency') != snapshot['currency'] or v.get('priceDate') != snapshot['priceDate'] for v in vehicles):
                 raise ValueError('Transfer snapshot price metadata inconsistent')
-    if detail_routes != routes or home_routes != routes[:3]:
+    if detail_routes != routes or home_routes != routes[:HOMEPAGE_TRANSFER_LIMIT]:
         raise ValueError('Shared transfer pages differ from published JSON snapshot')
 
 

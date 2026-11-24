@@ -12,7 +12,7 @@ from urllib.parse import quote, unquote, urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from seo_check import SeoDocument, validate_alternates
-from staging_release import island_props, validate_transfer_product_pages
+from staging_release import HOMEPAGE_TRANSFER_LIMIT, island_props, validate_transfer_product_pages
 
 
 ORIGIN = "https://staging.qualitour-astro.pages.dev"
@@ -286,7 +286,7 @@ def validate_transfers(root):
         validate_transfer_product_pages(root, snapshot, prefix)
         detail = island_props((root / (prefix + "private-transfers.html")).read_text(), "TransferRoutesGrid").get("routes")
         home = island_props((root / ("zh.html" if language == "zh" else "index.html")).read_text(), "TransferRoutesGrid").get("routes")
-        if detail != routes or home != routes[:3]:
+        if detail != routes or home != routes[:HOMEPAGE_TRANSFER_LIMIT]:
             raise ValueError(f"Shared {language} transfer routes differ from published JSON")
 
 

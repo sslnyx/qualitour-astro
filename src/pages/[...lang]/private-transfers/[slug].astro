@@ -6,9 +6,12 @@ import BookingExperience from "../../../components/booking/BookingExperience";
 import { productEntryForTransferCard } from "../../../lib/booking/contracts";
 import { resolveTransferWebsiteDetails } from "../../../lib/booking/transfer-website-details";
 import { localizedLocation } from "../../../lib/transfer-locations";
+import { buildBookingVehicleDetails } from "../../../lib/private-transfer-cards.mjs";
+import { vehicleModelImage } from "../../../lib/vehicle-model-images";
 import { transferProductBySlug, transferProductPages, type TransferProduct } from "../../../lib/transfer-products";
 import { transferRouteCover, type TransferCover } from "../../../lib/transfer-covers";
 import fleetImage from "../../../assets/images/fleet/charter-package.jpg";
+import vehicleModels from "../../../data/vehicle-models.json";
 
 export function getStaticPaths() {
   return [undefined, "zh"].flatMap(lang =>
@@ -39,8 +42,23 @@ const defaultDirection = sharedDestination ? product : defaultEntry ?? product;
 const from = localizedLocation(defaultDirection.from, lang);
 const to = localizedLocation(defaultDirection.to, lang);
 const hasVariants = product.variants.length > 1;
+const vehicleWebsiteRelease = (Astro.locals as {
+  qualitourVehicleWebsiteRelease?: { id: string; revision: number; models: unknown[] };
+}).qualitourVehicleWebsiteRelease;
+if (vehicleWebsiteRelease) {
+  Astro.response.headers.set("X-Qualitour-Vehicle-Release", `${vehicleWebsiteRelease.id}; revision=${vehicleWebsiteRelease.revision}`);
+  Astro.response.headers.set("Cache-Control", "private, no-store");
+}
+const vehicleDetails = buildBookingVehicleDetails({
+  models: vehicleWebsiteRelease?.models ?? vehicleModels.models,
+  lang,
+  imageFor: vehicleModelImage,
+});
 const options = product.variants.map(variant => ({
-  productId: variant.productId, seater: variant.seater, referencePrice: referencePrice(variant),
+  productId: variant.productId,
+  seater: variant.seater,
+  referencePrice: referencePrice(variant),
+  details: vehicleDetails[variant.seater],
 }));
 const cheapest = product.variants.filter(variant => referencePrice(variant))
   .reduce<TransferProduct | undefined>((min, variant) => !min || Number(variant.price) < Number(min.price) ? variant : min, undefined);
@@ -105,6 +123,7 @@ const description = details.description !== defaults.description ? details.descr
 
 <Layout title={`${routeTitle} · ${vehicle} | Qualitour`} description={intro} lang={lang} alternates={alternates}>
   <div class="transfer-detail bg-[#f8f8f7] text-gray-900" data-transfer-detail={product.activityId}
+    data-vehicle-website-release={vehicleWebsiteRelease?.id}
     data-transfer-title={routeTitle} data-transfer-defaults={JSON.stringify(product.details)} data-transfer-lang={lang}
     data-transfer-card-entries={JSON.stringify(cardEntries)} data-transfer-list-href={listHref}
     data-transfer-home-href={localePrefix || "/"}

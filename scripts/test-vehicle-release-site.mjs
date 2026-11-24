@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
+import { vehicleWebsiteReleasePaths } from '../cms/src/lib/cms/native-site-policy.mjs';
 import { markerForVehicleRelease, vehicleReleaseId, vehicleReleaseIdFromManifest, vehicleReleasePhotoPaths } from './lib/vehicle-release-site.mjs';
 
 const id = '2f5c2d8e-8afd-4e4b-923b-208398d96049';
+assert.ok(vehicleWebsiteReleasePaths.has('/private-transfers'));
+assert.ok(vehicleWebsiteReleasePaths.has('/zh/private-transfers'));
+assert.ok(vehicleWebsiteReleasePaths.has('/private-transfers/yvr-to-whistler'));
+assert.ok(vehicleWebsiteReleasePaths.has('/zh/private-transfers/whistler-to-vancouver-yvr'));
+assert.ok(!vehicleWebsiteReleasePaths.has('/zh/booking-status'));
+assert.ok(!vehicleWebsiteReleasePaths.has('/zh/private-transfers/missing'));
 assert.equal(vehicleReleaseId(id), id);
 assert.equal(vehicleReleaseId(''), null);
 assert.throws(() => vehicleReleaseId('UPPERCASE'));

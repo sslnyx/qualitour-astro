@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import TransferRouteCard from "./TransferRouteCard";
 import type { TransferRoute } from "../lib/zaui/zaui";
 import type { DirectionalTransferCovers } from "../lib/transfer-covers";
@@ -39,23 +40,110 @@ interface Props {
   groupByDestination?: boolean;
 }
 
+function TransferRoutesCarousel({ children, lang }: { children: ReactNode; lang: Props["lang"] }) {
+  const track = useRef<HTMLUListElement>(null);
+  const [canScrollBack, setCanScrollBack] = useState(false);
+  const [canScrollForward, setCanScrollForward] = useState(false);
+  const trackId = "home-transfer-routes";
+  const zh = lang === "zh";
+
+  useEffect(() => {
+    const element = track.current;
+    if (!element) return;
+
+    const updateControls = () => {
+      setCanScrollBack(element.scrollLeft > 1);
+      setCanScrollForward(element.scrollWidth - element.clientWidth - element.scrollLeft > 1);
+    };
+    const observer = new ResizeObserver(updateControls);
+    observer.observe(element);
+    element.addEventListener("scroll", updateControls, { passive: true });
+    updateControls();
+
+    return () => {
+      observer.disconnect();
+      element.removeEventListener("scroll", updateControls);
+    };
+  }, []);
+
+  const scrollOneCard = (direction: -1 | 1) => {
+    const element = track.current;
+    if (!element || (direction === -1 ? !canScrollBack : !canScrollForward)) return;
+
+    const [first, second] = element.children;
+    const step = second.getBoundingClientRect().left - first.getBoundingClientRect().left;
+    element.scrollBy({ left: direction * step });
+  };
+
+  const buttonStyle = "inline-flex size-11 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-800 hover:border-orange-600 hover:text-orange-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700 aria-disabled:cursor-default aria-disabled:opacity-40 aria-disabled:hover:border-gray-300 aria-disabled:hover:text-gray-800";
+
+  return (
+    <>
+      <div className={`mb-2 flex justify-end gap-2 ${canScrollBack || canScrollForward ? "" : "invisible"}`}>
+        <button
+          type="button"
+          aria-controls={trackId}
+          aria-label={zh ? "上一條接送路線" : "Previous transfer route"}
+          aria-disabled={!canScrollBack}
+          className={buttonStyle}
+          onClick={() => scrollOneCard(-1)}
+        >
+          <span className="material-icons" aria-hidden="true">chevron_left</span>
+        </button>
+        <button
+          type="button"
+          aria-controls={trackId}
+          aria-label={zh ? "下一條接送路線" : "Next transfer route"}
+          aria-disabled={!canScrollForward}
+          className={buttonStyle}
+          onClick={() => scrollOneCard(1)}
+        >
+          <span className="material-icons" aria-hidden="true">chevron_right</span>
+        </button>
+      </div>
+      <ul
+        id={trackId}
+        ref={track}
+        aria-label={zh ? "私人接送路線" : "Private transfer routes"}
+        tabIndex={0}
+        className="-mx-1 grid snap-x snap-mandatory auto-cols-[88%] grid-flow-col gap-4 overflow-x-auto overscroll-x-contain scroll-px-1 scroll-smooth px-1 pt-8 pb-4 focus-visible:outline-2 focus-visible:outline-orange-700 motion-reduce:scroll-auto sm:auto-cols-[calc((100%-1.5rem)/2)] sm:gap-6 lg:auto-cols-[calc((100%-3rem)/3)]"
+      >
+        {children}
+      </ul>
+    </>
+  );
+}
+
 export default function TransferRoutesGrid({ routes, lang, hrefs, covers, groupByDestination }: Props) {
+  const renderCard = (route: TransferRoute) => (
+    <TransferRouteCard
+      key={route.id}
+      route={route}
+      lang={lang}
+      hrefs={hrefs}
+      cover={covers?.[route.id]}
+      source={groupByDestination ? undefined : "home"}
+    />
+  );
   const renderCards = (items: TransferRoute[]) => (
     <div className="grid grid-cols-1 gap-x-6 gap-y-10 pt-6 md:grid-cols-2 lg:grid-cols-3">
-      {items.map(route => (
-        <TransferRouteCard
-          key={route.id}
-          route={route}
-          lang={lang}
-          hrefs={hrefs}
-          cover={covers?.[route.id]}
-          source={groupByDestination ? undefined : "home"}
-        />
-      ))}
+      {items.map(renderCard)}
     </div>
   );
 
-  if (!groupByDestination) return renderCards(routes);
+  if (!groupByDestination) {
+    if (routes.length < 2) return renderCards(routes);
+
+    return (
+      <TransferRoutesCarousel lang={lang}>
+        {routes.map(route => (
+          <li key={route.id} className="min-w-0 snap-start [&>article]:h-full">
+            {renderCard(route)}
+          </li>
+        ))}
+      </TransferRoutesCarousel>
+    );
+  }
 
   const groups = categories
     .map(category => ({

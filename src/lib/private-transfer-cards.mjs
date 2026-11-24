@@ -37,6 +37,9 @@ const CHARTER_CARDS = [
     { modelId: 'mercedes-16', price: '110', popular: true },
 ];
 
+// Booking capacity and the physical vehicle's seat count are separate.
+const BOOKING_MODEL_IDS = { 11: 'mercedes-12', 14: 'mercedes-16' };
+
 const CHARTER_TEXT = {
     en: { unit: '/ Hr', minimum: 'Min. 2.5 hours', area: 'Within Greater Vancouver only' },
     zh: { unit: '/ 小時', minimum: '最少 2.5 小時', area: '僅限大溫哥華地區' },
@@ -76,17 +79,32 @@ function usableModels(models) {
     });
 }
 
+const modelImage = (model, imageFor) => typeof model.photo === 'string' ? model.photo : imageFor(model.id);
+
+export function buildBookingVehicleDetails({ models, lang, imageFor }) {
+    const usable = usableModels(models);
+    return Object.fromEntries(Object.entries(BOOKING_MODEL_IDS).flatMap(([capacity, modelId]) => {
+        const model = usable.find((item) => item.id === modelId);
+        if (!model) return [];
+        const image = modelImage(model, imageFor);
+        return [[capacity, {
+            name: model.name[lang],
+            description: model.description[lang],
+            imageSrc: typeof image === 'string' ? image : image?.src,
+        }]];
+    }));
+}
+
 export function buildPrivateTransferCards({ models, lang, imageFor }) {
     const language = lang === 'zh' ? 'zh' : 'en';
     const usable = usableModels(models);
-    const modelImage = (model) => typeof model.photo === 'string' ? model.photo : imageFor(model.id);
 
     const fleetItems = usable.map((model) => ({
         id: model.id,
         label: model.name[language],
         capacity: suitableText(model.suitable.min, model.suitable.max, language),
         description: model.description[language],
-        image: modelImage(model),
+        image: modelImage(model, imageFor),
     }));
 
     const text = CHARTER_TEXT[language];
@@ -100,7 +118,7 @@ export function buildPrivateTransferCards({ models, lang, imageFor }) {
             priceUnit: text.unit,
             bullets: [suitableText(model.suitable.min, model.suitable.max, language), text.minimum, text.area],
             ...(popular ? { popular: true } : {}),
-            image: modelImage(model),
+            image: modelImage(model, imageFor),
         };
     });
 

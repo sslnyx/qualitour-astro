@@ -16,6 +16,7 @@ import { transferRouteCardLinks } from "../../lib/transfer-products";
 import { transferListingCovers } from "../../lib/transfer-covers";
 import FeaturedToursHero, { type HomeHeroBackground } from "../../components/FeaturedToursHero";
 import homeHeroBackgrounds from "../../data/home-hero-backgrounds.json";
+import homepageTransfers from "../../data/homepage-transfers.json";
 
 // Generate paths for both locales
 export function getStaticPaths() {
@@ -37,8 +38,7 @@ const [rawTours, catalogue, reviews, transferRoutes] = await Promise.all([
   getPrivateTransfersWithPricing(),
 ]);
 
-// Use top 3 transfer routes for homepage
-const featuredTransfers = transferRoutes.slice(0, 3);
+const featuredTransfers = transferRoutes.slice(0, homepageTransfers.routeLimit);
 
 // Keep the latest six published tours for the hero, with a shorter featured preview below it.
 const featuredTours = rawTours.slice(0, 6);
@@ -195,7 +195,7 @@ const whyUsItems = [
   <!-- Private Transfers Section -->
   <section id="home-private-transfers" aria-labelledby="home-private-transfers-heading" class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-16">
+      <div class="mb-4 text-center">
         <h2 id="home-private-transfers-heading" class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
           {t.privateTransfers}
         </h2>
@@ -238,7 +238,7 @@ const whyUsItems = [
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-12">
         <span
-          class="text-orange-500 font-bold tracking-widest uppercase text-sm mb-2 block"
+          class="section-label mb-2 block font-bold uppercase text-orange-500"
         >
           {t.testimonials}
         </span>

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { buildPrivateTransferCards, suitableText } from '../src/lib/private-transfer-cards.mjs';
+import { buildBookingVehicleDetails, buildPrivateTransferCards, suitableText } from '../src/lib/private-transfer-cards.mjs';
 
 const model = (id, en, zh, min, max, dEn, dZh) => ({
     id,
@@ -16,6 +16,23 @@ const sienna = model('sienna-7', 'Sienna', '豐田', 1, 4, 'Small groups', '小�
 const m12 = model('mercedes-12', 'Benz 12', '賓士 12', 6, 10, 'Luggage', '行李');
 const m16 = model('mercedes-16', 'Benz 16', '賓士 16', 6, 13, 'Large groups', '大團體');
 const imageFor = (id) => `image:${id}`;
+
+test('booking details match each passenger option to its published vehicle model', () => {
+    const photo = '/_vehicle-release/d625d585-cb19-4925-84fb-dc85b8310109/mercedes-16.webp';
+    const models = [
+        { ...m16, description: { en: 'Published luggage notes', zh: '已發布的行李說明' }, photo },
+        sienna,
+        m12,
+    ];
+
+    assert.deepEqual(buildBookingVehicleDetails({ models, lang: 'zh', imageFor }), {
+        11: { name: '賓士 12', description: '行李', imageSrc: 'image:mercedes-12' },
+        14: { name: '賓士 16', description: '已發布的行李說明', imageSrc: photo },
+    });
+    assert.deepEqual(buildBookingVehicleDetails({ models: [m16, sienna], lang: 'en', imageFor }), {
+        14: { name: 'Benz 16', description: 'Large groups', imageSrc: 'image:mercedes-16' },
+    });
+});
 
 test('suitableText uses the website sentences', () => {
     assert.equal(suitableText(1, 4, 'en'), 'Suitable for 1-4 passengers');

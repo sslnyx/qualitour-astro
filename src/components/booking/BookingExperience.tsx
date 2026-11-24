@@ -22,7 +22,12 @@ import "./booking.css";
 type Props = {
   lang: "en" | "zh";
   productId?: string;
-  variants?: { productId: string; seater: "11" | "14"; referencePrice?: string }[];
+  variants?: {
+    productId: string;
+    seater: "11" | "14";
+    referencePrice?: string;
+    details?: { name: string; description: string; imageSrc?: string };
+  }[];
   journey?: BookingJourney & {
     entries: Record<string, Pick<BookingJourney, "title" | "pickup" | "intendedDropoff" | "productEntry">>;
   };
@@ -108,19 +113,18 @@ export default function BookingExperience({
   const rates = productCatalog?.rates.filter(rate => rate.routeId === requestedRoute?.id);
   const singleRate = rates?.length === 1 ? rates[0] : undefined;
   const unavailable = Boolean(productId && productCatalog && !rates?.length);
+  const selectedVariant = variants?.find((variant) => variant.productId === productId);
+  const vehicleDetails = selectedVariant?.details;
   const journeyContext = useMemo(() => {
-    const currentVariant = variants?.find(
-      (variant) => variant.productId === productId,
-    );
     const context = entryJourney(journey);
     return context
       ? {
           ...context,
-          seater: currentVariant?.seater ?? context.seater,
-          referencePrice: currentVariant ? currentVariant.referencePrice : context.referencePrice,
+          seater: selectedVariant?.seater ?? context.seater,
+          referencePrice: selectedVariant ? selectedVariant.referencePrice : context.referencePrice,
         }
       : undefined;
-  }, [journey, productId, variants]);
+  }, [journey, selectedVariant]);
 
   useEffect(() => {
     if (!variants?.length) return;
@@ -470,12 +474,14 @@ export default function BookingExperience({
             type="button"
             aria-pressed={variant.productId === productId}
             onClick={() => selectVehicle(variant)}
-            className="qb-vehicle-option inline-flex min-h-12 items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-left text-sm font-semibold text-gray-800 hover:border-orange-500 disabled:opacity-60"
+            className="qb-vehicle-option inline-flex min-h-12 min-w-0 flex-1 items-center gap-2 rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-left text-sm font-semibold text-gray-800 hover:border-orange-500 disabled:opacity-60 sm:flex-none sm:px-4"
           >
-            <span className="material-icons text-lg" aria-hidden="true">airport_shuttle</span>
+            <span className="hidden sm:inline-flex" aria-hidden="true">
+              <span className="material-icons text-lg">airport_shuttle</span>
+            </span>
             <span>
               <span className="block">
-                {lang === "zh" ? `${variant.seater} 座` : `${variant.seater}-seater`}
+                {lang === "zh" ? `最多 ${variant.seater} 位乘客` : `Up to ${variant.seater} passengers`}
               </span>
               {variant.referencePrice && (
                 <span className="qb-vehicle-option__price block text-xs font-medium text-gray-500">
@@ -488,6 +494,29 @@ export default function BookingExperience({
           </button>
         ))}
       </div>
+      {vehicleDetails && (
+        <div className="qb-vehicle-details mt-3 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:gap-4">
+          {vehicleDetails.imageSrc && (
+            <figure className="m-0 w-20 shrink-0 text-center sm:w-28">
+              <img
+                src={vehicleDetails.imageSrc}
+                alt=""
+                className="aspect-[3/2] w-full object-contain"
+                decoding="async"
+              />
+              <figcaption className="mt-1 text-xs text-gray-600">
+                {lang === "zh" ? "車型示意" : "Sample vehicle"}
+              </figcaption>
+            </figure>
+          )}
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-gray-900">{vehicleDetails.name}</div>
+            {vehicleDetails.description && (
+              <p className="mt-1 text-sm text-gray-600">{vehicleDetails.description}</p>
+            )}
+          </div>
+        </div>
+      )}
     </fieldset>
   ) : null;
 
