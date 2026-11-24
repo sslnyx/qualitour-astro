@@ -135,7 +135,7 @@ const description = details.description !== defaults.description ? details.descr
       </div>
     </div>
     <div class="transfer-detail__grid mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <article class="min-w-0 self-start overflow-hidden rounded-2xl border border-gray-200 bg-white">
+      <article class="transfer-detail__intro min-w-0 self-start overflow-hidden rounded-2xl border border-gray-200 bg-white">
         <div class="relative bg-gray-100" data-transfer-photo-pending={sharedDestination ? "" : undefined}>
           <img data-transfer-photo data-transfer-route-cover={cover ? "" : undefined} hidden={!photo} src={photo || undefined} alt={cover?.alt ?? routeTitle}
             class:list={["w-full bg-gray-100 object-cover", cover ? "aspect-video" : "aspect-[16/8]"]}
@@ -194,7 +194,21 @@ const description = details.description !== defaults.description ? details.descr
     [data-transfer-photo-pending] :is([data-transfer-photo], [data-transfer-photo-credit]) { visibility: hidden; }
   }
   @media (min-width: 1100px) {
-    .transfer-detail__grid { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.25fr); gap: 2rem; }
+    .transfer-detail__grid {
+      /* The site navigation is 4.5rem tall, plus its bottom border. */
+      --transfer-intro-top: calc(4.5rem + 1px + 1rem);
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.8fr);
+      grid-template-areas: "booking intro";
+      gap: 2rem;
+    }
+    #booking { grid-area: booking; }
+    .transfer-detail__intro {
+      grid-area: intro;
+      position: sticky;
+      top: var(--transfer-intro-top);
+      max-block-size: calc(100dvh - var(--transfer-intro-top) - 1rem);
+      overflow-y: auto;
+    }
   }
 </style>
 
