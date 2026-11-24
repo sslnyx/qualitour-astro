@@ -15,6 +15,7 @@ export type BookingJourney = {
   title: string;
   pickup: string;
   intendedDropoff?: string;
+  productEntry?: QuoteInput["productEntry"];
   seater: "11" | "14";
   serviceArea?: string;
   referencePrice?: string;

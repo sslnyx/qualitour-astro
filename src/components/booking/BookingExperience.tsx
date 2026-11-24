@@ -4,6 +4,7 @@ import { bookingMessage } from "../../lib/booking/errors";
 import { reconcileBookingCustomer } from "../../lib/booking/customer-draft";
 import { settleAbortable } from "../../lib/booking/request";
 import { pollPendingPayment } from "../../lib/booking/payment-status-poll";
+import { quoteInputForProductEntry } from "../../lib/booking/contracts";
 import type {
   AvailabilityResult,
   BookingQuote,
@@ -23,7 +24,7 @@ type Props = {
   productId?: string;
   variants?: { productId: string; seater: "11" | "14"; referencePrice?: string }[];
   journey?: BookingJourney & {
-    entries: Record<string, Pick<BookingJourney, "title" | "pickup" | "intendedDropoff">>;
+    entries: Record<string, Pick<BookingJourney, "title" | "pickup" | "intendedDropoff" | "productEntry">>;
   };
 };
 
@@ -322,10 +323,10 @@ export default function BookingExperience({
     setError(undefined);
     setQuote(undefined);
     try {
-      const next = await bookingApi<BookingQuote>("quotes", {
+      const next = await bookingApi<BookingQuote>("quotes", quoteInputForProductEntry({
         ...input,
         returnTo: "transfers",
-      });
+      }, journeyContext?.productEntry));
       reservationKey.current = crypto.randomUUID();
       setCustomer((current) => reconcileBookingCustomer(current, next));
       setQuote(next);

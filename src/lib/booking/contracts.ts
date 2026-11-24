@@ -78,6 +78,7 @@ export type PublicCatalog = {
 };
 export type QuoteInput = {
   returnTo?: "transfers" | "contact";
+  productEntry?: "whistler-to-yvr" | "whistler-to-greater-vancouver";
   routeId: string;
   rateId: string;
   departureLocal: string;
@@ -85,6 +86,29 @@ export type QuoteInput = {
   /** Optional promo code. */
   couponCode?: string;
 };
+
+/**
+ * Identifies the entry card when the shared Whistler return page opened from
+ * one of its two distinct catalogue directions. This is quote-only context;
+ * it is unrelated to the guest's form-selected drop-off location.
+ */
+export function productEntryForTransferCard(
+  productSlug: string,
+  card: string | null | undefined,
+): QuoteInput["productEntry"] {
+  if (productSlug !== "whistler-to-vancouver-yvr") return undefined;
+  if (card === "route-0-reverse") return "whistler-to-yvr";
+  if (card === "route-1-reverse") return "whistler-to-greater-vancouver";
+  return undefined;
+}
+
+/** Adds product-entry context only when the visitor reached a recognized card. */
+export function quoteInputForProductEntry(
+  input: QuoteInput,
+  productEntry: QuoteInput["productEntry"],
+): QuoteInput {
+  return productEntry ? { ...input, productEntry } : input;
+}
 export type AvailabilityInput = {
   routeId: string;
   rateId: string;

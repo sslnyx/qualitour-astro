@@ -3,6 +3,7 @@ import { Image } from "astro:assets";
 import { getLocalePrefix, type Locale } from "../../../i18n/config";
 import Layout from "../../../layouts/Layout.astro";
 import BookingExperience from "../../../components/booking/BookingExperience";
+import { productEntryForTransferCard } from "../../../lib/booking/contracts";
 import { resolveTransferWebsiteDetails } from "../../../lib/booking/transfer-website-details";
 import { localizedLocation } from "../../../lib/transfer-locations";
 import { transferProductBySlug, transferProductPages, type TransferProduct } from "../../../lib/transfer-products";
@@ -93,6 +94,7 @@ const journey = {
   serviceArea,
   entries: Object.fromEntries(Object.entries(cardEntries).map(([key, entry]) => [key, {
     title: bookingTitle(entry.from, entry.to), pickup: entry.from, intendedDropoff: entry.to,
+    productEntry: productEntryForTransferCard(product.slug, key),
   }])),
   referencePrice: referencePrice(product),
 };

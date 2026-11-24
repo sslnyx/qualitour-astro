@@ -12,6 +12,10 @@ import {
   transferProducts,
   transferRouteCardLinks,
 } from "../src/lib/transfer-products.ts";
+import {
+  productEntryForTransferCard,
+  quoteInputForProductEntry,
+} from "../src/lib/booking/contracts.ts";
 
 test("all 18 directions and their detail entries use localized destination photos", () => {
   const zh = transferListingCovers(snapshot.routes, "zh");
@@ -77,6 +81,36 @@ test("the two Whistler return cards keep distinct destinations on their shared d
     { key: "route-0-reverse", routeId: "route-0", from: "Whistler", to: "Vancouver Airport (YVR)" },
     { key: "route-1-reverse", routeId: "route-1", from: "Whistler", to: "Greater Vancouver" },
   ]);
+});
+
+test("Whistler return card entries carry their matching quote product entry only", () => {
+  const quote = {
+    routeId: "test-route",
+    rateId: "test-rate",
+    departureLocal: "2026-11-23T09:00",
+    passengers: 2,
+  };
+  for (const lang of ["en", "zh"]) {
+    assert.equal(
+      productEntryForTransferCard("whistler-to-vancouver-yvr", "route-0-reverse"),
+      "whistler-to-yvr",
+      `${lang} YVR return`,
+    );
+    assert.equal(
+      productEntryForTransferCard("whistler-to-vancouver-yvr", "route-1-reverse"),
+      "whistler-to-greater-vancouver",
+      `${lang} Greater Vancouver return`,
+    );
+    assert.equal(productEntryForTransferCard("whistler-to-vancouver-yvr", undefined), undefined, `${lang} direct`);
+    assert.equal(productEntryForTransferCard("vancouver-yvr-to-whistler", "route-0-forward"), undefined, `${lang} other product`);
+  }
+  assert.deepEqual(
+    quoteInputForProductEntry(quote, "whistler-to-yvr"),
+    { ...quote, productEntry: "whistler-to-yvr" },
+  );
+  const directQuote = quoteInputForProductEntry(quote, undefined);
+  assert.deepEqual(directQuote, quote);
+  assert.equal(Object.hasOwn(directQuote, "productEntry"), false);
 });
 
 test("all old vehicle-specific bookmarks retain their seat selection on the canonical route", () => {
