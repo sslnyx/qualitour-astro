@@ -106,7 +106,8 @@ function TransferRoutesCarousel({ children, lang }: { children: ReactNode; lang:
           <span className="material-icons" aria-hidden="true">chevron_right</span>
         </button>
       </div>
-      <div ref={viewportRef} className="-mx-1 overflow-hidden px-1">
+      {/* Let hover shadows fade inside the viewport while keeping the section spacing. */}
+      <div ref={viewportRef} className="-mx-4 -mb-8 overflow-hidden px-4 sm:-mx-6 sm:px-6">
         <ul
           id={trackId}
           aria-label={zh ? "私人接送路線" : "Private transfer routes"}
@@ -118,7 +119,7 @@ function TransferRoutesCarousel({ children, lang }: { children: ReactNode; lang:
             if (event.key === "ArrowLeft") carousel?.scrollPrev();
             else carousel?.scrollNext();
           }}
-          className="grid auto-cols-[88%] grid-flow-col gap-4 pt-8 pb-4 [touch-action:pan-y_pinch-zoom] focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-orange-700 sm:auto-cols-[calc((100%-1.5rem)/2)] sm:gap-6 lg:auto-cols-[calc((100%-3rem)/3)]"
+          className="grid auto-cols-[88%] grid-flow-col gap-4 pt-8 pb-12 [touch-action:pan-y_pinch-zoom] focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-orange-700 sm:auto-cols-[calc((100%-1.5rem)/2)] sm:gap-6 lg:auto-cols-[calc((100%-3rem)/3)]"
         >
           {children}
         </ul>
