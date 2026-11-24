@@ -1,5 +1,5 @@
 ---
-import { getLocalePrefix, type Locale } from "../../i18n/config";
+import type { Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
 import BookingExperience from "../../components/booking/BookingExperience";
 
@@ -21,15 +21,10 @@ const currentLang: Locale = (lang as Locale) || "en";
   noindex
 >
   <div class="booking-status-page">
-    <div class="mx-auto max-w-7xl px-4 pt-8 text-gray-900 sm:px-6">
-      <a class="font-semibold text-orange-800 hover:underline" href={`${getLocalePrefix(currentLang)}/private-transfers`}>
-        ← {currentLang === "zh" ? "所有接送線路" : "All transfer routes"}
-      </a>
-    </div>
     <BookingExperience lang={currentLang} client:load />
   </div>
 </Layout>
 
 <style>
-  .booking-status-page { min-height: 70vh; padding-bottom: 64px; background: #f8f8f7; }
+  :global(#main-content):has(> .booking-status-page) { background: #f8f8f7; }
 </style>

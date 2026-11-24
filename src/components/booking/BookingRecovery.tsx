@@ -20,7 +20,7 @@ function FindBookingForm({ lang }: { lang: "zh" | "en" }) {
           .catch(() => setState("error"));
       }}
     >
-      <h3>{t("用電郵找回預訂", "Find a booking by email")}</h3>
+      <h2>{t("用電郵找回預訂", "Find a booking by email")}</h2>
       <p className="qb-note">
         {t(
           "輸入預訂編號和預訂時用的電郵，我們會把專屬連結寄到那個電郵。",
@@ -82,7 +82,7 @@ export function BookingRecovery(p: {
   const t = (zh: string, en: string) => (p.lang === "zh" ? zh : en);
   return (
     <section className="qt-card qb-recovery" aria-labelledby="recovery-heading">
-      <h1 id="recovery-heading" className="mb-3 text-2xl font-bold">{t("找回你的預訂", "Find your booking")}</h1>
+      <h1 id="recovery-heading" className="qb-status-title">{t("找回你的預訂", "Find your booking")}</h1>
       <p className="qb-note">
         {t(
           "同一瀏覽器可找回最近 20 筆預訂。身分保留 7 天；清除 Cookie 或換裝置後無法在此找回。",
@@ -100,59 +100,61 @@ export function BookingRecovery(p: {
               )}
         </p>
       )}
-      <ul className="qb-recent-list">
-        {p.bookings.map((b) => {
-          const state =
-            b.status === "cancelled"
-              ? "cancelled"
-              : b.paymentNotification
-                ? "paid"
-                : b.paymentState === "review"
-                  ? "review"
-                  : "pending";
-          const label = {
-            paid: t("付款已確認", "Payment confirmed"),
-            review: t("付款需要核對", "Payment needs review"),
-            cancelled: t("已取消", "Cancelled"),
-            pending: t("待付款／核對", "Awaiting payment / verification"),
-          }[state];
-          const manage =
-            "/book/manage/" + encodeURIComponent(b.id) + "?lang=" + p.lang;
-          return (
-            <li key={b.id} className="qb-recent-item">
-              <div className="qb-recent-head">
-                <strong>{b.reference}</strong>
-                <span className={"qb-status qb-status--" + state}>{label}</span>
-              </div>
-              <span className="qb-recent-route">
-                {p.lang === "zh" ? b.routeNameZh : b.routeNameEn}
-              </span>
-              <span className="qb-note">
-                {formatDepartureLabel(b.departureLabel, p.lang)}
-              </span>
-              <div className="qb-recent-actions">
-                <a className="qb-recent-open" href={manage}>
-                  {t("查看預訂", "View booking")}{" "}
-                  <span aria-hidden="true">→</span>
-                </a>
-                {b.paymentNotification ? (
-                  <a
-                    className="qb-recent-receipt"
-                    href={
-                      "/book/receipt/" +
-                      encodeURIComponent(b.id) +
-                      "?lang=" +
-                      p.lang
-                    }
-                  >
-                    {t("查看收據", "View receipt")}
+      {p.bookings.length > 0 && (
+        <ul className="qb-recent-list">
+          {p.bookings.map((b) => {
+            const state =
+              b.status === "cancelled"
+                ? "cancelled"
+                : b.paymentNotification
+                  ? "paid"
+                  : b.paymentState === "review"
+                    ? "review"
+                    : "pending";
+            const label = {
+              paid: t("付款已確認", "Payment confirmed"),
+              review: t("付款需要核對", "Payment needs review"),
+              cancelled: t("已取消", "Cancelled"),
+              pending: t("待付款／核對", "Awaiting payment / verification"),
+            }[state];
+            const manage =
+              "/book/manage/" + encodeURIComponent(b.id) + "?lang=" + p.lang;
+            return (
+              <li key={b.id} className="qb-recent-item">
+                <div className="qb-recent-head">
+                  <strong>{b.reference}</strong>
+                  <span className={"qb-status qb-status--" + state}>{label}</span>
+                </div>
+                <span className="qb-recent-route">
+                  {p.lang === "zh" ? b.routeNameZh : b.routeNameEn}
+                </span>
+                <span className="qb-note">
+                  {formatDepartureLabel(b.departureLabel, p.lang)}
+                </span>
+                <div className="qb-recent-actions">
+                  <a className="qb-recent-open" href={manage}>
+                    {t("查看預訂", "View booking")}{" "}
+                    <span aria-hidden="true">→</span>
                   </a>
-                ) : null}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+                  {b.paymentNotification ? (
+                    <a
+                      className="qb-recent-receipt"
+                      href={
+                        "/book/receipt/" +
+                        encodeURIComponent(b.id) +
+                        "?lang=" +
+                        p.lang
+                      }
+                    >
+                      {t("查看收據", "View receipt")}
+                    </a>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
       <button
         type="button"
         className="qt-btn"
@@ -168,7 +170,6 @@ export function BookingRecovery(p: {
 export function ReceiptView(p: {
   receipt: BookingReceipt;
   lang: "zh" | "en";
-  onBack: () => void;
   onPrint: () => void;
 }) {
   const r = p.receipt,
@@ -178,7 +179,7 @@ export function ReceiptView(p: {
       <p className="qb-status confirmed">
         {t("付款已確認", "Payment confirmed")}
       </p>
-      <h1 id="receipt-heading">
+      <h1 id="receipt-heading" className="qb-status-title">
         {t("Sandbox 付款收據", "Sandbox payment receipt")}
       </h1>
       <p className="qb-note">
@@ -257,9 +258,6 @@ export function ReceiptView(p: {
       <div className="qb-public-actions qb-no-print">
         <button className="qt-btn qt-btn--primary" onClick={p.onPrint}>
           {t("列印收據", "Print receipt")}
-        </button>
-        <button className="qt-btn" onClick={p.onBack}>
-          {t("返回預訂", "Back to booking")}
         </button>
       </div>
     </section>

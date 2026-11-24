@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { bookingApi, ApiError } from "../../lib/booking/api";
 import { bookingMessage } from "../../lib/booking/errors";
 import { reconcileBookingCustomer } from "../../lib/booking/customer-draft";
@@ -316,7 +316,8 @@ export default function BookingExperience({
     window.location.assign(url);
   };
 
-  const transfersPath = lang === "zh" ? "/zh/private-transfers" : "/private-transfers";
+  const localePrefix = lang === "zh" ? "/zh" : "";
+  const transfersPath = `${localePrefix}/private-transfers`;
 
   async function requestQuote(input: QuoteInput) {
     setBusy(true);
@@ -414,10 +415,31 @@ export default function BookingExperience({
     }
   }
 
+  const showReceipt = routeState.view === "receipt";
+  const lookupPath = `${localePrefix}/booking-status`;
+  const back = showReceipt && routeState.id
+    ? {
+        href: bookingPath(lang, `/manage/${encodeURIComponent(routeState.id)}`),
+        label: lang === "zh" ? "返回本次預訂" : "Back to this booking",
+      }
+    : routeState.id
+      ? { href: lookupPath, label: lang === "zh" ? "返回查找預訂" : "Back to booking lookup" }
+      : { href: transfersPath, label: lang === "zh" ? "所有接送線路" : "All transfer routes" };
+
+  const renderStatus = (content: ReactNode) => (
+    <div className="qb-customer qb-status-content">
+      <a className="qb-status-back qb-no-print" href={back.href}>
+        <span aria-hidden="true">←</span>
+        {back.label}
+      </a>
+      {content}
+    </div>
+  );
+
   if (routeState.view === "claim")
-    return (
-      <section className="qb-customer qt-card" role="status">
-        <h2>
+    return renderStatus(
+      <section className="qt-card" role="status">
+        <h1 className="qb-status-title">
           {claimFailed
             ? lang === "zh"
               ? "這個連結已失效"
@@ -425,7 +447,7 @@ export default function BookingExperience({
             : lang === "zh"
               ? "正在開啟您的預訂…"
               : "Opening your booking…"}
-        </h2>
+        </h1>
         {claimFailed ? (
           <p>
             {lang === "zh"
@@ -433,7 +455,7 @@ export default function BookingExperience({
               : "Please contact Qualitour and we will send you a new link."}
           </p>
         ) : null}
-      </section>
+      </section>,
     );
 
   const vehicleSelector = variants?.length ? (
@@ -492,85 +514,66 @@ export default function BookingExperience({
     );
 
   if (routeState.view === "receipt" && receipt)
-    return (
-      <div className="qb-customer">
-        <ReceiptView
-          receipt={receipt}
-          lang={lang}
-          onPrint={() => window.print()}
-          onBack={() =>
-            navigate(
-              bookingPath(
-                lang,
-                `/manage/${encodeURIComponent(routeState.id!)}`,
-              ),
-            )
-          }
-        />
-      </div>
+    return renderStatus(
+      <ReceiptView receipt={receipt} lang={lang} onPrint={() => window.print()} />,
     );
 
   if (!productId && !routeState.id)
-    return (
-      <div className="qb-customer">
-        <div className="qb-public-main">
-          <BookingRecovery
-            bookings={recent}
-            lang={lang}
-            loading={recoveryLoading}
-            error={recoveryError ? bookingMessage(recoveryError, lang) : ""}
-            onRefresh={recover}
-          />
-        </div>
-      </div>
+    return renderStatus(
+      <BookingRecovery
+        bookings={recent}
+        lang={lang}
+        loading={recoveryLoading}
+        error={recoveryError ? bookingMessage(recoveryError, lang) : ""}
+        onRefresh={recover}
+      />,
     );
 
-  const showReceipt = routeState.view === "receipt";
   const pageError = error ?? (booking ? undefined : catalogError);
-  return (
-    <div className={`qb-customer${productId ? " qb-compact" : ""}`}>
-      <BookingView
-        key={productId}
-        showBooking={Boolean(routeState.id)}
-        showReceipt={showReceipt}
-        lang={lang}
-        fixedProduct={Boolean(productId)}
-        journey={journeyContext}
-        vehicleSelector={vehicleSelector}
-        catalog={productId ? productCatalog : catalog}
-        quote={quote}
-        booking={booking}
-        customer={customer}
-        setCustomer={setCustomer}
-        loading={catalogLoading || (Boolean(routeState.id) && bookingLoading)}
-        busy={busy}
-        error={pageError ? bookingMessage(pageError, lang) : ""}
-        focusError={Boolean(error && !routeState.id)}
-        checkoutError={checkoutError ? bookingMessage(checkoutError, lang) : ""}
-        paymentSetupFailed={Boolean(catalogError)}
-        initialRouteId={requestedRoute?.id}
-        initialRateId={singleRate?.id}
-        tripDraft={variants?.length ? tripDraft : undefined}
-        onTripDraftChange={variants?.length
-          ? (patch) => setTripDraft((current) => ({ ...current, ...patch }))
-          : undefined}
-        onAvailability={(input, signal) =>
-          bookingApi<AvailabilityResult>("availability", input, signal)
-        }
-        onQuote={requestQuote}
-        onReserve={reserve}
-        onCheckout={checkout}
-        onCancel={cancel}
-        onRefresh={refresh}
-        onNew={() => navigate(showReceipt && routeState.id
-          ? bookingPath(lang, `/manage/${encodeURIComponent(routeState.id)}`)
-          : transfersPath)}
-        onReceipt={() =>
-          navigate(
-            bookingPath(lang, `/receipt/${encodeURIComponent(routeState.id!)}`),
-          )
-        }
-      />
-    </div>
+  const bookingView = (
+    <BookingView
+      key={productId}
+      showBooking={Boolean(routeState.id)}
+      showReceipt={showReceipt}
+      lang={lang}
+      fixedProduct={Boolean(productId)}
+      journey={journeyContext}
+      vehicleSelector={vehicleSelector}
+      catalog={productId ? productCatalog : catalog}
+      quote={quote}
+      booking={booking}
+      customer={customer}
+      setCustomer={setCustomer}
+      loading={catalogLoading || (Boolean(routeState.id) && bookingLoading)}
+      busy={busy}
+      error={pageError ? bookingMessage(pageError, lang) : ""}
+      focusError={Boolean(error && !routeState.id)}
+      checkoutError={checkoutError ? bookingMessage(checkoutError, lang) : ""}
+      paymentSetupFailed={Boolean(catalogError)}
+      initialRouteId={requestedRoute?.id}
+      initialRateId={singleRate?.id}
+      tripDraft={variants?.length ? tripDraft : undefined}
+      onTripDraftChange={variants?.length
+        ? (patch) => setTripDraft((current) => ({ ...current, ...patch }))
+        : undefined}
+      onAvailability={(input, signal) =>
+        bookingApi<AvailabilityResult>("availability", input, signal)
+      }
+      onQuote={requestQuote}
+      onReserve={reserve}
+      onCheckout={checkout}
+      onCancel={cancel}
+      onRefresh={refresh}
+      transfersPath={transfersPath}
+      onReceipt={() =>
+        navigate(
+          bookingPath(lang, `/receipt/${encodeURIComponent(routeState.id!)}`),
+        )
+      }
+    />
   );
+
+  return productId
+    ? <div className="qb-customer qb-compact">{bookingView}</div>
+    : renderStatus(bookingView);
 }

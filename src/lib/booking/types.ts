@@ -52,6 +52,6 @@ export type BookingViewProps = {
   onCheckout: () => void;
   onCancel: () => void;
   onRefresh: () => void;
-  onNew: () => void;
+  transfersPath: string;
   onReceipt: () => void;
 };

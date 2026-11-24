@@ -256,6 +256,7 @@ export function BookingView(p: BookingViewProps) {
   const routeId = p.initialRouteId ?? "";
   const passengerId = useId();
   const dateGuidanceId = useId();
+  const holdLabelId = useId();
   const checkSeq = useRef(0);
   const restoredDate = useRef(p.tripDraft?.serviceDate);
   const tripReviewHeading = useRef<HTMLHeadingElement>(null);
@@ -585,6 +586,12 @@ export function BookingView(p: BookingViewProps) {
     </label>
   );
   const b = p.booking;
+  const holdDeadline = b?.status === "pending" && Number.isFinite(b.holdUntil)
+    ? b.holdUntil
+    : 0;
+  const holdSeconds = Math.max(0, Math.ceil(holdDeadline - tick / 1000));
+  const holdMinutes = Math.floor(holdSeconds / 60);
+  const secondsWithinMinute = holdSeconds % 60;
   return (
     <div className="qb-customer">
       <p className="qb-sandbox" role="note">
@@ -597,37 +604,35 @@ export function BookingView(p: BookingViewProps) {
         </span>
       </p>
       <div className="qb-public-main">
-        <div className="qb-hero">
-          <a
-            className="qb-back-link"
-            href={
-              p.lang === "zh" ? "/zh/private-transfers" : "/private-transfers"
-            }
-          >
-            ← {t("私人接送", "Private transfers")}
-          </a>
-          {!p.fixedProduct && <h1>{t("你的測試預訂", "Your test booking")}</h1>}
-          <div
-            className="qb-progress"
-            aria-label={t("預訂步驟", "Booking progress")}
-          >
-            <span
-              className={!p.showBooking && showTrip ? "is-current" : ""}
-              aria-current={!p.showBooking && showTrip ? "step" : undefined}
+        {p.showBooking ? (
+          <h1 className="qb-status-title qb-detail-title">
+            {p.showReceipt ? t("付款收據", "Payment receipt") : t("預訂詳情", "Booking details")}
+          </h1>
+        ) : (
+          <div className="qb-hero">
+            {!p.fixedProduct && <h1>{t("你的測試預訂", "Your test booking")}</h1>}
+            <div
+              className="qb-progress"
+              aria-label={t("預訂步驟", "Booking progress")}
             >
-              1 · {t("行程與報價", "Trip & quote")}
-            </span>
-            <span
-              className={!showTrip && !p.showBooking ? "is-current" : ""}
-              aria-current={!showTrip && !p.showBooking ? "step" : undefined}
-            >
-              2 · {t("接送資料", "Transfer details")}
-            </span>
-            <span className={p.showBooking ? "is-current" : ""}>
-              3 · {t("測試付款與確認", "Test payment & confirmation")}
-            </span>
+              <span
+                className={showTrip ? "is-current" : ""}
+                aria-current={showTrip ? "step" : undefined}
+              >
+                1 · {t("行程與報價", "Trip & quote")}
+              </span>
+              <span
+                className={!showTrip ? "is-current" : ""}
+                aria-current={!showTrip ? "step" : undefined}
+              >
+                2 · {t("接送資料", "Transfer details")}
+              </span>
+              <span>
+                3 · {t("測試付款與確認", "Test payment & confirmation")}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
         {p.error && (
           <div className="qt-alert" role="alert" ref={bookingErrorNotice} tabIndex={-1}>
             {p.error}
@@ -654,14 +659,11 @@ export function BookingView(p: BookingViewProps) {
                   >
                     {p.showReceipt ? t("重試載入收據", "Retry loading receipt") : t("重新核對", "Check again")}
                   </button>
-                  <button className="qt-btn" onClick={p.onNew}>
-                    {p.showReceipt ? t("返回本次預訂", "Back to this booking") : t("返回預訂頁", "Back to booking")}
-                  </button>
                 </div>
               </>
             ) : (
               <>
-                <div>
+                <div className="qb-booking-reference">
                   <span className={"qb-status " + b.status}>
                     {b.status === "confirmed"
                       ? t("測試預訂已確認", "Test booking confirmed")
@@ -671,6 +673,43 @@ export function BookingView(p: BookingViewProps) {
                   </span>
                   <h2>{b.reference}</h2>
                 </div>
+                {b.status === "pending" && (
+                  <div className={holdSeconds ? "qb-hold" : "qb-hold qb-hold--ended"}>
+                    <p className="qb-hold__label" id={holdLabelId}>
+                      {holdSeconds
+                        ? t("車位保留倒數", "Vehicle hold countdown")
+                        : t("車位保留狀態", "Vehicle hold status")}
+                    </p>
+                    {holdSeconds > 0 && (
+                      <p className="qb-hold__time" role="timer" aria-labelledby={holdLabelId}>
+                        <span aria-hidden="true">
+                          {String(holdMinutes).padStart(2, "0")}:{String(secondsWithinMinute).padStart(2, "0")}
+                        </span>
+                        <span className="sr-only">
+                          {t(
+                            `剩餘 ${holdMinutes} 分 ${secondsWithinMinute} 秒`,
+                            `${holdMinutes} minutes and ${secondsWithinMinute} seconds remaining`,
+                          )}
+                        </span>
+                      </p>
+                    )}
+                    <p className="qb-hold__guidance" role="status">
+                      {holdSeconds
+                        ? b.canPay && b.paymentState === "unpaid"
+                          ? t("請在倒數結束前完成付款。", "Complete payment before the countdown ends.")
+                          : t("付款狀態以系統核對結果為準。", "Payment status updates after verification.")
+                        : holdDeadline > 0
+                          ? t(
+                              "車位保留時間已到，請重新核對預訂及付款狀態。",
+                              "The hold timer has ended. Refresh to check your booking and payment status.",
+                            )
+                          : t(
+                              "請重新核對付款與車位保留狀態。",
+                              "Refresh to check your payment and vehicle hold status.",
+                            )}
+                    </p>
+                  </div>
+                )}
                 <dl>
                   <div>
                     <dt>{t("路線", "Route")}</dt>
@@ -720,19 +759,6 @@ export function BookingView(p: BookingViewProps) {
                     </dd>
                   </div>
                 </dl>
-                {b.status === "pending" && (
-                  <p className="qb-note">
-                    {b.holdUntil > tick / 1000
-                      ? t(
-                          `車位仍暫留約 ${Math.max(1, Math.ceil((b.holdUntil - tick / 1000) / 60))} 分鐘；付款狀態以伺服器核對為準。`,
-                          `Your vehicle is held for about ${Math.max(1, Math.ceil((b.holdUntil - tick / 1000) / 60))} more minutes. Payment must be verified by the server.`,
-                        )
-                      : t(
-                          "正在核實付款與車位狀態，請重新核對。",
-                          "The payment and vehicle hold need verification. Please check again.",
-                        )}
-                  </p>
-                )}
                 {b.status === "cancelled" && b.paymentNotification && (
                   <p role="status" className="qb-note">
                     {b.paymentState === "refunded"
@@ -818,9 +844,9 @@ export function BookingView(p: BookingViewProps) {
                     "Keep your booking reference and use this browser to view it. This is a test booking; no actual transfer notification will be sent.",
                   )}
                 </p>
-                <button className="qt-btn qt-btn--ghost" onClick={p.onNew}>
+                <a className="qt-btn qt-btn--ghost" href={p.transfersPath}>
                   {t("建立另一筆測試預訂", "Start another test booking")}
-                </button>
+                </a>
                 {b.status === "pending" && (
                   <small className="qb-note">
                     {t(

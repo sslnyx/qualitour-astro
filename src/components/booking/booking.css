@@ -436,12 +436,10 @@
     gap: 0;
   }
 }
-.qb-recovery {
-  margin-bottom: 1.5rem;
-}
 .qb-recent-list {
   list-style: none;
   padding: 0;
+  width: 100%;
   display: grid;
   gap: 1rem;
 }
@@ -531,8 +529,7 @@
   overflow-wrap: anywhere;
 }
 .qb-receipt dl {
-  display: grid;
-  gap: 1rem;
+  width: 100%;
 }
 .qb-receipt dl > div {
   display: grid;
@@ -588,14 +585,6 @@
 .qb-hero {
   max-width: none;
   margin-bottom: 26px;
-}
-.qb-back-link {
-  display: inline-block;
-  color: #9a4b0b;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 18px;
-  text-decoration: none;
 }
 .qb-hero h1 {
   font-size: clamp(28px, 3vw, 38px);
@@ -987,7 +976,7 @@
   padding-top: 0;
   margin-bottom: 20px;
 }
-.qb-compact .qb-hero :is(h1, p, .qb-back-link) {
+.qb-compact .qb-hero :is(h1, p) {
   display: none;
 }
 .qb-compact .qb-progress {
@@ -1236,14 +1225,103 @@
 .qb-price-lines .qb-price-total{border-top:1px solid var(--qt-line,#d9dee5);padding-top:6px;font-weight:650}
 .qb-price-lines .qb-price-total dt{color:inherit}
 
+.qb-status-content {
+  max-width: 820px;
+  margin-inline: auto;
+  padding: clamp(12px, 2vw, 24px) clamp(16px, 3vw, 24px) clamp(32px, 5vw, 56px);
+}
+.qb-status-content,
+.qb-status-content > .qb-customer {
+  background: transparent;
+}
+.qb-status-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: 12px;
+  color: #9a3412;
+  font-size: 14px;
+  font-weight: 650;
+}
+.qb-status-back:hover {
+  text-decoration: underline;
+}
+.qb-status-content .qb-public-main {
+  padding: 0;
+}
+.qb-status-title {
+  margin: 0;
+  color: var(--qt-charcoal);
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 750;
+  line-height: 1.2;
+}
+.qb-detail-title {
+  margin-bottom: 14px;
+}
+.qb-status-content .qb-sandbox {
+  justify-content: flex-start;
+  margin-bottom: 12px;
+  padding: 0;
+}
+.qb-status-content .qb-summary .qb-public-actions {
+  margin: 0;
+}
+.qb-status-content .qb-summary > .qt-btn--ghost {
+  align-self: flex-start;
+}
+.qb-status-content .qb-booking-reference h2 {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+.qb-recovery,
+.qb-receipt {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+.qb-receipt .qb-public-actions {
+  margin: 0;
+}
+.qb-hold {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 12px 16px;
+  border: 1px solid #f3bf75;
+  border-radius: 12px;
+  background: #fff4e5;
+  color: #71330e;
+}
+.qb-hold--ended {
+  border-color: var(--qt-border);
+  background: var(--qt-bg);
+  color: var(--qt-text);
+}
+.qb-hold__label {
+  font-weight: 700;
+}
+.qb-hold__time {
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+.qb-hold__guidance {
+  grid-column: 1 / -1;
+  font-size: 14px;
+}
 .qb-find {
   display: grid;
+  width: 100%;
   gap: 10px;
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid var(--qb-border, #e5e7eb);
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--qt-border);
 }
-.qb-find h3 {
+.qb-customer .qb-find h2 {
   margin: 0;
   font-size: 1rem;
 }
