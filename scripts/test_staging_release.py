@@ -33,21 +33,21 @@ class ReleaseTests(unittest.TestCase):
 
     def test_transfer_pages_match_the_published_json_snapshot(self):
         snapshot = self.transfer_fixture()
-        release.validate_shared_transfers(snapshot, snapshot['routes'], snapshot['routes'][:6])
-        for homepage in ([], snapshot['routes'][:3], list(reversed(snapshot['routes'][:6]))):
+        release.validate_shared_transfers(snapshot, snapshot['routes'], snapshot['routes'][:9])
+        for homepage in ([], snapshot['routes'][:6], list(reversed(snapshot['routes'][:9]))):
             with self.subTest(homepage_count=len(homepage)), self.assertRaisesRegex(ValueError, 'snapshot'):
                 release.validate_shared_transfers(snapshot, snapshot['routes'], homepage)
         changed = json.loads(json.dumps(snapshot['routes']))
         changed[0]['vehicles'][0]['price'] = '99999.00'
         with self.assertRaisesRegex(ValueError, 'snapshot'):
-            release.validate_shared_transfers(snapshot, changed, changed[:6])
+            release.validate_shared_transfers(snapshot, changed, changed[:9])
 
     def test_partial_or_undated_transfer_snapshot_stops_release(self):
         for key, value in [('routes', []), ('activityCount', 31), ('priceDate', '2026-02-30'), ('currency', '$')]:
             snapshot = self.transfer_fixture()
             snapshot[key] = value
             with self.subTest(key=key), self.assertRaises(ValueError):
-                release.validate_shared_transfers(snapshot, snapshot['routes'], snapshot['routes'][:6])
+                release.validate_shared_transfers(snapshot, snapshot['routes'], snapshot['routes'][:9])
 
     def transfer_fixture(self):
         definitions = json.loads(Path(__file__).with_name('zaui-route-map.json').read_text())
