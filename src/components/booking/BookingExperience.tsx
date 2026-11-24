@@ -57,7 +57,7 @@ export default function BookingExperience({
   journey,
 }: Props) {
   const [selectedProductId, setSelectedProductId] = useState(defaultProductId);
-  const [tripDraft, setTripDraft] = useState<BookingTripDraft>({ serviceDate: "", passengers: 1, coupon: "" });
+  const [tripDraft, setTripDraft] = useState<BookingTripDraft>({ serviceDate: "", passengers: 0, coupon: "" });
   const [customer, setCustomer] = useState<CustomerInput>({
     name: "",
     email: "",

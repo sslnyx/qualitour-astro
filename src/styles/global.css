@@ -41,7 +41,8 @@
 .transfer-secondary-action,
 .transfer-detail .qb-customer .qt-btn--primary,
 .transfer-detail .qb-trip-review > .qt-btn,
-.transfer-detail .qb-vehicle-option[aria-pressed="true"] {
+.transfer-detail .qb-vehicle-option[aria-pressed="true"],
+.qb-customer .qb-passenger-control button:last-child:enabled {
     background: linear-gradient(to right, #f7941e, #ff6b35);
     color: #fff;
     text-shadow: 0 1px 2px rgb(83 36 5 / 65%);
@@ -51,7 +52,8 @@
 .transfer-secondary-action:hover,
 .transfer-detail .qb-customer .qt-btn--primary:not(:disabled):hover,
 .transfer-detail .qb-trip-review > .qt-btn:not(:disabled):hover,
-.transfer-detail .qb-vehicle-option[aria-pressed="true"]:not(:disabled):hover {
+.transfer-detail .qb-vehicle-option[aria-pressed="true"]:not(:disabled):hover,
+.qb-customer .qb-passenger-control button:last-child:enabled:hover {
     background: linear-gradient(to right, #e67d14, #ed582a);
 }
 

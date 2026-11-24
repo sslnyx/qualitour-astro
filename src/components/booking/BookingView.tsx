@@ -238,7 +238,7 @@ export function BookingView(p: BookingViewProps) {
   const t = (zh: string, en: string) => (p.lang === "zh" ? zh : en),
     [rateId, setRateId] = useState(""),
     [departure, setDeparture] = useState(""),
-    [localTripDraft, setLocalTripDraft] = useState<BookingTripDraft>({ serviceDate: "", passengers: 1, coupon: "" }),
+    [localTripDraft, setLocalTripDraft] = useState<BookingTripDraft>({ serviceDate: "", passengers: 0, coupon: "" }),
     [serviceTime, setServiceTime] = useState(""),
     [ack, setAck] = useState(false),
     [editingTrip, setEditingTrip] = useState(true),
@@ -356,10 +356,20 @@ export function BookingView(p: BookingViewProps) {
 
   const showTrip = editingTrip || !quoteValid;
   const maxPassengers = rate?.maxPassengers ?? 60;
+  const missingPassengers = passengers === 0;
   const invalidPassengers = !Number.isInteger(passengers) || passengers < 1 || passengers > maxPassengers;
-  const passengerError = invalidPassengers
-    ? t(`請輸入 1 至 ${maxPassengers} 位乘客，或選擇其他車型。`, `Enter 1 to ${maxPassengers} passengers or choose another vehicle.`)
-    : "";
+  const passengerHint = missingPassengers
+    ? t("請至少選擇 1 位乘客。", "Choose at least 1 passenger.")
+    : invalidPassengers
+      ? t(
+          `請選擇 1 至 ${maxPassengers} 位乘客，或更換車型。`,
+          `Choose 1 to ${maxPassengers} passengers or switch vehicles.`,
+        )
+      : "";
+  const passengerDescription = [
+    rate && `${passengerId}-limit`,
+    passengerHint && `${passengerId}-hint`,
+  ].filter(Boolean).join(" ");
   const quoteDisabled =
     p.busy ||
     !route ||
@@ -376,12 +386,12 @@ export function BookingView(p: BookingViewProps) {
       quoteDisabledReason = t("正在載入可預訂路線。", "Loading the bookable route.");
     } else if (!rate) {
       quoteDisabledReason = t("請先選擇車型。", "Choose a vehicle first.");
-    } else if (invalidPassengers) {
-      quoteDisabledReason = passengerError;
-    } else if (!serviceDate || !serviceDateIsAllowed) {
-      quoteDisabledReason = t("請選擇可服務的日期。", "Choose an available service date.");
-    } else {
-      quoteDisabledReason = t("請選擇可用的出發時間。", "Choose an available departure time.");
+    } else if (route.serviceRules) {
+      if (!serviceDate || !serviceDateIsAllowed) {
+        quoteDisabledReason = t("請選擇可服務的日期。", "Choose an available service date.");
+      } else if (!times.includes(serviceTime) || !departure) {
+        quoteDisabledReason = t("請選擇可用的出發時間。", "Choose an available departure time.");
+      }
     }
   }
   useEffect(() => {
@@ -1211,16 +1221,30 @@ export function BookingView(p: BookingViewProps) {
                     )}
                     {p.vehicleSelector}
                     <div className="qt-field qb-full qb-passenger-field">
-                      <label htmlFor={passengerId}>
-                        {t("乘客人數", "Passengers")}
-                      </label>
-                      <div className="qb-passenger-control">
+                      <div className="qb-passenger-label">
+                        <label id={`${passengerId}-label`} htmlFor={passengerId}>
+                          {t("乘客人數", "Passengers")}
+                        </label>
+                        {rate && (
+                          <p id={`${passengerId}-limit`} className="qb-note">
+                            {t(
+                              `一輛車，最多 ${maxPassengers} 位乘客`,
+                              `One vehicle, up to ${maxPassengers} passengers`,
+                            )}
+                          </p>
+                        )}
+                      </div>
+                      <div
+                        className="qb-passenger-control"
+                        role="group"
+                        aria-labelledby={`${passengerId}-label`}
+                      >
                         <button
                           type="button"
                           aria-label={t("減少乘客", "Remove a passenger")}
-                          disabled={passengers <= 1}
+                          disabled={passengers <= 0}
                           onClick={() => {
-                            updateTripDraft({ passengers: Math.max(1, passengers - 1) });
+                            updateTripDraft({ passengers: Math.max(0, Math.ceil(passengers) - 1) });
                             setAck(false);
                           }}
                         >
@@ -1231,12 +1255,12 @@ export function BookingView(p: BookingViewProps) {
                           type="number"
                           inputMode="numeric"
                           required
-                          min={1}
+                          min={0}
                           max={maxPassengers}
                           step={1}
                           value={passengers}
-                          aria-invalid={invalidPassengers}
-                          aria-describedby={invalidPassengers ? `${passengerId}-error` : undefined}
+                          aria-invalid={invalidPassengers && !missingPassengers ? true : undefined}
+                          aria-describedby={passengerDescription || undefined}
                           onChange={(e) => {
                             updateTripDraft({ passengers: Number(e.target.value) });
                             setAck(false);
@@ -1247,23 +1271,24 @@ export function BookingView(p: BookingViewProps) {
                           aria-label={t("增加乘客", "Add a passenger")}
                           disabled={passengers >= maxPassengers}
                           onClick={() => {
-                            updateTripDraft({ passengers: Math.min(maxPassengers, passengers + 1) });
+                            updateTripDraft({ passengers: Math.min(maxPassengers, Math.max(1, Math.floor(passengers) + 1)) });
                             setAck(false);
                           }}
                         >
                           +
                         </button>
                       </div>
-                      {rate && (
-                        <span className="qb-note">
-                          {t(
-                            `一輛車，最多 ${rate.maxPassengers} 位乘客`,
-                            `One vehicle, up to ${rate.maxPassengers} passengers`,
-                          )}
-                        </span>
-                      )}
-                      {passengerError && (
-                        <p id={`${passengerId}-error`} className="qb-quote-readiness" role="status">{passengerError}</p>
+                      <output className="sr-only" htmlFor={passengerId}>
+                        {t(`${passengers} 位乘客`, `${passengers} passengers`)}
+                      </output>
+                      {passengerHint && (
+                        <p
+                          id={`${passengerId}-hint`}
+                          className={missingPassengers ? "qb-note qb-passenger-hint" : "qb-quote-readiness qb-passenger-hint"}
+                          role="status"
+                        >
+                          {passengerHint}
+                        </p>
                       )}
                     </div>
                     <label className="qt-field qb-full qb-coupon">
@@ -1530,7 +1555,7 @@ export function BookingView(p: BookingViewProps) {
                     </div>
                     <div>
                       <dt>{t("乘客", "Passengers")}</dt>
-                      <dd>{passengers}</dd>
+                      <dd>{missingPassengers ? t("尚未選擇", "Not selected") : passengers}</dd>
                     </div>
                   </dl>
                   <p className="qb-note">
