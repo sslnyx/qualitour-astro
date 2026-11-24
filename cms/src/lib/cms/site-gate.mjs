@@ -4,7 +4,7 @@ import { nativeSiteRoute } from './native-site-policy.mjs';
 // the site build (which presents SITE_BUILD_KEY); everyone else is sent to the static site. Admin, API, media and the
 // /_image fallback are not pages and stay open. With no key configured the gate is off, so a missing secret can never
 // lock the pages out.
-const FIXED_PAGES = new Set(['/book', '/zh/book', '/404', '/500']);
+const FIXED_PAGES = new Set(['/booking-status', '/zh/booking-status', '/404', '/500']);
 const DEFAULT_PUBLIC_ORIGIN = 'https://qualitour-site.qualitour.workers.dev';
 export const SITE_BUILD_HEADER = 'X-Qualitour-Site-Build';
 

@@ -1,11 +1,10 @@
 import PriceLines from "./PriceLines";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import type { BookingViewProps } from "../../lib/booking/types";
+import type { BookingTripDraft, BookingViewProps } from "../../lib/booking/types";
 import type {
   CustomerInput,
   RouteServiceRules,
 } from "../../lib/booking/contracts";
-import { BookingRecovery } from "./BookingRecovery";
 import { BookingLocationSelect } from "./BookingLocationSelect";
 import { ServiceCalendar } from "./ServiceCalendar";
 import {
@@ -55,6 +54,12 @@ function timeMinutes(value: string) {
   if (!match) return null;
   const minutes = Number(match[1]) * 60 + Number(match[2]);
   return minutes >= 0 && minutes < 1440 ? minutes : null;
+}
+
+function nextServiceDate(value: string) {
+  const date = new Date(`${value}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
 }
 
 function vancouverParts(epochMs: number) {
@@ -231,13 +236,10 @@ export function CancellationPolicy({ lang }: { lang: "zh" | "en" }) {
 
 export function BookingView(p: BookingViewProps) {
   const t = (zh: string, en: string) => (p.lang === "zh" ? zh : en),
-    [routeId, setRouteId] = useState(""),
     [rateId, setRateId] = useState(""),
     [departure, setDeparture] = useState(""),
-    [serviceDate, setServiceDate] = useState(""),
+    [localTripDraft, setLocalTripDraft] = useState<BookingTripDraft>({ serviceDate: "", passengers: 1, coupon: "" }),
     [serviceTime, setServiceTime] = useState(""),
-    [passengers, setPassengers] = useState(1),
-    [coupon, setCoupon] = useState(""),
     [ack, setAck] = useState(false),
     [editingTrip, setEditingTrip] = useState(true),
     [timePeriod, setTimePeriod] = useState("morning"),
@@ -248,59 +250,29 @@ export function BookingView(p: BookingViewProps) {
       slots: Record<string, boolean>;
       receivedAt?: number;
     }>({ key: "", status: "loading", slots: {} }),
-    [timeCheck, setTimeCheck] = useState<"idle" | "checking" | "taken">("idle"),
-    [customer, setCustomer] = useState<CustomerInput>({
-      name: "",
-      email: "",
-      phone: "",
-      pickupAddress: "",
-      dropoffAddress: "",
-      flightNumber: "",
-      notes: "",
-    });
+    [timeCheck, setTimeCheck] = useState<"idle" | "checking" | "taken">("idle");
+  const { customer, setCustomer } = p;
+  const { serviceDate, passengers, coupon } = p.tripDraft ?? localTripDraft;
+  const routeId = p.initialRouteId ?? "";
   const passengerId = useId();
+  const dateGuidanceId = useId();
   const checkSeq = useRef(0);
+  const restoredDate = useRef(p.tripDraft?.serviceDate);
   const tripReviewHeading = useRef<HTMLHeadingElement>(null);
+  const bookingErrorNotice = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const timer = setInterval(() => setTick(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
   useEffect(() => {
-    if (p.initialRouteId) {
-      setRouteId(p.initialRouteId);
-      setRateId(p.initialRateId ?? "");
-    }
-  }, [p.initialRouteId, p.initialRateId]);
+    if (p.initialRateId) setRateId(p.initialRateId);
+  }, [p.initialRateId]);
   useEffect(() => {
-    setCustomer((current) => ({
-      ...current,
-      pickupLocationId:
-        p.quote?.pickupOptions?.length === 1
-          ? p.quote.pickupOptions[0].id
-          : undefined,
-      dropoffLocationId:
-        p.quote?.dropoffOptions?.length === 1
-          ? p.quote.dropoffOptions[0].id
-          : undefined,
-    }));
     setAck(false);
-  }, [p.quote?.id]);
-  useEffect(() => {
     if (p.quote) {
       setEditingTrip(false);
     }
   }, [p.quote?.id]);
-  useEffect(() => {
-    if (!routeId && !p.initialRouteId && p.catalog?.routes.length === 1) {
-      setRouteId(p.catalog.routes[0].id);
-    }
-  }, [p.catalog, p.initialRouteId, routeId]);
-  useEffect(() => {
-    const rates = p.catalog?.rates.filter(
-      (candidate) => candidate.routeId === routeId,
-    );
-    if (!rateId && rates?.length === 1) setRateId(rates[0].id);
-  }, [p.catalog, routeId, rateId]);
   const route = p.catalog?.routes.find((r) => r.id === routeId),
     rate = p.catalog?.rates.find(
       (r) => r.id === rateId && r.routeId === routeId,
@@ -361,14 +333,69 @@ export function BookingView(p: BookingViewProps) {
       return enabledDates.get(date)!;
     };
   }, [route?.serviceRules, rate, localNow.date, Math.floor(tick / 60_000)]);
+  const earliestSelectableDate = useMemo(() => {
+    if (!serviceBounds) return undefined;
+    for (let date = serviceBounds.min; date <= serviceBounds.max; date = nextServiceDate(date)) {
+      if (calendarDateEnabled(date)) return date;
+    }
+    return undefined;
+  }, [calendarDateEnabled, serviceBounds?.min, serviceBounds?.max]);
+
+  function updateTripDraft(patch: Partial<BookingTripDraft>) {
+    if (p.onTripDraftChange) p.onTripDraftChange(patch);
+    else setLocalTripDraft((current) => ({ ...current, ...patch }));
+  }
+
+  useEffect(() => {
+    if (!restoredDate.current || !route || !rate) return;
+    const date = restoredDate.current;
+    restoredDate.current = undefined;
+    if (!calendarDateEnabled(date)) updateTripDraft({ serviceDate: "" });
+  }, [route, rate, calendarDateEnabled]);
+
   const showTrip = editingTrip || !quoteValid;
+  const maxPassengers = rate?.maxPassengers ?? 60;
+  const invalidPassengers = !Number.isInteger(passengers) || passengers < 1 || passengers > maxPassengers;
+  const passengerError = invalidPassengers
+    ? t(`請輸入 1 至 ${maxPassengers} 位乘客，或選擇其他車型。`, `Enter 1 to ${maxPassengers} passengers or choose another vehicle.`)
+    : "";
+  const quoteDisabled =
+    p.busy ||
+    !route ||
+    !rate ||
+    invalidPassengers ||
+    timeCheck === "checking" ||
+    (Boolean(route?.serviceRules) &&
+      (!serviceDateIsAllowed || !times.includes(serviceTime) || !departure));
+  let quoteDisabledReason = "";
+  if (quoteDisabled) {
+    if (p.busy || timeCheck === "checking") {
+      quoteDisabledReason = t("正在核對可用車位，請稍候。", "Checking vehicle availability. Please wait.");
+    } else if (!route) {
+      quoteDisabledReason = t("正在載入可預訂路線。", "Loading the bookable route.");
+    } else if (!rate) {
+      quoteDisabledReason = t("請先選擇車型。", "Choose a vehicle first.");
+    } else if (invalidPassengers) {
+      quoteDisabledReason = passengerError;
+    } else if (!serviceDate || !serviceDateIsAllowed) {
+      quoteDisabledReason = t("請選擇可服務的日期。", "Choose an available service date.");
+    } else {
+      quoteDisabledReason = t("請選擇可用的出發時間。", "Choose an available departure time.");
+    }
+  }
   useEffect(() => {
     if (!showTrip) {
       // Start the new step at the quoted trip, before asking for contact details.
-      window.scrollTo({ top: 0, behavior: "auto" });
+      tripReviewHeading.current?.scrollIntoView({ block: "start" });
       tripReviewHeading.current?.focus({ preventScroll: true });
     }
   }, [showTrip, p.quote?.id]);
+  useEffect(() => {
+    if (p.error && p.focusError) {
+      bookingErrorNotice.current?.scrollIntoView({ block: "center" });
+      bookingErrorNotice.current?.focus({ preventScroll: true });
+    }
+  }, [p.error, p.focusError]);
   const timeGroups = [
     {
       id: "morning",
@@ -389,7 +416,7 @@ export function BookingView(p: BookingViewProps) {
   const activeTimeGroup =
     timeGroups.find((group) => group.id === timePeriod) ?? timeGroups[0];
   const availabilityKey =
-    p.onAvailability && route && rate && serviceDate && serviceDateIsAllowed
+    p.onAvailability && route && rate && serviceDate && times.length
       ? `${routeId}|${rateId}|${serviceDate}`
       : "";
   const availabilityCurrent = availability.key === availabilityKey;
@@ -492,6 +519,33 @@ export function BookingView(p: BookingViewProps) {
     }).format(minor / 100);
   const name = (r: { nameZh: string; nameEn: string }) =>
     p.lang === "zh" ? r.nameZh : r.nameEn;
+  const waitingForLocation = t("待選擇", "Choose a location");
+  const quotedPickup = selectedPickup
+    ? name(selectedPickup)
+    : quote?.pickupOptions?.length
+      ? waitingForLocation
+      : p.journey?.pickup;
+  const quotedDropoff = selectedDropoff
+    ? name(selectedDropoff)
+    : p.journey?.intendedDropoff ?? (quote?.dropoffOptions?.length ? waitingForLocation : undefined);
+  const quotedLocationRows = (
+    <>
+      {quotedPickup && (
+        <div>
+          <dt>{t("上車地點", "Pickup location")}</dt>
+          <dd>{quotedPickup}</dd>
+        </div>
+      )}
+      {quotedDropoff && (
+        <div>
+          <dt>{!selectedDropoff && p.journey?.intendedDropoff
+            ? t("預選下車地", "Intended drop-off")
+            : t("下車地點", "Drop-off location")}</dt>
+          <dd>{quotedDropoff}</dd>
+        </div>
+      )}
+    </>
+  );
   const timeLabel = (value: string) => {
     if (p.lang === "zh") return value;
     const minutes = timeMinutes(value);
@@ -533,12 +587,15 @@ export function BookingView(p: BookingViewProps) {
   const b = p.booking;
   return (
     <div className="qb-customer">
-      <div className="qb-sandbox" role="note">
-        {t(
-          "Sandbox 測試環境：不會扣取真實款項，也不會提供真實接送服務。",
-          "Sandbox test environment: no real charge and no travel service will be provided.",
-        )}
-      </div>
+      <p className="qb-sandbox" role="note">
+        <span className="material-icons" aria-hidden="true">info_outline</span>
+        <span>
+          {t(
+            "測試環境 · 不會扣款，也不會安排接送",
+            "Test mode · No charge or transfer service",
+          )}
+        </span>
+      </p>
       <div className="qb-public-main">
         <div className="qb-hero">
           <a
@@ -549,17 +606,7 @@ export function BookingView(p: BookingViewProps) {
           >
             ← {t("私人接送", "Private transfers")}
           </a>
-          <h1>
-            {p.showBooking
-              ? t("你的測試預訂", "Your test booking")
-              : t("安排你的私人接送", "Plan your private transfer")}
-          </h1>
-          <p>
-            {t(
-              "選擇路線與時間，核對整車報價，再填寫接送資料。",
-              "Choose a route and time, review your whole-vehicle quote, then add your transfer details.",
-            )}
-          </p>
+          {!p.fixedProduct && <h1>{t("你的測試預訂", "Your test booking")}</h1>}
           <div
             className="qb-progress"
             aria-label={t("預訂步驟", "Booking progress")}
@@ -582,7 +629,7 @@ export function BookingView(p: BookingViewProps) {
           </div>
         </div>
         {p.error && (
-          <div className="qt-alert" role="alert">
+          <div className="qt-alert" role="alert" ref={bookingErrorNotice} tabIndex={-1}>
             {p.error}
           </div>
         )}
@@ -591,12 +638,13 @@ export function BookingView(p: BookingViewProps) {
             {!b ? (
               <>
                 <p role="status">
-                  {p.loading
-                    ? t("正在核對預訂狀態…", "Checking your booking…")
-                    : t(
-                        "目前無法顯示這筆預訂。",
-                        "This booking cannot be displayed right now.",
-                      )}
+                  {p.showReceipt
+                    ? p.loading
+                      ? t("正在載入收據…", "Loading your receipt…")
+                      : t("暫時無法顯示收據。", "Your receipt is temporarily unavailable.")
+                    : p.loading
+                      ? t("正在核對預訂狀態…", "Checking your booking…")
+                      : t("目前無法顯示這筆預訂。", "This booking cannot be displayed right now.")}
                 </p>
                 <div className="qb-public-actions">
                   <button
@@ -604,10 +652,10 @@ export function BookingView(p: BookingViewProps) {
                     onClick={p.onRefresh}
                     disabled={p.busy || p.loading}
                   >
-                    {t("重新核對", "Check again")}
+                    {p.showReceipt ? t("重試載入收據", "Retry loading receipt") : t("重新核對", "Check again")}
                   </button>
                   <button className="qt-btn" onClick={p.onNew}>
-                    {t("返回預訂頁", "Back to booking")}
+                    {p.showReceipt ? t("返回本次預訂", "Back to this booking") : t("返回預訂頁", "Back to booking")}
                   </button>
                 </div>
               </>
@@ -709,6 +757,12 @@ export function BookingView(p: BookingViewProps) {
                 {b.status !== "cancelled" && (
                   <CancellationPolicy lang={p.lang} />
                 )}
+                {b.status === "pending" && p.checkoutError && (
+                  <div className="qt-alert" role="alert">
+                    <strong>{t("無法開啟測試付款。", "Could not open test payment.")}</strong>{" "}
+                    {p.checkoutError}
+                  </div>
+                )}
                 <div className="qb-public-actions">
                   {b.paymentNotification && b.status !== "cancelled" && (
                     <button
@@ -750,11 +804,12 @@ export function BookingView(p: BookingViewProps) {
                   </button>
                 </div>
                 {b.canPay && !p.catalog?.paymentEnabled && (
-                  <p className="qb-note">
-                    {t(
-                      "此預覽目前尚未連接測試付款。",
-                      "Test payments are not connected in this preview.",
-                    )}
+                  <p className={p.paymentSetupFailed ? "qt-alert" : "qb-note"} role={p.paymentSetupFailed ? "alert" : "status"}>
+                    {p.paymentSetupFailed
+                      ? t("暫時無法核對付款設定，請重新核對狀態。", "Payment settings could not be checked. Refresh the booking status to try again.")
+                      : p.catalog
+                        ? t("此預覽目前尚未連接測試付款。", "Test payments are not connected in this preview.")
+                        : t("正在核對測試付款設定…", "Checking test payment settings…")}
                   </p>
                 )}
                 <p className="qb-note">
@@ -802,14 +857,20 @@ export function BookingView(p: BookingViewProps) {
                       {t("行程已選好", "Your trip is ready")}
                     </span>
                     <h2 ref={tripReviewHeading} tabIndex={-1}>
-                      {route ? name(route) : ""}
+                      {p.journey?.title ?? (route ? name(route) : "")}
                     </h2>
                     <p>
                       {quote
                         ? formatDepartureLabel(quote.departureLabel, p.lang)
                         : ""}{" "}
                       · {passengers} {t("位乘客", "passengers")}
+                      {p.journey && (
+                        <>{" "}<span className="whitespace-nowrap">· {t(`${p.journey.seater} 座車型`, `${p.journey.seater}-seat vehicle`)}</span></>
+                      )}
                     </p>
+                    {(quotedPickup || quotedDropoff) && (
+                      <dl className="qb-trip-review__locations">{quotedLocationRows}</dl>
+                    )}
                     {quote && (
                       <p className="qb-trip-review__total">
                         <span>
@@ -835,13 +896,11 @@ export function BookingView(p: BookingViewProps) {
               {showTrip && (
                 <form
                   className="qt-card qb-trip-form"
-                  data-fixed-route={Boolean(
-                    p.initialRouteId && p.initialRateId,
-                  )}
+                  data-fixed-route={p.fixedProduct}
                   onSubmit={(e) => {
                     e.preventDefault();
                     if (
-                      !p.busy &&
+                      !quoteDisabled &&
                       route &&
                       rate &&
                       (!route.serviceRules ||
@@ -856,38 +915,23 @@ export function BookingView(p: BookingViewProps) {
                       });
                   }}
                 >
-                  <h2>{t("選擇行程與出發時間", "Where to, and when?")}</h2>
+                  <h2>{t("選擇出發日期與時間", "Choose a date and time")}</h2>
+                  {p.journey && (
+                    <div className="qb-entry-journey">
+                      <p>
+                        <span>{t("本次接送", "This transfer")}</span>
+                        <strong>{p.journey.title}</strong>
+                      </p>
+                      {p.journey.referencePrice && (
+                        <p>
+                          <span>{t("每車參考價", "Reference price per vehicle")}</span>
+                          <strong>{p.journey.referencePrice}</strong>
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <fieldset className="qb-fields" disabled={p.busy}>
-                    <label className="qt-field qb-full qb-route-choice">
-                      <span>{t("路線", "Route")}</span>
-                      <select
-                        required
-                        value={routeId}
-                        onChange={(e) => {
-                          setRouteId(e.target.value);
-                          setRateId("");
-                          setDeparture("");
-                          setServiceDate("");
-                          setServiceTime("");
-                          setCustomer((current) => ({
-                            ...current,
-                            pickupLocationId: undefined,
-                            dropoffLocationId: undefined,
-                          }));
-                          setAck(false);
-                        }}
-                      >
-                        <option value="">
-                          {t("請選擇路線", "Choose a route")}
-                        </option>
-                        {p.catalog.routes.map((r) => (
-                          <option key={r.id} value={r.id}>
-                            {name(r)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="qt-field qb-full qb-vehicle-choice">
+                    {!p.initialRateId && <label className="qt-field qb-full qb-vehicle-choice">
                       <span>{t("車型方案", "Vehicle option")}</span>
                       <select
                         required
@@ -917,18 +961,13 @@ export function BookingView(p: BookingViewProps) {
                                 : [];
                           setRateId(e.target.value);
                           if (!nextDateAllowed) {
-                            setServiceDate("");
+                            updateTripDraft({ serviceDate: "" });
                             setServiceTime("");
                             setDeparture("");
                           } else if (!nextTimes.includes(serviceTime)) {
                             setServiceTime("");
                             setDeparture("");
                           }
-                          setCustomer((current) => ({
-                            ...current,
-                            pickupLocationId: undefined,
-                            dropoffLocationId: undefined,
-                          }));
                           setAck(false);
                         }}
                       >
@@ -947,20 +986,42 @@ export function BookingView(p: BookingViewProps) {
                             </option>
                           ))}
                       </select>
-                    </label>
+                    </label>}
                     {route?.serviceRules ? (
                       <>
                         <div className="qb-full qb-date-time">
                           <div className="qb-date-panel">
                             <h3>{t("選擇日期", "Choose a date")}</h3>
+                            <p id={dateGuidanceId} className="qb-date-guidance">
+                              <strong>
+                                {earliestSelectableDate ? (
+                                  <>
+                                    {t("最早可選", "Earliest available")}{" "}
+                                    <time dateTime={earliestSelectableDate}>
+                                      {formatServiceDate(earliestSelectableDate, p.lang)}
+                                    </time>
+                                  </>
+                                ) : t("目前暫無可選日期", "No dates currently available")}
+                              </strong>
+                              <span>
+                                {t(
+                                  `需提前 ${leadLabel(route.serviceRules.minLeadMinutes ?? MIN_BOOKING_LEAD_MINUTES, "zh")} 預訂 · 溫哥華當地時間`,
+                                  `Book at least ${leadLabel(route.serviceRules.minLeadMinutes ?? MIN_BOOKING_LEAD_MINUTES, "en")} ahead · Vancouver local time`,
+                                )}
+                              </span>
+                            </p>
                             <ServiceCalendar
                               lang={p.lang}
                               value={serviceDate}
                               min={serviceBounds!.min}
                               max={serviceBounds!.max}
+                              describedBy={dateGuidanceId}
+                              renderMonthPicker={(picker) => (
+                                <BookingLocationSelect {...picker} placeholder={picker.label} hideLabel />
+                              )}
                               isDateEnabled={calendarDateEnabled}
                               onChange={(date) => {
-                                setServiceDate(date);
+                                updateTripDraft({ serviceDate: date });
                                 setServiceTime("");
                                 setDeparture("");
                                 setAck(false);
@@ -1122,6 +1183,7 @@ export function BookingView(p: BookingViewProps) {
                         />
                       </label>
                     )}
+                    {p.vehicleSelector}
                     <div className="qt-field qb-full qb-passenger-field">
                       <label htmlFor={passengerId}>
                         {t("乘客人數", "Passengers")}
@@ -1132,7 +1194,7 @@ export function BookingView(p: BookingViewProps) {
                           aria-label={t("減少乘客", "Remove a passenger")}
                           disabled={passengers <= 1}
                           onClick={() => {
-                            setPassengers(Math.max(1, passengers - 1));
+                            updateTripDraft({ passengers: Math.max(1, passengers - 1) });
                             setAck(false);
                           }}
                         >
@@ -1144,25 +1206,22 @@ export function BookingView(p: BookingViewProps) {
                           inputMode="numeric"
                           required
                           min={1}
-                          max={rate?.maxPassengers ?? 60}
+                          max={maxPassengers}
                           step={1}
                           value={passengers}
+                          aria-invalid={invalidPassengers}
+                          aria-describedby={invalidPassengers ? `${passengerId}-error` : undefined}
                           onChange={(e) => {
-                            setPassengers(Number(e.target.value));
+                            updateTripDraft({ passengers: Number(e.target.value) });
                             setAck(false);
                           }}
                         />
                         <button
                           type="button"
                           aria-label={t("增加乘客", "Add a passenger")}
-                          disabled={passengers >= (rate?.maxPassengers ?? 60)}
+                          disabled={passengers >= maxPassengers}
                           onClick={() => {
-                            setPassengers(
-                              Math.min(
-                                rate?.maxPassengers ?? 60,
-                                passengers + 1,
-                              ),
-                            );
+                            updateTripDraft({ passengers: Math.min(maxPassengers, passengers + 1) });
                             setAck(false);
                           }}
                         >
@@ -1177,6 +1236,9 @@ export function BookingView(p: BookingViewProps) {
                           )}
                         </span>
                       )}
+                      {passengerError && (
+                        <p id={`${passengerId}-error`} className="qb-quote-readiness" role="status">{passengerError}</p>
+                      )}
                     </div>
                     <label className="qt-field qb-full qb-coupon">
                       <span>
@@ -1189,7 +1251,7 @@ export function BookingView(p: BookingViewProps) {
                         autoCapitalize="characters"
                         spellCheck={false}
                         onChange={(e) => {
-                          setCoupon(e.target.value);
+                          updateTripDraft({ coupon: e.target.value });
                           setAck(false);
                         }}
                       />
@@ -1198,8 +1260,8 @@ export function BookingView(p: BookingViewProps) {
                   <p className="qb-note">
                     {route?.serviceRules
                       ? t(
-                          `此路線需提前 ${leadLabel(route.serviceRules.minLeadMinutes ?? MIN_BOOKING_LEAD_MINUTES, "zh")}預訂。所有時間以溫哥華當地時間為準。下一步核對價格與車位；取得報價不會保留車位。`,
-                          `This route must be booked at least ${leadLabel(route.serviceRules.minLeadMinutes ?? MIN_BOOKING_LEAD_MINUTES, "en")} ahead. All times are local to Vancouver. We check price and vehicle availability in the next step; a quote does not hold a vehicle.`,
+                          "下一步會核對價格與車位；取得報價不會保留車位。",
+                          "The next step verifies price and vehicle availability; a quote does not hold a vehicle.",
                         )
                       : t(
                           "目前測試設定：提前至少1小時、最多366天。取得報價時不會保留車位。",
@@ -1208,21 +1270,17 @@ export function BookingView(p: BookingViewProps) {
                   </p>
                   <button
                     className="qt-btn qt-btn--primary"
-                    disabled={
-                      p.busy ||
-                      !route ||
-                      !rate ||
-                      timeCheck === "checking" ||
-                      (Boolean(route?.serviceRules) &&
-                        (!serviceDateIsAllowed ||
-                          !times.includes(serviceTime) ||
-                          !departure))
-                    }
+                    disabled={quoteDisabled}
                   >
                     {p.busy
                       ? t("核對中…", "Checking…")
                       : t("查看報價及繼續 →", "Review quote & continue →")}
                   </button>
+                  {quoteDisabledReason && (
+                    <p className="qb-quote-readiness" role="status">
+                      {quoteDisabledReason}
+                    </p>
+                  )}
                 </form>
               )}
               {quote && quoteValid && !showTrip && (
@@ -1360,7 +1418,9 @@ export function BookingView(p: BookingViewProps) {
             </div>
             <aside className="qt-card qb-summary">
               <h2>{t("行程摘要", "Trip summary")}</h2>
-              {route && (
+              {p.journey ? (
+                <p className="qb-summary__journey">{p.journey.title}</p>
+              ) : route && (
                 <p>
                   {p.lang === "zh" ? route.pickupZh : route.pickupEn} →{" "}
                   {p.lang === "zh" ? route.dropoffZh : route.dropoffEn}
@@ -1381,20 +1441,19 @@ export function BookingView(p: BookingViewProps) {
                   </div>
                   <PriceLines lang={p.lang} price={quote} />
                   <dl>
-                    {selectedPickup ? (
+                    {quotedLocationRows}
+                    <div>
+                      <dt>{t("車型", "Vehicle")}</dt>
+                      <dd>{p.journey
+                        ? t(`${p.journey.seater} 座`, `${p.journey.seater} seats`)
+                        : t(quote.rateNameZh, quote.rateNameEn)}</dd>
+                    </div>
+                    {p.journey?.serviceArea && (
                       <div>
-                        <dt>
-                          {t("上車航廈／地點", "Pickup terminal / location")}
-                        </dt>
-                        <dd>{name(selectedPickup)}</dd>
+                        <dt>{t("服務範圍", "Service area")}</dt>
+                        <dd>{p.journey.serviceArea}</dd>
                       </div>
-                    ) : null}
-                    {selectedDropoff ? (
-                      <div>
-                        <dt>{t("下車地點", "Drop-off location")}</dt>
-                        <dd>{name(selectedDropoff)}</dd>
-                      </div>
-                    ) : null}
+                    )}
                     <div>
                       <dt>{t("出發", "Departure")}</dt>
                       <dd>
@@ -1469,20 +1528,6 @@ export function BookingView(p: BookingViewProps) {
               </div>
             </aside>
           </div>
-        )}
-        {!p.showBooking && (
-          <details className="qb-recovery-disclosure">
-            <summary>
-              {t("已經預訂？找回你的預訂", "Already booked? Find your booking")}
-            </summary>
-            <BookingRecovery
-              bookings={p.recent ?? []}
-              lang={p.lang}
-              loading={p.recoveryLoading ?? false}
-              error={p.recoveryError ?? ""}
-              onRefresh={p.onRecover}
-            />
-          </details>
         )}
       </div>
     </div>

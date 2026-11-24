@@ -2,12 +2,12 @@
 import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
 import PageHero from "../../components/PageHero.astro";
-import { wpUrl } from "../../lib/wp-url";
 import TransferRoutesGrid from "../../components/TransferRoutesGrid";
+import { getPrivateTransfersWithPricing } from "../../lib/zaui/zaui";
+import { transferRouteCardLinks, transferProducts } from "../../lib/transfer-products";
+import { transferListingCovers } from "../../lib/transfer-covers";
 import PremiumReviewsGrid from "../../components/PremiumReviewsGrid";
 import { getGoogleReviews } from "../../lib/wordpress/api";
-import { getPrivateTransfersWithPricing } from "../../lib/zaui/zaui";
-import CdnImage from "../../components/CdnImage.astro";
 import { Image } from "astro:assets";
 import skiShuttleImg from "../../assets/images/ski-shuttle.jpg";
 import vehicleModels from "../../data/vehicle-models.json";
@@ -45,15 +45,7 @@ try {
     console.error("Failed to fetch reviews:", e);
 }
 
-// Read the shared last-successful manual Zaui snapshot; no API request during builds.
-let transferRoutes: Awaited<ReturnType<typeof getPrivateTransfersWithPricing>> =
-    [];
-try {
-    transferRoutes = await getPrivateTransfersWithPricing();
-    console.log(`Loaded ${transferRoutes.length} transfer routes from the shared snapshot`);
-} catch (e) {
-    throw new Error("The transfer snapshot is invalid; refusing an incomplete page", { cause: e });
-}
+const transferRoutes = await getPrivateTransfersWithPricing();
 
 // Filter transfer-related reviews with improved keywords
 const transferKeywords = [
@@ -128,15 +120,13 @@ const t = {
         lang === "zh"
             ? "舒適、安全、準時的專屬用車服務"
             : "Premium door-to-door transportation across British Columbia",
-    heroTagline: lang === "zh" ? "專業接送" : "PROFESSIONAL TRANSFERS",
     whyUs: lang === "zh" ? "為什麼選擇我們" : "Why Choose Qualitour",
     ourFleet: lang === "zh" ? "車隊與包車服務" : "Fleet & Charter Services",
     fleetDesc:
         lang === "zh"
             ? "多元車型，滿足您各種旅行需求"
             : "Versatile fleet options designed to meet all your travel needs",
-    popularRoutes: lang === "zh" ? "熱門路線" : "Popular Routes",
-    routesDesc: lang === "zh" ? "選擇您的行程" : "Select your journey",
+    popularRoutes: lang === "zh" ? "瀏覽所有線路" : "Browse transfer routes",
     perVehicle: lang === "zh" ? "每車" : "per vehicle",
     charterServices: lang === "zh" ? "包車服務" : "Charter Services",
     charterDesc:
@@ -215,8 +205,6 @@ const { fleetItems, charterRates } = buildPrivateTransferCards({
     imageFor,
 });
 
-// Transfer routes are now fetched from Zaui API (see above)
-
 const faqItems = [
     {
         q:
@@ -267,10 +255,6 @@ const faqItems = [
     },
 ];
 
-function extractPriceNumber(caption: string): string | null {
-    const m = caption.match(/\$\s*(\d+)/);
-    return m ? m[1] : null;
-}
 ---
 
 <Layout
@@ -283,12 +267,11 @@ function extractPriceNumber(caption: string): string | null {
     lang={lang}
     image={skiShuttleImg.src}
 >
-    <!-- Hero Section -->
+    <div class="transfer-catalogue-hero">
     <PageHero
         image={skiShuttleImg}
         title={t.heading}
         subtitle={t.subheading}
-        badge={{ icon: "airport_shuttle", text: t.heroTagline }}
     >
         <div class="mt-2 flex flex-wrap justify-center gap-2 sm:mt-4 sm:gap-4">
             <a
@@ -307,41 +290,34 @@ function extractPriceNumber(caption: string): string | null {
             </a>
         </div>
     </PageHero>
+    </div>
 
-    <!-- Popular Routes -->
-    <section id="routes" class="py-12 sm:py-16 lg:py-20 bg-gray-50 scroll-mt-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-8 sm:mb-12">
-                <span
-                    class="text-[#f7941e] font-bold tracking-widest uppercase text-sm mb-2 block"
-                    >{t.popularRoutes}</span
-                >
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                    {t.routesDesc}
-                </h2>
+    <section id="routes" class="bg-gray-50 py-10 text-gray-900 scroll-mt-20 sm:py-14" aria-labelledby="transfer-routes-heading">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+                <div>
+                    <h2 id="transfer-routes-heading" class="text-3xl font-bold tracking-tight sm:text-4xl">
+                        {lang === "zh" ? "所有接送線路" : "All transfer routes"}
+                    </h2>
+                    <p class="mt-2 text-gray-600">
+                        {lang === "zh"
+                            ? `共有 ${transferProducts.length} 種方向與車型組合。可在卡片上切換方向，再選擇車型。`
+                            : `Browse ${transferProducts.length} route and vehicle combinations. Switch directions on a card and select your vehicle.`}
+                    </p>
+                </div>
+                <a href={`${localePrefix}/booking-status`} class="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-gray-700 underline decoration-gray-300 underline-offset-4 hover:text-orange-700">
+                    <span class="material-icons text-lg" aria-hidden="true">receipt_long</span>
+                    {lang === "zh" ? "查找我的預訂" : "Find my booking"}
+                </a>
             </div>
-
-            {
-                transferRoutes.length > 0 ? (
-                    <TransferRoutesGrid
-                        routes={transferRoutes}
-                        lang={lang}
-                        localePrefix={localePrefix}
-                        client:load
-                    />
-                ) : (
-                    <div class="text-center py-12 text-gray-500">
-                        <span class="material-icons text-4xl mb-4">
-                            sync_problem
-                        </span>
-                        <p>
-                            {lang === "zh"
-                                ? "無法載入路線資訊"
-                                : "Unable to load routes"}
-                        </p>
-                    </div>
-                )
-            }
+            <TransferRoutesGrid
+                routes={transferRoutes}
+                lang={lang}
+                hrefs={transferRouteCardLinks(transferRoutes, localePrefix)}
+                covers={transferListingCovers(transferRoutes, lang)}
+                groupByDestination
+                client:load
+            />
         </div>
     </section>
 
@@ -654,3 +630,25 @@ function extractPriceNumber(caption: string): string | null {
         </div>
     </section>
 </Layout>
+
+<style>
+    .transfer-catalogue-hero {
+        --site-hero-min-height: clamp(13rem, 25vw, 20rem);
+    }
+
+    .transfer-catalogue-hero :global(.page-hero > .animate-bounce) {
+        display: none;
+    }
+
+    @media (max-width: 639px) {
+        .transfer-catalogue-hero :global(h1) {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .transfer-catalogue-hero :global(h1 + p) {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+    }
+</style>

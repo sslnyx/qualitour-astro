@@ -1,3 +1,4 @@
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import type {
   PublicCatalog,
   BookingQuote,
@@ -8,19 +9,39 @@ import type {
   GuestBooking,
 } from "./contracts";
 
+export type BookingTripDraft = { serviceDate: string; passengers: number; coupon: string };
+
+export type BookingJourney = {
+  title: string;
+  pickup: string;
+  intendedDropoff?: string;
+  seater: "11" | "14";
+  serviceArea?: string;
+  referencePrice?: string;
+};
+
 export type BookingViewProps = {
   showBooking: boolean;
-  websiteUrl: string;
+  showReceipt: boolean;
   lang: "en" | "zh";
-  onLanguage: (lang: "en" | "zh") => void;
+  fixedProduct: boolean;
+  journey?: BookingJourney;
+  vehicleSelector?: ReactNode;
   catalog?: PublicCatalog;
   quote?: BookingQuote;
   booking?: GuestBooking;
+  customer: CustomerInput;
+  setCustomer: Dispatch<SetStateAction<CustomerInput>>;
   loading: boolean;
   busy: boolean;
   error: string;
+  focusError: boolean;
+  checkoutError: string;
+  paymentSetupFailed: boolean;
   initialRouteId?: string;
   initialRateId?: string;
+  tripDraft?: BookingTripDraft;
+  onTripDraftChange?: (patch: Partial<BookingTripDraft>) => void;
   onAvailability?: (
     value: AvailabilityInput,
     signal?: AbortSignal,
@@ -32,8 +53,4 @@ export type BookingViewProps = {
   onRefresh: () => void;
   onNew: () => void;
   onReceipt: () => void;
-  recent?: GuestBooking[];
-  recoveryLoading?: boolean;
-  recoveryError?: string;
-  onRecover: () => void;
 };

@@ -82,7 +82,7 @@ export function BookingRecovery(p: {
   const t = (zh: string, en: string) => (p.lang === "zh" ? zh : en);
   return (
     <section className="qt-card qb-recovery" aria-labelledby="recovery-heading">
-      <h2 id="recovery-heading">{t("找回你的預訂", "Your recent bookings")}</h2>
+      <h1 id="recovery-heading" className="mb-3 text-2xl font-bold">{t("找回你的預訂", "Find your booking")}</h1>
       <p className="qb-note">
         {t(
           "同一瀏覽器可找回最近 20 筆預訂。身分保留 7 天；清除 Cookie 或換裝置後無法在此找回。",

@@ -20,6 +20,12 @@
     "run_worker_first": [
       "/api/transfer",
       "/api/transfer/*",
+      "/book",
+      "/book/",
+      "/book.html",
+      "/zh/book",
+      "/zh/book/",
+      "/zh/book.html",
       "/book/manage/*",
       "/book/return/*",
       "/book/receipt/*",
@@ -28,6 +34,8 @@
       "/zh/book/return/*",
       "/zh/book/receipt/*",
       "/zh/book/claim/*",
+      "/private-transfers/*",
+      "/zh/private-transfers/*",
       "/_image",
       "/_emdash/api/media/file/*"
     ]

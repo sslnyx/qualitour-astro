@@ -1,0 +1,207 @@
+{
+  "destinations": [
+    {
+      "to": "Vancouver Airport (YVR)",
+      "file": "vancouver-airport.webp",
+      "alt": {
+        "zh": "日落時的溫哥華國際機場航廈",
+        "en": "Vancouver International Airport terminal at sunset"
+      },
+      "credit": {
+        "name": "Vancouver International Airport",
+        "href": "https://news.yvr.ca/media-library/"
+      }
+    }
+  ],
+  "directions": [
+    {
+      "from": "Vancouver Airport (YVR)",
+      "to": "Whistler",
+      "file": "whistler-village.webp",
+      "alt": {
+        "zh": "惠斯勒山村的雪景與鐘樓",
+        "en": "Snow and the clock tower in Whistler Village"
+      }
+    },
+    {
+      "from": "Greater Vancouver",
+      "to": "Whistler",
+      "file": "whistler-village-from-blackcomb.webp",
+      "alt": {
+        "zh": "從黑梳山纜車站眺望雪中的惠斯勒村與滑雪場",
+        "en": "Snowy Whistler Village and ski runs viewed from the Blackcomb gondola terminal"
+      },
+      "credit": {
+        "name": "Mogodore",
+        "href": "https://commons.wikimedia.org/wiki/File:090215-IMG_0702-WhistlerVillage.jpg",
+        "license": "CC BY-SA 3.0",
+        "licenseHref": "https://creativecommons.org/licenses/by-sa/3.0/"
+      }
+    },
+    {
+      "from": "Whistler",
+      "to": "Greater Vancouver",
+      "file": "route-1-reverse.webp",
+      "alt": {
+        "zh": "本拿比 Metrotown 城市天際線",
+        "en": "Metrotown skyline in Burnaby"
+      },
+      "credit": {
+        "name": "Zacharycmango",
+        "href": "https://commons.wikimedia.org/wiki/File:Burnaby_Metrotown_skyline.jpg",
+        "license": "CC BY-SA 4.0",
+        "licenseHref": "https://creativecommons.org/licenses/by-sa/4.0/"
+      }
+    },
+    {
+      "from": "Vancouver Airport (YVR)",
+      "to": "Greater Vancouver (Zone 1)",
+      "file": "vancouver-downtown-street.webp",
+      "alt": {
+        "zh": "溫哥華市中心的高樓與無軌電車架空線",
+        "en": "Downtown Vancouver streetscape with high-rises and trolley wires"
+      },
+      "credit": {
+        "name": "GoToVan",
+        "href": "https://commons.wikimedia.org/wiki/File:A_Street_Scene_in_Downtown,_Vancouver_(49674626501).jpg",
+        "license": "CC BY 2.0",
+        "licenseHref": "https://creativecommons.org/licenses/by/2.0/"
+      }
+    },
+    {
+      "from": "Vancouver Airport (YVR)",
+      "to": "Greater Vancouver (Zone 2)",
+      "file": "north-vancouver-lonsdale-avenue.webp",
+      "alt": {
+        "zh": "北溫哥華朗斯代爾大道，背景為松雞山",
+        "en": "Lonsdale Avenue in North Vancouver with Grouse Mountain behind"
+      },
+      "credit": {
+        "name": "Flying Penguin",
+        "href": "https://commons.wikimedia.org/wiki/File:Lonsdale_Ave_North_Vancouver_BC.JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseHref": "https://creativecommons.org/licenses/by-sa/3.0/"
+      }
+    },
+    {
+      "from": "Vancouver Airport (YVR)",
+      "to": "Greater Vancouver (Zone 3)",
+      "file": "route-4-forward.webp",
+      "alt": {
+        "zh": "白石鎮碼頭與海灣",
+        "en": "White Rock Pier and Semiahmoo Bay"
+      },
+      "credit": {
+        "name": "Joe Mabel",
+        "href": "https://commons.wikimedia.org/wiki/File:White_Rock_Pier_from_the_east_01.jpg",
+        "license": "CC BY-SA 4.0",
+        "licenseHref": "https://creativecommons.org/licenses/by-sa/4.0/"
+      }
+    },
+    {
+      "from": "Vancouver / YVR",
+      "to": "Sun Peaks",
+      "file": "route-5-forward.webp",
+      "alt": {
+        "zh": "太陽峰滑雪度假村的雪道和纜車",
+        "en": "Snowy ski run and chairlift at Sun Peaks Resort"
+      },
+      "credit": {
+        "name": "Janet Hopkins",
+        "href": "https://commons.wikimedia.org/wiki/File:Sun_Peaks_Resort.jpg",
+        "license": "CC BY 3.0",
+        "licenseHref": "https://creativecommons.org/licenses/by/3.0/"
+      }
+    },
+    {
+      "from": "Sun Peaks",
+      "to": "Vancouver / YVR",
+      "file": "route-5-reverse.webp",
+      "alt": {
+        "zh": "溫哥華煤氣港的海上飛機、碼頭與天際線",
+        "en": "Seaplane harbour and skyline at Coal Harbour, Vancouver"
+      },
+      "credit": {
+        "name": "Daderot",
+        "href": "https://commons.wikimedia.org/wiki/File:Skyline_with_seaplane_-_Vancouver,_Canada_-_DSC09323.JPG",
+        "license": "CC0",
+        "licenseHref": "https://creativecommons.org/publicdomain/zero/1.0/"
+      }
+    },
+    {
+      "from": "Vancouver",
+      "to": "Seattle",
+      "file": "route-6-forward.webp",
+      "alt": {
+        "zh": "西雅圖太空針塔與市中心天際線",
+        "en": "Seattle Space Needle and downtown skyline"
+      },
+      "credit": {
+        "name": "Guywelch2000",
+        "href": "https://commons.wikimedia.org/wiki/File:Space_Needle_and_Seattle_skyline_from_Kerry_Park_with_waxing_gibbous_moon,_27_June_2026.jpg",
+        "license": "CC BY 4.0",
+        "licenseHref": "https://creativecommons.org/licenses/by/4.0/"
+      }
+    },
+    {
+      "from": "Seattle",
+      "to": "Vancouver",
+      "file": "route-6-reverse.webp",
+      "alt": {
+        "zh": "福溪奧運村望向溫哥華市中心與北岸群山",
+        "en": "Downtown Vancouver and North Shore mountains from False Creek Olympic Village"
+      },
+      "credit": {
+        "name": "Shane Smith",
+        "href": "https://commons.wikimedia.org/wiki/File:Vancouver_from_False_Creek_(Olympic_Village)_-_panoramio.jpg",
+        "license": "CC BY-SA 3.0",
+        "licenseHref": "https://creativecommons.org/licenses/by-sa/3.0/"
+      }
+    },
+    {
+      "from": "Vancouver Airport (YVR)",
+      "to": "Canada Place Cruise Terminal",
+      "file": "route-7-forward.webp",
+      "alt": {
+        "zh": "溫哥華加拿大廣場郵輪碼頭的白帆屋頂",
+        "en": "White-sail roof of the Canada Place Cruise Terminal in Vancouver"
+      },
+      "credit": {
+        "name": "Dietmar Rabich",
+        "href": "https://commons.wikimedia.org/wiki/File:Vancouver_(BC,_Canada),_Canada_Place_--_2022_--_1847.jpg",
+        "license": "CC BY-SA 4.0",
+        "licenseHref": "https://creativecommons.org/licenses/by-sa/4.0/"
+      }
+    },
+    {
+      "from": "Greater Vancouver",
+      "to": "Abbotsford (YXX) Airport",
+      "file": "route-8-forward.webp",
+      "alt": {
+        "zh": "阿博斯福國際機場 YXX 的入口與飛機展示",
+        "en": "Entrance and aircraft display at Abbotsford International Airport, YXX"
+      },
+      "credit": {
+        "name": "YXXOps",
+        "href": "https://commons.wikimedia.org/wiki/File:AbbotsfordAirportEntrance.jpg",
+        "license": "CC BY-SA 4.0",
+        "licenseHref": "https://creativecommons.org/licenses/by-sa/4.0/"
+      }
+    },
+    {
+      "from": "Abbotsford (YXX) Airport",
+      "to": "Greater Vancouver",
+      "file": "route-8-reverse.webp",
+      "alt": {
+        "zh": "從松雞山眺望大溫哥華、海港與市中心",
+        "en": "Greater Vancouver, harbour and downtown viewed from Grouse Mountain"
+      },
+      "credit": {
+        "name": "Rollan Budi",
+        "href": "https://commons.wikimedia.org/wiki/File:Vancouver_from_Grouse_Mountain_at_dusk.jpg",
+        "license": "CC BY-SA 2.0",
+        "licenseHref": "https://creativecommons.org/licenses/by-sa/2.0/"
+      }
+    }
+  ]
+}

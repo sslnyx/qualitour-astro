@@ -8,6 +8,8 @@ import {nativeSiteRoute} from './native-site-policy.mjs';
 import { VEHICLE_WEBSITE_RELEASE_HEADER } from './vehicle-website-release.mjs';
 import { loadVehicleWebsiteRelease } from './vehicle-website-release.mjs';
 import {getImage} from 'astro:assets';
+import {transferProductBySlug} from '../../../../src/lib/transfer-products.ts';
+import {routeNativeBooking} from '../../../../src/server/native-booking/index.mjs';
 /**
  * Astro loads the configured image service with a lazy import the first time any <Image> renders. In the Worker
  * that import fails once a page's data is in memory ("InvalidImageService"), blanking every page that renders an
@@ -36,9 +38,17 @@ export const onRequest=defineMiddleware(async(context,next)=>{
   if(context.request.headers.has(VEHICLE_WEBSITE_RELEASE_HEADER)&&!vehicleReleaseRoute)return failure(404,'Page not found');
   const vehicleWebsiteRelease=vehicleReleaseRoute?await loadVehicleWebsiteRelease(context.request,env):null;
   if(vehicleWebsiteRelease)context.locals.qualitourVehicleWebsiteRelease=vehicleWebsiteRelease;
-  const catalogues=await getNativeSiteCatalogues();
   let props={};
-  if(!['home','simple','tours','featured'].includes(route.kind)){
+  let transferDetailsAvailable=true;
+  if(route.kind==='transfer-product'){
+   const product=transferProductBySlug(route.params.slug);
+   const url=new URL('/api/transfer/details/'+product.activityId,'https://qualitour.qualitour.workers.dev');
+   const details=await routeNativeBooking(new Request(url),env,{});
+   if(details?.ok)context.locals.qualitourTransferDetails=await details.json();
+   // Prefer the release snapshot on the next render when the details store was temporarily unavailable.
+   transferDetailsAvailable=Boolean(details?.ok);
+  } else if(!['home','simple','tours','featured'].includes(route.kind)){
+   const catalogues=await getNativeSiteCatalogues();
    props=resolveNativePageProps({pathname:route.pathname,params:route.params,origin:context.site?.origin||context.url.origin,base:'/',catalogues,reviews:await getGoogleReviews()});
    if(!props){context.cache.set(false);return failure(404,'Page not found');}
    if(route.kind==='tour'){
@@ -48,7 +58,7 @@ export const onRequest=defineMiddleware(async(context,next)=>{
    }
   }
   context.locals.qualitourPageProps=props;
-  if(context.request.headers.has('Authorization')||context.request.headers.has('Cookie')||vehicleWebsiteRelease)context.cache.set(false);
+  if(context.request.headers.has('Authorization')||context.request.headers.has('Cookie')||vehicleWebsiteRelease||!transferDetailsAvailable)context.cache.set(false);
   else {const hint=await getNativeSiteCacheHint();context.cache.set({...hint,tags:[...new Set(['tours',...(hint?.tags||[])])],maxAge:86400,swr:604800});}
   const response=await next();
   if(response.status!==200){context.cache.set(false);return response;}

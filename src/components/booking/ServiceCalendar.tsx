@@ -5,7 +5,15 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type ReactNode,
 } from "react";
+
+type MonthPickerProps = {
+  label: string;
+  value: string;
+  options: { id: string; label: string }[];
+  onChange: (month: string) => void;
+};
 
 export type ServiceCalendarProps = {
   lang: "en" | "zh";
@@ -13,6 +21,8 @@ export type ServiceCalendarProps = {
   min: string;
   max?: string;
   label?: string;
+  describedBy?: string;
+  renderMonthPicker?: (props: MonthPickerProps) => ReactNode;
   compact?: boolean;
   isDateEnabled: (date: string) => boolean;
   onChange: (date: string) => void;
@@ -237,6 +247,8 @@ export function ServiceCalendar({
   min,
   max: lastDate,
   label,
+  describedBy,
+  renderMonthPicker,
   compact = false,
   isDateEnabled,
   onChange,
@@ -275,7 +287,11 @@ export function ServiceCalendar({
   // Enquiries can navigate indefinitely while keeping the month menu short.
   const menuStart = lastDate ? min : `${clampMonth(shiftMonth(displayMonth, -12), minMonth, maxMonth)}-01`;
   const menuEnd = lastDate ?? (displayMonth >= "9998-12" ? max : `${shiftMonth(displayMonth, 12)}-01`);
-  const monthOptions = useMemo(() => getMonthOptions(menuStart, menuEnd), [menuStart, menuEnd]);
+  const monthOptions = useMemo(
+    () => getMonthOptions(menuStart, menuEnd).map(id => ({ id, label: formatMonthLabel(id, lang) })),
+    [menuStart, menuEnd, lang],
+  );
+  const monthPickerLabel = lang === "zh" ? "選擇月份" : "Choose month";
   const tabStop = calendarView.focusedDate;
   const days = useMemo(() => getMonthGrid(displayMonth), [displayMonth]);
   const weekdays =
@@ -339,7 +355,12 @@ export function ServiceCalendar({
   };
 
   return (
-    <div className="qb-calendar" role="group" aria-labelledby={groupLabelId}>
+    <div
+      className="qb-calendar"
+      role="group"
+      aria-labelledby={groupLabelId}
+      aria-describedby={describedBy}
+    >
       <span id={groupLabelId} className="qb-calendar__visually-hidden">
         {label ?? (lang === "zh" ? "選擇服務日期" : "Choose service date")}
       </span>
@@ -353,23 +374,28 @@ export function ServiceCalendar({
         >
           <span aria-hidden="true">‹</span>
         </button>
-        <label htmlFor={monthSelectId} className="qb-calendar__month-label">
-          <span className="qb-calendar__visually-hidden">
-            {lang === "zh" ? "選擇月份" : "Choose month"}
-          </span>
-          <select
-            id={monthSelectId}
-            className="qb-calendar__month-select"
-            value={displayMonth}
-            onChange={(event) => changeMonth(event.currentTarget.value)}
-          >
-            {monthOptions.map((month) => (
-              <option key={month} value={month}>
-                {formatMonthLabel(month, lang)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="qb-calendar__month-label">
+          {renderMonthPicker ? renderMonthPicker({
+            label: monthPickerLabel,
+            value: displayMonth,
+            options: monthOptions,
+            onChange: changeMonth,
+          }) : (
+            <label htmlFor={monthSelectId}>
+              <span className="qb-calendar__visually-hidden">{monthPickerLabel}</span>
+              <select
+                id={monthSelectId}
+                className="qb-calendar__month-select"
+                value={displayMonth}
+                onChange={(event) => changeMonth(event.currentTarget.value)}
+              >
+                {monthOptions.map((month) => (
+                  <option key={month.id} value={month.id}>{month.label}</option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
         <button
           type="button"
           className="qb-calendar__nav-button qb-calendar__nav-button--next"

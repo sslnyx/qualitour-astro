@@ -1367,6 +1367,15 @@ const navData = JSON.stringify({
             return;
         }
 
+        // Shared transfer product pages keep the visitor's chosen vehicle in either language.
+        if (/^\/(?:zh\/)?private-transfers\/[^/]+$/.test(pathWithoutBase)) {
+            const destination = new URL(window.location.href);
+            const productPath = pathWithoutBase.replace(/^\/zh(?=\/)/, "");
+            destination.pathname = `${baseUrl}${targetLang === "zh" ? "/zh" : ""}${productPath}`;
+            window.location.href = destination.href;
+            return;
+        }
+
         // Fallback
         if (lang === "en") {
             window.location.href = `${baseUrl}/zh${pathWithoutBase}`;

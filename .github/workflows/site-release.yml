@@ -50,7 +50,7 @@ jobs:
             site-images-v1-
       - name: Test the release safeguards
         run: |
-          node scripts/test-site-worker.mjs
+          npm run test:site
           node cms/scripts/test-pages-rebuild-notifier.mjs
           node cms/scripts/test-release-status.mjs
           node scripts/test-tour-ribbon-currency.mjs
@@ -96,11 +96,12 @@ jobs:
         run: |
           pages=$(node -e "console.log(require('./.astro/site-release/assets/site-release.json').pages)")
           vehicle_release_id=$(node -e "console.log(require('./.astro/site-release/assets/site-release.json').vehicleWebsiteReleaseId || '')")
-          for path in / /zh /tours /book; do
+          for path in / /zh /tours /private-transfers /private-transfers/yvr-to-whistler /zh/private-transfers/yvr-to-whistler /booking-status; do
             code=$(curl -s -o /dev/null -w '%{http_code}' "https://qualitour-site.qualitour.workers.dev$path")
             echo "$path $code"
             test "$code" = 200
           done
+          test "$(curl -s -o /dev/null -w '%{http_code}' https://qualitour-site.qualitour.workers.dev/book)" = 301
           if test -n "$vehicle_release_id"; then
             cache_bust="release-verify=${{ github.run_id }}"
             curl -fsS "https://qualitour-site.qualitour.workers.dev/site-release.json?$cache_bust" -o "$RUNNER_TEMP/site-release.json"

@@ -75,6 +75,52 @@ def island_props(html, component):
     return matches[0]
 
 
+class TransferProductLinks(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag != 'a':
+            return
+        products = attrs.get('data-transfer-products', attrs.get('data-transfer-product', '')).split()
+        if products:
+            self.links.append((products, attrs.get('href', '')))
+
+
+def validate_transfer_product_pages(root, snapshot, prefix, base=''):
+    parser = TransferProductLinks()
+    parser.feed((root / (prefix + 'private-transfers.html')).read_text())
+    expected = {
+        f"transfer-product-{vehicle['activityId']}": vehicle.get('seater')
+        for route in snapshot['routes']
+        for key in ['vehicles', 'reverseActivityIds']
+        for vehicle in route.get(key, [])
+    }
+    destinations = {}
+    products_by_link = {}
+    pattern = re.escape(f'{base}/{prefix}private-transfers/') + '[a-z0-9-]+'
+    for products, href in parser.links:
+        target = urllib.parse.urlsplit(href)
+        variant = re.fullmatch(r'vehicle=(11|14)', target.query)
+        if (target.scheme or target.netloc or target.fragment
+                or (target.query and (not variant or len(products) != 1))
+                or not re.fullmatch(pattern, target.path)
+                or not (root / (target.path.removeprefix(base + '/') + '.html')).is_file()):
+            raise ValueError(f'Missing transfer product page: {href}')
+        ids = frozenset(products)
+        if len(ids) != len(products) or products_by_link.setdefault(href, ids) != ids:
+            raise ValueError(f'Conflicting transfer products for {href}')
+        for product_id in products:
+            if variant and expected.get(product_id) != variant[1]:
+                raise ValueError(f'Wrong transfer vehicle for {product_id}: {href}')
+            if destinations.setdefault(product_id, target.path) != target.path:
+                raise ValueError(f'Conflicting transfer product destinations for {product_id}: {href}')
+    if destinations.keys() != expected.keys() or len(destinations) != snapshot['activityCount']:
+        raise ValueError(f'Incomplete transfer products in /{prefix}private-transfers')
+
+
 def read_url(url):
     request = urllib.request.Request(url, headers={'User-Agent': 'Qualitour-Staging-Verification/1.0', 'Cache-Control': 'no-cache'})
     with urllib.request.urlopen(request, timeout=45) as response:
@@ -182,8 +228,9 @@ def verify(root):
             document.feed(content)
             validate_document(document, relative_tour, tour=True)
         summary[lang] = {'count': len(tours), 'sample_slugs': [t['slug'] for t in tours[:2]]}
-        transfer = ('zh/' if lang == 'zh' else '') + 'private-transfers.html'
-        routes = island_props((root / transfer).read_text(), 'TransferRoutesGrid')['routes']
+        prefix = 'zh/' if lang == 'zh' else ''
+        validate_transfer_product_pages(root, transfer_snapshot, prefix, base='/staging')
+        routes = island_props((root / (prefix + 'private-transfers.html')).read_text(), 'TransferRoutesGrid')['routes']
         home = 'zh.html' if lang == 'zh' else 'index.html'
         home_routes = island_props((root / home).read_text(), 'TransferRoutesGrid')['routes']
         validate_shared_transfers(transfer_snapshot, routes, home_routes)

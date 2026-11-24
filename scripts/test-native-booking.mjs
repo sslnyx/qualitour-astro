@@ -4,43 +4,67 @@ import test from "node:test";
 
 import { settleAbortable } from "../src/lib/booking/request.ts";
 import { pollPendingPayment } from "../src/lib/booking/payment-status-poll.ts";
+import { reconcileBookingCustomer } from "../src/lib/booking/customer-draft.ts";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("transfer booking surfaces share the native Sandbox experience", async () => {
-  const [page, card, button, dialog, experience, api] = await Promise.all([
-    read("src/pages/[...lang]/book.astro"),
+const customerDraft = {
+  name: "Local test guest",
+  email: "guest@example.test",
+  phone: "6045550108",
+  pickupLocationId: "whistler",
+  pickupAddress: "100 Test Avenue",
+  dropoffLocationId: "vancouver",
+  dropoffAddress: "200 Test Avenue",
+  flightNumber: "",
+  notes: "Local test note",
+};
+const whistler = { id: "whistler", nameEn: "Whistler", nameZh: "惠斯勒" };
+const vancouver = { id: "vancouver", nameEn: "Vancouver", nameZh: "溫哥華" };
+const yvr = { id: "yvr", nameEn: "YVR", nameZh: "溫哥華機場", requiresAddress: false };
+
+test("a new quote keeps contact details and still-available pickup and drop-off choices", () => {
+  assert.deepEqual(reconcileBookingCustomer(customerDraft, {
+    pickupOptions: [whistler],
+    dropoffOptions: [vancouver, yvr],
+  }), customerDraft);
+});
+
+test("a changed quote replaces incompatible options and clears only their addresses", () => {
+  assert.deepEqual(reconcileBookingCustomer(customerDraft, {
+    pickupOptions: [whistler],
+    dropoffOptions: [yvr],
+  }), {
+    ...customerDraft,
+    dropoffLocationId: "yvr",
+    dropoffAddress: "",
+  });
+});
+
+test("free-text addresses stay available and a saved address is cleared when its field is no longer applicable", () => {
+  const draft = { ...customerDraft, pickupLocationId: undefined };
+  assert.deepEqual(reconcileBookingCustomer(draft, {
+    dropoffOptions: [{ ...vancouver, requiresAddress: false }],
+  }), { ...draft, dropoffAddress: "" });
+});
+
+test("transfer details host the existing booking form and status pages only recover existing bookings", async () => {
+  const [product, status, card, experience, api] = await Promise.all([
+    read("src/pages/[...lang]/private-transfers/[slug].astro"),
+    read("src/pages/[...lang]/booking-status.astro"),
     read("src/components/TransferRouteCard.tsx"),
-    read("src/components/TransferBookingModalButton.tsx"),
-    read("src/components/booking/NativeBookingDialog.tsx"),
     read("src/components/booking/BookingExperience.tsx"),
     read("src/lib/booking/api.ts"),
   ]);
-  assert.match(page, /<BookingExperience/);
-  assert.match(card, /<NativeBookingDialog/);
-  assert.match(button, /<NativeBookingDialog/);
-  assert.match(dialog, /<BookingExperience/);
-  assert.match(dialog, /open \? \(/);
-  assert.match(dialog, /document\.body\.style\.overflow = "hidden"/);
+  assert.match(product, /<BookingExperience lang=\{lang\} productId=\{product.productId\}/);
+  assert.match(status, /<BookingExperience lang=\{currentLang\} client:load/);
+  assert.match(card, /searchParams.set\("card",/);
+  assert.match(card, /data-transfer-products=/);
+  assert.doesNotMatch(card, /href=\{hrefs\[vehicle.activityId\]\}/);
+  assert.match(experience, /directoryProductId === productId/);
+  assert.match(experience, /if \(!productId && !routeState.id\)/);
   assert.match(api, /\/api\/transfer\//);
-  assert.match(experience, /directoryProductId === selectedProductId/);
-  assert.match(experience, /useState<"en" \| "zh">\(pageLang\)/);
-  assert.match(experience, /languageDestination/);
-  assert.match(experience, /This transfer is not open for test booking yet/);
-});
-
-test("private transfer booking no longer embeds or links to Zaui", async () => {
-  const files = await Promise.all([
-    read("src/pages/[...lang]/book.astro"),
-    read("src/components/TransferRouteCard.tsx"),
-    read("src/components/TransferBookingModalButton.tsx"),
-    read("src/components/TransferBookingModal.tsx"),
-    read("src/components/TransferCardsWithModal.tsx"),
-  ]);
-  const source = files.join("\n");
-  assert.doesNotMatch(source, /qualitour\.zaui\.net\/booking/i);
-  assert.doesNotMatch(source, /<iframe/i);
-  assert.doesNotMatch(source, /localStorage|sessionStorage/);
+  assert.doesNotMatch(product + status + card, /qualitour\.zaui\.net\/booking|<iframe|localStorage|sessionStorage/i);
 });
 
 test("Stripe handoff only accepts the hosted test checkout destination", async () => {

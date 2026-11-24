@@ -26,7 +26,8 @@ Account: Qualitour (`ca4d347f96116e87e8f5dbd6c62f0b30`). Always run Wrangler thr
 | Page routing rules / which URLs exist | [cms/src/lib/cms/native-site-policy.mjs](cms/src/lib/cms/native-site-policy.mjs) | CMS Worker, then site |
 | CMS admin, tour editor, pages-rebuild plugin, CMS runtime, caching, site gate | `cms/` (`cms/src/plugins`, `cms/src/lib/cms`, `cms/scripts/lib`) | CMS Worker (site only if pages change) |
 | Booking API embedded in the CMS Worker | `src/server/native-booking/` | CMS Worker (site only if pages change) |
-| Booking pages `/book`, `/zh/book` | `src/pages/[...lang]/book.astro`, `src/components`, `src/lib/booking` | CMS Worker, then site |
+| Transfer products and booking form | `src/pages/[...lang]/private-transfers/[slug].astro`, `src/lib/transfer-products.ts`, `src/components/booking` | CMS Worker, then site |
+| Existing booking management and recovery | `src/pages/[...lang]/booking-status.astro`, `src/components/booking`, `src/server/native-booking/router.mjs`, `site/worker.mjs` | CMS Worker, then site |
 | Site proxy rules (what the site forwards to the CMS) | [site/worker.mjs](site/worker.mjs) and `run_worker_first` in [wrangler.site.jsonc](wrangler.site.jsonc) | Site only (`deploy:site`) |
 | Crawl / asset assembly / release gates for the static site | `scripts/build-site.mjs`, `scripts/release-site.mjs`, `scripts/test-site-worker.mjs` | Site |
 | CMS combined-Worker build, bindings guard, deploy guard | `scripts/build-worker.mjs`, `scripts/deploy-worker.mjs`, `scripts/lib/worker-release.mjs` | CMS Worker |

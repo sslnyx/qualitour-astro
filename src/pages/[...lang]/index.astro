@@ -12,6 +12,8 @@ import heroBackground from "../../assets/hero-background.webp";
 import HomeTourGroups from "../../components/HomeTourGroups.astro";
 import ReviewsSlider from "../../components/ReviewsSlider";
 import TransferRoutesGrid from "../../components/TransferRoutesGrid";
+import { transferRouteCardLinks } from "../../lib/transfer-products";
+import { transferListingCovers } from "../../lib/transfer-covers";
 import FeaturedToursHero, { type HomeHeroBackground } from "../../components/FeaturedToursHero";
 import homeHeroBackgrounds from "../../data/home-hero-backgrounds.json";
 
@@ -205,7 +207,8 @@ const whyUsItems = [
           <TransferRoutesGrid
             routes={featuredTransfers}
             lang={lang}
-            localePrefix={localePrefix}
+            hrefs={transferRouteCardLinks(featuredTransfers, localePrefix)}
+            covers={transferListingCovers(featuredTransfers, lang)}
             client:visible
           />
         ) : (

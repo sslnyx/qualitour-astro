@@ -152,7 +152,14 @@ class BuildFixture:
             listing = prefix + "tours.html"
             self._write(listing, page_html(listing, body=island("ToursGrid", tours=catalogue[lang])))
             transfers = prefix + "private-transfers.html"
-            self._write(transfers, page_html(transfers, body=island("TransferRoutesGrid", routes=self.routes)))
+            product_links = ""
+            for route in self.routes:
+                for product in route["vehicles"]:
+                    activity = product["activityId"]
+                    path = f"{prefix}private-transfers/test-{activity}"
+                    product_links += f'<a data-transfer-product="transfer-product-{activity}" href="/{path}">Details</a>'
+                    self._write(path + ".html", page_html(path + ".html"))
+            self._write(transfers, page_html(transfers, body=island("TransferRoutesGrid", routes=self.routes) + product_links))
 
     def _write(self, relative, content):
         path = self.dist / relative
@@ -163,6 +170,20 @@ class BuildFixture:
 class PagesStaticFinalizerTests(unittest.TestCase):
     def run_finalize(self, fixture):
         return load_finalizer().finalize(fixture.dist, fixture.snapshot_path, fixture.compatibility_path)
+
+    def test_transfer_action_can_link_two_vehicle_options_to_one_directional_page(self):
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = BuildFixture(temp).create()
+            finalizer = load_finalizer()
+            snapshot = json.loads((fixture.dist / "data/private-transfers.json").read_text())
+            routes_page = fixture.dist / "private-transfers.html"
+            shared = '<a data-transfer-products="transfer-product-1 transfer-product-2" href="/private-transfers/test-1">View &amp; book</a>'
+            routes_page.write_text(shared + shared)
+            finalizer.validate_transfer_product_pages(fixture.dist, snapshot, "")
+
+            routes_page.write_text(shared + '<a data-transfer-product="transfer-product-2" href="/private-transfers/test-2">Details</a>')
+            with self.assertRaisesRegex(ValueError, 'Conflicting transfer product destinations'):
+                finalizer.validate_transfer_product_pages(fixture.dist, snapshot, "")
 
     def test_catalogue_rejects_unapproved_origin_and_bad_snapshot_age(self):
         cases = {
@@ -226,7 +247,7 @@ class PagesStaticFinalizerTests(unittest.TestCase):
             result = self.run_finalize(fixture)
             self.run_finalize(fixture)
 
-            self.assertEqual(result["counts"]["pages"], 10)
+            self.assertEqual(result["counts"]["pages"], 14)
             self.assertEqual(result["counts"]["tours"], {"en": 2, "zh": 2})
             self.assertEqual(result["homepage_ids"], {"en": [11, 12], "zh": [21, 22]})
             self.assertFalse((fixture.dist / ".htaccess-staging").exists())
@@ -236,7 +257,7 @@ class PagesStaticFinalizerTests(unittest.TestCase):
 
             inventory = json.loads((fixture.dist / "seo-inventory.json").read_text())
             self.assertEqual(inventory["target"], "cloudflare-staging")
-            self.assertEqual(len(inventory["pages"]), 10)
+            self.assertEqual(len(inventory["pages"]), 14)
             manifest = json.loads((fixture.dist / "qualitour-release.json").read_text())
             self.assertEqual(manifest["schema"], 1)
             self.assertEqual(manifest["target"], "cloudflare-staging")

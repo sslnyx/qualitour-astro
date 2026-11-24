@@ -37,6 +37,45 @@
     min-height: var(--site-hero-min-height);
 }
 
+.transfer-primary-action,
+.transfer-secondary-action,
+.transfer-detail .qb-customer .qt-btn--primary,
+.transfer-detail .qb-trip-review > .qt-btn,
+.transfer-detail .qb-vehicle-option[aria-pressed="true"] {
+    background: linear-gradient(to right, #f7941e, #ff6b35);
+    color: #fff;
+    text-shadow: 0 1px 2px rgb(83 36 5 / 65%);
+}
+
+.transfer-primary-action:hover,
+.transfer-secondary-action:hover,
+.transfer-detail .qb-customer .qt-btn--primary:not(:disabled):hover,
+.transfer-detail .qb-trip-review > .qt-btn:not(:disabled):hover,
+.transfer-detail .qb-vehicle-option[aria-pressed="true"]:not(:disabled):hover {
+    background: linear-gradient(to right, #e67d14, #ed582a);
+}
+
+.transfer-secondary-action,
+.transfer-detail .qb-trip-review > .qt-btn,
+.transfer-detail .qb-vehicle-option[aria-pressed="true"] {
+    border-color: #f7941e;
+}
+
+.transfer-detail .qb-vehicle-option[aria-pressed="true"] .qb-vehicle-option__price {
+    color: inherit;
+}
+
+:is(
+    .transfer-primary-action,
+    .transfer-secondary-action,
+    .transfer-detail .qb-customer .qt-btn--primary,
+    .transfer-detail .qb-trip-review > .qt-btn,
+    .transfer-detail .qb-vehicle-option
+):focus-visible {
+    outline: 3px solid #9a3412;
+    outline-offset: 3px;
+}
+
 .home-hero-shade {
     background: linear-gradient(0deg, rgb(8 14 25 / 98%), rgb(8 14 25 / 84%) 27%, rgb(8 14 25 / 48%) 63%, rgb(8 14 25 / 16%));
 }

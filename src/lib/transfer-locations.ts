@@ -10,8 +10,9 @@ const ZH: Record<string, string> = {
   "Sun Peaks": "Sun Peaks（太陽峰）",
   Vancouver: "溫哥華",
   "Vancouver / YVR": "溫哥華／YVR 機場",
+  "Vancouver Airport (YVR) / Greater Vancouver": "溫哥華機場（YVR）／大溫哥華地區",
   "Vancouver Airport (YVR)": "溫哥華機場（YVR）",
-  Whistler: "Whistler",
+  Whistler: "惠斯勒",
 };
 export const localizedLocation = (name: string, lang: "en" | "zh") =>
   lang === "zh" ? (ZH[name] ?? name) : name;

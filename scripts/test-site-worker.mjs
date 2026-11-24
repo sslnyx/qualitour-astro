@@ -88,7 +88,7 @@ test('every booking page the Worker serves is also routed to the Worker first (e
 });
 
 const id = '44e59043-295c-416a-b400-3b94f86a77ce';
-test('booking pages are served from the Worker\'s own /book asset, never from the CMS', async () => {
+test('booking pages are served from the Worker\'s own booking-status asset, never from the CMS', async () => {
   for (const path of ['/book/manage/' + id, '/book/return/' + id, '/book/receipt/' + id, '/book/claim/' + id, '/zh/book/manage/' + id]) assert.equal(isBookingPagePath(path), true, path);
   for (const path of ['/book', '/zh/book', '/book/manage/abc', '/book/manage/' + id + '/x', '/book/other/' + id]) assert.equal(isBookingPagePath(path), false, path);
   const seen = [];
@@ -98,7 +98,7 @@ test('booking pages are served from the Worker\'s own /book asset, never from th
   assert.equal(response.headers.get('Cache-Control'), 'no-store');
   assert.equal(response.headers.get('X-Robots-Tag'), 'noindex');
   await worker.fetch(new Request(pub + '/zh/book/manage/' + id), env);
-  assert.deepEqual(seen, ['/book', '/zh/book']);
+  assert.deepEqual(seen, ['/booking-status', '/zh/booking-status']);
   assert.equal((await worker.fetch(new Request(pub + '/book/manage/' + id, { method: 'POST' }), env)).status, 405);
 });
 
@@ -112,4 +112,33 @@ test('a PDF asked for with ?inline=1 is shown in the browser; everything else ke
   assert.equal(toInlinePdf(html, new URL(`${pub}/_emdash/api/media/file/x.pdf?inline=1`)).headers.get('Content-Disposition'), 'attachment');
   const notPdfPath = new Response('x', { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment' } });
   assert.equal(toInlinePdf(notPdfPath, new URL(`${pub}/_emdash/api/media/file/x.bin?inline=1`)).headers.get('Content-Disposition'), 'attachment');
+});
+
+test('retired booking entry points preserve language and known product bookmarks', async () => {
+  const noAssets = { ASSETS: { fetch: () => { throw new Error('redirect must precede asset lookup'); } } };
+  for (const [path, target] of [
+    ['/book', '/private-transfers'],
+    ['/zh/book/', '/zh/private-transfers'],
+    ['/book?lang=zh&product=transfer-product-18', '/zh/private-transfers/yvr-to-whistler?vehicle=11'],
+    ['/book?product=transfer-product-54', '/private-transfers/yvr-to-whistler?vehicle=14'],
+    ['/book?product=https://example.com', '/private-transfers'],
+  ]) {
+    const response = await worker.fetch(new Request(pub + path), noAssets);
+    assert.equal(response.status, 301);
+    assert.equal(response.headers.get('Location'), target);
+  }
+});
+
+test('retired seat-specific pages redirect to directional pages with the same vehicle', async () => {
+  const config = JSON.parse(readFileSync(new URL('../wrangler.site.jsonc', import.meta.url), 'utf8'));
+  const env = { ASSETS: { fetch: () => { throw new Error('redirect must precede asset lookup'); } } };
+  for (const prefix of ['', '/zh']) for (const direction of ['yvr-to-whistler', 'whistler-to-vancouver-yvr', 'yvr-to-greater-vancouver-zone-1']) {
+    for (const seats of ['11', '14']) {
+      const oldPath = `${prefix}/private-transfers/${direction}-${seats}-seater`;
+      const res = await worker.fetch(new Request(pub + oldPath), env);
+      assert.equal(res.status, 301);
+      assert.equal(res.headers.get('Location'), `${prefix}/private-transfers/${direction}?vehicle=${seats}`);
+      assert.ok(config.assets.run_worker_first.includes(`${prefix}/private-transfers/*`));
+    }
+  }
 });

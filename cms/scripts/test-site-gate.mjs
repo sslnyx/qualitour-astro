@@ -6,7 +6,7 @@ const env = { SITE_BUILD_KEY: 'k'.repeat(64) };
 const get = (path, headers = {}, method = 'GET') => new Request('https://qualitour.qualitour.workers.dev' + path, { method, headers });
 
 test('page paths are gated; admin, API, media and the image fallback are not', () => {
-  for (const path of ['/', '/zh', '/tours', '/tours/x', '/zh/tours/x', '/tours/style/cruises', '/tours/destination/geo-ca', '/faq', '/zh/contact', '/book', '/zh/book', '/404', '/500'])
+  for (const path of ['/', '/zh', '/tours', '/tours/x', '/zh/tours/x', '/tours/style/cruises', '/tours/destination/geo-ca', '/faq', '/zh/contact', '/booking-status', '/zh/booking-status', '/404', '/500'])
     assert.equal(isSitePage(path), true, path);
   for (const path of ['/_emdash/admin', '/_emdash/api/media/file/a.webp', '/api/transfer/catalog', '/book/manage/abc', '/_image', '/_astro/a.js', '/cms-proof/tours/x', '/native-proof/zh', '/img/a.webp'])
     assert.equal(isSitePage(path), false, path);

@@ -16,6 +16,7 @@ import { cp, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { dirname, join, resolve } from 'node:path';
+import { transferProductPages } from '../src/lib/transfer-products.ts';
 import { nativeSiteRoute } from '../cms/src/lib/cms/native-site-policy.mjs';
 import { syncCmsSnapshot } from '../src/lib/cms/content-server.mjs';
 import { createCmsReader } from '../src/lib/cms/read-client.mjs';
@@ -79,6 +80,8 @@ const sleep = ms => new Promise(done => setTimeout(done, ms));
 
 const seeds = ['/', '/zh', '/tours', '/zh/tours', '/tours/featured', '/zh/tours/featured'];
 for (const page of ['about-us', 'contact', 'faq', 'privacy-policy', 'terms', 'visa', 'reviews', 'private-transfers']) seeds.push('/' + page, '/zh/' + page);
+const productPaths = ['', '/zh'].flatMap(prefix => transferProductPages.map(product => `${prefix}/private-transfers/${product.slug}`));
+seeds.push(...productPaths);
 const requiredTours = [];
 const publishedSlugs = new Set();
 for (const locale of ['en', 'zh']) for (const tour of snapshot.locales[locale].tours) {
@@ -86,7 +89,7 @@ for (const locale of ['en', 'zh']) for (const tour of snapshot.locales[locale].t
   requiredTours.push(path); seeds.push(path); publishedSlugs.add(decode(tour.slug));
 }
 // Pages the CMS does not render through the router but serves from its own assets.
-const fixedPaths = ['/book', '/zh/book', '/404', '/500'];
+const fixedPaths = ['/booking-status', '/zh/booking-status', '/404', '/500'];
 
 async function crawlAll() {
   const pages = new Map(); // decoded pathname -> html
@@ -131,6 +134,8 @@ async function crawlAll() {
 // render is stale, so wait and crawl again before giving up.
 function findProblems({ pages, failures }) {
   const problems = [...failures];
+  const missingProducts = productPaths.filter(path => !pages.has(path));
+  if (missingProducts.length) problems.push(`${missingProducts.length} transfer product pages missing: ${missingProducts.slice(0, 5).join(', ')}`);
   const missing = requiredTours.filter(path => !pages.has(path));
   if (missing.length) problems.push(`${missing.length} published tours missing: ${missing.slice(0, 5).join(', ')}`);
   const stale = [...pages.keys()].filter(path => nativeSiteRoute(path)?.kind === 'tour' && !publishedSlugs.has(decode(path.split('/').pop())));
@@ -152,7 +157,7 @@ for (let attempt = 1; ; attempt++) {
 const { pages } = crawled;
 const deadLinks = verdict.dead;
 if (verdict.hard.length) { console.error('Site build failed:\n' + verdict.hard.join('\n')); process.exit(1); }
-if (!pages.has('/') || !pages.has('/zh') || !pages.has('/book')) { console.error('Site build failed: home or booking pages missing'); process.exit(1); }
+if (!pages.has('/') || !pages.has('/zh') || !pages.has('/booking-status') || !pages.has('/zh/booking-status')) { console.error('Site build failed: home or booking status pages missing'); process.exit(1); }
 if (vehicleWebsiteReleaseId) {
   const expectedMarker = markerForVehicleRelease(vehicleWebsiteReleaseId);
   const markerFailures = [...vehicleReleasePages].filter(path => !pages.get(path)?.includes(expectedMarker));
@@ -325,7 +330,7 @@ if (vehicleWebsiteReleaseId) {
 const brokenIslands = [...pages].flatMap(([path, html]) => findBrokenIslandProps(path, html));
 if (brokenIslands.length) throw new Error(`${brokenIslands.length} island(s) with invalid props; first: ${brokenIslands.slice(0, 5).join(' | ')}`);
 
-// Pages the CMS serves from its own assets (/book, 404, 500) were built with a different set of hashed files than
+// Pages the CMS serves from its own assets (/booking-status, 404, 500) were built with a different set of hashed files than
 // the CMS client build; fetch whatever any page references and the base assets lack, following CSS url() references.
 const assetMissing = [];
 const assetSeen = new Set();

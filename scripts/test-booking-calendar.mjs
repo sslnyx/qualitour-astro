@@ -132,11 +132,13 @@ test("calendar markup exposes accessible selection and unavailable dates", () =>
       value: "2024-02-29",
       min: "2024-02-28",
       max: "2024-03-02",
+      describedBy: "date-guidance",
       isDateEnabled: (date) => date !== "2024-03-01",
       onChange: () => {},
     }),
   );
 
+  assert.match(markup, /<div class="qb-calendar" role="group"[^>]*aria-describedby="date-guidance"/);
   assert.match(markup, /class="qb-calendar__head"/);
   assert.match(markup, /class="qb-calendar__weekdays"/);
   assert.match(markup, /qb-calendar__selected/);
@@ -163,6 +165,27 @@ test("enquiry calendar can fit a narrow form and show future months without a bo
   assert.match(html, /min-height:44px;min-width:0/);
   assert.match(html, /value="2027-11"/);
   assert.doesNotMatch(html, /value="2027-12"/);
+});
+
+test("the booking month picker replaces the native select and uses the calendar bounds", () => {
+  let picker;
+  const markup = renderToStaticMarkup(React.createElement(calendar.ServiceCalendar, {
+    lang: "en",
+    min: "2026-11-18",
+    max: "2027-01-31",
+    value: "2026-12-15",
+    isDateEnabled: () => true,
+    onChange: () => {},
+    renderMonthPicker: (props) => {
+      picker = props;
+      return React.createElement("button", { type: "button", role: "combobox" }, "December 2026");
+    },
+  }));
+
+  assert.match(markup, /role="combobox">December 2026/);
+  assert.doesNotMatch(markup, /<select/);
+  assert.equal(picker.value, "2026-12");
+  assert.deepEqual(picker.options.map(({ id }) => id), ["2026-11", "2026-12", "2027-01"]);
 });
 
 test("roving focus falls forward when the supplied date is unavailable", () => {

@@ -1,5 +1,6 @@
 import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
 import handler, { PluginBridge } from '@emdash-cms/cloudflare/worker';
+import { legacyBookingRedirect, legacyTransferProductRedirect } from '../../src/lib/transfer-products';
 import { routeNativeBooking } from '../../src/server/native-booking/index.mjs';
 import { durableExecutionContext, fetchFreeRuntime } from './lib/cms/free-runtime.mjs';
 
@@ -89,9 +90,11 @@ export default {
       return vehicleWebsiteReleasePhotoResponse(request, env, pathname);
     }
     // Public pages belong to the static Worker `qualitour-site`; only its build may render them here.
+    const legacy = legacyBookingRedirect(request) ?? legacyTransferProductRedirect(request);
+    if (legacy) return legacy;
     const gated = siteGate(request, env as { SITE_BUILD_KEY?: string; PUBLIC_SITE_ORIGIN?: string });
     if (gated) return gated;
-    if (['/book', '/zh/book', '/404', '/500'].includes(pathname) && ['GET', 'HEAD'].includes(request.method)) {
+    if (['/booking-status', '/zh/booking-status', '/404', '/500'].includes(pathname) && ['GET', 'HEAD'].includes(request.method)) {
       return (env.ASSETS as { fetch(request: Request): Promise<Response> }).fetch(request);
     }
     if (pathname.startsWith('/native-proof/') || nativeSiteRoute(pathname)) {

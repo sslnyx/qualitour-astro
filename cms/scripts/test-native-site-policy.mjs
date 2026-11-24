@@ -12,6 +12,8 @@ test('normalization retains original extensionless paths and rejects ambiguous e
  assert.equal(nativeSiteRoute('/zh/')?.redirect,'/zh');
  for(const p of ['/tours/a%2fb','/tours/%2e%2e','/tours/%5cfoo','/tours/%00foo','/tours/%ZZ'])assert.equal(nativeSiteRoute(p),null,p);
  assert.equal(nativeSiteRoute('/tours/featured')?.kind,'featured');
+ assert.equal(nativeSiteRoute('/zh/private-transfers/yvr-to-whistler')?.kind,'transfer-product');
+ assert.equal(nativeSiteRoute('/private-transfers/does-not-exist'),null);
 });
 test('release config routes all visitor families before static HTML but keeps default cache disabled',async()=>{
  const {readFile}=await import('node:fs/promises');const c=JSON.parse(await readFile(new URL('../../wrangler.qualitour.jsonc',import.meta.url),'utf8'));

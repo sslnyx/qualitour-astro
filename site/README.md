@@ -11,7 +11,7 @@ This folder is the **frontend Worker project**: the Worker that visitors reach. 
 
 - Serves static HTML and assets from `.astro/site-release/assets` (generated, not committed).
 - Forwards to the CMS Worker, presented under the CMS origin: `/api/transfer/*` (booking API), `/_image`, `/_emdash/api/media/file/*`.
-- Serves guest booking pages (`/book/{manage,return,receipt,claim}/<id>`) from its own `/book` asset so the page and scripts come from the same release.
+- Serves guest booking pages (`/book/{manage,return,receipt,claim}/<id>`) from its own `/booking-status` asset so the page and scripts come from the same release.
 - Does **not** proxy the CMS admin; passkeys are bound to the CMS host.
 
 ## How the static site is made

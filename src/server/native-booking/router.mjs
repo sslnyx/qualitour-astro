@@ -9,10 +9,10 @@ export function createNativeBookingRouter(api) {
    return api.fetch(request,{TRANSFER_DB:env.TRANSFER_DB,TRANSFER_CATALOGUE:env.TRANSFER_CATALOGUE,TRANSFER_SANDBOX_KEY:env.TRANSFER_SANDBOX_KEY,TRANSFER_SMTP:env.TRANSFER_SMTP},context);
   }
   if(!path.startsWith('/book/')&&!path.startsWith('/zh/book/'))return null;
-  if(url.origin!==origin||!new RegExp(`^/(?:zh/)?book/(?:manage|return|receipt)/${uuid}$`).test(path))return failure();
+  if(url.origin!==origin||!new RegExp(`^/(?:zh/)?book/(?:manage|return|receipt|claim)/${uuid}$`).test(path))return failure();
   if(request.method!=='GET')return failure(405);
   const lang=url.searchParams.get('lang');
-  const target=new URL(lang==='zh'||path.startsWith('/zh/')?'/zh/book':'/book',origin);
+  const target=new URL(lang==='zh'||path.startsWith('/zh/')?'/zh/booking-status':'/booking-status',origin);
   const asset=await env.ASSETS.fetch(new Request(target));
   const headers=new Headers(asset.headers);headers.set('Cache-Control','no-store');headers.set('X-Robots-Tag','noindex');headers.set('Referrer-Policy','no-referrer');
   return new Response(asset.body,{status:asset.status,headers});

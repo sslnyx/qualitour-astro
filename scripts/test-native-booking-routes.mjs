@@ -10,8 +10,8 @@ test('customer APIs are intercepted while CMS and regular static routes fall thr
 });
 test('deep links keep language shell and original URL while using pretty static asset paths',async()=>{
  const route=createNativeBookingRouter({fetch:async()=>{throw Error('wrong API route')}}),id='00000000-0000-4000-8000-000000000001';
- for(const lang of ['en','zh'])for(const action of ['manage','return','receipt']){
- const r=await route(req(`/book/${action}/${id}?lang=${lang}`),{ASSETS:{fetch:async(r)=>{assert.equal(new URL(r.url).pathname,lang==='zh'?'/zh/book':'/book');return new Response(`<html lang="${lang}">book shell</html>`,{headers:{'Content-Type':'text/html'}})}}},{});
+ for(const lang of ['en','zh'])for(const action of ['manage','return','receipt','claim']){
+ const r=await route(req(`/book/${action}/${id}?lang=${lang}`),{ASSETS:{fetch:async(r)=>{assert.equal(new URL(r.url).pathname,lang==='zh'?'/zh/booking-status':'/booking-status');return new Response(`<html lang="${lang}">book shell</html>`,{headers:{'Content-Type':'text/html'}})}}},{});
  assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'no-store');assert.match(await r.text(),new RegExp(`lang="${lang}"`));
  }
 });

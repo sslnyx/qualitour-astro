@@ -1,3 +1,4 @@
+import {transferProductBySlug} from '../../../../src/lib/transfer-products.ts';
 const simplePages=['about-us','contact','faq','privacy-policy','terms','visa','reviews','private-transfers'];
 const categories=new Set(['style','destination']);
 const safeSegment=value=>{try{const d=decodeURIComponent(value);return d&&d!=='.'&&d!=='..'&&!/[\\/\u0000-\u001f\u007f]/.test(d)?d:null;}catch{return null;}};
@@ -12,6 +13,7 @@ export function nativeSiteRoute(pathname){
  let kind;
  if(segments.length===0||segments.length===1&&segments[0]==='')kind='home';
  else if(segments.length===1&&simplePages.includes(segments[0]))kind='simple';
+ else if(segments[0]==='private-transfers'&&segments.length===2&&transferProductBySlug(safeSegment(segments[1])))kind='transfer-product';
  else if(segments[0]==='tours'){
   if(segments.length===1)kind='tours';
   else if(segments.length===2)kind=segments[1]==='featured'?'featured':'tour';
@@ -20,5 +22,5 @@ export function nativeSiteRoute(pathname){
  return {kind,locale,pathname,params:{lang:locale==='zh'?'zh':undefined,...(segments.length>1?{slug:safeSegment(segments.at(-1))}:{})},...(original!==pathname?{redirect:pathname}:{})};
 }
 export const nativeSitePagePatterns=Object.freeze([
- '[...lang]',...simplePages.map(p=>'[...lang]/'+p),'[...lang]/tours','[...lang]/tours/featured','[...lang]/tours/[slug]',...[...categories].map(p=>'[...lang]/tours/'+p+'/[slug]'),]);
-export const nativeSiteWorkerPatterns=Object.freeze(['/',...['','/zh'].flatMap(prefix=>[...(prefix?[prefix,prefix+'/']:[]),...simplePages.flatMap(p=>[prefix+'/'+p,prefix+'/'+p+'/',prefix+'/'+p+'.html']),prefix+'/tours',prefix+'/tours/*',prefix+'/tours.html',prefix+'/destinations/*'])]);
+ '[...lang]','[...lang]/private-transfers/[slug]',...simplePages.map(p=>'[...lang]/'+p),'[...lang]/tours','[...lang]/tours/featured','[...lang]/tours/[slug]',...[...categories].map(p=>'[...lang]/tours/'+p+'/[slug]'),]);
+export const nativeSiteWorkerPatterns=Object.freeze(['/',...['','/zh'].flatMap(prefix=>[...(prefix?[prefix,prefix+'/']:[]),...simplePages.flatMap(p=>[prefix+'/'+p,...(p==='private-transfers'?[]:[prefix+'/'+p+'/']),prefix+'/'+p+'.html']),prefix+'/private-transfers/*',prefix+'/tours',prefix+'/tours/*',prefix+'/tours.html',prefix+'/destinations/*'])]);

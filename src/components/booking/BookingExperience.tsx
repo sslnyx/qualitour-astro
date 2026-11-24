@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { bookingApi, ApiError } from "../../lib/booking/api";
 import { bookingMessage } from "../../lib/booking/errors";
+import { reconcileBookingCustomer } from "../../lib/booking/customer-draft";
 import { settleAbortable } from "../../lib/booking/request";
 import { pollPendingPayment } from "../../lib/booking/payment-status-poll";
 import type {
@@ -13,18 +14,31 @@ import type {
   QuoteInput,
 } from "../../lib/booking/contracts";
 import { BookingView } from "./BookingView";
-import { ReceiptView } from "./BookingRecovery";
+import type { BookingJourney, BookingTripDraft } from "../../lib/booking/types";
+import { BookingRecovery, ReceiptView } from "./BookingRecovery";
 import "./booking.css";
 
 type Props = {
   lang: "en" | "zh";
   productId?: string;
-  compact?: boolean;
+  variants?: { productId: string; seater: "11" | "14"; referencePrice?: string }[];
+  journey?: BookingJourney & {
+    entries: Record<string, Pick<BookingJourney, "title" | "pickup" | "intendedDropoff">>;
+  };
 };
 
-function bookingPath(lang: "en" | "zh", suffix = "") {
-  if (suffix) return `/book${suffix}?lang=${lang}`;
-  return lang === "zh" ? "/zh/book" : "/book";
+function entryJourney(
+  journey: Props["journey"],
+): BookingJourney | undefined {
+  if (!journey) return undefined;
+  const { entries, ...context } = journey;
+  if (typeof window === "undefined") return context;
+  const card = new URLSearchParams(window.location.search).get("card");
+  return card && Object.hasOwn(entries, card) ? { ...context, ...entries[card] } : context;
+}
+
+function bookingPath(lang: "en" | "zh", suffix: string) {
+  return `/book${suffix}?lang=${lang}`;
 }
 
 function currentBookingRoute() {
@@ -37,68 +51,112 @@ function currentBookingRoute() {
 
 export default function BookingExperience({
   lang: pageLang,
-  productId,
-  compact = false,
+  productId: defaultProductId,
+  variants,
+  journey,
 }: Props) {
+  const [selectedProductId, setSelectedProductId] = useState(defaultProductId);
+  const [tripDraft, setTripDraft] = useState<BookingTripDraft>({ serviceDate: "", passengers: 1, coupon: "" });
+  const [customer, setCustomer] = useState<CustomerInput>({
+    name: "",
+    email: "",
+    phone: "",
+    pickupAddress: "",
+    dropoffAddress: "",
+    flightNumber: "",
+    notes: "",
+  });
+  const productId = selectedProductId ?? defaultProductId;
   const [lang, setLang] = useState<"en" | "zh">(pageLang);
   const [catalog, setCatalog] = useState<PublicCatalog>();
   const [quote, setQuote] = useState<BookingQuote>();
   const [booking, setBooking] = useState<GuestBooking>();
   const [receipt, setReceipt] = useState<BookingReceipt>();
   const [recent, setRecent] = useState<GuestBooking[]>([]);
-  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogLoading, setCatalogLoading] = useState(Boolean(productId));
   const [bookingLoading, setBookingLoading] = useState(false);
   const [recoveryLoading, setRecoveryLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
+  const [checkoutError, setCheckoutError] = useState<unknown>();
+  const [catalogError, setCatalogError] = useState<unknown>();
+  const [catalogAttempt, setCatalogAttempt] = useState(0);
   const [recoveryError, setRecoveryError] = useState<unknown>();
-  const [queryProductId, setQueryProductId] = useState<string>();
   const [locationReady, setLocationReady] = useState(false);
   const [routeState, setRouteState] = useState<{
     view?: string;
     id?: string;
   }>({});
   const reservationKey = useRef(crypto.randomUUID());
+  const vehicleSelectorRef = useRef<HTMLFieldSetElement>(null);
+  const restoreVehicleFocus = useRef(false);
   const bookingRequest = useRef<{
     id: string;
     controller: AbortController;
     result: Promise<boolean>;
   }>(undefined);
-  const requestedProductId = productId ?? queryProductId;
-  const selectedProductId =
-    requestedProductId &&
-    /^transfer-product-[a-zA-Z0-9-]{1,96}$/.test(requestedProductId)
-      ? requestedProductId
+  const receiptRequest = useRef<AbortController>(undefined);
+  const needsCatalogue = Boolean(productId || routeState.view === "manage" || routeState.view === "return");
+  const productCatalog = useMemo(() => {
+    if (!catalog || !productId) return undefined;
+    const routes = catalog.routes.filter(route => route.directoryProductId === productId);
+    const routeIds = new Set(routes.map(route => route.id));
+    return { ...catalog, routes, rates: catalog.rates.filter(rate => routeIds.has(rate.routeId)) };
+  }, [catalog, productId]);
+  const requestedRoute = productCatalog?.routes[0];
+  const rates = productCatalog?.rates.filter(rate => rate.routeId === requestedRoute?.id);
+  const singleRate = rates?.length === 1 ? rates[0] : undefined;
+  const unavailable = Boolean(productId && productCatalog && !rates?.length);
+  const journeyContext = useMemo(() => {
+    const currentVariant = variants?.find(
+      (variant) => variant.productId === productId,
+    );
+    const context = entryJourney(journey);
+    return context
+      ? {
+          ...context,
+          seater: currentVariant?.seater ?? context.seater,
+          referencePrice: currentVariant ? currentVariant.referencePrice : context.referencePrice,
+        }
       : undefined;
+  }, [journey, productId, variants]);
 
-  const requestedRoute = useMemo(
-    () =>
-      selectedProductId
-        ? catalog?.routes.find(
-            (route) => route.directoryProductId === selectedProductId,
-          )
-        : undefined,
-    [catalog, selectedProductId],
-  );
-  const requestedRate = useMemo(
-    () =>
-      requestedRoute
-        ? catalog?.rates.find((rate) => rate.routeId === requestedRoute.id)
-        : undefined,
-    [catalog, requestedRoute],
-  );
-  const unavailable = Boolean(requestedProductId && catalog && !requestedRoute);
+  useEffect(() => {
+    if (!variants?.length) return;
+    const seats = new URLSearchParams(window.location.search).get("vehicle");
+    const requested = variants.find(variant => variant.seater === seats);
+    setSelectedProductId(requested?.productId ?? defaultProductId);
+  }, [defaultProductId, variants]);
+
+  function selectVehicle(variant: NonNullable<Props["variants"]>[number]) {
+    if (busy || variant.productId === productId) return;
+    restoreVehicleFocus.current = true;
+    setQuote(undefined);
+    setError(undefined);
+    setSelectedProductId(variant.productId);
+    const url = new URL(window.location.href);
+    url.searchParams.set("vehicle", variant.seater);
+    window.history.replaceState(window.history.state, "", url);
+    window.dispatchEvent(new Event("qualitour:transfer-vehicle-change"));
+  }
+
+  useEffect(() => {
+    if (!restoreVehicleFocus.current) return;
+    restoreVehicleFocus.current = false;
+    vehicleSelectorRef.current
+      ?.querySelector<HTMLButtonElement>('button[aria-pressed="true"]')
+      ?.focus({ preventScroll: true });
+  }, [productId]);
 
   useEffect(() => {
     const parameters = new URLSearchParams(window.location.search);
     const selected = parameters.get("lang");
-    const nextLang = selected === "zh" ? "zh" : pageLang;
+    const nextLang = !productId && selected === "zh" ? "zh" : pageLang;
     setLang(nextLang);
-    setQueryProductId(parameters.get("product") ?? undefined);
-    setRouteState(currentBookingRoute());
+    if (!productId) setRouteState(currentBookingRoute());
     setLocationReady(true);
     document.documentElement.lang = nextLang === "zh" ? "zh-Hant" : "en";
-  }, [pageLang]);
+  }, [pageLang, productId]);
 
   // A booking a staff member made for the customer opens from a private link, /book/claim/<id>#t=<secret>. The
   // secret is in the fragment so it never reaches a server log; it is sent once to set the booking cookie, then the
@@ -172,10 +230,36 @@ export default function BookingExperience({
     return result;
   }, [routeState.id]);
 
+  const loadReceipt = useCallback(async () => {
+    if (!routeState.id) return;
+    receiptRequest.current?.abort();
+    const controller = new AbortController();
+    receiptRequest.current = controller;
+    setBookingLoading(true);
+    setError(undefined);
+    try {
+      const next = await bookingApi<BookingReceipt>(
+        `bookings/${encodeURIComponent(routeState.id)}/receipt`,
+        undefined,
+        controller.signal,
+      );
+      if (!controller.signal.aborted) setReceipt(next);
+    } catch (nextError) {
+      if (!controller.signal.aborted) setError(nextError);
+    } finally {
+      if (receiptRequest.current === controller) {
+        receiptRequest.current = undefined;
+        setBookingLoading(false);
+      }
+    }
+  }, [routeState.id]);
+
   useEffect(() => {
+    if (!needsCatalogue) return;
     let active = true;
     const controller = new AbortController();
     setCatalogLoading(true);
+    setCatalogError(undefined);
     settleAbortable(
       bookingApi<PublicCatalog>("catalog", undefined, controller.signal),
       controller.signal,
@@ -184,7 +268,7 @@ export default function BookingExperience({
         if (active && nextCatalog) setCatalog(nextCatalog);
       })
       .catch((nextError) => {
-        if (active) setError(nextError);
+        if (active) setCatalogError(nextError);
       })
       .finally(() => {
         if (active) setCatalogLoading(false);
@@ -193,24 +277,20 @@ export default function BookingExperience({
       active = false;
       controller.abort();
     };
-  }, []);
+  }, [needsCatalogue, catalogAttempt]);
 
   useEffect(() => {
-    if (locationReady && !routeState.id) void recover();
-  }, [locationReady, recover, routeState.id]);
+    if (!productId && locationReady && !routeState.id) void recover();
+  }, [locationReady, productId, recover, routeState.id]);
 
   useEffect(() => {
     if (!routeState.id || routeState.view === "claim") return;
     if (routeState.view === "receipt") {
-      setBookingLoading(true);
-      setError(undefined);
-      bookingApi<BookingReceipt>(
-        `bookings/${encodeURIComponent(routeState.id)}/receipt`,
-      )
-        .then(setReceipt)
-        .catch(setError)
-        .finally(() => setBookingLoading(false));
-      return;
+      void loadReceipt();
+      return () => {
+        receiptRequest.current?.abort();
+        receiptRequest.current = undefined;
+      };
     }
     void loadBooking();
     return () => {
@@ -220,7 +300,7 @@ export default function BookingExperience({
         bookingRequest.current = undefined;
       }
     };
-  }, [loadBooking, routeState.id, routeState.view]);
+  }, [loadBooking, loadReceipt, routeState.id, routeState.view]);
 
   const pendingPayment =
     booking?.id === routeState.id &&
@@ -235,17 +315,7 @@ export default function BookingExperience({
     window.location.assign(url);
   };
 
-  const languageDestination = (nextLang: "en" | "zh") => {
-    if (routeState.id && routeState.view)
-      return bookingPath(
-        nextLang,
-        `/${routeState.view}/${encodeURIComponent(routeState.id)}`,
-      );
-    const base = bookingPath(nextLang);
-    return selectedProductId
-      ? `${base}?product=${encodeURIComponent(selectedProductId)}`
-      : base;
-  };
+  const transfersPath = lang === "zh" ? "/zh/private-transfers" : "/private-transfers";
 
   async function requestQuote(input: QuoteInput) {
     setBusy(true);
@@ -257,6 +327,7 @@ export default function BookingExperience({
         returnTo: "transfers",
       });
       reservationKey.current = crypto.randomUUID();
+      setCustomer((current) => reconcileBookingCustomer(current, next));
       setQuote(next);
     } catch (nextError) {
       setError(nextError);
@@ -282,7 +353,6 @@ export default function BookingExperience({
       setError(nextError);
       if (nextError instanceof ApiError && nextError.status === 409)
         setQuote(undefined);
-      void recover();
     } finally {
       setBusy(false);
     }
@@ -292,6 +362,7 @@ export default function BookingExperience({
     if (!routeState.id || busy) return;
     setBusy(true);
     setError(undefined);
+    setCheckoutError(undefined);
     try {
       const result = await bookingApi<{ url: string }>(
         `bookings/${encodeURIComponent(routeState.id)}/checkout`,
@@ -305,10 +376,23 @@ export default function BookingExperience({
         throw new Error("Invalid payment destination");
       window.location.assign(destination.href);
     } catch (nextError) {
-      setError(nextError);
+      setCheckoutError(nextError);
       setBusy(false);
       void loadBooking();
     }
+  }
+
+  function refresh() {
+    if (!routeState.id) {
+      window.location.reload();
+      return;
+    }
+    if (routeState.view === "receipt") {
+      void loadReceipt();
+      return;
+    }
+    if (catalogError && !catalogLoading) setCatalogAttempt((attempt) => attempt + 1);
+    void loadBooking();
   }
 
   async function cancel() {
@@ -322,7 +406,6 @@ export default function BookingExperience({
       );
       bookingRequest.current?.controller.abort();
       setBooking(cancelled);
-      void recover();
     } catch (nextError) {
       setError(nextError);
     } finally {
@@ -352,28 +435,64 @@ export default function BookingExperience({
       </section>
     );
 
+  const vehicleSelector = variants?.length ? (
+    <fieldset ref={vehicleSelectorRef} className="qb-full min-w-0" disabled={busy}>
+      <legend className="mb-2 text-sm font-semibold text-gray-700">
+        {lang === "zh" ? "選擇車型" : "Choose your vehicle"}
+      </legend>
+      <div className="flex flex-wrap gap-2">
+        {variants.map(variant => (
+          <button
+            key={variant.productId}
+            type="button"
+            aria-pressed={variant.productId === productId}
+            onClick={() => selectVehicle(variant)}
+            className="qb-vehicle-option inline-flex min-h-12 items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-left text-sm font-semibold text-gray-800 hover:border-orange-500 disabled:opacity-60"
+          >
+            <span className="material-icons text-lg" aria-hidden="true">airport_shuttle</span>
+            <span>
+              <span className="block">
+                {lang === "zh" ? `${variant.seater} 座` : `${variant.seater}-seater`}
+              </span>
+              {variant.referencePrice && (
+                <span className="qb-vehicle-option__price block text-xs font-medium text-gray-500">
+                  {lang === "zh"
+                    ? `參考價 ${variant.referencePrice}`
+                    : `Reference ${variant.referencePrice}`}
+                </span>
+              )}
+            </span>
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  ) : null;
+
   if (unavailable)
     return (
-      <section className="qb-customer qt-card qb-unavailable" role="status">
-        <h2>
-          {lang === "zh"
-            ? "此接送暫未開放測試預訂"
-            : "This transfer is not open for test booking yet"}
-        </h2>
-        <p>
-          {lang === "zh"
-            ? "完整資料已可瀏覽；Sandbox 目前只開放已核對的測試路線。"
-            : "Full route details remain available; Sandbox booking is limited to approved test routes."}
-        </p>
-        <a className="qt-btn" href={bookingPath(lang)}>
-          {lang === "zh" ? "查看可測試路線" : "View test routes"}
-        </a>
-      </section>
+      <>
+        {vehicleSelector && <div className="mb-4">{vehicleSelector}</div>}
+        <section className="qb-customer qt-card qb-unavailable" role="status">
+          <h2>
+            {lang === "zh"
+              ? "此接送暫未開放測試預訂"
+              : "This transfer is not open for test booking yet"}
+          </h2>
+          <p>
+            {lang === "zh"
+              ? "完整資料已可瀏覽；Sandbox 目前只開放已核對的測試路線。"
+              : "Full route details remain available; Sandbox booking is limited to approved test routes."}
+          </p>
+          <a className="qt-btn" href={transfersPath}>
+            {lang === "zh" ? "瀏覽接送線路" : "Browse transfer routes"}
+          </a>
+        </section>
+      </>
     );
 
   if (routeState.view === "receipt" && receipt)
     return (
-      <div className={`qb-customer${compact ? " qb-compact" : ""}`}>
+      <div className="qb-customer">
         <ReceiptView
           receipt={receipt}
           lang={lang}
@@ -390,23 +509,50 @@ export default function BookingExperience({
       </div>
     );
 
+  if (!productId && !routeState.id)
+    return (
+      <div className="qb-customer">
+        <div className="qb-public-main">
+          <BookingRecovery
+            bookings={recent}
+            lang={lang}
+            loading={recoveryLoading}
+            error={recoveryError ? bookingMessage(recoveryError, lang) : ""}
+            onRefresh={recover}
+          />
+        </div>
+      </div>
+    );
+
+  const showReceipt = routeState.view === "receipt";
+  const pageError = error ?? (booking ? undefined : catalogError);
   return (
-    <div className={`qb-customer${compact ? " qb-compact" : ""}`}>
+    <div className={`qb-customer${productId ? " qb-compact" : ""}`}>
       <BookingView
+        key={productId}
         showBooking={Boolean(routeState.id)}
-        websiteUrl={
-          lang === "zh" ? "/zh/private-transfers" : "/private-transfers"
-        }
+        showReceipt={showReceipt}
         lang={lang}
-        onLanguage={(nextLang) => navigate(languageDestination(nextLang))}
-        catalog={catalog}
+        fixedProduct={Boolean(productId)}
+        journey={journeyContext}
+        vehicleSelector={vehicleSelector}
+        catalog={productId ? productCatalog : catalog}
         quote={quote}
         booking={booking}
+        customer={customer}
+        setCustomer={setCustomer}
         loading={catalogLoading || (Boolean(routeState.id) && bookingLoading)}
         busy={busy}
-        error={error ? bookingMessage(error, lang) : ""}
+        error={pageError ? bookingMessage(pageError, lang) : ""}
+        focusError={Boolean(error && !routeState.id)}
+        checkoutError={checkoutError ? bookingMessage(checkoutError, lang) : ""}
+        paymentSetupFailed={Boolean(catalogError)}
         initialRouteId={requestedRoute?.id}
-        initialRateId={requestedRate?.id}
+        initialRateId={singleRate?.id}
+        tripDraft={variants?.length ? tripDraft : undefined}
+        onTripDraftChange={variants?.length
+          ? (patch) => setTripDraft((current) => ({ ...current, ...patch }))
+          : undefined}
         onAvailability={(input, signal) =>
           bookingApi<AvailabilityResult>("availability", input, signal)
         }
@@ -414,17 +560,15 @@ export default function BookingExperience({
         onReserve={reserve}
         onCheckout={checkout}
         onCancel={cancel}
-        onRefresh={routeState.id ? loadBooking : () => window.location.reload()}
-        onNew={() => navigate(bookingPath(lang))}
+        onRefresh={refresh}
+        onNew={() => navigate(showReceipt && routeState.id
+          ? bookingPath(lang, `/manage/${encodeURIComponent(routeState.id)}`)
+          : transfersPath)}
         onReceipt={() =>
           navigate(
             bookingPath(lang, `/receipt/${encodeURIComponent(routeState.id!)}`),
           )
         }
-        recent={recent}
-        recoveryLoading={recoveryLoading}
-        recoveryError={recoveryError ? bookingMessage(recoveryError, lang) : ""}
-        onRecover={recover}
       />
     </div>
   );

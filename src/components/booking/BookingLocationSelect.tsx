@@ -14,6 +14,7 @@ export type BookingLocationSelectProps = {
   onChange: (id: string) => void;
   required?: boolean;
   disabled?: boolean;
+  hideLabel?: boolean;
 };
 
 export function BookingLocationSelect({
@@ -24,6 +25,7 @@ export function BookingLocationSelect({
   onChange,
   required = false,
   disabled = false,
+  hideLabel = false,
 }: BookingLocationSelectProps) {
   const generatedId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -177,10 +179,10 @@ export function BookingLocationSelect({
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
       }}
     >
-      <span className="qb-location-select__label" id={labelId}>
+      <span className={hideLabel ? "sr-only" : "qb-location-select__label"} id={labelId}>
         {label}
       </span>
-      <select
+      {required && <select
         className="qb-location-select__native"
         value={value}
         required={required}
@@ -201,7 +203,7 @@ export function BookingLocationSelect({
             {option.label}
           </option>
         ))}
-      </select>
+      </select>}
       <button
         ref={triggerRef}
         className="qb-location-select__trigger"

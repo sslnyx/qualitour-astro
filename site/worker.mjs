@@ -1,16 +1,18 @@
-// Frontend Worker for qualitour.ca: every public page is a static asset (no Worker request, no D1).
-// Only the paths listed under assets.run_worker_first reach this script; they belong to the CMS Worker
-// (`qualitour`) and are forwarded over a service binding as a same-origin reverse proxy:
+// Frontend Worker for qualitour.ca: public pages are static assets and do not read D1.
+// Product paths reach this script for old seat-specific redirects; canonical detail pages use local assets.
+// APIs and media belonging to the CMS Worker (`qualitour`) are forwarded over a same-origin service binding:
 //   /api/transfer/*   booking API
-//   (the booking pages /book/{manage,return,receipt}/<id> are served from this Worker's own /book asset)
+//   (the booking pages /book/{manage,return,receipt}/<id> are served from this Worker's own booking-status asset)
 //   /_image           image transform (fallback)   /_emdash/api/media/file/*    public media
 // The CMS Worker pins its public origin (booking Origin check, Stripe return URLs), so the proxy presents the
 // request under the CMS origin and maps the answer back. The CMS admin is NOT proxied: passkeys are bound to
 // the CMS host, which stays reachable on its own address.
 
+import { legacyBookingRedirect, legacyTransferProductRedirect } from '../src/lib/transfer-products.ts';
+
 const FORWARDED = [/^\/api\/transfer(?:\/|$)/, /^\/_image$/, /^\/_emdash\/api\/media\/file\//];
 // A guest's booking pages (manage, return from Stripe, receipt) are the booking page itself; the page reads the booking
-// id from its address. Serving /book from this Worker's own assets keeps the page and its scripts from the same release
+// id from its address. Serving the booking-status page from this Worker's own assets keeps the page and its scripts from the same release
 // (the CMS Worker's copy can be newer or older than the last site release).
 const BOOKING_PAGE = /^\/(zh\/)?book\/(?:manage|return|receipt|claim)\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 export function isBookingPagePath(pathname) {
@@ -59,9 +61,12 @@ export function toInlinePdf(response, url) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const redirect = legacyBookingRedirect(request) ?? legacyTransferProductRedirect(request);
+    if (redirect) return redirect;
     if (isBookingPagePath(url.pathname)) {
       if (request.method !== 'GET') return new Response(JSON.stringify({ error: 'METHOD_NOT_ALLOWED' }), { status: 405, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
-      const page = await env.ASSETS.fetch(new Request(new URL(url.pathname.startsWith('/zh/') ? '/zh/book' : '/book', url.origin)));
+      const zh = url.searchParams.get('lang') === 'zh' || url.pathname.startsWith('/zh/');
+      const page = await env.ASSETS.fetch(new Request(new URL(zh ? '/zh/booking-status' : '/booking-status', url.origin)));
       const headers = new Headers(page.headers);
       headers.set('Cache-Control', 'no-store'); headers.set('X-Robots-Tag', 'noindex'); headers.set('Referrer-Policy', 'no-referrer');
       return new Response(page.body, { status: page.status, headers });
