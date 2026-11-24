@@ -176,10 +176,18 @@ class PagesStaticFinalizerTests(unittest.TestCase):
             fixture = BuildFixture(temp).create()
             finalizer = load_finalizer()
             snapshot = json.loads((fixture.dist / "data/private-transfers.json").read_text())
+            snapshot["routes"] = [{
+                "id": "route-0",
+                "vehicles": [route["vehicles"][0] for route in snapshot["routes"]],
+            }]
             routes_page = fixture.dist / "private-transfers.html"
-            shared = '<a data-transfer-products="transfer-product-1 transfer-product-2" href="/private-transfers/test-1">View &amp; book</a>'
+            shared = '<a data-transfer-products="transfer-product-1 transfer-product-2" href="/private-transfers/test-1?card=route-0-forward">View &amp; book</a>'
             routes_page.write_text(shared + shared)
             finalizer.validate_transfer_product_pages(fixture.dist, snapshot, "")
+
+            routes_page.write_text(shared.replace("route-0-forward", "route-0-reverse"))
+            with self.assertRaisesRegex(ValueError, 'Missing transfer product page'):
+                finalizer.validate_transfer_product_pages(fixture.dist, snapshot, "")
 
             routes_page.write_text(shared + '<a data-transfer-product="transfer-product-2" href="/private-transfers/test-2">Details</a>')
             with self.assertRaisesRegex(ValueError, 'Conflicting transfer product destinations'):

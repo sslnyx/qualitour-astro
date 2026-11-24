@@ -92,28 +92,37 @@ class TransferProductLinks(HTMLParser):
 def validate_transfer_product_pages(root, snapshot, prefix, base=''):
     parser = TransferProductLinks()
     parser.feed((root / (prefix + 'private-transfers.html')).read_text())
-    expected = {
-        f"transfer-product-{vehicle['activityId']}": vehicle.get('seater')
+    cards = {
+        f"{route['id']}-{direction}": {
+            f"transfer-product-{vehicle['activityId']}": vehicle.get('seater')
+            for vehicle in route[key]
+        }
         for route in snapshot['routes']
-        for key in ['vehicles', 'reverseActivityIds']
-        for vehicle in route.get(key, [])
+        for key, direction in [('vehicles', 'forward'), ('reverseActivityIds', 'reverse')]
+        if route.get(key)
     }
+    expected = {product: seats for card in cards.values() for product, seats in card.items()}
     destinations = {}
     products_by_link = {}
     pattern = re.escape(f'{base}/{prefix}private-transfers/') + '[a-z0-9-]+'
     for products, href in parser.links:
         target = urllib.parse.urlsplit(href)
-        variant = re.fullmatch(r'vehicle=(11|14)', target.query)
+        query = urllib.parse.parse_qs(target.query, keep_blank_values=True)
+        variant = query.get('vehicle', [None])[0]
+        card = query.get('card', [None])[0]
+        ids = frozenset(products)
+        card_ids = set(cards.get(card, {}))
         if (target.scheme or target.netloc or target.fragment
-                or (target.query and (not variant or len(products) != 1))
+                or any(key not in {'card', 'vehicle'} or len(values) != 1 for key, values in query.items())
+                or ('vehicle' in query and (variant not in {'11', '14'} or len(products) != 1))
+                or ('card' in query and not (ids <= card_ids if variant else ids == card_ids))
                 or not re.fullmatch(pattern, target.path)
                 or not (root / (target.path.removeprefix(base + '/') + '.html')).is_file()):
             raise ValueError(f'Missing transfer product page: {href}')
-        ids = frozenset(products)
         if len(ids) != len(products) or products_by_link.setdefault(href, ids) != ids:
             raise ValueError(f'Conflicting transfer products for {href}')
         for product_id in products:
-            if variant and expected.get(product_id) != variant[1]:
+            if variant and expected.get(product_id) != variant:
                 raise ValueError(f'Wrong transfer vehicle for {product_id}: {href}')
             if destinations.setdefault(product_id, target.path) != target.path:
                 raise ValueError(f'Conflicting transfer product destinations for {product_id}: {href}')
