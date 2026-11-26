@@ -3,6 +3,7 @@ import { getLocalePrefix, type Locale } from "../../i18n/config";
 import Layout from "../../layouts/Layout.astro";
 import PageHero from "../../components/PageHero.astro";
 import TransferRoutesGrid from "../../components/TransferRoutesGrid";
+import CharterQuoteDialog from "../../components/CharterQuoteDialog";
 import { getPrivateTransfersWithPricing } from "../../lib/zaui/zaui";
 import { transferRouteCardLinks, transferProducts } from "../../lib/transfer-products";
 import { transferListingCovers } from "../../lib/transfer-covers";
@@ -405,6 +406,8 @@ const faqItems = [
                                 </ul>
                                 <a
                                     href={`${localePrefix}/contact`}
+                                    data-charter-quote={rate.modelId}
+                                    aria-haspopup="dialog"
                                     class="block w-full text-center py-3 bg-gray-100 hover:bg-[#f7941e] text-gray-700 hover:text-white font-semibold rounded-xl transition-all duration-300"
                                 >
                                     {t.needQuote}
@@ -564,6 +567,8 @@ const faqItems = [
                     <div class="flex flex-wrap justify-center gap-4">
                         <a
                             href={`${localePrefix}/contact`}
+                            data-charter-quote=""
+                            aria-haspopup="dialog"
                             class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#f7941e] to-[#ff6b35] text-white font-bold rounded-full hover:shadow-2xl hover:shadow-orange-500/30 hover:scale-105 transition-all duration-300"
                         >
                             <span class="material-icons">mail</span>
@@ -607,6 +612,12 @@ const faqItems = [
             </div>
         </div>
     </section>
+
+    <CharterQuoteDialog
+        lang={lang === "zh" ? "zh" : "en"}
+        vehicles={fleetItems.map((item) => ({ id: item.id, name: item.label }))}
+        client:idle
+    />
 </Layout>
 
 <style>

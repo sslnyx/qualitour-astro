@@ -29,7 +29,7 @@
     "test:worker": "node --test scripts/test-worker-assets.mjs && python3 -m unittest scripts/test_pages_static.py",
     "deploy:worker": "node scripts/deploy-worker.mjs",
     "build:site": "node scripts/build-site.mjs",
-    "test:site": "node --test scripts/test-site-worker.mjs scripts/test-transfer-products.mjs",
+    "test:site": "node --test scripts/test-site-worker.mjs scripts/test-transfer-products.mjs scripts/test-charter-quote.mjs",
     "deploy:site": "CLOUDFLARE_ACCOUNT_ID=ca4d347f96116e87e8f5dbd6c62f0b30 /Users/ning/bin/cf-wrangler deploy --config wrangler.site.jsonc",
     "release:site": "node scripts/release-site.mjs"
   },

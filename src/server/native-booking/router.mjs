@@ -6,7 +6,7 @@ export function createNativeBookingRouter(api) {
  return async function routeNativeBooking(request, env, context) {
   const url=new URL(request.url), path=url.pathname;
   if(path==='/api/transfer'||path.startsWith('/api/transfer/')){
-   return api.fetch(request,{TRANSFER_DB:env.TRANSFER_DB,TRANSFER_CATALOGUE:env.TRANSFER_CATALOGUE,TRANSFER_SANDBOX_KEY:env.TRANSFER_SANDBOX_KEY,TRANSFER_SMTP:env.TRANSFER_SMTP},context);
+   return api.fetch(request,{TRANSFER_DB:env.TRANSFER_DB,TRANSFER_CATALOGUE:env.TRANSFER_CATALOGUE,TRANSFER_SANDBOX_KEY:env.TRANSFER_SANDBOX_KEY,TRANSFER_SMTP:env.TRANSFER_SMTP,QUOTE_NOTIFY_TO:env.QUOTE_NOTIFY_TO},context);
   }
   if(!path.startsWith('/book/')&&!path.startsWith('/zh/book/'))return null;
   if(url.origin!==origin||!new RegExp(`^/(?:zh/)?book/(?:manage|return|receipt|claim)/${uuid}$`).test(path))return failure();

@@ -2,6 +2,7 @@ export interface NativeBookingEnvironment {
  TRANSFER_DB?: unknown;
  TRANSFER_SANDBOX_KEY?: string;
  TRANSFER_SMTP?: string;
+ QUOTE_NOTIFY_TO?: string;
  ASSETS?: {fetch(request: Request): Promise<Response>};
  [binding:string]: unknown;
 }
