@@ -10,6 +10,24 @@ export function emptyQuote(vehicleModelId = '') {
 
 const REQUIRED = ['name', 'email', 'travelDate', 'passengers', 'pickup', 'itinerary'];
 
+/** The fields shown on each step, in order: the clicked vehicle comes first, personal details last. */
+export const QUOTE_STEPS = [
+    ['vehicleModelId', 'passengers', 'travelDate', 'startTime', 'hours'],
+    ['pickup', 'itinerary', 'luggage', 'notes'],
+    ['name', 'email', 'phone'],
+];
+
+/** The problems among one step's own fields, in the order the fields are shown. */
+export function stepErrors(form, step, today = vancouverToday()) {
+    const errors = quoteErrors(form, today);
+    return Object.fromEntries(QUOTE_STEPS[step].filter((field) => errors[field]).map((field) => [field, errors[field]]));
+}
+
+/** The earliest step holding one of these problems, or -1 when there are none. */
+export function firstStepWithError(errors) {
+    return QUOTE_STEPS.findIndex((fields) => fields.some((field) => errors[field]));
+}
+
 export function vancouverToday() {
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Vancouver' }).format(new Date());
 }

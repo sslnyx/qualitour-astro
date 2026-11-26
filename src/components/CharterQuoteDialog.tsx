@@ -1,13 +1,19 @@
 /**
  * The custom charter quote popup on the private transfers page. Any link marked `data-charter-quote="<vehicle id>"`
  * (empty for "not sure") opens it. Until this script has loaded, and on modified clicks, the link still goes to the
- * contact page. What was typed is kept if the popup is closed without sending.
+ * contact page. The form is asked in three steps; what was typed is kept if the popup is closed without sending.
  */
-import { useEffect, useId, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useRef, useState } from "react";
+import { ServiceCalendar } from "./booking/ServiceCalendar";
+// The same themed calendar as the tour enquiry form.
+import "./forms/tour-inquiry-calendar.css";
 import { ApiError, bookingApi } from "../lib/booking/api";
 import {
+    QUOTE_STEPS,
     emptyQuote,
+    firstStepWithError,
     quoteErrors,
+    stepErrors,
     quotePayload,
     vancouverToday,
     type CharterQuoteForm,
@@ -18,7 +24,7 @@ import {
 const copy = {
     en: {
         title: "Request a custom quote", intro: "Tell us about your trip and we will reply by email with a quote.",
-        contact: "Your details", vehicleSection: "Vehicle and time", trip: "Your trip",
+        stepNames: ["Vehicle & time", "Your trip", "Your details"], chooseDate: "Choose a date", closeCalendar: "Close calendar", back: "Back", next: "Next", progress: "Progress",
         name: "Full name", email: "Email", phone: "Phone", vehicleModelId: "Vehicle", unsure: "Not sure yet",
         travelDate: "Date", startTime: "Start time", hours: "Estimated hours", passengers: "Passengers",
         pickup: "Pick-up location", itinerary: "Destinations or itinerary", luggage: "Luggage", notes: "Anything else",
@@ -33,7 +39,7 @@ const copy = {
     },
     zh: {
         title: "訂製包車報價", intro: "請告訴我們您的行程，我們會以電郵回覆報價。",
-        contact: "聯絡資料", vehicleSection: "車型與時間", trip: "行程",
+        stepNames: ["車型與時間", "行程", "聯絡資料"], chooseDate: "選擇日期", closeCalendar: "關閉日曆", back: "上一步", next: "下一步", progress: "填寫進度",
         name: "姓名", email: "電郵地址", phone: "電話", vehicleModelId: "車型", unsure: "不確定",
         travelDate: "用車日期", startTime: "開始時間", hours: "預計時數", passengers: "乘客人數",
         pickup: "上車地點", itinerary: "目的地或行程", luggage: "行李", notes: "備註",
@@ -60,7 +66,14 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
     const dialogRef = useRef<HTMLDialogElement>(null);
     const triggerRef = useRef<HTMLElement | null>(null);
     const requestId = useRef("");
+    const headingRef = useRef<HTMLHeadingElement>(null);
+    const bodyRef = useRef<HTMLDivElement>(null);
     const [open, setOpen] = useState(false);
+    const [step, setStep] = useState(0);
+    const [calendarOpen, setCalendarOpen] = useState(false);
+    const dateButtonRef = useRef<HTMLButtonElement>(null);
+    const calendarRef = useRef<HTMLDivElement>(null);
+    const returnToDate = useRef(false);
     const [form, setForm] = useState<CharterQuoteForm>(() => emptyQuote());
     const [errors, setErrors] = useState<Partial<Record<keyof CharterQuoteForm, CharterQuoteProblem>>>({});
     const [sending, setSending] = useState(false);
@@ -79,6 +92,9 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
             if (vehicle) {
                 requestId.current = "";
                 setForm((current) => ({ ...current, vehicleModelId: vehicle }));
+                // Start where the clicked vehicle can be seen.
+                setStep(0);
+                setFailure("");
             }
             setOpen(true);
         };
@@ -99,8 +115,36 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
         };
     }, [open]);
 
+    // On opening and on each step: start at the top, with the step's name focused (announced, and no keyboard pops up).
+    useEffect(() => {
+        if (!open) return;
+        if (bodyRef.current) bodyRef.current.scrollTop = 0;
+        headingRef.current?.focus({ preventScroll: true });
+    }, [open, step]);
+
+    // The fields are inert while the calendar covers them, so focus goes back only after they are live again.
+    useEffect(() => {
+        if (calendarOpen) calendarRef.current?.querySelector<HTMLButtonElement>('[role="gridcell"][tabindex="0"]')?.focus({ preventScroll: true });
+        else if (returnToDate.current) {
+            returnToDate.current = false;
+            dateButtonRef.current?.focus({ preventScroll: true });
+        }
+    }, [calendarOpen]);
+
+    const closeCalendar = () => {
+        returnToDate.current = true;
+        setCalendarOpen(false);
+    };
+
+    const goTo = (next: number) => {
+        setCalendarOpen(false);
+        setFailure("");
+        setStep(next);
+    };
+
     const close = () => {
         setOpen(false);
+        setCalendarOpen(false);
         setReference("");
         setFailure("");
     };
@@ -115,12 +159,22 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
     const submit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (sending) return;
-        const problems = quoteErrors(form);
+        setCalendarOpen(false);
+        const last = step === QUOTE_STEPS.length - 1;
+        const problems = last ? quoteErrors(form) : stepErrors(form, step);
         setErrors(problems);
-        const first = Object.keys(problems)[0];
-        if (first) {
+        const wrongStep = firstStepWithError(problems);
+        if (wrongStep >= 0) {
             setFailure(t.invalid);
-            (event.currentTarget.elements.namedItem(first) as HTMLElement | null)?.focus();
+            if (wrongStep !== step) setStep(wrongStep);
+            else {
+                const first = QUOTE_STEPS[step].find((name) => problems[name])!;
+                (event.currentTarget.elements.namedItem(first) as HTMLElement | null)?.focus();
+            }
+            return;
+        }
+        if (!last) {
+            goTo(step + 1);
             return;
         }
         setSending(true);
@@ -133,6 +187,7 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
             );
             setReference(result.reference);
             setForm(emptyQuote());
+            setStep(0);
             requestId.current = "";
         } catch (error) {
             const status = error instanceof ApiError ? error.status : 0;
@@ -161,7 +216,7 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
         };
         return (
             <div className={`flex min-w-0 flex-col gap-1 ${options.wide ? "sm:col-span-2" : ""}`}>
-                <label htmlFor={shared.id} className="text-sm font-medium text-gray-800">
+                <label id={`${shared.id}-label`} htmlFor={shared.id} className="text-sm font-medium text-gray-800">
                     {t[name]}
                     {optional && <span className="ml-1 font-normal text-gray-500">({t.optional})</span>}
                 </label>
@@ -172,6 +227,28 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
                             <option key={vehicle.id} value={vehicle.id}>{vehicle.name}</option>
                         ))}
                     </select>
+                ) : name === "travelDate" ? (
+                    <button
+                        ref={dateButtonRef}
+                        id={shared.id}
+                        name={name}
+                        type="button"
+                        disabled={sending}
+                        aria-haspopup="dialog"
+                        aria-expanded={calendarOpen}
+                        aria-labelledby={`${shared.id}-label ${shared.id}-value`}
+                        aria-invalid={shared["aria-invalid"]}
+                        aria-describedby={shared["aria-describedby"]}
+                        onClick={() => (calendarOpen ? closeCalendar() : setCalendarOpen(true))}
+                        className={`${shared.className} flex cursor-pointer items-center justify-between gap-2 text-left`}
+                    >
+                        <span id={`${shared.id}-value`} className={form.travelDate ? "min-w-0 break-words" : "min-w-0 break-words text-gray-500"}>
+                            {form.travelDate
+                                ? new Intl.DateTimeFormat(lang === "zh" ? "zh-Hant-CA" : "en-CA", { dateStyle: "full", timeZone: "UTC" }).format(new Date(`${form.travelDate}T00:00:00Z`))
+                                : t.chooseDate}
+                        </span>
+                        <span className="material-icons shrink-0 text-lg text-[#a8410b]" aria-hidden="true">calendar_today</span>
+                    </button>
                 ) : options.rows ? (
                     <textarea {...shared} rows={options.rows} placeholder={options.hint} onChange={(event) => change(name, event.target.value)} />
                 ) : (
@@ -182,12 +259,21 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
         );
     };
 
-    const section = (title: string, children: React.ReactNode) => (
-        <fieldset className="min-w-0">
-            <legend className="mb-2 text-sm font-bold text-[#b84e00]">{title}</legend>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{children}</div>
-        </fieldset>
-    );
+    const fields: Record<Field, () => React.ReactNode> = {
+        vehicleModelId: () => field("vehicleModelId"),
+        passengers: () => field("passengers", { type: "number", min: 1, max: 500, inputMode: "numeric" }),
+        travelDate: () => field("travelDate"),
+        startTime: () => field("startTime", { type: "time" }),
+        hours: () => field("hours", { type: "number", min: 0.5, max: 240, step: 0.5, inputMode: "decimal" }),
+        pickup: () => field("pickup", { type: "text" }, { wide: true }),
+        itinerary: () => field("itinerary", {}, { wide: true, rows: 3, hint: t.itineraryHint }),
+        luggage: () => field("luggage", { type: "text" }, { wide: true, hint: t.luggageHint }),
+        notes: () => field("notes", {}, { wide: true, rows: 2 }),
+        name: () => field("name", { type: "text", autoComplete: "name" }, { wide: true }),
+        email: () => field("email", { type: "email", autoComplete: "email" }),
+        phone: () => field("phone", { type: "tel", autoComplete: "tel" }),
+    };
+    const isLast = step === QUOTE_STEPS.length - 1;
 
     if (!open) return null;
 
@@ -198,7 +284,8 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
             className="fixed inset-0 m-auto w-[calc(100%_-_1.5rem)] max-w-2xl overflow-hidden rounded-2xl bg-white p-0 text-left shadow-2xl backdrop:bg-black/60"
             onCancel={(event) => {
                 event.preventDefault();
-                close();
+                if (calendarOpen) closeCalendar();
+                else close();
             }}
             onClick={(event) => {
                 if (event.target === event.currentTarget) close();
@@ -217,8 +304,8 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
                         <span className="material-icons" aria-hidden="true">close</span>
                     </button>
                 </div>
-                <div className="min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
-                    {reference ? (
+                {reference ? (
+                    <div className="min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
                         <div role="status" className="py-8 text-center">
                             <span className="material-icons text-5xl text-green-600" aria-hidden="true">check_circle</span>
                             <h3 className="mt-3 text-2xl font-bold text-gray-900">{t.sentTitle}</h3>
@@ -229,26 +316,46 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
                                 {t.close}
                             </button>
                         </div>
-                    ) : (
-                        <form method="post" noValidate onSubmit={submit} className="flex flex-col gap-5">
-                            {section(t.contact, <>
-                                {field("name", { type: "text", autoComplete: "name" })}
-                                {field("email", { type: "email", autoComplete: "email" })}
-                                {field("phone", { type: "tel", autoComplete: "tel" })}
-                            </>)}
-                            {section(t.vehicleSection, <>
-                                {field("vehicleModelId")}
-                                {field("passengers", { type: "number", min: 1, max: 500, inputMode: "numeric" })}
-                                {field("travelDate", { type: "date", min: vancouverToday() })}
-                                {field("startTime", { type: "time" })}
-                                {field("hours", { type: "number", min: 0.5, max: 240, step: 0.5, inputMode: "decimal" })}
-                            </>)}
-                            {section(t.trip, <>
-                                {field("pickup", { type: "text" }, { wide: true })}
-                                {field("itinerary", {}, { wide: true, rows: 4, hint: t.itineraryHint })}
-                                {field("luggage", { type: "text" }, { wide: true, hint: t.luggageHint })}
-                                {field("notes", {}, { wide: true, rows: 2 })}
-                            </>)}
+                    </div>
+                ) : (
+                    <form
+                        method="post"
+                        noValidate
+                        onSubmit={submit}
+                        onKeyDown={(event) => {
+                            if (!calendarOpen || event.key !== "Escape") return;
+                            event.preventDefault();
+                            closeCalendar();
+                        }}
+                        className="flex min-h-0 flex-col"
+                    >
+                        {/* Finished steps can be reopened; later ones are reached with Next, which checks the fields. */}
+                        <ol aria-label={t.progress} className="grid shrink-0 grid-cols-3 gap-2 px-4 pt-3 sm:px-6">
+                            {t.stepNames.map((title, index) => (
+                                <li key={title} aria-current={index === step ? "step" : undefined}>
+                                    <button
+                                        type="button"
+                                        disabled={index >= step || sending}
+                                        onClick={() => goTo(index)}
+                                        className={`flex min-h-11 w-full flex-col justify-center gap-1.5 text-left text-xs sm:text-sm ${index === step ? "font-bold text-gray-900" : "text-gray-500"} enabled:cursor-pointer enabled:hover:text-[#b84e00]`}
+                                    >
+                                        <span className={`h-1 w-full rounded-full ${index <= step ? "bg-[#b84e00]" : "bg-gray-200"}`} />
+                                        <span>{index + 1}. {title}</span>
+                                    </button>
+                                </li>
+                            ))}
+                        </ol>
+                        <div className="relative flex min-h-0 flex-col">
+                        {/* One height on wider screens, so the buttons stay put from step to step. */}
+                        <div ref={bodyRef} inert={calendarOpen} className="min-h-0 overflow-y-auto overscroll-contain px-4 py-4 sm:h-[27rem] sm:px-6">
+                            <h3 ref={headingRef} tabIndex={-1} className="sr-only">
+                                {t.stepNames[step]} ({step + 1}/{QUOTE_STEPS.length})
+                            </h3>
+                            <div className="grid grid-cols-1 content-start gap-3 sm:grid-cols-2">
+                                {QUOTE_STEPS[step].map((name) => (
+                                    <Fragment key={name}>{fields[name]()}</Fragment>
+                                ))}
+                            </div>
                             {/* Hidden from people; automated form fillers complete it and their request is dropped. */}
                             <div aria-hidden="true" className="absolute -left-[9999px] size-px overflow-hidden">
                                 <label>
@@ -256,13 +363,54 @@ export default function CharterQuoteDialog({ lang, vehicles }: { lang: "en" | "z
                                     <input type="text" name="website" tabIndex={-1} autoComplete="off" value={form.website} onChange={(event) => change("website", event.target.value)} />
                                 </label>
                             </div>
-                            {failure && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{failure}</p>}
-                            <button type="submit" disabled={sending} className="min-h-12 rounded-xl bg-[#b84e00] px-6 py-3 font-semibold text-white hover:bg-[#963f00] disabled:cursor-not-allowed disabled:opacity-70">
-                                {sending ? t.sending : t.submit}
-                            </button>
-                        </form>
-                    )}
-                </div>
+                        </div>
+                        {/* Laid over the fields, so choosing a date never lengthens the popup. */}
+                        {calendarOpen && (
+                            <div className="absolute inset-0 overflow-y-auto overscroll-contain bg-white px-4 py-1 sm:px-6">
+                                <div ref={calendarRef} className="tour-inquiry-calendar mx-auto w-full max-w-sm rounded-xl border border-gray-200 bg-white p-2 sm:p-3">
+                                    <ServiceCalendar
+                                        lang={lang}
+                                        label={t.travelDate}
+                                        value={form.travelDate}
+                                        min={vancouverToday()}
+                                        compact
+                                        isDateEnabled={() => true}
+                                        onChange={(value) => {
+                                            change("travelDate", value);
+                                            closeCalendar();
+                                        }}
+                                    />
+                                    <button type="button" onClick={closeCalendar} className="mt-1 min-h-11 w-full rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                                        {t.closeCalendar}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        </div>
+                        <div className="shrink-0 border-t border-gray-200 px-4 py-3 sm:px-6">
+                            {failure && <p role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{failure}</p>}
+                            <div className="flex gap-3">
+                                {step > 0 && (
+                                    <button type="button" onClick={() => goTo(step - 1)} disabled={sending} className="min-h-12 rounded-xl border border-gray-300 px-6 py-3 font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-70">
+                                        {t.back}
+                                    </button>
+                                )}
+                                {/* A new button on each step; the second click of a double click must not press it. */}
+                                <button
+                                    key={step}
+                                    type="submit"
+                                    disabled={sending}
+                                    onClick={(event) => {
+                                        if (event.detail > 1) event.preventDefault();
+                                    }}
+                                    className="min-h-12 flex-1 rounded-xl bg-[#b84e00] px-6 py-3 font-semibold text-white hover:bg-[#963f00] disabled:cursor-not-allowed disabled:opacity-70"
+                                >
+                                    {!isLast ? t.next : sending ? t.sending : t.submit}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                )}
             </div>
         </dialog>
     );
