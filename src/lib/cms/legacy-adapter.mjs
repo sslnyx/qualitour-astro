@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { CMS_ORIGIN, normalizeCmsMediaUrl } from './read-client.mjs';
+import { hideFlaggedContent } from './tour-content-warnings.mjs';
 
 const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object'
   ? Object.fromEntries(Object.keys(value).filter(key => key !== '_key').sort().map(key => [key, canonical(value[key])])) : value;
@@ -206,7 +207,7 @@ export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = ne
     if (!claimsImport(data)) {
       const tour = nativeTour(entry, source, taxonomyOverride), slug = slugKey(tour.slug);
       if (seen.has(`cms:${entry.id}`) || slugs.has(slug)) throw new Error('Duplicate native CMS identity or public slug');
-      seen.add(`cms:${entry.id}`); slugs.add(slug); tours.push(tour); sortDates.set(tour.id,tour.date); continue;
+      seen.add(`cms:${entry.id}`); slugs.add(slug); tours.push(hideFlaggedContent(tour, data.source_key)); sortDates.set(tour.id,tour.date); continue;
     }
     const key = data.source_key, original = source.tours[key];
     if (typeof key !== 'string' || !key) throw new Error(`Missing public source identity for CMS entry ${entry.id}`);
@@ -263,7 +264,8 @@ export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = ne
       return [name,taxonomyOverride && Object.hasOwn(taxonomyOverride,name) ? projectedTermRows(taxonomyOverride[name]) : legacy];
     }));
     const seo=nativeSeo(data.seo);if(seo)tour.nativeSeo=seo;
-    attachMediaDimensions(tour,dimensions);tours.push(tour); sortDates.set(tour.id,original.date);
+    const shown=hideFlaggedContent(tour,key);
+    attachMediaDimensions(shown,dimensions);tours.push(shown); sortDates.set(shown.id,original.date);
   }
   // A page of a larger collection may hold only excluded proof fixtures; the caller guards the merged result.
   if (!tours.length && !allowEmpty) throw new Error(`Refusing an empty ${locale} CMS catalogue`);
