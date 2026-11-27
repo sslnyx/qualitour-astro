@@ -13,6 +13,7 @@ import { safeTourReturnPath, tourWorkspaceHref } from './tour-navigation';
 import { TourSettings } from './TourSettings';
 import { ReleaseChip } from './ReleaseChip';
 import { ContentWarnings } from './ContentWarnings';
+import { ContentChecks } from './ContentChecks';
 import type {PendingNavigation,NavigationGuardComponent} from './navigation-guard';
 
 type Section = 'basic' | 'overview' | 'itinerary' | 'media' | 'notes';
@@ -92,6 +93,7 @@ export function TourEditorPage({ id, locale, returnTo, initialSection, Navigatio
     <nav className="tw-sections" aria-label="行程編輯分區">{sections.map(s=><button type="button" key={s.id} className={section===s.id?'is-active':''} aria-current={section===s.id?'page':undefined} onClick={()=>{setSection(s.id);setMode('edit');}}>{s.label}{sectionDirty(s.id)&&<span className="tw-dirty-dot" aria-hidden="true" title="此分區有未儲存修改"/>}{s.id==='itinerary'&&<span>{rows.length}</span>}</button>)}</nav>
     {state.error && <div role="alert" className="tw-alert">{state.error}{(state.dirty||state.conflict)&&<button type="button" disabled={state.comparing||state.saving} onClick={()=>void session.compareLatest()}>{state.comparing?'正在對照…':'對照最新內容'}</button>}<button type="button" onClick={() => setLeaving('reload')}>重新讀取</button></div>}
     {!state.loading&&state.item&&<ContentWarnings data={state.draft}/>}
+    {!state.loading&&state.item&&<ContentChecks key={state.item.id} item={state.item} data={state.draft}/>}
     <RecoveryPanel state={state} session={session}/>
     {actionError&&<div role="alert" className="tw-alert">{actionError}<button type="button" onClick={()=>setActionError('')}>關閉</button></div>}
     {state.loading ? <div className="tw-empty">正在載入行程…</div> : !state.item ? <div className="tw-empty"><p>無法開啟此行程。</p><a href={listPath}>返回行程列表</a></div> : <>
