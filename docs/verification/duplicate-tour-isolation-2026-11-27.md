@@ -1,7 +1,24 @@
 # 複製團令整個團目錄建立失敗（2026-11-27）
 
 分支 `fix/duplicate-tour-isolation-20261127`，基於上線分支 `codex/emdash-native-site-20261112` 的 `8670c84`。
-寫本文時：**未提交、未 push、未部署，沒有讀寫上線 CMS 或 D1。**
+修正提交：`592e84a`。**未 push、未部署，沒有寫入上線 CMS 或 D1。** 部署前的唯讀核對見下一節。
+
+## 部署前唯讀核對（2026-11-27，Ning 同意後執行）
+
+| 核對項 | 結果 |
+| --- | --- |
+| `origin` 上線分支 | 仍是 `8670c84`，不用 rebase |
+| 上線 `qualitour` Worker 的 `qualitour-release.json` | `commit` = `8670c843…`，是 `592e84a` 的祖先 |
+| 目前 CMS Worker 版本（回退點） | `5f14338d-113f-4b0e-8670-27e27d471d7c`（2026-11-27T02:36:19Z） |
+| 上線網站 `site-release.json` | 2026-11-27T02:40:33Z 建置，257 團（英 192、中 65） |
+| 已發布 CMS 資料列 | 英 193、中 66，其中各一個 proof 測試項目 |
+| 新程式建出的目錄 | 英 192、中 65，被隱藏 0 個 |
+| 已發布的匯入團 | 256 個，全部在清單記錄的 ID；清單上沒有未發布的團 |
+| 已發布項目中重複的 `source_key` | 沒有，即現在沒有已發布的複本 |
+| 同一批資料跑上線版舊程式 | 同樣英 192、中 65；兩份目錄的內容雜湊相同 |
+
+讀取方法：`syncCmsSnapshot`（即 `npm run sync:cms`）加一段本機腳本比較新舊程式，對內容只發 GET。
+**限制：** 內容 API 只列已發布的團，草稿和垃圾桶裡有沒有複本沒有查（它們即使發布也會被隱藏）。雜湊比較走的是網站建置那條路；CMS Worker 直接讀 D1 的路徑由自動測試覆蓋。部署若隔了一段時間或有人改過團，第 4 步要重跑。
 
 ## 原因
 
@@ -63,7 +80,7 @@
 - `npm run build:worker-cms` 本機建置成功。提示元件單獨渲染檢查過文字和連結。
 - 新增的發布 workflow 測試沒有加到 `main` 的 `site-release.yml`。
 
-**未驗證：** 沒有在真實後台按 Duplicate 或看提示畫面（複本資料按 EmDash 原始碼模擬）；沒有跑完整的 `build:worker` 和 `release:site`（會讀上線 CMS）；沒有確認上線 CMS 現在是否已有複本、原團 ID 是否仍和清單一致。
+**未驗證：** 沒有在真實後台按 Duplicate 或看提示畫面（複本資料按 EmDash 原始碼模擬）；沒有跑完整的 `build:worker` 和 `release:site`。
 
 ## 部署步驟（每一步的提交、push、讀寫上線、部署都要 Ning 同意）
 
@@ -73,7 +90,7 @@
 2. `git fetch origin`。上線分支如有新提交，rebase 上去，重跑測試。
 3. **確認不會退回舊版。** 打開 `https://qualitour.qualitour.workers.dev/qualitour-release.json` 取得 `commit`，再執行
    `git merge-base --is-ancestor <該 commit> HEAD && echo OK`。
-   沒有 `OK` 就停：上線 Worker 有這個分支沒有的程式。再用 `/Users/ning/bin/cf-wrangler deployments list --name qualitour` 核對最後部署時間，記下目前版本 ID 作回退點。
+   沒有 `OK` 就停：上線 Worker 有這個分支沒有的程式。再用 `CLOUDFLARE_ACCOUNT_ID=ca4d347f96116e87e8f5dbd6c62f0b30 /Users/ning/bin/cf-wrangler deployments list --name qualitour` 核對最後部署時間，記下目前版本 ID 作回退點。
 4. **唯讀核對原團清單：** `QUALITOUR_CMS_ORIGIN=https://qualitour.qualitour.workers.dev npm run sync:cms`（只讀已發布的團，只寫本機檔案）。
    - 預期沒有任何 `left out of the site` 行，團數和目前網站一致。
    - 有 `copy` 行：在後台核對兩個 ID 哪個是真正的原團。若被隱藏的是原團，清單過時，**停止部署**並更新清單。若真是複本，部署後它不會顯示。
