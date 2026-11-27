@@ -1,6 +1,9 @@
 import { createHash } from 'node:crypto';
 import { CMS_ORIGIN, normalizeCmsMediaUrl } from './read-client.mjs';
 import { hideFlaggedContent } from './tour-content-warnings.mjs';
+import { claimPublicIdentities, claimsImport, importProblem, tourOwners } from './tour-identity.mjs';
+
+export { claimsImport };
 
 const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object'
   ? Object.fromEntries(Object.keys(value).filter(key => key !== '_key').sort().map(key => [key, canonical(value[key])])) : value;
@@ -179,42 +182,33 @@ function nativeTour(entry, source, taxonomyOverride) {
 export function sortCatalogueTours(tours, sortDates) {
   return tours.sort((a,b)=>String(sortDates.get(b.id)).localeCompare(String(sortDates.get(a.id)))||compareIds(b.id,a.id));
 }
-/**
- * Whether an entry is one of the imported WordPress tours. The live loader exposes unset columns as null, so a
- * native tour carries `source_key: null`; any string (even an empty one, which then fails identity checks) claims
- * an import.
- */
-export function claimsImport(data) {
-  // Tours that were never public on WordPress (draft, pending, private) have no frozen public snapshot to compare
-  // with; once an editor publishes one it renders like any native tour, from its CMS fields alone.
-  if (NEVER_PUBLIC.has(data?.source_status)) return false;
-  return ['source_key','source_status'].some(field => typeof data?.[field] === 'string');
-}
-const NEVER_PUBLIC = new Set(['draft','pending','private']);
 /** The site shows a currency only when a tour is priced in USD; no label at all means the default (CAD). */
 export const currencyLabel = value => (/^\s*usd\s*$/i.test(String(value ?? '')) ? 'USD' : '');
 /** The stored currency (CAD or USD, or empty). Kept for page descriptions, which already tell same-titled tours apart by "(price CAD)". */
 export const currencyCode = value => { const code = String(value ?? '').trim().toUpperCase(); return code === 'CAD' || code === 'USD' ? code : ''; };
-export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = new Map(), allowEmpty = false } = {}) {
+export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = new Map(), allowEmpty = false, owners = tourOwners } = {}) {
   const source = compat.locales[locale]; if (!source) throw new Error('Missing locale compatibility manifest');
-  const seen = new Set(), slugs = new Set(), excluded = [], tours = [], sortDates = new Map();
+  const entryIds = new Set(), excluded = [], rejected = [], candidates = [];
+  const known = key => Object.hasOwn(source.tours, key) && new RegExp(`^wp-${locale}-[1-9]\\d*$`).test(key);
   for (const entry of entries) {
     if (entry.status !== 'published') throw new Error('Non-published CMS entry');
     if (entry.locale !== locale) throw new Error('CMS locale mismatch');
     if (PROOF_IDS.has(entry.id)) { excluded.push(entry.id); continue; }
+    // The same row twice means the read itself went wrong, which no single tour can explain.
+    if (entryIds.has(entry.id)) throw new Error(`Duplicate published CMS tour ID ${entry.id}`);
+    if (entry.id) entryIds.add(entry.id);
     const data = entry.data || {};
+    // Decided before any field is read, so whatever else a copy holds cannot affect the other tours.
+    const problem = importProblem(entry.id, data, { owners, known });
+    if (problem) { rejected.push({ entryId: entry.id, ...problem }); continue; }
     const taxonomyOverride = taxonomyOverrides.get?.(entry.id);
     if (!claimsImport(data)) {
-      const tour = nativeTour(entry, source, taxonomyOverride), slug = slugKey(tour.slug);
-      if (seen.has(`cms:${entry.id}`) || slugs.has(slug)) throw new Error('Duplicate native CMS identity or public slug');
-      seen.add(`cms:${entry.id}`); slugs.add(slug); tours.push(hideFlaggedContent(tour, data.source_key)); sortDates.set(tour.id,tour.date); continue;
+      const tour = nativeTour(entry, source, taxonomyOverride);
+      candidates.push({ tour: hideFlaggedContent(tour, data.source_key), claim: { entryId: tour.id, identity: `cms:${entry.id}`, slug: slugKey(tour.slug), imported: false, publishedAt: tour.date, sortDate: tour.date } });
+      continue;
     }
     const key = data.source_key, original = source.tours[key];
-    if (typeof key !== 'string' || !key) throw new Error(`Missing public source identity for CMS entry ${entry.id}`);
-    if (!original || !new RegExp(`^wp-${locale}-[1-9]\\d*$`).test(key)) throw new Error(`Missing public compatibility identity for CMS entry ${entry.id}`);
     const publicSlug = slugKey(original.tour.slug);
-    if (seen.has(key) || slugs.has(publicSlug)) throw new Error('Duplicate CMS source identity or legacy URL');
-    seen.add(key); slugs.add(publicSlug);
     // Imported entries have this complete projection. Absence means an API or
     // schema mismatch; explicit null/empty values represent an editor's removal.
     for (const field of ['title','summary','price','currency','duration','location','tour_code']) {
@@ -265,8 +259,15 @@ export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = ne
     }));
     const seo=nativeSeo(data.seo);if(seo)tour.nativeSeo=seo;
     const shown=hideFlaggedContent(tour,key);
-    attachMediaDimensions(shown,dimensions);tours.push(shown); sortDates.set(shown.id,original.date);
+    attachMediaDimensions(shown,dimensions);
+    candidates.push({ tour: shown, claim: { entryId: entry.id, identity: key, slug: publicSlug, imported: true, publishedAt: tour.date, sortDate: original.date } });
   }
+  const lost = claimPublicIdentities(candidates.map(candidate => candidate.claim));
+  rejected.push(...lost);
+  const dropped = new Set(lost.map(row => row.entryId));
+  const shownCandidates = candidates.filter(candidate => !dropped.has(candidate.claim.entryId));
+  const tours = shownCandidates.map(candidate => candidate.tour);
+  const sortDates = new Map(shownCandidates.map(candidate => [candidate.tour.id, candidate.claim.sortDate]));
   // A page of a larger collection may hold only excluded proof fixtures; the caller guards the merged result.
   if (!tours.length && !allowEmpty) throw new Error(`Refusing an empty ${locale} CMS catalogue`);
   sortCatalogueTours(tours,sortDates);
@@ -280,10 +281,20 @@ export function buildCatalogue(entries, compat, locale, { taxonomyOverrides = ne
     for (const tour of tours) for (const term of tour.tour_terms[name]) if (!known.has(term.slug)) { known.add(term.slug); vocabulary.push({...term,parent:0}); }
     return [name,vocabulary.map(term=>({...term,count:counts.get(term.slug)||0}))];
   }));
-  // Not serialized: lets a caller that builds a catalogue in pages re-sort the merged result identically.
+  // Not serialized: lets a caller that builds a catalogue in pages re-sort the merged result identically, and
+  // settle identities across pages. `claims` is keyed by CMS entry ID; `rejected` lists the tours left out and why.
   const catalogue = {tours,terms,excluded};
   Object.defineProperty(catalogue,'sortDates',{value:sortDates,enumerable:false});
+  Object.defineProperty(catalogue,'claims',{value:new Map(shownCandidates.map(candidate=>[candidate.claim.entryId,candidate.claim])),enumerable:false});
+  Object.defineProperty(catalogue,'rejected',{value:rejected,enumerable:false});
   return catalogue;
+}
+
+/** The imported tour whose old public address this slug would collide with, if any. */
+export function importedTourAtSlug(compat, locale, slug) {
+  let wanted;
+  try { wanted = slugKey(slug); } catch { return; }
+  return Object.entries(compat.locales[locale]?.tours || {}).find(([, original]) => slugKey(original.tour.slug) === wanted)?.[0];
 }
 
 /** Expose only verified reciprocal relationships whose two tours remain published. */

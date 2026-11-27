@@ -2,6 +2,7 @@ import { readFile, mkdir, rename, writeFile, stat, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createCmsReader, CMS_ORIGIN } from './read-client.mjs';
 import { buildCatalogue, retainPublicTranslations, contentHash, sortToursByPublishedAt } from './legacy-adapter.mjs';
+import { reportHiddenTours } from './tour-identity.mjs';
 
 const snapshotPath = () => resolve('.astro/cms-content/public-catalogue.json');
 const compatPath = () => resolve('src/data/cms-legacy-compat.json');
@@ -28,7 +29,10 @@ export async function syncCmsSnapshot({ reader = createCmsReader() } = {}) {
   if (compat.schema !== 1) throw new Error('Unsupported CMS compatibility manifest');
   const locales = {};
   // Sequential locales also avoid concurrent refresh-token rotation in the CLI store.
-  for (const locale of ['en','zh']) locales[locale] = buildCatalogue(await reader.listPublished(locale),compat,locale);
+  for (const locale of ['en','zh']) {
+    locales[locale] = buildCatalogue(await reader.listPublished(locale),compat,locale);
+    reportHiddenTours(locale,locales[locale].rejected);
+  }
   retainPublicTranslations(locales);
   const result = { schema:SCHEMA, origin:CMS_ORIGIN, generatedAt:new Date().toISOString(), compatibilityHash, locales };
   await mkdir(resolve('.astro/cms-content'),{recursive:true});

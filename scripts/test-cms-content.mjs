@@ -53,7 +53,8 @@ test('only current published, locale-matched entries appear; unknown/duplicate i
   assert.throws(()=>buildCatalogue([{...f.entry,status:'draft'}],f.compat,'en'),/published/);
   assert.throws(()=>buildCatalogue([{...f.entry,locale:'zh'}],f.compat,'en'),/locale/);
   assert.throws(()=>buildCatalogue([f.entry,f.entry],f.compat,'en'),/Duplicate/);
-  assert.throws(()=>buildCatalogue([{...f.entry,data:{...f.data,source_key:'wp-en-99'}}],f.compat,'en'),/compatibility/);
+  const unknown=buildCatalogue([{...f.entry,data:{...f.data,source_key:'wp-en-99'}}],f.compat,'en',{allowEmpty:true});
+  assert.deepEqual([unknown.tours.length,unknown.rejected.map(row=>row.code)],[0,['unknown-source-key']]);
   assert.throws(()=>buildCatalogue([],f.compat,'en'),/empty/);
 });
 test('rich text escapes content, rejects active links and never passes HTML/custom embeds through', () => {
@@ -154,15 +155,16 @@ test('native published tours use stable string identities, safe defaults, live t
   assert.equal(result.terms.destinations.find(term=>term.slug==='banff').count,1);
 });
 
-test('native identity validation rejects reserved or colliding slugs and claimed bad imports',()=>{
+test('native validation rejects reserved slugs; colliding slugs and bad import claims leave out only that tour',()=>{
   const f=fixture();
   const native=(slug,data={})=>({id:'01NATIVE0000000000000000002',slug,locale:'en',status:'published',publishedAt:'2026-11-12T02:00:00Z',data:{title:'Native',...data}});
   assert.throws(()=>buildCatalogue([f.entry,native('featured')],f.compat,'en'),/reserved/);
   assert.throws(()=>buildCatalogue([f.entry,native('bad?slug')],f.compat,'en'),/invalid native public slug/);
-  assert.throws(()=>buildCatalogue([f.entry,native('ORIGINAL-TOUR')],f.compat,'en'),/legacy URL|public slug/i);
-  assert.throws(()=>buildCatalogue([f.entry,native('original-tour')],f.compat,'en'),/legacy URL|public slug/i);
-  assert.throws(()=>buildCatalogue([native('native',{source_key:'wp-en-999'})],f.compat,'en'),/compatibility/);
-  assert.throws(()=>buildCatalogue([native('native',{source_key:''})],f.compat,'en'),/source identity/);
+  const leftOut=entry=>{const result=buildCatalogue([f.entry,entry],f.compat,'en');return [result.tours.map(tour=>tour.id),result.rejected.map(row=>row.code)];};
+  assert.deepEqual(leftOut(native('ORIGINAL-TOUR')),[[12],['url-taken']]);
+  assert.deepEqual(leftOut(native('original-tour')),[[12],['url-taken']]);
+  assert.deepEqual(leftOut(native('native',{source_key:'wp-en-999'})),[[12],['unknown-source-key']]);
+  assert.deepEqual(leftOut(native('native',{source_key:''})),[[12],['missing-source-key']]);
   assert.throws(()=>buildCatalogue([native('native',{seo:{canonical:'javascript:alert(1)'}})],f.compat,'en'),/canonical/);
 });
 

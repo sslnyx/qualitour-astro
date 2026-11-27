@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { buildCatalogue, claimsImport, contentHash, currencyLabel } from '../src/lib/cms/legacy-adapter.mjs';
+import { tourOwners } from '../src/lib/cms/tour-identity.mjs';
 
 const compat = JSON.parse(await readFile(new URL('../src/data/cms-legacy-compat.json', import.meta.url), 'utf8'));
 const published = '2026-11-15T10:00:00.000Z';
@@ -41,7 +42,7 @@ test('a draft that was never public on WordPress publishes without a compatibili
 function importedEntry(key, overrides = {}) {
   const original = compat.locales.en.tours[key];
   const data = { title: 'x', summary: '', price: '', currency: '', duration: '', location: '', tour_code: '', overview: [], itinerary: [], itinerary_continued: [], additional_info: [], faq: [], gallery: [], source_key: key, source_status: 'publish', ribbon: original.tour.tour_meta.ribbon ?? '' };
-  return { id: 'imp-' + key, slug: original.tour.slug, status: 'published', locale: 'en', publishedAt: published, data: { ...data, ...overrides } };
+  return { id: tourOwners[key], slug: original.tour.slug, status: 'published', locale: 'en', publishedAt: published, data: { ...data, ...overrides } };
 }
 const sourceOf = key => {
   const original = compat.locales.en.tours[key], baseline = original.baseline;

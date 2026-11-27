@@ -1,5 +1,6 @@
 import compatibilitySource from '../../../../src/data/cms-legacy-compat.json' with { type: 'json' };
 import { buildCatalogue, claimsImport, retainPublicTranslations, sortCatalogueTours } from '../../../../src/lib/cms/legacy-adapter.mjs';
+import { claimPublicIdentities, reportHiddenTours } from '../../../../src/lib/cms/tour-identity.mjs';
 import { getRequestContext, MediaRepository } from 'emdash';
 import { getDb } from 'emdash/runtime';
 import { assignTourCategories, buildCategoryTerms } from './native-site-categories.mjs';
@@ -223,8 +224,7 @@ export function createNativeSiteData({
     // entries are released as soon as its tours exist. Only a small stub per entry survives for translation linking.
     const catalogues={}, stubs={}, collectionHints=[];
     for (const locale of locales) {
-      const tours=[], excluded=[], seenIds=new Set(), sortDates=new Map();
-      stubs[locale]=[];
+      const built=[], excluded=[], rejected=[], claims=new Map(), seenIds=new Set(), linked=[];
       let pageCount=0;
       for await (const page of readTourPages(locale,vocabulary,shared)) {
         if (!Array.isArray(page)) throw new Error(`Invalid published ${locale} CMS collection result`);
@@ -233,16 +233,25 @@ export function createNativeSiteData({
         await resolveSeoImages({[locale]:rows},lookupMediaStorageKeys);
         if (rows.length) {
           const part=buildCatalogue(rows,compatibility,locale,{allowEmpty:true});
-          assignTourCategories({tours:part.tours,entries:rows,vocabulary:vocabulary[locale],tourIdFor:projectedId});
-          const entryIds=new Map(rows.map(entry=>[String(projectedId(entry)),entry.id]));
+          // A copy answers to its original's tour ID, so only rows that made it into the catalogue may give a
+          // tour its categories, its entry or its translation links.
+          const shown=rows.filter(entry=>part.claims.has(entry.id));
+          assignTourCategories({tours:part.tours,entries:shown,vocabulary:vocabulary[locale],tourIdFor:projectedId});
+          const entryIds=new Map(shown.map(entry=>[String(projectedId(entry)),entry.id]));
           for (const tour of part.tours) { Object.defineProperty(tour,'entryId',{value:entryIds.get(String(tour.id)),enumerable:false}); packTourDetail(tour); }
-          tours.push(...part.tours); excluded.push(...part.excluded);
-          for (const [id,date] of part.sortDates) sortDates.set(id,date);
-          stubs[locale].push(...rows.map(linkingStub));
+          built.push(...part.tours); excluded.push(...part.excluded); rejected.push(...part.rejected);
+          for (const [id,claim] of part.claims) claims.set(id,claim);
+          linked.push(...shown.map(linkingStub));
         }
         if (++pageCount>100) throw new Error(`Published ${locale} CMS collection did not terminate`);
       }
+      // Each page was checked on its own; two tours on different pages may still ask for one address.
+      const lost=claimPublicIdentities(claims.values()), dropped=new Set(lost.map(row=>row.entryId));
+      const tours=built.filter(tour=>!dropped.has(tour.entryId));
+      stubs[locale]=linked.filter(stub=>!dropped.has(stub.id));
+      reportHiddenTours(locale,[...rejected,...lost]);
       if (!tours.length) throw new Error(`Refusing an empty ${locale} CMS catalogue`);
+      const sortDates=new Map(tours.map(tour=>[tour.id,claims.get(tour.entryId).sortDate]));
       collectionHints.push({tags:['tours']});
       sortCatalogueTours(tours,sortDates);
       const terms=buildCategoryTerms({tours,vocabulary:vocabulary[locale],locale});

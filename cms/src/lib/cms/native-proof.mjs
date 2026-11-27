@@ -145,7 +145,7 @@ export function createNativeProofCatalogue(entries, { compatibility: source = co
   const normalized = entries.map(entry => normalizeEntry(entry));
   for (const entry of normalized) validateMedia(entry.data);
   const catalogue = buildCatalogue(normalized, source, NATIVE_PROOF_LOCALE);
-  const bySource = new Map(normalized.filter(entry => !proofIds.has(entry.id)).map(entry => [entry.data.source_key, entry]));
+  const bySource = new Map(normalized.filter(entry => catalogue.claims.has(entry.id)).map(entry => [entry.data.source_key, entry]));
   const tours = catalogue.tours.map(tour => presentMedia(tour, bySource.get(`wp-zh-${tour.id}`)));
   const cards = tours.map(tour => {
     const entry = bySource.get(`wp-zh-${tour.id}`);
